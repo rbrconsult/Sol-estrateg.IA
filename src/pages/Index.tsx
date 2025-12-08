@@ -178,32 +178,31 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* KPIs Section - Completo */}
+        {/* KPIs Section - Otimizado */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-4">Indicadores Principais</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-8">
             <KPICard
               title="Propostas"
               value={kpis.totalNegocios}
               subtitle="Total criadas"
               icon={Briefcase}
-              delay={100}
+              delay={50}
             />
             <KPICard
               title="Pipeline"
               value={formatCurrency(kpis.valorPipeline)}
               subtitle={`${kpis.totalNegocios} propostas`}
               icon={TrendingUp}
-              variant="default"
-              delay={120}
+              delay={70}
             />
             <KPICard
-              title="Taxa Conversão"
+              title="Conversão"
               value={`${kpis.taxaConversao.toFixed(1)}%`}
               subtitle={`${kpis.negociosGanhos} ganhos`}
               icon={Target}
               variant="success"
-              delay={140}
+              delay={90}
             />
             <KPICard
               title="Ganhos"
@@ -211,36 +210,37 @@ const Index = () => {
               subtitle={`${kpis.negociosGanhos} fechados`}
               icon={CheckCircle}
               variant="success"
-              delay={160}
+              delay={110}
             />
             <KPICard
               title="Perdidos"
               value={formatCurrency(kpis.valorPerdido)}
-              subtitle={`${kpis.negociosPerdidos} propostas`}
+              subtitle={`${kpis.negociosPerdidos} props`}
               icon={AlertTriangle}
               variant="danger"
-              delay={180}
+              delay={130}
             />
             <KPICard
               title="Ticket Médio"
               value={formatCurrency(kpis.ticketMedio)}
               subtitle="Por proposta"
               icon={DollarSign}
-              delay={200}
+              delay={150}
             />
             <KPICard
-              title="Ciclo Proposta"
-              value={`${kpis.cicloProposta} dias`}
-              subtitle="Projeto → Proposta"
+              title="Ciclo"
+              value={`${kpis.cicloProposta}d`}
+              subtitle="Proj → Prop"
               icon={Clock}
-              delay={220}
+              delay={170}
             />
             <KPICard
               title="Potência"
               value={formatPower(kpis.potenciaTotal)}
-              subtitle="Total sistemas"
+              subtitle="Total kWp"
               icon={Zap}
-              delay={240}
+              variant="warning"
+              delay={190}
             />
           </div>
         </section>
