@@ -27,38 +27,43 @@ interface SheetRow {
 
 // Normalize private key to proper PEM format
 function normalizePrivateKey(key: string): string {
+  // Remove any surrounding quotes
+  let normalizedKey = key.replace(/^["']|["']$/g, '');
+  
   // Replace escaped newlines with actual newlines
-  let normalizedKey = key.replace(/\\n/g, '\n');
+  normalizedKey = normalizedKey.replace(/\\n/g, '\n');
   
-  // If key doesn't have header, add it
-  if (!normalizedKey.includes('-----BEGIN PRIVATE KEY-----')) {
-    normalizedKey = `-----BEGIN PRIVATE KEY-----\n${normalizedKey}\n-----END PRIVATE KEY-----`;
+  // Extract the base64 content (remove headers/footers and whitespace)
+  const beginMarker = '-----BEGIN PRIVATE KEY-----';
+  const endMarker = '-----END PRIVATE KEY-----';
+  
+  let content = normalizedKey
+    .replace(beginMarker, '')
+    .replace(endMarker, '')
+    .replace(/[\s\n\r]/g, ''); // Remove all whitespace
+  
+  // Reformat to proper PEM with 64-char lines
+  const lines: string[] = [];
+  for (let i = 0; i < content.length; i += 64) {
+    lines.push(content.substring(i, i + 64));
   }
   
-  // Ensure proper line breaks in the key content
-  const lines = normalizedKey.split('\n');
-  const header = lines[0];
-  const footer = lines[lines.length - 1];
-  const content = lines.slice(1, -1).join('');
+  const formattedKey = `${beginMarker}\n${lines.join('\n')}\n${endMarker}`;
   
-  // Reformat content to 64-char lines if it's all on one line
-  if (lines.length <= 3) {
-    const formattedContent = content.match(/.{1,64}/g)?.join('\n') || content;
-    normalizedKey = `${header}\n${formattedContent}\n${footer}`;
-  }
+  console.log('Formatted key preview:', formattedKey.substring(0, 100) + '...');
   
-  return normalizedKey;
+  return formattedKey;
 }
 
 // Get access token from Google OAuth2 using jose library
 async function getAccessToken(clientEmail: string, privateKey: string): Promise<string> {
   const normalizedKey = normalizePrivateKey(privateKey);
   
-  console.log('Private key starts with:', normalizedKey.substring(0, 50));
-  console.log('Private key ends with:', normalizedKey.substring(normalizedKey.length - 50));
-  console.log('Private key has proper headers:', normalizedKey.includes('-----BEGIN PRIVATE KEY-----'));
+  console.log('Importing key with jose...');
   
   const key = await importPKCS8(normalizedKey, 'RS256');
+  
+  console.log('Key imported successfully');
   
   const now = Math.floor(Date.now() / 1000);
   
@@ -148,8 +153,6 @@ serve(async (req) => {
     }
 
     console.log('Using client email:', CLIENT_EMAIL);
-    console.log('Private key length:', PRIVATE_KEY.length);
-    console.log('Private key first 30 chars:', PRIVATE_KEY.substring(0, 30));
 
     // Get OAuth2 access token
     const accessToken = await getAccessToken(CLIENT_EMAIL, PRIVATE_KEY);
