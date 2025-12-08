@@ -59,7 +59,8 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
   }, [data]);
 
   const maxValue = useMemo(() => Math.max(...sortedData.map(d => d.potencia), 1), [sortedData]);
-  const firstStageQty = sortedData[0]?.quantidade || 1;
+  const totalQty = useMemo(() => sortedData.reduce((acc, d) => acc + d.quantidade, 0), [sortedData]);
+  const totalPotencia = useMemo(() => sortedData.reduce((acc, d) => acc + d.potencia, 0), [sortedData]);
 
   const formatPower = (value: number) => {
     if (value >= 1000) {
@@ -78,7 +79,6 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
     return proposals.filter(p => p.etapa === selectedStage);
   }, [selectedStage, proposals]);
 
-  const totalPower = sortedData.reduce((acc, d) => acc + d.potencia, 0);
   const totalProjects = sortedData.reduce((acc, d) => acc + d.quantidade, 0);
 
   return (
@@ -96,7 +96,7 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
         <div className="space-y-3">
           {sortedData.map((stage, index) => {
             const widthPercent = Math.max(15, (stage.potencia / maxValue) * 100);
-            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(0);
+            const percentOfPotencia = totalPotencia > 0 ? ((stage.potencia / totalPotencia) * 100).toFixed(0) : '0';
             const color = stageColors[index % stageColors.length];
 
             return (
@@ -112,7 +112,7 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {conversionFromTop}% do topo
+                    {percentOfPotencia}% do kWp
                   </span>
                 </div>
 
@@ -144,11 +144,10 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
           })}
         </div>
 
-        {/* Summary */}
         <div className="mt-6 grid grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Potência Total</p>
-            <p className="text-lg font-bold text-foreground">{formatPower(totalPower)}</p>
+            <p className="text-lg font-bold text-foreground">{formatPower(totalPotencia)}</p>
           </div>
           <div className="text-center border-x border-border">
             <p className="text-xs text-muted-foreground">Projetos</p>
@@ -157,7 +156,7 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Potência Média</p>
             <p className="text-lg font-bold text-foreground">
-              {formatPower(totalProjects > 0 ? totalPower / totalProjects : 0)}
+              {formatPower(totalProjects > 0 ? totalPotencia / totalProjects : 0)}
             </p>
           </div>
         </div>
