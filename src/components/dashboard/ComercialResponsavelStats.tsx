@@ -9,8 +9,9 @@ import {
   Cell
 } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users } from "lucide-react";
 
-interface PreVendedorData {
+interface ComercialData {
   nome: string;
   leadsTrabalhos: number;
   convertidos: number;
@@ -18,11 +19,11 @@ interface PreVendedorData {
   atividades: number;
 }
 
-interface PreVendedorStatsProps {
-  data: PreVendedorData[];
+interface ComercialResponsavelStatsProps {
+  data: ComercialData[];
 }
 
-export function PreVendedorStats({ data }: PreVendedorStatsProps) {
+export function ComercialResponsavelStats({ data }: ComercialResponsavelStatsProps) {
   const getConversionColor = (value: number) => {
     if (value >= 20) return 'hsl(152, 60%, 45%)';
     if (value >= 10) return 'hsl(38, 92%, 50%)';
@@ -48,9 +49,12 @@ export function PreVendedorStats({ data }: PreVendedorStatsProps) {
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-card opacity-0 animate-fade-up" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground">Performance Pré-Vendedores</h3>
-        <p className="text-sm text-muted-foreground">Taxa de conversão e cadência</p>
+      <div className="mb-6 flex items-center gap-2">
+        <Users className="h-5 w-5 text-primary" />
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Comercial Responsável</h3>
+          <p className="text-sm text-muted-foreground">Taxa de conversão e cadência</p>
+        </div>
       </div>
 
       <Tabs defaultValue="conversao" className="w-full">

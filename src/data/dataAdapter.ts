@@ -109,28 +109,32 @@ export function extractPreVendedores(proposals: Proposal[]): string[] {
 // Funções de cálculo usando dados reais
 export function getKPIs(proposals: Proposal[]) {
   const totalNegocios = proposals.length;
-  const abertos = proposals.filter(p => p.status === 'Aberto');
-  const ganhos = proposals.filter(p => p.status === 'Ganho');
-  const perdidos = proposals.filter(p => p.status === 'Perdido');
   
-  const valorPipeline = abertos.reduce((acc, p) => acc + p.valorProposta, 0);
-  const valorGanho = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
-  const valorPerdido = perdidos.reduce((acc, p) => acc + p.valorProposta, 0);
+  // Soma total de valores e potência
+  const valorPipeline = proposals.reduce((acc, p) => acc + p.valorProposta, 0);
+  const potenciaTotal = proposals.reduce((acc, p) => acc + p.potenciaSistema, 0);
   
-  const taxaConversao = totalNegocios > 0 ? (ganhos.length / totalNegocios) * 100 : 0;
-  const ticketMedio = ganhos.length > 0 ? valorGanho / ganhos.length : 0;
+  // Ticket Médio = Soma Valor Propostas / Quantidade Propostas
+  const ticketMedio = totalNegocios > 0 ? valorPipeline / totalNegocios : 0;
+  
+  // Ciclo de Proposta = Diferença entre Data Projeto e Data Proposta
+  const proposalsComDatas = proposals.filter(p => p.dataCriacaoProjeto && p.dataCriacaoProposta);
+  const ciclos = proposalsComDatas.map(p => {
+    const inicio = new Date(p.dataCriacaoProjeto);
+    const fim = new Date(p.dataCriacaoProposta);
+    return Math.abs(Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)));
+  }).filter(c => !isNaN(c) && c >= 0);
+  
+  const cicloProposta = ciclos.length > 0 
+    ? Math.round(ciclos.reduce((a, b) => a + b, 0) / ciclos.length) 
+    : 0;
   
   return {
     totalNegocios,
-    negociosAbertos: abertos.length,
-    negociosGanhos: ganhos.length,
-    negociosPerdidos: perdidos.length,
     valorPipeline,
-    valorGanho,
-    valorPerdido,
-    taxaConversao,
+    potenciaTotal,
     ticketMedio,
-    cicloMedioVendas: 18 // dias média - pode ser calculado a partir das datas
+    cicloProposta
   };
 }
 
@@ -194,16 +198,19 @@ export function getPreVendedorPerformance(proposals: Proposal[]) {
   }).sort((a, b) => b.leadsTrabalhos - a.leadsTrabalhos);
 }
 
-export function getMotivosPerda(proposals: Proposal[]) {
-  const perdidos = proposals.filter(p => p.status === 'Perdido');
-  const motivosUnicos = [...new Set(perdidos.map(p => p.motivoPerda).filter(Boolean))];
+// Função para funil de potência (kWh)
+export function getPowerFunnelData(proposals: Proposal[]) {
+  const etapasUnicos = [...new Set(proposals.map(p => p.etapa))];
   
-  return motivosUnicos.map(motivo => {
-    const motivoProposals = perdidos.filter(p => p.motivoPerda === motivo);
+  return etapasUnicos.map((etapa) => {
+    const etapaProposals = proposals.filter(p => p.etapa === etapa);
+    const potencia = etapaProposals.reduce((acc, p) => acc + p.potenciaSistema, 0);
+    
     return {
-      motivo: motivo || 'Não informado',
-      quantidade: motivoProposals.length,
-      valor: motivoProposals.reduce((acc, p) => acc + p.valorProposta, 0)
+      etapa,
+      quantidade: etapaProposals.length,
+      potencia,
+      taxaConversao: proposals.length > 0 ? (etapaProposals.length / proposals.length) * 100 : 0
     };
   }).sort((a, b) => b.quantidade - a.quantidade);
 }
