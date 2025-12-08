@@ -6,7 +6,10 @@ import {
   Clock,
   RefreshCw,
   AlertCircle,
-  Zap
+  Zap,
+  Target,
+  AlertTriangle,
+  CheckCircle
 } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -175,47 +178,69 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* KPIs Section - Simplificado */}
+        {/* KPIs Section - Completo */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-4">Indicadores Principais</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             <KPICard
-              title="Propostas Criadas"
+              title="Propostas"
               value={kpis.totalNegocios}
-              subtitle="Total de propostas"
+              subtitle="Total criadas"
               icon={Briefcase}
               delay={100}
             />
             <KPICard
-              title="Pipeline Total"
+              title="Pipeline"
               value={formatCurrency(kpis.valorPipeline)}
               subtitle={`${kpis.totalNegocios} propostas`}
               icon={TrendingUp}
               variant="default"
-              delay={150}
+              delay={120}
+            />
+            <KPICard
+              title="Taxa Conversão"
+              value={`${kpis.taxaConversao.toFixed(1)}%`}
+              subtitle={`${kpis.negociosGanhos} ganhos`}
+              icon={Target}
+              variant="success"
+              delay={140}
+            />
+            <KPICard
+              title="Ganhos"
+              value={formatCurrency(kpis.valorGanho)}
+              subtitle={`${kpis.negociosGanhos} fechados`}
+              icon={CheckCircle}
+              variant="success"
+              delay={160}
+            />
+            <KPICard
+              title="Perdidos"
+              value={formatCurrency(kpis.valorPerdido)}
+              subtitle={`${kpis.negociosPerdidos} propostas`}
+              icon={AlertTriangle}
+              variant="danger"
+              delay={180}
             />
             <KPICard
               title="Ticket Médio"
               value={formatCurrency(kpis.ticketMedio)}
-              subtitle="Valor médio por proposta"
+              subtitle="Por proposta"
               icon={DollarSign}
-              variant="success"
               delay={200}
             />
             <KPICard
-              title="Ciclo de Proposta"
+              title="Ciclo Proposta"
               value={`${kpis.cicloProposta} dias`}
               subtitle="Projeto → Proposta"
               icon={Clock}
-              delay={250}
+              delay={220}
             />
             <KPICard
-              title="Potência Total"
+              title="Potência"
               value={formatPower(kpis.potenciaTotal)}
-              subtitle="Soma dos sistemas"
+              subtitle="Total sistemas"
               icon={Zap}
-              variant="default"
-              delay={300}
+              delay={240}
             />
           </div>
         </section>

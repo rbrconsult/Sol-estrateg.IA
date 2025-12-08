@@ -109,10 +109,18 @@ export function extractPreVendedores(proposals: Proposal[]): string[] {
 // Funções de cálculo usando dados reais
 export function getKPIs(proposals: Proposal[]) {
   const totalNegocios = proposals.length;
+  const ganhos = proposals.filter(p => p.status === 'Ganho');
+  const perdidos = proposals.filter(p => p.status === 'Perdido');
+  const abertos = proposals.filter(p => p.status === 'Aberto');
   
   // Soma total de valores e potência
   const valorPipeline = proposals.reduce((acc, p) => acc + p.valorProposta, 0);
+  const valorGanho = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
+  const valorPerdido = perdidos.reduce((acc, p) => acc + p.valorProposta, 0);
   const potenciaTotal = proposals.reduce((acc, p) => acc + p.potenciaSistema, 0);
+  
+  // Taxa de Conversão = Ganhos / Total
+  const taxaConversao = totalNegocios > 0 ? (ganhos.length / totalNegocios) * 100 : 0;
   
   // Ticket Médio = Soma Valor Propostas / Quantidade Propostas
   const ticketMedio = totalNegocios > 0 ? valorPipeline / totalNegocios : 0;
@@ -131,8 +139,14 @@ export function getKPIs(proposals: Proposal[]) {
   
   return {
     totalNegocios,
+    negociosAbertos: abertos.length,
+    negociosGanhos: ganhos.length,
+    negociosPerdidos: perdidos.length,
     valorPipeline,
+    valorGanho,
+    valorPerdido,
     potenciaTotal,
+    taxaConversao,
     ticketMedio,
     cicloProposta
   };
