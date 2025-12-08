@@ -5,7 +5,9 @@ import {
   DollarSign, 
   Target, 
   Clock, 
-  AlertTriangle 
+  AlertTriangle,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -14,10 +16,12 @@ import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
 import { LossAnalysis } from "@/components/dashboard/LossAnalysis";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
 import { VendedorTable } from "@/components/dashboard/VendedorTable";
+import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { adaptSheetData, extractVendedores, extractPreVendedores } from "@/data/dataAdapter";
 import {
   mockProposals,
-  vendedores,
-  preVendedores,
+  vendedores as defaultVendedores,
+  preVendedores as defaultPreVendedores,
   getKPIs,
   getFunnelData,
   getVendedorPerformance,
@@ -25,18 +29,43 @@ import {
   getMotivosPerda,
   getMonthlyData
 } from "@/data/mockData";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Index = () => {
   const [selectedVendedor, setSelectedVendedor] = useState("todos");
   const [selectedPreVendedor, setSelectedPreVendedor] = useState("todos");
+  
+  const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
+
+  // Use dados reais se disponíveis, senão usa mock
+  const { proposals, vendedores, preVendedores, lastUpdate, isUsingRealData } = useMemo(() => {
+    if (sheetsData?.data && sheetsData.data.length > 0) {
+      const adapted = adaptSheetData(sheetsData.data);
+      return {
+        proposals: adapted,
+        vendedores: extractVendedores(adapted),
+        preVendedores: extractPreVendedores(adapted),
+        lastUpdate: new Date(sheetsData.lastUpdate).toLocaleString('pt-BR'),
+        isUsingRealData: true
+      };
+    }
+    return {
+      proposals: mockProposals,
+      vendedores: defaultVendedores,
+      preVendedores: defaultPreVendedores,
+      lastUpdate: new Date().toLocaleString('pt-BR'),
+      isUsingRealData: false
+    };
+  }, [sheetsData]);
 
   const filteredProposals = useMemo(() => {
-    return mockProposals.filter(p => {
+    return proposals.filter(p => {
       if (selectedVendedor !== "todos" && p.responsavel !== selectedVendedor) return false;
       if (selectedPreVendedor !== "todos" && p.representante !== selectedPreVendedor) return false;
       return true;
     });
-  }, [selectedVendedor, selectedPreVendedor]);
+  }, [proposals, selectedVendedor, selectedPreVendedor]);
 
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
@@ -57,7 +86,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        lastUpdate="08/12/2024 14:30"
+        lastUpdate={lastUpdate}
         selectedVendedor={selectedVendedor}
         selectedPreVendedor={selectedPreVendedor}
         onVendedorChange={setSelectedVendedor}
@@ -67,6 +96,43 @@ const Index = () => {
       />
 
       <main className="mx-auto max-w-[1600px] px-6 py-8">
+        {/* Data Source Indicator */}
+        {!isUsingRealData && (
+          <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-amber-200">
+              Usando dados de demonstração. Configure as chaves do Google Sheets para ver dados reais.
+              {error && <span className="ml-2 text-red-400">Erro: {error.message}</span>}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isUsingRealData && (
+          <div className="mb-6 flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-green-500/20 px-3 py-1 text-sm text-green-400">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+              Dados em tempo real
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="mb-6 flex items-center justify-center gap-2 text-muted-foreground">
+            <RefreshCw className="h-5 w-5 animate-spin" />
+            Carregando dados do Google Sheets...
+          </div>
+        )}
+
         {/* KPIs Section */}
         <section className="mb-8">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
