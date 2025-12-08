@@ -185,17 +185,19 @@ export function getPreVendedorPerformance(proposals: Proposal[]) {
   return preVendedoresUnicos.map(rep => {
     const repProposals = proposals.filter(p => p.responsavel === rep);
     const ganhos = repProposals.filter(p => p.status === 'Ganho');
+    const valorTotal = repProposals.reduce((acc, p) => acc + p.valorProposta, 0);
     
     return {
       nome: rep,
       leadsTrabalhos: repProposals.length,
       convertidos: ganhos.length,
+      valorTotal,
       taxaConversao: repProposals.length > 0 
         ? (ganhos.length / repProposals.length) * 100 
         : 0,
       atividades: repProposals.length
     };
-  }).sort((a, b) => b.leadsTrabalhos - a.leadsTrabalhos);
+  }).sort((a, b) => b.valorTotal - a.valorTotal);
 }
 
 // Função para funil de potência (kWh)
