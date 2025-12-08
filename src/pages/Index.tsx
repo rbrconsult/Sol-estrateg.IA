@@ -18,7 +18,7 @@ import { PowerFunnel } from "@/components/dashboard/PowerFunnel";
 import { StatusFunnel } from "@/components/dashboard/StatusFunnel";
 import { ComercialResponsavelStats } from "@/components/dashboard/ComercialResponsavelStats";
 import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
-import { VendedorTable } from "@/components/dashboard/VendedorTable";
+import { VendedorRanking } from "@/components/dashboard/VendedorRanking";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
 import { StageProgress } from "@/components/dashboard/StageProgress";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
@@ -278,10 +278,9 @@ const Index = () => {
           <StageProgress proposals={filteredProposals} />
         </section>
 
-        {/* Tabela de Vendedores */}
+        {/* Ranking de Vendedores */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Ranking de Vendedores</h2>
-          <VendedorTable data={vendedorPerformance} />
+          <VendedorRanking data={vendedorPerformance} />
         </section>
 
         {/* Tendências */}
