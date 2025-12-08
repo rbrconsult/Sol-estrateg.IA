@@ -25,12 +25,38 @@ interface SheetRow {
   dados_projeto: string;
 }
 
+// Normalize private key to proper PEM format
+function normalizePrivateKey(key: string): string {
+  // Replace escaped newlines with actual newlines
+  let normalizedKey = key.replace(/\\n/g, '\n');
+  
+  // If key doesn't have header, add it
+  if (!normalizedKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    normalizedKey = `-----BEGIN PRIVATE KEY-----\n${normalizedKey}\n-----END PRIVATE KEY-----`;
+  }
+  
+  // Ensure proper line breaks in the key content
+  const lines = normalizedKey.split('\n');
+  const header = lines[0];
+  const footer = lines[lines.length - 1];
+  const content = lines.slice(1, -1).join('');
+  
+  // Reformat content to 64-char lines if it's all on one line
+  if (lines.length <= 3) {
+    const formattedContent = content.match(/.{1,64}/g)?.join('\n') || content;
+    normalizedKey = `${header}\n${formattedContent}\n${footer}`;
+  }
+  
+  return normalizedKey;
+}
+
 // Get access token from Google OAuth2 using jose library
 async function getAccessToken(clientEmail: string, privateKey: string): Promise<string> {
-  // Normalize the private key - handle escaped newlines
-  const normalizedKey = privateKey.replace(/\\n/g, '\n');
+  const normalizedKey = normalizePrivateKey(privateKey);
   
-  console.log('Importing private key with jose...');
+  console.log('Private key starts with:', normalizedKey.substring(0, 50));
+  console.log('Private key ends with:', normalizedKey.substring(normalizedKey.length - 50));
+  console.log('Private key has proper headers:', normalizedKey.includes('-----BEGIN PRIVATE KEY-----'));
   
   const key = await importPKCS8(normalizedKey, 'RS256');
   
@@ -122,6 +148,8 @@ serve(async (req) => {
     }
 
     console.log('Using client email:', CLIENT_EMAIL);
+    console.log('Private key length:', PRIVATE_KEY.length);
+    console.log('Private key first 30 chars:', PRIVATE_KEY.substring(0, 30));
 
     // Get OAuth2 access token
     const accessToken = await getAccessToken(CLIENT_EMAIL, PRIVATE_KEY);
