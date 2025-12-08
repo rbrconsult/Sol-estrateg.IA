@@ -100,9 +100,21 @@ const Index = () => {
         {!isUsingRealData && (
           <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
             <AlertCircle className="h-4 w-4 text-amber-500" />
-            <AlertDescription className="text-amber-200">
-              Usando dados de demonstração. Configure as chaves do Google Sheets para ver dados reais.
-              {error && <span className="ml-2 text-red-400">Erro: {error.message}</span>}
+            <AlertDescription className="flex items-center justify-between text-amber-200">
+              <span>
+                Usando dados de demonstração. Configure as chaves do Google Sheets para ver dados reais.
+                {error && <span className="ml-2 text-red-400">Erro: {error.message}</span>}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="ml-4 text-amber-200 hover:text-amber-100 hover:bg-amber-500/20"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+                Tentar novamente
+              </Button>
             </AlertDescription>
           </Alert>
         )}
