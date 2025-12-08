@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
+import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { DollarSign, ChevronRight } from "lucide-react";
 
 interface FunnelStage {
@@ -61,15 +62,6 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
   const maxValue = useMemo(() => Math.max(...sortedData.map(d => d.valor), 1), [sortedData]);
   const firstStageQty = sortedData[0]?.quantidade || 1;
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      notation: 'compact',
-      maximumFractionDigits: 1
-    }).format(value);
-  };
-
   const handleStageClick = (etapa: string) => {
     setSelectedStage(etapa);
     setIsModalOpen(true);
@@ -98,7 +90,7 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
         <div className="space-y-3">
           {sortedData.map((stage, index) => {
             const widthPercent = Math.max(15, (stage.valor / maxValue) * 100);
-            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(1);
+            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(0);
             const color = stageColors[index % stageColors.length];
 
             return (
@@ -136,7 +128,7 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
                         {stage.quantidade}
                       </span>
                       <span className="text-sm font-semibold text-white drop-shadow-sm">
-                        {formatCurrency(stage.valor)}
+                        {formatCurrencyAbbrev(stage.valor)}
                       </span>
                     </div>
                   </div>
@@ -150,7 +142,7 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
         <div className="mt-6 grid grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Pipeline Total</p>
-            <p className="text-lg font-bold text-foreground">{formatCurrency(totalValue)}</p>
+            <p className="text-lg font-bold text-foreground">{formatCurrencyAbbrev(totalValue)}</p>
           </div>
           <div className="text-center border-x border-border">
             <p className="text-xs text-muted-foreground">Projetos</p>
@@ -159,7 +151,7 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Ticket Médio</p>
             <p className="text-lg font-bold text-foreground">
-              {formatCurrency(totalProjects > 0 ? totalValue / totalProjects : 0)}
+              {formatCurrencyAbbrev(totalProjects > 0 ? totalValue / totalProjects : 0)}
             </p>
           </div>
         </div>

@@ -63,9 +63,9 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
 
   const formatPower = (value: number) => {
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)} MWp`;
+      return `${Math.floor(value / 100) / 10} MWp`;
     }
-    return `${value.toFixed(1)} kWp`;
+    return `${Math.floor(value)} kWp`;
   };
 
   const handleStageClick = (etapa: string) => {
@@ -96,7 +96,7 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
         <div className="space-y-3">
           {sortedData.map((stage, index) => {
             const widthPercent = Math.max(15, (stage.potencia / maxValue) * 100);
-            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(1);
+            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(0);
             const color = stageColors[index % stageColors.length];
 
             return (

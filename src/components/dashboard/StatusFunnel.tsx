@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
+import { formatCurrencyAbbrev, formatCurrencyFull } from "@/lib/formatters";
 import { Activity, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown } from "lucide-react";
 
 interface StatusData {
@@ -45,24 +46,6 @@ export function StatusFunnel({ data, proposals }: StatusFunnelProps) {
 
   const totalValue = data.reduce((acc, d) => acc + d.valor, 0);
   const totalQty = data.reduce((acc, d) => acc + d.quantidade, 0);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      notation: 'compact',
-      maximumFractionDigits: 1
-    }).format(value);
-  };
-
-  const formatCurrencyFull = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  };
 
   const handleStatusClick = (status: string) => {
     setSelectedStatus(status);
@@ -153,7 +136,7 @@ export function StatusFunnel({ data, proposals }: StatusFunnelProps) {
                   key={item.status}
                   className={`${config?.barClass} transition-all duration-700 first:rounded-l-full last:rounded-r-full`}
                   style={{ width: `${item.percentual}%` }}
-                  title={`${config?.label}: ${item.quantidade} (${item.percentual.toFixed(1)}%)`}
+                  title={`${config?.label}: ${item.quantidade} (${item.percentual.toFixed(0)}%)`}
                 />
               );
             })}
@@ -183,13 +166,13 @@ export function StatusFunnel({ data, proposals }: StatusFunnelProps) {
           <div className="rounded-lg bg-secondary/50 border border-border/50 p-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Valor em Aberto</p>
             <p className="text-xl font-bold text-info">
-              {formatCurrency(data.find(d => d.status === 'Aberto')?.valor || 0)}
+              {formatCurrencyAbbrev(data.find(d => d.status === 'Aberto')?.valor || 0)}
             </p>
           </div>
           <div className="rounded-lg bg-secondary/50 border border-border/50 p-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Valor Total</p>
             <p className="text-xl font-bold text-foreground">
-              {formatCurrency(totalValue)}
+              {formatCurrencyAbbrev(totalValue)}
             </p>
           </div>
         </div>

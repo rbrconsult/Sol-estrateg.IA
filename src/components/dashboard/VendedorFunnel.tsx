@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
+import { formatCurrencyAbbrev, formatCurrencyFull } from "@/lib/formatters";
 
 interface VendedorData {
   nome: string;
@@ -34,24 +35,6 @@ interface VendedorFunnelProps {
 export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
   const [selectedVendedor, setSelectedVendedor] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      notation: 'compact',
-      maximumFractionDigits: 1
-    }).format(value);
-  };
-
-  const formatCurrencyFull = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  };
 
   const handleBarClick = (vendedor: string) => {
     setSelectedVendedor(vendedor);
@@ -138,7 +121,7 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => formatCurrency(value)}
+                tickFormatter={(value) => formatCurrencyAbbrev(value)}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
@@ -190,12 +173,12 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
               <p className="text-sm text-foreground font-medium truncate mb-2">{vendedor.nome}</p>
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Total:</span>
-                <span className="font-semibold text-foreground">{formatCurrency(vendedor.valorTotal)}</span>
+                <span className="font-semibold text-foreground">{formatCurrencyAbbrev(vendedor.valorTotal)}</span>
               </div>
               <div className="flex gap-2 mt-1 text-xs">
-                <span className="text-info">{formatCurrency(vendedor.valorAberto)}</span>
-                <span className="text-success">{formatCurrency(vendedor.valorGanho)}</span>
-                <span className="text-destructive">{formatCurrency(vendedor.valorPerdido)}</span>
+                <span className="text-info">{formatCurrencyAbbrev(vendedor.valorAberto)}</span>
+                <span className="text-success">{formatCurrencyAbbrev(vendedor.valorGanho)}</span>
+                <span className="text-destructive">{formatCurrencyAbbrev(vendedor.valorPerdido)}</span>
               </div>
             </div>
           ))}

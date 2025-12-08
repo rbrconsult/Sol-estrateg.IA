@@ -45,8 +45,10 @@ function mapStatus(status: string): 'Aberto' | 'Ganho' | 'Perdido' {
   return 'Aberto';
 }
 
-function parseDate(dateStr: string): string {
-  if (!dateStr) return new Date().toISOString().split('T')[0];
+function parseDate(dateStr: string): string | null {
+  if (!dateStr || dateStr.trim() === '') return null;
+  
+  const trimmed = dateStr.trim();
   
   // Try different date formats
   const formats = [
@@ -56,16 +58,16 @@ function parseDate(dateStr: string): string {
   ];
   
   for (const format of formats) {
-    const match = dateStr.match(format);
+    const match = trimmed.match(format);
     if (match) {
       if (format === formats[0] || format === formats[2]) {
         return `${match[3]}-${match[2]}-${match[1]}`;
       }
-      return dateStr;
+      return trimmed;
     }
   }
   
-  return new Date().toISOString().split('T')[0];
+  return null;
 }
 
 export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
@@ -86,10 +88,10 @@ export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
       valorProposta: item.valor_proposta || 0,
       potenciaSistema: parseFloat(item.potencia_sistema) || 0,
       nomeProposta: item.nome_proposta || 'Proposta',
-      dataCriacaoProjeto: parseDate(item.data_criacao_projeto),
-      dataCriacaoProposta: parseDate(item.data_criacao_proposta),
+      dataCriacaoProjeto: parseDate(item.data_criacao_projeto) || '',
+      dataCriacaoProposta: parseDate(item.data_criacao_proposta) || '',
       slaProposta: parseInt(item.sla_proposta) || 48,
-      ultimaAtualizacao: parseDate(item.ultima_atualizacao),
+      ultimaAtualizacao: parseDate(item.ultima_atualizacao) || new Date().toISOString().split('T')[0],
       motivoPerda: status === 'Perdido' ? 'Não informado' : undefined,
       numAtividades: 1
     };
@@ -127,31 +129,41 @@ export function getKPIs(proposals: Proposal[]) {
   
   // Ciclo de Proposta = Diferença entre Data Proposta (M) e Data Projeto (L)
   // Coluna L = data_criacao_projeto, Coluna M = data_criacao_proposta
-  const proposalsComDatas = proposals.filter(p => {
-    return p.dataCriacaoProjeto && 
-           p.dataCriacaoProposta && 
-           p.dataCriacaoProjeto !== '' && 
-           p.dataCriacaoProposta !== '';
-  });
+  // IMPORTANTE: Ignorar registros com datas vazias, inválidas ou iguais
+  const ciclos: number[] = [];
   
-  const ciclos = proposalsComDatas.map(p => {
+  for (const p of proposals) {
+    // Verificar se ambas as datas existem e não estão vazias
+    if (!p.dataCriacaoProjeto || !p.dataCriacaoProposta || 
+        p.dataCriacaoProjeto.trim() === '' || p.dataCriacaoProposta.trim() === '') {
+      continue;
+    }
+    
+    // Ignorar se as datas são iguais (ciclo = 0 não é útil)
+    if (p.dataCriacaoProjeto === p.dataCriacaoProposta) {
+      continue;
+    }
+    
     try {
       const dataL = new Date(p.dataCriacaoProjeto);
       const dataM = new Date(p.dataCriacaoProposta);
       
       // Verificar se as datas são válidas
       if (isNaN(dataL.getTime()) || isNaN(dataM.getTime())) {
-        return null;
+        continue;
       }
       
       const diffMs = dataM.getTime() - dataL.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       
-      return diffDays >= 0 ? diffDays : null;
+      // Apenas ciclos positivos (proposta depois do projeto)
+      if (diffDays > 0) {
+        ciclos.push(diffDays);
+      }
     } catch {
-      return null;
+      continue;
     }
-  }).filter((c): c is number => c !== null && !isNaN(c));
+  }
   
   const cicloProposta = ciclos.length > 0 
     ? Math.round(ciclos.reduce((a, b) => a + b, 0) / ciclos.length) 
