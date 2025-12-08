@@ -7,15 +7,19 @@ import {
   Clock, 
   AlertTriangle,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Users,
+  Activity
 } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { SalesFunnel } from "@/components/dashboard/SalesFunnel";
-import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
+import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
+import { PreVendedorStats } from "@/components/dashboard/PreVendedorStats";
+import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
+import { VendedorTable } from "@/components/dashboard/VendedorTable";
 import { LossAnalysis } from "@/components/dashboard/LossAnalysis";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
-import { VendedorTable } from "@/components/dashboard/VendedorTable";
+import { StageProgress } from "@/components/dashboard/StageProgress";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { 
   adaptSheetData, 
@@ -167,11 +171,12 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* KPIs Section */}
+        {/* KPIs Section - Negócios iniciados, Pipeline, Conversão, Ticket, Ciclo, Perdidos */}
         <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Indicadores Principais</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <KPICard
-              title="Total de Negócios"
+              title="Negócios Iniciados"
               value={kpis.totalNegocios}
               subtitle={`${kpis.negociosAbertos} em andamento`}
               icon={Briefcase}
@@ -219,26 +224,37 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Funnel and Performance */}
-        <section className="mb-8 grid gap-6 lg:grid-cols-2">
-          <SalesFunnel data={funnelData} />
-          <PerformanceChart
-            data={preVendedorPerformance}
-            title="Pré-Vendedores"
-            subtitle="Taxa de conversão por pré-vendedor"
-            dataKey="taxaConversao"
-          />
+        {/* Funil Estratégico e Pré-Vendedores */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Funil de Vendas</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <StrategicFunnel data={funnelData} proposals={filteredProposals} />
+            <PreVendedorStats data={preVendedorPerformance} />
+          </div>
         </section>
 
-        {/* Vendedor Table */}
+        {/* Funil por Vendedor e Progresso por Etapas */}
         <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Performance de Vendas</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <VendedorFunnel data={vendedorPerformance} proposals={filteredProposals} />
+            <StageProgress proposals={filteredProposals} />
+          </div>
+        </section>
+
+        {/* Tabela de Vendedores */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Ranking de Vendedores</h2>
           <VendedorTable data={vendedorPerformance} />
         </section>
 
-        {/* Loss Analysis and Trends */}
-        <section className="mb-8 grid gap-6 lg:grid-cols-2">
-          <LossAnalysis data={motivosPerda} />
-          <TrendsChart data={monthlyData} />
+        {/* Análise de Perdas e Tendências */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Análises</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <LossAnalysis data={motivosPerda} />
+            <TrendsChart data={monthlyData} />
+          </div>
         </section>
 
         {/* Footer */}
