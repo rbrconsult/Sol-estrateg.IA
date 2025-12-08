@@ -25,7 +25,7 @@ interface SheetRow {
 }
 
 // Create JWT for Google OAuth2
-async function createJWT(serviceAccount: { client_email: string; private_key: string }): Promise<string> {
+async function createJWT(clientEmail: string, privateKey: string): Promise<string> {
   const header = {
     alg: 'RS256',
     typ: 'JWT',
@@ -33,7 +33,7 @@ async function createJWT(serviceAccount: { client_email: string; private_key: st
 
   const now = Math.floor(Date.now() / 1000);
   const payload = {
-    iss: serviceAccount.client_email,
+    iss: clientEmail,
     scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
@@ -45,11 +45,15 @@ async function createJWT(serviceAccount: { client_email: string; private_key: st
   const payloadB64 = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
-  // Import private key
-  const pemContents = serviceAccount.private_key
+  // Import private key - handle escaped newlines
+  const normalizedKey = privateKey.replace(/\\n/g, '\n');
+  const pemContents = normalizedKey
     .replace('-----BEGIN PRIVATE KEY-----', '')
     .replace('-----END PRIVATE KEY-----', '')
-    .replace(/\n/g, '');
+    .replace(/\n/g, '')
+    .trim();
+  
+  console.log('Processing private key, length after cleanup:', pemContents.length);
   
   const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
   
@@ -77,8 +81,8 @@ async function createJWT(serviceAccount: { client_email: string; private_key: st
 }
 
 // Get access token from Google OAuth2
-async function getAccessToken(serviceAccount: { client_email: string; private_key: string }): Promise<string> {
-  const jwt = await createJWT(serviceAccount);
+async function getAccessToken(clientEmail: string, privateKey: string): Promise<string> {
+  const jwt = await createJWT(clientEmail, privateKey);
   
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -107,7 +111,8 @@ serve(async (req) => {
 
   try {
     const SHEET_ID = Deno.env.get('GOOGLE_SHEET_ID');
-    const SERVICE_ACCOUNT_KEY = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
+    const CLIENT_EMAIL = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
+    const PRIVATE_KEY = Deno.env.get('GOOGLE_PRIVATE_KEY');
 
     if (!SHEET_ID) {
       console.error('Missing GOOGLE_SHEET_ID');
@@ -123,12 +128,12 @@ serve(async (req) => {
       );
     }
 
-    if (!SERVICE_ACCOUNT_KEY) {
-      console.error('Missing GOOGLE_SERVICE_ACCOUNT_KEY');
+    if (!CLIENT_EMAIL) {
+      console.error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL');
       return new Response(
         JSON.stringify({ 
           error: 'Missing configuration',
-          message: 'Google Service Account Key not configured'
+          message: 'Google Service Account Email not configured'
         }),
         { 
           status: 400, 
@@ -137,16 +142,12 @@ serve(async (req) => {
       );
     }
 
-    // Parse service account credentials
-    let serviceAccount;
-    try {
-      serviceAccount = JSON.parse(SERVICE_ACCOUNT_KEY);
-    } catch (e) {
-      console.error('Failed to parse service account key:', e);
+    if (!PRIVATE_KEY) {
+      console.error('Missing GOOGLE_PRIVATE_KEY');
       return new Response(
         JSON.stringify({ 
-          error: 'Invalid configuration',
-          message: 'Failed to parse service account credentials'
+          error: 'Missing configuration',
+          message: 'Google Private Key not configured'
         }),
         { 
           status: 400, 
@@ -154,10 +155,13 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Using client email:', CLIENT_EMAIL);
+    console.log('Private key starts with:', PRIVATE_KEY.substring(0, 30));
 
     // Get OAuth2 access token
     console.log('Getting OAuth2 access token...');
-    const accessToken = await getAccessToken(serviceAccount);
+    const accessToken = await getAccessToken(CLIENT_EMAIL, PRIVATE_KEY);
     console.log('Access token obtained successfully');
 
     // Fetch data from Google Sheets API with OAuth2
