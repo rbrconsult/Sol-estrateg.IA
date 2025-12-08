@@ -60,7 +60,7 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
   }, [data]);
 
   const maxValue = useMemo(() => Math.max(...sortedData.map(d => d.valor), 1), [sortedData]);
-  const firstStageQty = sortedData[0]?.quantidade || 1;
+  const totalQty = useMemo(() => sortedData.reduce((acc, d) => acc + d.quantidade, 0), [sortedData]);
 
   const handleStageClick = (etapa: string) => {
     setSelectedStage(etapa);
@@ -90,7 +90,8 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
         <div className="space-y-3">
           {sortedData.map((stage, index) => {
             const widthPercent = Math.max(15, (stage.valor / maxValue) * 100);
-            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(0);
+            const percentOfTotal = totalQty > 0 ? ((stage.quantidade / totalQty) * 100).toFixed(0) : '0';
+            const percentOfValue = totalValue > 0 ? ((stage.valor / totalValue) * 100).toFixed(0) : '0';
             const color = stageColors[index % stageColors.length];
 
             return (
@@ -106,7 +107,7 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {conversionFromTop}% do topo
+                    {percentOfValue}% do valor
                   </span>
                 </div>
 
