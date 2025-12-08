@@ -32,14 +32,14 @@ export const etapasReais = [
   'NEGOCIAÇÃO'
 ];
 
-// Mapeia status da planilha
-function mapStatus(status: string, etapa: string): 'Aberto' | 'Ganho' | 'Perdido' {
-  const normalized = status.toLowerCase().trim();
+// Mapeia status da planilha (Coluna F: aberto, perdido, ganho)
+function mapStatus(status: string): 'Aberto' | 'Ganho' | 'Perdido' {
+  const normalized = status?.toLowerCase().trim() || '';
   
-  if (normalized.includes('ganho') || normalized.includes('fechado') || normalized.includes('vencido')) {
+  if (normalized === 'ganho' || normalized.includes('ganho') || normalized.includes('fechado') || normalized.includes('vencido')) {
     return 'Ganho';
   }
-  if (normalized.includes('perdido') || normalized.includes('cancelado')) {
+  if (normalized === 'perdido' || normalized.includes('perdido') || normalized.includes('cancelado')) {
     return 'Perdido';
   }
   return 'Aberto';
@@ -70,7 +70,7 @@ function parseDate(dateStr: string): string {
 
 export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
   return sheetData.map((item, index) => {
-    const status = mapStatus(item.status, item.etapa);
+    const status = mapStatus(item.status);
     const etapa = item.etapa?.trim() || 'TRAFEGO PAGO';
     
     return {
