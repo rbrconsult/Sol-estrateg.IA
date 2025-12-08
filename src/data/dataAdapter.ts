@@ -226,13 +226,22 @@ export function getVendedorPerformance(proposals: Proposal[]) {
     const perdidos = vendedorProposals.filter(p => p.status === 'Perdido');
     const abertos = vendedorProposals.filter(p => p.status === 'Aberto');
     
+    // Calcula VALORES por status (não quantidade)
+    const valorGanho = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
+    const valorPerdido = perdidos.reduce((acc, p) => acc + p.valorProposta, 0);
+    const valorAberto = abertos.reduce((acc, p) => acc + p.valorProposta, 0);
+    const valorTotal = vendedorProposals.reduce((acc, p) => acc + p.valorProposta, 0);
+    
     return {
       nome: vendedor,
       totalPropostas: vendedorProposals.length,
       ganhos: ganhos.length,
       perdidos: perdidos.length,
       abertos: abertos.length,
-      valorTotal: vendedorProposals.reduce((acc, p) => acc + p.valorProposta, 0),
+      valorTotal,
+      valorGanho,
+      valorPerdido,
+      valorAberto,
       taxaConversao: vendedorProposals.length > 0 
         ? (ganhos.length / vendedorProposals.length) * 100 
         : 0,
