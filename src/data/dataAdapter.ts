@@ -125,13 +125,33 @@ export function getKPIs(proposals: Proposal[]) {
   // Ticket Médio = Soma Valor Propostas / Quantidade Propostas
   const ticketMedio = totalNegocios > 0 ? valorPipeline / totalNegocios : 0;
   
-  // Ciclo de Proposta = Diferença entre Data Projeto e Data Proposta
-  const proposalsComDatas = proposals.filter(p => p.dataCriacaoProjeto && p.dataCriacaoProposta);
+  // Ciclo de Proposta = Diferença entre Data Proposta (M) e Data Projeto (L)
+  // Coluna L = data_criacao_projeto, Coluna M = data_criacao_proposta
+  const proposalsComDatas = proposals.filter(p => {
+    return p.dataCriacaoProjeto && 
+           p.dataCriacaoProposta && 
+           p.dataCriacaoProjeto !== '' && 
+           p.dataCriacaoProposta !== '';
+  });
+  
   const ciclos = proposalsComDatas.map(p => {
-    const inicio = new Date(p.dataCriacaoProjeto);
-    const fim = new Date(p.dataCriacaoProposta);
-    return Math.abs(Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)));
-  }).filter(c => !isNaN(c) && c >= 0);
+    try {
+      const dataL = new Date(p.dataCriacaoProjeto);
+      const dataM = new Date(p.dataCriacaoProposta);
+      
+      // Verificar se as datas são válidas
+      if (isNaN(dataL.getTime()) || isNaN(dataM.getTime())) {
+        return null;
+      }
+      
+      const diffMs = dataM.getTime() - dataL.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      
+      return diffDays >= 0 ? diffDays : null;
+    } catch {
+      return null;
+    }
+  }).filter((c): c is number => c !== null && !isNaN(c));
   
   const cicloProposta = ciclos.length > 0 
     ? Math.round(ciclos.reduce((a, b) => a + b, 0) / ciclos.length) 
@@ -150,6 +170,34 @@ export function getKPIs(proposals: Proposal[]) {
     ticketMedio,
     cicloProposta
   };
+}
+
+// Funil de Status (Ciclo de Vida)
+export function getStatusFunnelData(proposals: Proposal[]) {
+  const abertos = proposals.filter(p => p.status === 'Aberto');
+  const ganhos = proposals.filter(p => p.status === 'Ganho');
+  const perdidos = proposals.filter(p => p.status === 'Perdido');
+  
+  return [
+    {
+      status: 'Aberto',
+      quantidade: abertos.length,
+      valor: abertos.reduce((acc, p) => acc + p.valorProposta, 0),
+      percentual: proposals.length > 0 ? (abertos.length / proposals.length) * 100 : 0
+    },
+    {
+      status: 'Ganho',
+      quantidade: ganhos.length,
+      valor: ganhos.reduce((acc, p) => acc + p.valorProposta, 0),
+      percentual: proposals.length > 0 ? (ganhos.length / proposals.length) * 100 : 0
+    },
+    {
+      status: 'Perdido',
+      quantidade: perdidos.length,
+      valor: perdidos.reduce((acc, p) => acc + p.valorProposta, 0),
+      percentual: proposals.length > 0 ? (perdidos.length / proposals.length) * 100 : 0
+    }
+  ];
 }
 
 export function getFunnelData(proposals: Proposal[]) {

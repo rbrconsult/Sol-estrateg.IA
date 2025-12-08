@@ -15,6 +15,7 @@ import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { PowerFunnel } from "@/components/dashboard/PowerFunnel";
+import { StatusFunnel } from "@/components/dashboard/StatusFunnel";
 import { ComercialResponsavelStats } from "@/components/dashboard/ComercialResponsavelStats";
 import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
 import { VendedorTable } from "@/components/dashboard/VendedorTable";
@@ -28,6 +29,7 @@ import {
   getKPIs,
   getFunnelData,
   getPowerFunnelData,
+  getStatusFunnelData,
   getVendedorPerformance,
   getPreVendedorPerformance,
   getMonthlyData
@@ -71,6 +73,7 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
   const powerFunnelData = useMemo(() => getPowerFunnelData(filteredProposals), [filteredProposals]);
+  const statusFunnelData = useMemo(() => getStatusFunnelData(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
   const preVendedorPerformance = useMemo(() => getPreVendedorPerformance(filteredProposals), [filteredProposals]);
   const monthlyData = useMemo(() => getMonthlyData(filteredProposals), [filteredProposals]);
@@ -245,12 +248,13 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Funil Estratégico R$ e kWh */}
+        {/* Funil Estratégico R$, kWh e Status */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-4">Funil de Vendas</h2>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-3">
             <StrategicFunnel data={funnelData} proposals={filteredProposals} />
             <PowerFunnel data={powerFunnelData} proposals={filteredProposals} />
+            <StatusFunnel data={statusFunnelData} proposals={filteredProposals} />
           </div>
         </section>
 
