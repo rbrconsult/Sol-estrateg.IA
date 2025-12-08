@@ -158,7 +158,7 @@ serve(async (req) => {
     const accessToken = await getAccessToken(CLIENT_EMAIL, PRIVATE_KEY);
 
     // Fetch data from Google Sheets API with OAuth2
-    const sheetName = 'Sheet1';
+    const sheetName = 'Página1';
     const range = `${sheetName}!A:P`;
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
 
