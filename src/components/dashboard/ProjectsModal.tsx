@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Proposal } from "@/data/dataAdapter";
+import { Phone, Mail, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProjectsModalProps {
   isOpen: boolean;
@@ -27,7 +29,14 @@ export function ProjectsModal({ isOpen, onClose, title, proposals }: ProjectsMod
       case 'Perdido':
         return <Badge className="bg-destructive/20 text-destructive border-0">Perdido</Badge>;
       default:
-        return <Badge className="bg-primary/20 text-primary border-0">Aberto</Badge>;
+        return <Badge className="bg-info/20 text-info border-0">Aberto</Badge>;
+    }
+  };
+
+  const copyToClipboard = (text: string, type: string) => {
+    if (text) {
+      navigator.clipboard.writeText(text);
+      toast.success(`${type} copiado!`);
     }
   };
 
@@ -35,42 +44,75 @@ export function ProjectsModal({ isOpen, onClose, title, proposals }: ProjectsMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="max-w-6xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>{title}</span>
+            <span className="text-lg font-bold">{title}</span>
             <div className="flex items-center gap-4 text-sm font-normal">
               <span className="text-muted-foreground">{proposals.length} projetos</span>
-              <span className="font-semibold text-primary">{formatCurrency(totalValor)}</span>
+              <span className="font-bold text-primary">{formatCurrency(totalValor)}</span>
             </div>
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-[60vh]">
+        <ScrollArea className="h-[65vh]">
           <Table>
             <TableHeader>
-              <TableRow className="border-border">
-                <TableHead className="text-muted-foreground">ID</TableHead>
-                <TableHead className="text-muted-foreground">Cliente</TableHead>
-                <TableHead className="text-muted-foreground">Etapa</TableHead>
-                <TableHead className="text-muted-foreground">Status</TableHead>
-                <TableHead className="text-muted-foreground">Vendedor</TableHead>
-                <TableHead className="text-muted-foreground">Pré-Vendedor</TableHead>
-                <TableHead className="text-muted-foreground text-right">Valor</TableHead>
+              <TableRow className="border-border bg-secondary/30">
+                <TableHead className="text-muted-foreground font-semibold">ID</TableHead>
+                <TableHead className="text-muted-foreground font-semibold">Cliente</TableHead>
+                <TableHead className="text-muted-foreground font-semibold">Contato</TableHead>
+                <TableHead className="text-muted-foreground font-semibold">Etapa</TableHead>
+                <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
+                <TableHead className="text-muted-foreground font-semibold">Vendedor</TableHead>
+                <TableHead className="text-muted-foreground font-semibold text-right">Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {proposals.map((proposal) => (
-                <TableRow key={proposal.id} className="border-border hover:bg-muted/50">
-                  <TableCell className="font-mono text-xs">{proposal.projetoId}</TableCell>
-                  <TableCell className="font-medium">{proposal.nomeCliente}</TableCell>
+                <TableRow key={proposal.id} className="border-border hover:bg-secondary/30">
+                  <TableCell className="font-mono text-xs text-muted-foreground">{proposal.projetoId}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-xs">{proposal.etapa}</Badge>
+                    <div>
+                      <p className="font-medium text-foreground">{proposal.nomeCliente}</p>
+                      {proposal.responsavel && (
+                        <p className="text-xs text-muted-foreground">Pré-venda: {proposal.responsavel}</p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      {proposal.clienteTelefone && (
+                        <button
+                          onClick={() => copyToClipboard(proposal.clienteTelefone, 'Telefone')}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-info transition-colors group"
+                        >
+                          <Phone className="h-3 w-3" />
+                          <span>{proposal.clienteTelefone}</span>
+                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      )}
+                      {proposal.clienteEmail && (
+                        <button
+                          onClick={() => copyToClipboard(proposal.clienteEmail, 'Email')}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-info transition-colors group"
+                        >
+                          <Mail className="h-3 w-3" />
+                          <span className="truncate max-w-[150px]">{proposal.clienteEmail}</span>
+                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      )}
+                      {!proposal.clienteTelefone && !proposal.clienteEmail && (
+                        <span className="text-xs text-muted-foreground/50">-</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs font-medium">{proposal.etapa}</Badge>
                   </TableCell>
                   <TableCell>{getStatusBadge(proposal.status)}</TableCell>
-                  <TableCell className="text-sm">{proposal.representante || '-'}</TableCell>
-                  <TableCell className="text-sm">{proposal.responsavel || '-'}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatCurrency(proposal.valorProposta)}</TableCell>
+                  <TableCell className="text-sm text-foreground">{proposal.representante || '-'}</TableCell>
+                  <TableCell className="text-right font-bold text-foreground">{formatCurrency(proposal.valorProposta)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

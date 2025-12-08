@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
   Legend
 } from 'recharts';
 import { ProjectsModal } from "./ProjectsModal";
@@ -20,6 +19,9 @@ interface VendedorData {
   perdidos: number;
   abertos: number;
   valorTotal: number;
+  valorGanho: number;
+  valorPerdido: number;
+  valorAberto: number;
   taxaConversao: number;
   atividades: number;
 }
@@ -42,6 +44,15 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
     }).format(value);
   };
 
+  const formatCurrencyFull = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
   const handleBarClick = (vendedor: string) => {
     setSelectedVendedor(vendedor);
     setIsModalOpen(true);
@@ -52,22 +63,42 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
     return proposals.filter(p => p.representante === selectedVendedor);
   }, [selectedVendedor, proposals]);
 
+  // Prepara dados para o gráfico com VALORES (R$) por status
+  const chartData = useMemo(() => {
+    return data.map(v => ({
+      nome: v.nome,
+      aberto: v.valorAberto,
+      ganho: v.valorGanho,
+      perdido: v.valorPerdido,
+      total: v.valorTotal
+    }));
+  }, [data]);
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const item = data.find(d => d.nome === label);
       return (
-        <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
-          <p className="font-medium text-foreground mb-2">{label}</p>
-          <div className="space-y-1 text-sm">
-            <p className="text-success">Ganhos: {item?.ganhos}</p>
-            <p className="text-destructive">Perdidos: {item?.perdidos}</p>
-            <p className="text-primary">Em Aberto: {item?.abertos}</p>
-            <p className="border-t border-border pt-1 mt-2 font-medium">
-              Taxa: {item?.taxaConversao.toFixed(1)}%
-            </p>
-            <p className="font-semibold text-foreground">
-              Valor: {formatCurrency(item?.valorTotal || 0)}
-            </p>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xl">
+          <p className="font-semibold text-foreground mb-3 text-base">{label}</p>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between gap-6">
+              <span className="text-muted-foreground">Em Aberto:</span>
+              <span className="font-medium text-info">{formatCurrencyFull(item?.valorAberto || 0)}</span>
+            </div>
+            <div className="flex justify-between gap-6">
+              <span className="text-muted-foreground">Ganhos:</span>
+              <span className="font-medium text-success">{formatCurrencyFull(item?.valorGanho || 0)}</span>
+            </div>
+            <div className="flex justify-between gap-6">
+              <span className="text-muted-foreground">Perdidos:</span>
+              <span className="font-medium text-destructive">{formatCurrencyFull(item?.valorPerdido || 0)}</span>
+            </div>
+            <div className="border-t border-border pt-2 mt-3">
+              <div className="flex justify-between gap-6">
+                <span className="font-medium text-foreground">Total:</span>
+                <span className="font-bold text-foreground">{formatCurrencyFull(item?.valorTotal || 0)}</span>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -79,15 +110,15 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
     <>
       <div className="rounded-xl border border-border bg-card p-6 shadow-card opacity-0 animate-fade-up" style={{ animationDelay: '450ms', animationFillMode: 'forwards' }}>
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-foreground">Funil por Vendedor</h3>
-          <p className="text-sm text-muted-foreground">Taxa de conversão e status por vendedor</p>
+          <h3 className="text-lg font-bold text-foreground">Funil por Vendedor (R$)</h3>
+          <p className="text-sm text-muted-foreground">Valores por status por vendedor</p>
         </div>
 
-        <div className="h-[320px]">
+        <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
-              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
             >
               <CartesianGrid 
                 strokeDasharray="3 3" 
@@ -101,42 +132,45 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
                 tickLine={false}
                 angle={-45}
                 textAnchor="end"
-                height={60}
+                height={80}
               />
               <YAxis 
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
                 verticalAlign="top" 
                 height={36}
-                formatter={(value) => <span className="text-sm text-foreground">{value}</span>}
+                formatter={(value) => (
+                  <span className="text-sm text-foreground capitalize">{value}</span>
+                )}
               />
               <Bar 
-                dataKey="ganhos" 
-                name="Ganhos"
+                dataKey="aberto" 
+                name="Aberto"
                 stackId="stack"
-                fill="hsl(152, 60%, 45%)"
+                fill="hsl(199, 89%, 48%)"
                 radius={[0, 0, 0, 0]}
                 cursor="pointer"
                 onClick={(data) => handleBarClick(data.nome)}
               />
               <Bar 
-                dataKey="abertos" 
-                name="Em Aberto"
+                dataKey="ganho" 
+                name="Ganho"
                 stackId="stack"
-                fill="hsl(215, 60%, 50%)"
+                fill="hsl(142, 76%, 36%)"
                 radius={[0, 0, 0, 0]}
                 cursor="pointer"
                 onClick={(data) => handleBarClick(data.nome)}
               />
               <Bar 
-                dataKey="perdidos" 
-                name="Perdidos"
+                dataKey="perdido" 
+                name="Perdido"
                 stackId="stack"
-                fill="hsl(0, 72%, 51%)"
+                fill="hsl(0, 84%, 60%)"
                 radius={[4, 4, 0, 0]}
                 cursor="pointer"
                 onClick={(data) => handleBarClick(data.nome)}
@@ -145,21 +179,24 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Taxa de conversão por vendedor */}
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-          {data.slice(0, 5).map((vendedor) => (
+        {/* Resumo por vendedor */}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {data.slice(0, 6).map((vendedor) => (
             <div 
               key={vendedor.nome}
-              className="rounded-lg bg-muted/30 p-2 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+              className="rounded-lg bg-secondary/50 border border-border/50 p-3 cursor-pointer hover:bg-secondary hover:border-primary/30 transition-all"
               onClick={() => handleBarClick(vendedor.nome)}
             >
-              <p className="text-xs text-muted-foreground truncate">{vendedor.nome}</p>
-              <p className={`font-bold ${
-                vendedor.taxaConversao >= 20 ? 'text-success' : 
-                vendedor.taxaConversao >= 10 ? 'text-warning' : 'text-destructive'
-              }`}>
-                {vendedor.taxaConversao.toFixed(1)}%
-              </p>
+              <p className="text-sm text-foreground font-medium truncate mb-2">{vendedor.nome}</p>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Total:</span>
+                <span className="font-semibold text-foreground">{formatCurrency(vendedor.valorTotal)}</span>
+              </div>
+              <div className="flex gap-2 mt-1 text-xs">
+                <span className="text-info">{formatCurrency(vendedor.valorAberto)}</span>
+                <span className="text-success">{formatCurrency(vendedor.valorGanho)}</span>
+                <span className="text-destructive">{formatCurrency(vendedor.valorPerdido)}</span>
+              </div>
             </div>
           ))}
         </div>

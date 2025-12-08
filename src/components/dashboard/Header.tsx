@@ -1,4 +1,4 @@
-import { Calendar, RefreshCw, LayoutDashboard, Kanban } from "lucide-react";
+import { Calendar, RefreshCw, LayoutDashboard, Kanban, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,42 +29,43 @@ export function Header({
   preVendedores
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-gradient-to-r from-card via-card to-secondary/30 backdrop-blur-xl shadow-lg">
       <div className="mx-auto max-w-[1600px] px-6 py-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Logo and Title */}
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-glow-primary">
-              <span className="text-xl font-bold text-primary-foreground">E</span>
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg animate-glow">
+              <span className="text-2xl font-black text-primary-foreground tracking-tighter">E</span>
+              <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-warning animate-pulse" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                BI Estratégico
+              <h1 className="text-2xl font-black tracking-tight text-foreground bg-clip-text">
+                EVOLVE BI
               </h1>
-              <p className="text-sm text-muted-foreground">Inteligência Comercial EVOLVE</p>
+              <p className="text-sm font-medium text-primary">Inteligência Comercial Estratégica</p>
             </div>
           </div>
 
           {/* Navigation and Filters */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Navigation */}
-            <Button variant="default" disabled>
+            <Button variant="default" className="bg-primary hover:bg-primary/90 shadow-md" disabled>
               <LayoutDashboard className="mr-2 h-4 w-4" />
-              BI Estratégico
+              Dashboard
             </Button>
             
             <Link to="/pipeline">
-              <Button variant="outline" className="border-border bg-background">
+              <Button variant="outline" className="border-border/50 bg-secondary/50 hover:bg-secondary hover:border-primary/50">
                 <Kanban className="mr-2 h-4 w-4" />
                 Pipeline
               </Button>
             </Link>
 
-            <div className="w-px h-8 bg-border mx-1" />
+            <div className="w-px h-8 bg-border/50 mx-1" />
 
             {/* Filters */}
             <Select value={selectedVendedor} onValueChange={onVendedorChange}>
-              <SelectTrigger className="w-[180px] bg-background border-border">
+              <SelectTrigger className="w-[180px] bg-secondary/50 border-border/50 hover:border-primary/50 transition-colors">
                 <SelectValue placeholder="Vendedor" />
               </SelectTrigger>
               <SelectContent>
@@ -76,7 +77,7 @@ export function Header({
             </Select>
 
             <Select value={selectedPreVendedor} onValueChange={onPreVendedorChange}>
-              <SelectTrigger className="w-[200px] bg-background border-border">
+              <SelectTrigger className="w-[200px] bg-secondary/50 border-border/50 hover:border-primary/50 transition-colors">
                 <SelectValue placeholder="Comercial Responsável" />
               </SelectTrigger>
               <SelectContent>
@@ -87,13 +88,14 @@ export function Header({
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" className="border-border bg-background">
+            <Button variant="outline" size="icon" className="border-border/50 bg-secondary/50 hover:bg-secondary hover:border-primary/50">
               <Calendar className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Atualizado: {lastUpdate}</span>
+            <div className="flex items-center gap-2 rounded-lg bg-secondary/50 border border-border/50 px-4 py-2 text-sm">
+              <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+              <span className="text-muted-foreground">Atualizado:</span>
+              <span className="font-medium text-foreground">{lastUpdate}</span>
             </div>
           </div>
         </div>

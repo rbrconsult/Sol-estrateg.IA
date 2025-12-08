@@ -248,14 +248,19 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Funil Estratégico R$, kWh e Status */}
+        {/* Funil Estratégico R$ e kWh */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-4">Funil de Vendas</h2>
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-2">
             <StrategicFunnel data={funnelData} proposals={filteredProposals} />
             <PowerFunnel data={powerFunnelData} proposals={filteredProposals} />
-            <StatusFunnel data={statusFunnelData} proposals={filteredProposals} />
           </div>
+        </section>
+
+        {/* Ciclo de Vida (Status Funnel) - Linha separada */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Ciclo de Vida</h2>
+          <StatusFunnel data={statusFunnelData} proposals={filteredProposals} />
         </section>
 
         {/* Comercial Responsável e Vendedores */}
