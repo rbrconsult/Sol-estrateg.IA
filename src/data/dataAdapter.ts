@@ -1,57 +1,46 @@
 import { Proposal as SheetProposal } from '@/hooks/useGoogleSheetsData';
-import { Proposal, etapas, motivosPerda as defaultMotivosPerda, vendedores as defaultVendedores, preVendedores as defaultPreVendedores } from './mockData';
 
-// Mapeia etapas da planilha para as etapas padrão
-const etapaMapping: Record<string, string> = {
-  'lead': 'Lead',
-  'qualificação': 'Qualificação',
-  'qualificacao': 'Qualificação',
-  'visita': 'Visita Técnica',
-  'visita técnica': 'Visita Técnica',
-  'proposta': 'Proposta Enviada',
-  'proposta enviada': 'Proposta Enviada',
-  'negociação': 'Negociação',
-  'negociacao': 'Negociação',
-  'fechamento': 'Fechamento',
-  'ganho': 'Fechamento',
-};
+export interface Proposal {
+  id: string;
+  etapa: string;
+  projetoId: string;
+  nomeCliente: string;
+  clienteTelefone: string;
+  clienteEmail: string;
+  status: 'Aberto' | 'Ganho' | 'Perdido';
+  responsavel: string;
+  representante: string;
+  valorProposta: number;
+  potenciaSistema: number;
+  nomeProposta: string;
+  dataCriacaoProjeto: string;
+  dataCriacaoProposta: string;
+  slaProposta: number;
+  ultimaAtualizacao: string;
+  motivoPerda?: string;
+  numAtividades: number;
+}
+
+// Etapas reais da planilha EVOLVE
+export const etapasReais = [
+  'TRAFEGO PAGO',
+  'PROSPECÇÃO',
+  'QUALIFICAÇÃO',
+  'QUALIFICADO',
+  'CONTATO REALIZADO',
+  'PROPOSTA',
+  'NEGOCIAÇÃO'
+];
 
 // Mapeia status da planilha
-const statusMapping: Record<string, 'Aberto' | 'Ganho' | 'Perdido'> = {
-  'aberto': 'Aberto',
-  'em andamento': 'Aberto',
-  'ativo': 'Aberto',
-  'ganho': 'Ganho',
-  'fechado': 'Ganho',
-  'vencido': 'Ganho',
-  'perdido': 'Perdido',
-  'cancelado': 'Perdido',
-};
-
-function normalizeString(str: string): string {
-  return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-function mapEtapa(etapa: string): string {
-  const normalized = normalizeString(etapa);
-  for (const [key, value] of Object.entries(etapaMapping)) {
-    if (normalized.includes(normalizeString(key))) {
-      return value;
-    }
-  }
-  return etapas[0]; // Default to first stage
-}
-
 function mapStatus(status: string, etapa: string): 'Aberto' | 'Ganho' | 'Perdido' {
-  const normalized = normalizeString(status);
-  for (const [key, value] of Object.entries(statusMapping)) {
-    if (normalized.includes(normalizeString(key))) {
-      return value;
-    }
-  }
-  // Infer from etapa if status not recognized
-  if (normalizeString(etapa).includes('fechamento') || normalizeString(etapa).includes('ganho')) {
+  const normalized = status.toLowerCase().trim();
+  
+  if (normalized.includes('ganho') || normalized.includes('fechado') || normalized.includes('vencido')) {
     return 'Ganho';
+  }
+  if (normalized.includes('perdido') || normalized.includes('cancelado')) {
+    return 'Perdido';
   }
   return 'Aberto';
 }
@@ -82,7 +71,7 @@ function parseDate(dateStr: string): string {
 export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
   return sheetData.map((item, index) => {
     const status = mapStatus(item.status, item.etapa);
-    const etapa = status === 'Ganho' ? 'Fechamento' : mapEtapa(item.etapa);
+    const etapa = item.etapa?.trim() || 'TRAFEGO PAGO';
     
     return {
       id: item.projeto_id || `PROP-${String(index).padStart(4, '0')}`,
@@ -92,8 +81,8 @@ export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
       clienteTelefone: item.cliente_telefone || '',
       clienteEmail: item.cliente_email || '',
       status,
-      responsavel: item.representante || defaultVendedores[0], // vendedor
-      representante: item.responsavel || defaultPreVendedores[0], // pré-vendedor
+      responsavel: item.responsavel || '', // pré-vendedor
+      representante: item.representante || '', // vendedor
       valorProposta: item.valor_proposta || 0,
       potenciaSistema: parseFloat(item.potencia_sistema) || 0,
       nomeProposta: item.nome_proposta || 'Proposta',
@@ -101,18 +90,145 @@ export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
       dataCriacaoProposta: parseDate(item.data_criacao_proposta),
       slaProposta: parseInt(item.sla_proposta) || 48,
       ultimaAtualizacao: parseDate(item.ultima_atualizacao),
-      motivoPerda: status === 'Perdido' ? defaultMotivosPerda[Math.floor(Math.random() * defaultMotivosPerda.length)] : undefined,
-      numAtividades: Math.floor(Math.random() * 10) + 1
+      motivoPerda: status === 'Perdido' ? 'Não informado' : undefined,
+      numAtividades: 1
     };
   });
 }
 
 export function extractVendedores(proposals: Proposal[]): string[] {
-  const vendedoresSet = new Set(proposals.map(p => p.responsavel).filter(Boolean));
-  return Array.from(vendedoresSet);
+  const vendedoresSet = new Set(proposals.map(p => p.representante).filter(Boolean));
+  return Array.from(vendedoresSet).sort();
 }
 
 export function extractPreVendedores(proposals: Proposal[]): string[] {
-  const preVendedoresSet = new Set(proposals.map(p => p.representante).filter(Boolean));
-  return Array.from(preVendedoresSet);
+  const preVendedoresSet = new Set(proposals.map(p => p.responsavel).filter(Boolean));
+  return Array.from(preVendedoresSet).sort();
+}
+
+// Funções de cálculo usando dados reais
+export function getKPIs(proposals: Proposal[]) {
+  const totalNegocios = proposals.length;
+  const abertos = proposals.filter(p => p.status === 'Aberto');
+  const ganhos = proposals.filter(p => p.status === 'Ganho');
+  const perdidos = proposals.filter(p => p.status === 'Perdido');
+  
+  const valorPipeline = abertos.reduce((acc, p) => acc + p.valorProposta, 0);
+  const valorGanho = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
+  const valorPerdido = perdidos.reduce((acc, p) => acc + p.valorProposta, 0);
+  
+  const taxaConversao = totalNegocios > 0 ? (ganhos.length / totalNegocios) * 100 : 0;
+  const ticketMedio = ganhos.length > 0 ? valorGanho / ganhos.length : 0;
+  
+  return {
+    totalNegocios,
+    negociosAbertos: abertos.length,
+    negociosGanhos: ganhos.length,
+    negociosPerdidos: perdidos.length,
+    valorPipeline,
+    valorGanho,
+    valorPerdido,
+    taxaConversao,
+    ticketMedio,
+    cicloMedioVendas: 18 // dias média - pode ser calculado a partir das datas
+  };
+}
+
+export function getFunnelData(proposals: Proposal[]) {
+  // Agrupa por etapa real da planilha
+  const etapasUnicos = [...new Set(proposals.map(p => p.etapa))];
+  
+  return etapasUnicos.map((etapa) => {
+    const etapaProposals = proposals.filter(p => p.etapa === etapa);
+    const valor = etapaProposals.reduce((acc, p) => acc + p.valorProposta, 0);
+    
+    return {
+      etapa,
+      quantidade: etapaProposals.length,
+      valor,
+      taxaConversao: proposals.length > 0 ? (etapaProposals.length / proposals.length) * 100 : 0
+    };
+  }).sort((a, b) => b.quantidade - a.quantidade);
+}
+
+export function getVendedorPerformance(proposals: Proposal[]) {
+  const vendedoresUnicos = [...new Set(proposals.map(p => p.representante).filter(Boolean))];
+  
+  return vendedoresUnicos.map(vendedor => {
+    const vendedorProposals = proposals.filter(p => p.representante === vendedor);
+    const ganhos = vendedorProposals.filter(p => p.status === 'Ganho');
+    const perdidos = vendedorProposals.filter(p => p.status === 'Perdido');
+    const abertos = vendedorProposals.filter(p => p.status === 'Aberto');
+    
+    return {
+      nome: vendedor,
+      totalPropostas: vendedorProposals.length,
+      ganhos: ganhos.length,
+      perdidos: perdidos.length,
+      abertos: abertos.length,
+      valorTotal: vendedorProposals.reduce((acc, p) => acc + p.valorProposta, 0),
+      taxaConversao: vendedorProposals.length > 0 
+        ? (ganhos.length / vendedorProposals.length) * 100 
+        : 0,
+      atividades: vendedorProposals.length
+    };
+  }).sort((a, b) => b.valorTotal - a.valorTotal);
+}
+
+export function getPreVendedorPerformance(proposals: Proposal[]) {
+  const preVendedoresUnicos = [...new Set(proposals.map(p => p.responsavel).filter(Boolean))];
+  
+  return preVendedoresUnicos.map(rep => {
+    const repProposals = proposals.filter(p => p.responsavel === rep);
+    const ganhos = repProposals.filter(p => p.status === 'Ganho');
+    
+    return {
+      nome: rep,
+      leadsTrabalhos: repProposals.length,
+      convertidos: ganhos.length,
+      taxaConversao: repProposals.length > 0 
+        ? (ganhos.length / repProposals.length) * 100 
+        : 0,
+      atividades: repProposals.length
+    };
+  }).sort((a, b) => b.leadsTrabalhos - a.leadsTrabalhos);
+}
+
+export function getMotivosPerda(proposals: Proposal[]) {
+  const perdidos = proposals.filter(p => p.status === 'Perdido');
+  const motivosUnicos = [...new Set(perdidos.map(p => p.motivoPerda).filter(Boolean))];
+  
+  return motivosUnicos.map(motivo => {
+    const motivoProposals = perdidos.filter(p => p.motivoPerda === motivo);
+    return {
+      motivo: motivo || 'Não informado',
+      quantidade: motivoProposals.length,
+      valor: motivoProposals.reduce((acc, p) => acc + p.valorProposta, 0)
+    };
+  }).sort((a, b) => b.quantidade - a.quantidade);
+}
+
+export function getMonthlyData(proposals: Proposal[]) {
+  const months = [
+    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+  ];
+  
+  return months.map((mes, index) => {
+    const monthProposals = proposals.filter(p => {
+      const date = new Date(p.dataCriacaoProjeto);
+      return date.getMonth() === index;
+    });
+    
+    const ganhos = monthProposals.filter(p => p.status === 'Ganho');
+    
+    return {
+      mes,
+      iniciados: monthProposals.length,
+      valorFechado: ganhos.reduce((acc, p) => acc + p.valorProposta, 0),
+      taxaConversao: monthProposals.length > 0 
+        ? (ganhos.length / monthProposals.length) * 100 
+        : 0
+    };
+  });
 }
