@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
-import { ChevronRight } from "lucide-react";
+import { DollarSign } from "lucide-react";
 
 interface FunnelStage {
   etapa: string;
@@ -27,26 +26,37 @@ const FUNNEL_ORDER = [
   'NEGOCIAÇÃO'
 ];
 
+const stageColors = [
+  { bg: 'bg-blue-500', hover: 'hover:bg-blue-600', text: 'text-white' },
+  { bg: 'bg-amber-400', hover: 'hover:bg-amber-500', text: 'text-gray-900' },
+  { bg: 'bg-emerald-500', hover: 'hover:bg-emerald-600', text: 'text-white' },
+  { bg: 'bg-rose-300', hover: 'hover:bg-rose-400', text: 'text-gray-900' },
+  { bg: 'bg-indigo-400', hover: 'hover:bg-indigo-500', text: 'text-white' },
+  { bg: 'bg-teal-500', hover: 'hover:bg-teal-600', text: 'text-white' },
+  { bg: 'bg-orange-500', hover: 'hover:bg-orange-600', text: 'text-white' }
+];
+
 export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Ordenar dados pela ordem estratégica do funil
   const sortedData = useMemo(() => {
-    return [...data].sort((a, b) => {
-      const indexA = FUNNEL_ORDER.indexOf(a.etapa);
-      const indexB = FUNNEL_ORDER.indexOf(b.etapa);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
+    const ordered: FunnelStage[] = [];
+    FUNNEL_ORDER.forEach(etapa => {
+      const found = data.find(d => d.etapa === etapa);
+      if (found) {
+        ordered.push(found);
+      }
     });
+    // Adiciona etapas que não estão no FUNNEL_ORDER
+    data.forEach(d => {
+      if (!FUNNEL_ORDER.includes(d.etapa) && !ordered.find(o => o.etapa === d.etapa)) {
+        ordered.push(d);
+      }
+    });
+    return ordered;
   }, [data]);
-
-  const maxQuantidade = useMemo(() => 
-    Math.max(...sortedData.map(d => d.quantidade)), 
-    [sortedData]
-  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -67,102 +77,81 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
     return proposals.filter(p => p.etapa === selectedStage);
   }, [selectedStage, proposals]);
 
-  // Calcular taxa de conversão entre etapas
-  const getConversionRate = (currentIndex: number) => {
-    if (currentIndex === 0) return 100;
-    const current = sortedData[currentIndex]?.quantidade || 0;
-    const previous = sortedData[0]?.quantidade || 1;
-    return (current / previous) * 100;
-  };
-
-  const stageColors = [
-    'from-blue-600 to-blue-500',
-    'from-blue-500 to-blue-400',
-    'from-cyan-500 to-cyan-400',
-    'from-teal-500 to-teal-400',
-    'from-emerald-500 to-emerald-400',
-    'from-green-500 to-green-400',
-    'from-lime-500 to-lime-400'
-  ];
+  const totalValue = sortedData.reduce((acc, d) => acc + d.valor, 0);
+  const totalProjects = sortedData.reduce((acc, d) => acc + d.quantidade, 0);
 
   return (
     <>
       <div className="rounded-xl border border-border bg-card p-6 shadow-card opacity-0 animate-fade-up" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-foreground">Funil Estratégico de Vendas</h3>
-          <p className="text-sm text-muted-foreground">Clique em uma etapa para ver os projetos</p>
+        <div className="mb-6 flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-success" />
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Funil de Vendas (R$)</h3>
+            <p className="text-sm text-muted-foreground">Clique em uma etapa para ver os projetos</p>
+          </div>
         </div>
 
-        <div className="space-y-2">
+        {/* Funnel Visualization */}
+        <div className="relative flex flex-col items-center py-4">
           {sortedData.map((stage, index) => {
-            const widthPercent = maxQuantidade > 0 
-              ? Math.max(25, (stage.quantidade / maxQuantidade) * 100)
-              : 25;
-            const conversionRate = getConversionRate(index);
+            // Calcula a largura progressiva (100% no topo, diminuindo)
+            const maxWidth = 100;
+            const minWidth = 25;
+            const widthStep = (maxWidth - minWidth) / Math.max(sortedData.length - 1, 1);
+            const width = maxWidth - (index * widthStep);
+            
+            const colorIndex = index % stageColors.length;
+            const colors = stageColors[colorIndex];
 
             return (
-              <div 
-                key={stage.etapa} 
-                className="group cursor-pointer transition-transform hover:scale-[1.01]"
-                onClick={() => handleStageClick(stage.etapa)}
+              <div
+                key={stage.etapa}
+                className="relative w-full flex justify-center"
+                style={{ marginTop: index === 0 ? 0 : -1 }}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{stage.etapa}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-muted-foreground">{stage.quantidade}</span>
-                    <span className="font-semibold text-foreground w-24 text-right">{formatCurrency(stage.valor)}</span>
-                  </div>
-                </div>
-                
-                <div className="relative h-12 w-full overflow-hidden rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors">
-                  <div
-                    className={cn(
-                      "absolute left-0 top-0 h-full rounded-lg bg-gradient-to-r transition-all duration-300",
-                      stageColors[index % stageColors.length]
-                    )}
-                    style={{ 
-                      width: `${widthPercent}%`,
-                      clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%)'
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-between px-4">
-                    <span className="text-sm font-bold text-white drop-shadow-md">
-                      {stage.quantidade} projetos
-                    </span>
-                    <span className="text-xs font-medium text-white/90 drop-shadow-md bg-black/20 px-2 py-0.5 rounded">
-                      {conversionRate.toFixed(1)}% do topo
+                <button
+                  onClick={() => handleStageClick(stage.etapa)}
+                  className={`
+                    relative transition-all duration-200 cursor-pointer
+                    ${colors.bg} ${colors.hover} ${colors.text}
+                    flex items-center justify-center
+                    py-3 font-medium text-sm
+                    shadow-sm hover:shadow-md hover:scale-[1.02]
+                  `}
+                  style={{
+                    width: `${width}%`,
+                    clipPath: index === sortedData.length - 1 
+                      ? 'polygon(8% 0%, 92% 0%, 50% 100%)' 
+                      : 'polygon(0% 0%, 100% 0%, 96% 100%, 4% 100%)',
+                    minHeight: '52px'
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-0.5 z-10">
+                    <span className="font-semibold text-xs sm:text-sm">{stage.etapa}</span>
+                    <span className="text-[10px] sm:text-xs opacity-90">
+                      {stage.quantidade} • {formatCurrency(stage.valor)}
                     </span>
                   </div>
-                </div>
+                </button>
               </div>
             );
           })}
         </div>
 
-        {/* Resumo */}
+        {/* Summary */}
         <div className="mt-6 grid grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4">
           <div className="text-center">
-            <p className="text-xs text-muted-foreground">Total Pipeline</p>
-            <p className="text-xl font-bold text-foreground">
-              {formatCurrency(sortedData.reduce((acc, d) => acc + d.valor, 0))}
-            </p>
+            <p className="text-xs text-muted-foreground">Pipeline Total</p>
+            <p className="text-lg font-bold text-foreground">{formatCurrency(totalValue)}</p>
           </div>
           <div className="text-center border-x border-border">
-            <p className="text-xs text-muted-foreground">Total Projetos</p>
-            <p className="text-xl font-bold text-foreground">
-              {sortedData.reduce((acc, d) => acc + d.quantidade, 0)}
-            </p>
+            <p className="text-xs text-muted-foreground">Projetos</p>
+            <p className="text-lg font-bold text-foreground">{totalProjects}</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Ticket Médio</p>
-            <p className="text-xl font-bold text-foreground">
-              {formatCurrency(
-                sortedData.reduce((acc, d) => acc + d.valor, 0) / 
-                Math.max(1, sortedData.reduce((acc, d) => acc + d.quantidade, 0))
-              )}
+            <p className="text-lg font-bold text-foreground">
+              {formatCurrency(totalProjects > 0 ? totalValue / totalProjects : 0)}
             </p>
           </div>
         </div>

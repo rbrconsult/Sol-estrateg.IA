@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
-import { ChevronRight, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 
 interface PowerStage {
   etapa: string;
@@ -27,26 +26,37 @@ const FUNNEL_ORDER = [
   'NEGOCIAÇÃO'
 ];
 
+const stageColors = [
+  { bg: 'bg-amber-500', hover: 'hover:bg-amber-600', text: 'text-white' },
+  { bg: 'bg-orange-400', hover: 'hover:bg-orange-500', text: 'text-white' },
+  { bg: 'bg-yellow-400', hover: 'hover:bg-yellow-500', text: 'text-gray-900' },
+  { bg: 'bg-lime-400', hover: 'hover:bg-lime-500', text: 'text-gray-900' },
+  { bg: 'bg-green-500', hover: 'hover:bg-green-600', text: 'text-white' },
+  { bg: 'bg-emerald-500', hover: 'hover:bg-emerald-600', text: 'text-white' },
+  { bg: 'bg-teal-500', hover: 'hover:bg-teal-600', text: 'text-white' }
+];
+
 export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Ordenar dados pela ordem estratégica do funil
   const sortedData = useMemo(() => {
-    return [...data].sort((a, b) => {
-      const indexA = FUNNEL_ORDER.indexOf(a.etapa);
-      const indexB = FUNNEL_ORDER.indexOf(b.etapa);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
+    const ordered: PowerStage[] = [];
+    FUNNEL_ORDER.forEach(etapa => {
+      const found = data.find(d => d.etapa === etapa);
+      if (found) {
+        ordered.push(found);
+      }
     });
+    // Adiciona etapas que não estão no FUNNEL_ORDER
+    data.forEach(d => {
+      if (!FUNNEL_ORDER.includes(d.etapa) && !ordered.find(o => o.etapa === d.etapa)) {
+        ordered.push(d);
+      }
+    });
+    return ordered;
   }, [data]);
-
-  const maxQuantidade = useMemo(() => 
-    Math.max(...sortedData.map(d => d.quantidade)), 
-    [sortedData]
-  );
 
   const formatPower = (value: number) => {
     if (value >= 1000) {
@@ -65,23 +75,8 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
     return proposals.filter(p => p.etapa === selectedStage);
   }, [selectedStage, proposals]);
 
-  // Calcular taxa de conversão entre etapas
-  const getConversionRate = (currentIndex: number) => {
-    if (currentIndex === 0) return 100;
-    const current = sortedData[currentIndex]?.quantidade || 0;
-    const previous = sortedData[0]?.quantidade || 1;
-    return (current / previous) * 100;
-  };
-
-  const stageColors = [
-    'from-amber-600 to-amber-500',
-    'from-amber-500 to-orange-500',
-    'from-orange-500 to-orange-400',
-    'from-yellow-500 to-yellow-400',
-    'from-lime-500 to-lime-400',
-    'from-green-500 to-green-400',
-    'from-emerald-500 to-emerald-400'
-  ];
+  const totalPower = sortedData.reduce((acc, d) => acc + d.potencia, 0);
+  const totalProjects = sortedData.reduce((acc, d) => acc + d.quantidade, 0);
 
   return (
     <>
@@ -94,76 +89,67 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
           </div>
         </div>
 
-        <div className="space-y-2">
+        {/* Funnel Visualization */}
+        <div className="relative flex flex-col items-center py-4">
           {sortedData.map((stage, index) => {
-            const widthPercent = maxQuantidade > 0 
-              ? Math.max(25, (stage.quantidade / maxQuantidade) * 100)
-              : 25;
-            const conversionRate = getConversionRate(index);
+            // Calcula a largura progressiva (100% no topo, diminuindo)
+            const maxWidth = 100;
+            const minWidth = 25;
+            const widthStep = (maxWidth - minWidth) / Math.max(sortedData.length - 1, 1);
+            const width = maxWidth - (index * widthStep);
+            
+            const colorIndex = index % stageColors.length;
+            const colors = stageColors[colorIndex];
 
             return (
-              <div 
-                key={stage.etapa} 
-                className="group cursor-pointer transition-transform hover:scale-[1.01]"
-                onClick={() => handleStageClick(stage.etapa)}
+              <div
+                key={stage.etapa}
+                className="relative w-full flex justify-center"
+                style={{ marginTop: index === 0 ? 0 : -1 }}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{stage.etapa}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-muted-foreground">{stage.quantidade}</span>
-                    <span className="font-semibold text-foreground w-24 text-right">{formatPower(stage.potencia)}</span>
-                  </div>
-                </div>
-                
-                <div className="relative h-12 w-full overflow-hidden rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors">
-                  <div
-                    className={cn(
-                      "absolute left-0 top-0 h-full rounded-lg bg-gradient-to-r transition-all duration-300",
-                      stageColors[index % stageColors.length]
-                    )}
-                    style={{ 
-                      width: `${widthPercent}%`,
-                      clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%)'
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-between px-4">
-                    <span className="text-sm font-bold text-white drop-shadow-md">
-                      {stage.quantidade} projetos
-                    </span>
-                    <span className="text-xs font-medium text-white/90 drop-shadow-md bg-black/20 px-2 py-0.5 rounded">
-                      {conversionRate.toFixed(1)}% do topo
+                <button
+                  onClick={() => handleStageClick(stage.etapa)}
+                  className={`
+                    relative transition-all duration-200 cursor-pointer
+                    ${colors.bg} ${colors.hover} ${colors.text}
+                    flex items-center justify-center
+                    py-3 font-medium text-sm
+                    shadow-sm hover:shadow-md hover:scale-[1.02]
+                  `}
+                  style={{
+                    width: `${width}%`,
+                    clipPath: index === sortedData.length - 1 
+                      ? 'polygon(8% 0%, 92% 0%, 50% 100%)' 
+                      : 'polygon(0% 0%, 100% 0%, 96% 100%, 4% 100%)',
+                    minHeight: '52px'
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-0.5 z-10">
+                    <span className="font-semibold text-xs sm:text-sm">{stage.etapa}</span>
+                    <span className="text-[10px] sm:text-xs opacity-90">
+                      {stage.quantidade} • {formatPower(stage.potencia)}
                     </span>
                   </div>
-                </div>
+                </button>
               </div>
             );
           })}
         </div>
 
-        {/* Resumo */}
+        {/* Summary */}
         <div className="mt-6 grid grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Potência Total</p>
-            <p className="text-xl font-bold text-foreground">
-              {formatPower(sortedData.reduce((acc, d) => acc + d.potencia, 0))}
-            </p>
+            <p className="text-lg font-bold text-foreground">{formatPower(totalPower)}</p>
           </div>
           <div className="text-center border-x border-border">
-            <p className="text-xs text-muted-foreground">Total Projetos</p>
-            <p className="text-xl font-bold text-foreground">
-              {sortedData.reduce((acc, d) => acc + d.quantidade, 0)}
-            </p>
+            <p className="text-xs text-muted-foreground">Projetos</p>
+            <p className="text-lg font-bold text-foreground">{totalProjects}</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Potência Média</p>
-            <p className="text-xl font-bold text-foreground">
-              {formatPower(
-                sortedData.reduce((acc, d) => acc + d.potencia, 0) / 
-                Math.max(1, sortedData.reduce((acc, d) => acc + d.quantidade, 0))
-              )}
+            <p className="text-lg font-bold text-foreground">
+              {formatPower(totalProjects > 0 ? totalPower / totalProjects : 0)}
             </p>
           </div>
         </div>
