@@ -1,4 +1,5 @@
-import { Calendar, RefreshCw } from "lucide-react";
+import { Calendar, RefreshCw, LayoutDashboard, Kanban } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -38,14 +39,30 @@ export function Header({
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                EVOLVE
+                BI Estratégico
               </h1>
-              <p className="text-sm text-muted-foreground">Dashboard Comercial</p>
+              <p className="text-sm text-muted-foreground">Inteligência Comercial EVOLVE</p>
             </div>
           </div>
 
-          {/* Filters */}
+          {/* Navigation and Filters */}
           <div className="flex flex-wrap items-center gap-3">
+            {/* Navigation */}
+            <Button variant="default" disabled>
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              BI Estratégico
+            </Button>
+            
+            <Link to="/pipeline">
+              <Button variant="outline" className="border-border bg-background">
+                <Kanban className="mr-2 h-4 w-4" />
+                Pipeline
+              </Button>
+            </Link>
+
+            <div className="w-px h-8 bg-border mx-1" />
+
+            {/* Filters */}
             <Select value={selectedVendedor} onValueChange={onVendedorChange}>
               <SelectTrigger className="w-[180px] bg-background border-border">
                 <SelectValue placeholder="Vendedor" />
@@ -59,11 +76,11 @@ export function Header({
             </Select>
 
             <Select value={selectedPreVendedor} onValueChange={onPreVendedorChange}>
-              <SelectTrigger className="w-[180px] bg-background border-border">
-                <SelectValue placeholder="Pré-vendedor" />
+              <SelectTrigger className="w-[200px] bg-background border-border">
+                <SelectValue placeholder="Comercial Responsável" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos Pré-vendedores</SelectItem>
+                <SelectItem value="todos">Todos Comerciais</SelectItem>
                 {preVendedores.map(p => (
                   <SelectItem key={p} value={p}>{p}</SelectItem>
                 ))}

@@ -3,21 +3,18 @@ import {
   Briefcase, 
   TrendingUp, 
   DollarSign, 
-  Target, 
-  Clock, 
-  AlertTriangle,
+  Clock,
   RefreshCw,
   AlertCircle,
-  Users,
-  Activity
+  Zap
 } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
-import { PreVendedorStats } from "@/components/dashboard/PreVendedorStats";
+import { PowerFunnel } from "@/components/dashboard/PowerFunnel";
+import { ComercialResponsavelStats } from "@/components/dashboard/ComercialResponsavelStats";
 import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
 import { VendedorTable } from "@/components/dashboard/VendedorTable";
-import { LossAnalysis } from "@/components/dashboard/LossAnalysis";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
 import { StageProgress } from "@/components/dashboard/StageProgress";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
@@ -27,9 +24,9 @@ import {
   extractPreVendedores,
   getKPIs,
   getFunnelData,
+  getPowerFunnelData,
   getVendedorPerformance,
   getPreVendedorPerformance,
-  getMotivosPerda,
   getMonthlyData
 } from "@/data/dataAdapter";
 import { Button } from "@/components/ui/button";
@@ -70,9 +67,9 @@ const Index = () => {
 
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
+  const powerFunnelData = useMemo(() => getPowerFunnelData(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
   const preVendedorPerformance = useMemo(() => getPreVendedorPerformance(filteredProposals), [filteredProposals]);
-  const motivosPerda = useMemo(() => getMotivosPerda(filteredProposals), [filteredProposals]);
   const monthlyData = useMemo(() => getMonthlyData(filteredProposals), [filteredProposals]);
 
   const formatCurrency = (value: number) => {
@@ -82,6 +79,13 @@ const Index = () => {
       notation: 'compact',
       maximumFractionDigits: 1
     }).format(value);
+  };
+
+  const formatPower = (value: number) => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)} MWp`;
+    }
+    return `${value.toFixed(1)} kWp`;
   };
 
   const hasData = proposals.length > 0;
@@ -171,75 +175,73 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* KPIs Section - Negócios iniciados, Pipeline, Conversão, Ticket, Ciclo, Perdidos */}
+        {/* KPIs Section - Simplificado */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-4">Indicadores Principais</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <KPICard
-              title="Negócios Iniciados"
+              title="Propostas Criadas"
               value={kpis.totalNegocios}
-              subtitle={`${kpis.negociosAbertos} em andamento`}
+              subtitle="Total de propostas"
               icon={Briefcase}
               delay={100}
             />
             <KPICard
-              title="Pipeline Ativo"
+              title="Pipeline Total"
               value={formatCurrency(kpis.valorPipeline)}
-              subtitle={`${kpis.negociosAbertos} propostas`}
+              subtitle={`${kpis.totalNegocios} propostas`}
               icon={TrendingUp}
               variant="default"
               delay={150}
             />
             <KPICard
-              title="Taxa de Conversão"
-              value={`${kpis.taxaConversao.toFixed(1)}%`}
-              subtitle={`${kpis.negociosGanhos} ganhos`}
-              icon={Target}
+              title="Ticket Médio"
+              value={formatCurrency(kpis.ticketMedio)}
+              subtitle="Valor médio por proposta"
+              icon={DollarSign}
               variant="success"
               delay={200}
             />
             <KPICard
-              title="Ticket Médio"
-              value={formatCurrency(kpis.ticketMedio)}
-              subtitle="Por venda fechada"
-              icon={DollarSign}
-              variant="success"
+              title="Ciclo de Proposta"
+              value={`${kpis.cicloProposta} dias`}
+              subtitle="Projeto → Proposta"
+              icon={Clock}
               delay={250}
             />
             <KPICard
-              title="Ciclo de Vendas"
-              value={`${kpis.cicloMedioVendas} dias`}
-              subtitle="Média de fechamento"
-              icon={Clock}
+              title="Potência Total"
+              value={formatPower(kpis.potenciaTotal)}
+              subtitle="Soma dos sistemas"
+              icon={Zap}
+              variant="default"
               delay={300}
-            />
-            <KPICard
-              title="Valor Perdido"
-              value={formatCurrency(kpis.valorPerdido)}
-              subtitle={`${kpis.negociosPerdidos} propostas`}
-              icon={AlertTriangle}
-              variant="danger"
-              delay={350}
             />
           </div>
         </section>
 
-        {/* Funil Estratégico e Pré-Vendedores */}
+        {/* Funil Estratégico R$ e kWh */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-4">Funil de Vendas</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <StrategicFunnel data={funnelData} proposals={filteredProposals} />
-            <PreVendedorStats data={preVendedorPerformance} />
+            <PowerFunnel data={powerFunnelData} proposals={filteredProposals} />
           </div>
         </section>
 
-        {/* Funil por Vendedor e Progresso por Etapas */}
+        {/* Comercial Responsável e Vendedores */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Performance de Vendas</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">Performance Comercial</h2>
           <div className="grid gap-6 lg:grid-cols-2">
+            <ComercialResponsavelStats data={preVendedorPerformance} />
             <VendedorFunnel data={vendedorPerformance} proposals={filteredProposals} />
-            <StageProgress proposals={filteredProposals} />
           </div>
+        </section>
+
+        {/* Progresso por Etapas */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-4">Progresso por Etapas</h2>
+          <StageProgress proposals={filteredProposals} />
         </section>
 
         {/* Tabela de Vendedores */}
@@ -248,18 +250,15 @@ const Index = () => {
           <VendedorTable data={vendedorPerformance} />
         </section>
 
-        {/* Análise de Perdas e Tendências */}
+        {/* Tendências */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Análises</h2>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <LossAnalysis data={motivosPerda} />
-            <TrendsChart data={monthlyData} />
-          </div>
+          <h2 className="text-xl font-bold text-foreground mb-4">Tendências Mensais</h2>
+          <TrendsChart data={monthlyData} />
         </section>
 
         {/* Footer */}
         <footer className="mt-12 border-t border-border pt-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 EVOLVE - Dashboard Comercial. Todos os direitos reservados.</p>
+          <p>© 2024 EVOLVE - BI Estratégico. Todos os direitos reservados.</p>
         </footer>
       </main>
     </div>
