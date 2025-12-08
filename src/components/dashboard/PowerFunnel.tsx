@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
-import { Zap } from "lucide-react";
+import { Zap, ChevronRight } from "lucide-react";
 
 interface PowerStage {
   etapa: string;
@@ -27,13 +27,13 @@ const FUNNEL_ORDER = [
 ];
 
 const stageColors = [
-  { bg: 'bg-amber-500', hover: 'hover:bg-amber-600', text: 'text-white' },
-  { bg: 'bg-orange-400', hover: 'hover:bg-orange-500', text: 'text-white' },
-  { bg: 'bg-yellow-400', hover: 'hover:bg-yellow-500', text: 'text-gray-900' },
-  { bg: 'bg-lime-400', hover: 'hover:bg-lime-500', text: 'text-gray-900' },
-  { bg: 'bg-green-500', hover: 'hover:bg-green-600', text: 'text-white' },
-  { bg: 'bg-emerald-500', hover: 'hover:bg-emerald-600', text: 'text-white' },
-  { bg: 'bg-teal-500', hover: 'hover:bg-teal-600', text: 'text-white' }
+  'bg-amber-500',
+  'bg-orange-400',
+  'bg-yellow-500',
+  'bg-lime-500',
+  'bg-green-500',
+  'bg-emerald-500',
+  'bg-teal-500'
 ];
 
 export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
@@ -57,6 +57,9 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
     });
     return ordered;
   }, [data]);
+
+  const maxValue = useMemo(() => Math.max(...sortedData.map(d => d.potencia), 1), [sortedData]);
+  const firstStageQty = sortedData[0]?.quantidade || 1;
 
   const formatPower = (value: number) => {
     if (value >= 1000) {
@@ -85,52 +88,57 @@ export function PowerFunnel({ data, proposals }: PowerFunnelProps) {
           <Zap className="h-5 w-5 text-warning" />
           <div>
             <h3 className="text-lg font-semibold text-foreground">Funil de Potência (kWh)</h3>
-            <p className="text-sm text-muted-foreground">Clique em uma etapa para ver os projetos</p>
+            <p className="text-sm text-muted-foreground">Clique para ver os projetos</p>
           </div>
         </div>
 
-        {/* Funnel Visualization */}
-        <div className="relative flex flex-col items-center py-4">
+        {/* Funnel Bars */}
+        <div className="space-y-3">
           {sortedData.map((stage, index) => {
-            // Calcula a largura progressiva (100% no topo, diminuindo)
-            const maxWidth = 100;
-            const minWidth = 25;
-            const widthStep = (maxWidth - minWidth) / Math.max(sortedData.length - 1, 1);
-            const width = maxWidth - (index * widthStep);
-            
-            const colorIndex = index % stageColors.length;
-            const colors = stageColors[colorIndex];
+            const widthPercent = Math.max(15, (stage.potencia / maxValue) * 100);
+            const conversionFromTop = ((stage.quantidade / firstStageQty) * 100).toFixed(1);
+            const color = stageColors[index % stageColors.length];
 
             return (
               <div
                 key={stage.etapa}
-                className="relative w-full flex justify-center"
-                style={{ marginTop: index === 0 ? 0 : -1 }}
+                className="group cursor-pointer"
+                onClick={() => handleStageClick(stage.etapa)}
               >
-                <button
-                  onClick={() => handleStageClick(stage.etapa)}
-                  className={`
-                    relative transition-all duration-200 cursor-pointer
-                    ${colors.bg} ${colors.hover} ${colors.text}
-                    flex items-center justify-center
-                    py-3 font-medium text-sm
-                    shadow-sm hover:shadow-md hover:scale-[1.02]
-                  `}
-                  style={{
-                    width: `${width}%`,
-                    clipPath: index === sortedData.length - 1 
-                      ? 'polygon(8% 0%, 92% 0%, 50% 100%)' 
-                      : 'polygon(0% 0%, 100% 0%, 96% 100%, 4% 100%)',
-                    minHeight: '52px'
-                  }}
-                >
-                  <div className="flex flex-col items-center gap-0.5 z-10">
-                    <span className="font-semibold text-xs sm:text-sm">{stage.etapa}</span>
-                    <span className="text-[10px] sm:text-xs opacity-90">
-                      {stage.quantidade} • {formatPower(stage.potencia)}
-                    </span>
+                {/* Stage Label */}
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{stage.etapa}</span>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                </button>
+                  <span className="text-xs text-muted-foreground">
+                    {conversionFromTop}% do topo
+                  </span>
+                </div>
+
+                {/* Bar Container */}
+                <div className="relative h-10 w-full rounded-lg bg-muted/30 overflow-hidden group-hover:bg-muted/50 transition-colors">
+                  {/* Filled Bar */}
+                  <div
+                    className={`absolute left-0 top-0 h-full ${color} rounded-lg transition-all duration-300 group-hover:brightness-110`}
+                    style={{ width: `${widthPercent}%` }}
+                  />
+                  
+                  {/* Content inside bar */}
+                  <div className="absolute inset-0 flex items-center px-3">
+                    <div 
+                      className="flex items-center justify-between w-full"
+                      style={{ width: `${widthPercent}%` }}
+                    >
+                      <span className="text-sm font-bold text-white drop-shadow-sm">
+                        {stage.quantidade}
+                      </span>
+                      <span className="text-sm font-semibold text-white drop-shadow-sm">
+                        {formatPower(stage.potencia)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
