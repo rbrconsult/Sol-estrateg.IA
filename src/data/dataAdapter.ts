@@ -230,10 +230,13 @@ export function getFunnelData(proposals: Proposal[]) {
 }
 
 export function getVendedorPerformance(proposals: Proposal[]) {
-  const vendedoresUnicos = [...new Set(proposals.map(p => p.representante).filter(Boolean))];
+  // Usa 'representante' se disponível, senão usa 'responsavel'
+  const getVendedor = (p: Proposal) => p.representante || p.responsavel || '';
+  
+  const vendedoresUnicos = [...new Set(proposals.map(getVendedor).filter(Boolean))];
   
   return vendedoresUnicos.map(vendedor => {
-    const vendedorProposals = proposals.filter(p => p.representante === vendedor);
+    const vendedorProposals = proposals.filter(p => getVendedor(p) === vendedor);
     const ganhos = vendedorProposals.filter(p => p.status === 'Ganho');
     const perdidos = vendedorProposals.filter(p => p.status === 'Perdido');
     const abertos = vendedorProposals.filter(p => p.status === 'Aberto');

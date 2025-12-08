@@ -43,7 +43,8 @@ export function VendedorFunnel({ data, proposals }: VendedorFunnelProps) {
 
   const filteredProposals = useMemo(() => {
     if (!selectedVendedor) return [];
-    return proposals.filter(p => p.representante === selectedVendedor);
+    // Filtra por representante ou responsavel
+    return proposals.filter(p => (p.representante || p.responsavel) === selectedVendedor);
   }, [selectedVendedor, proposals]);
 
   // Prepara dados para o gráfico com VALORES (R$) por status
