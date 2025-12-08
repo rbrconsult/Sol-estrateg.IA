@@ -1,6 +1,7 @@
-import { Calendar, RefreshCw, LayoutDashboard, Kanban, Sparkles } from "lucide-react";
+import { Calendar, LayoutDashboard, Kanban, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ export function Header({
   preVendedores
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-gradient-to-r from-card via-card to-secondary/30 backdrop-blur-xl shadow-lg">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-xl shadow-lg">
       <div className="mx-auto max-w-[1600px] px-6 py-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Logo and Title */}
@@ -91,6 +92,9 @@ export function Header({
             <Button variant="outline" size="icon" className="border-border/50 bg-secondary/50 hover:bg-secondary hover:border-primary/50">
               <Calendar className="h-4 w-4" />
             </Button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             <div className="flex items-center gap-2 rounded-lg bg-secondary/50 border border-border/50 px-4 py-2 text-sm">
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
