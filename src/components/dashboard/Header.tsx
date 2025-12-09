@@ -1,4 +1,4 @@
-import { LayoutDashboard, Kanban, Sparkles, LogOut } from "lucide-react";
+import { LayoutDashboard, Kanban, Sparkles, LogOut, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -154,6 +154,20 @@ export function Header({
                   <span className="text-warning font-semibold">Super Admin</span>
                 )}
               </div>
+              
+              {userRole === 'super_admin' && (
+                <Link to="/admin">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-warning/50 text-warning hover:bg-warning/10 hover:border-warning"
+                    title="Painel Admin"
+                  >
+                    <Shield className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+              
               <Button
                 variant="outline"
                 size="icon"
