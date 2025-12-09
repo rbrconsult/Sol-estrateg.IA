@@ -94,11 +94,11 @@ export function Header({
 
             {/* Filters */}
             <Select value={selectedVendedor} onValueChange={onVendedorChange}>
-              <SelectTrigger className="w-[180px] bg-secondary/50 border-border/50 hover:border-primary/50 transition-colors">
-                <SelectValue placeholder="Vendedor" />
+              <SelectTrigger className="w-[280px] bg-secondary/50 border-border/50 hover:border-primary/50 transition-colors">
+                <SelectValue placeholder="Gerente Comercial - Guilherme Aguiar" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos Vendedores</SelectItem>
+                <SelectItem value="todos">Todos Gerentes</SelectItem>
                 {vendedores.map(v => (
                   <SelectItem key={v} value={v}>{v}</SelectItem>
                 ))}
