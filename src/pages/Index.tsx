@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   CheckCircle
 } from "lucide-react";
+import { isWithinInterval, parseISO, isValid } from "date-fns";
 import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
@@ -36,12 +37,20 @@ import {
 } from "@/data/dataAdapter";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
 
 const Index = () => {
   const [selectedVendedor, setSelectedVendedor] = useState("todos");
   const [selectedPreVendedor, setSelectedPreVendedor] = useState("todos");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
   
   const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
+
+  const handleDateRangeChange = (range: DateRange, preset: DateFilterPreset) => {
+    setDateRange(range);
+    setDatePreset(preset);
+  };
 
   // Processa dados do Google Sheets
   const { proposals, vendedores, preVendedores, lastUpdate } = useMemo(() => {
@@ -66,9 +75,23 @@ const Index = () => {
     return proposals.filter(p => {
       if (selectedVendedor !== "todos" && p.representante !== selectedVendedor) return false;
       if (selectedPreVendedor !== "todos" && p.responsavel !== selectedPreVendedor) return false;
+      
+      // Date filter
+      if (dateRange.from) {
+        const proposalDate = p.dataCriacaoProposta ? parseISO(p.dataCriacaoProposta) : null;
+        if (!proposalDate || !isValid(proposalDate)) return false;
+        
+        const interval = {
+          start: dateRange.from,
+          end: dateRange.to || dateRange.from
+        };
+        
+        if (!isWithinInterval(proposalDate, interval)) return false;
+      }
+      
       return true;
     });
-  }, [proposals, selectedVendedor, selectedPreVendedor]);
+  }, [proposals, selectedVendedor, selectedPreVendedor, dateRange]);
 
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
@@ -106,6 +129,9 @@ const Index = () => {
         onPreVendedorChange={setSelectedPreVendedor}
         vendedores={vendedores}
         preVendedores={preVendedores}
+        dateRange={dateRange}
+        datePreset={datePreset}
+        onDateRangeChange={handleDateRangeChange}
       />
 
       <main className="mx-auto max-w-[1600px] px-6 py-8">
