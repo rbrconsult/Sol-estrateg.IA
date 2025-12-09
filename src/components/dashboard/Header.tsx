@@ -1,4 +1,4 @@
-import { LayoutDashboard, Kanban, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Sparkles, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateFilter, DateRange, DateFilterPreset } from "./DateFilter";
-
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 interface HeaderProps {
   lastUpdate: string;
   selectedVendedor: string;
@@ -52,7 +53,13 @@ export function Header({
   datePreset,
   onDateRangeChange
 }: HeaderProps) {
+  const { signOut, user, userRole } = useAuth();
   const dateLabel = getDateLabel(datePreset, dateRange);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Logout realizado com sucesso!');
+  };
   
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-xl shadow-lg">
@@ -138,6 +145,24 @@ export function Header({
 
             {/* Theme Toggle */}
             <ThemeToggle />
+
+            {/* User Info & Logout */}
+            <div className="flex items-center gap-2 ml-2">
+              <div className="hidden md:flex flex-col items-end text-xs">
+                <span className="text-muted-foreground truncate max-w-[150px]">{user?.email}</span>
+                {userRole === 'super_admin' && (
+                  <span className="text-warning font-semibold">Super Admin</span>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleSignOut}
+                className="border-border/50 hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
