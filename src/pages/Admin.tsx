@@ -7,10 +7,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2 } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface UserWithRole {
   id: string;
@@ -48,7 +56,14 @@ export default function Admin() {
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
+  
+  // CRUD state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole });
+  const [formLoading, setFormLoading] = useState(false);
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
       toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
@@ -188,6 +203,127 @@ export default function Admin() {
     }
   };
 
+  // CRUD Functions
+  const handleCreateUser = async () => {
+    if (!formData.email || !formData.password) {
+      toast.error('Email e senha são obrigatórios');
+      return;
+    }
+    
+    setFormLoading(true);
+    try {
+      // Create user via Supabase Auth Admin API (edge function)
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { 
+          action: 'create',
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.full_name,
+          role: formData.role
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Usuário criado com sucesso!');
+      setIsCreateDialogOpen(false);
+      setFormData({ email: '', password: '', full_name: '', role: 'user' });
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      toast.error(error.message || 'Erro ao criar usuário');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async () => {
+    if (!selectedUser) return;
+    
+    setFormLoading(true);
+    try {
+      // Update role in user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .update({ role: formData.role })
+        .eq('user_id', selectedUser.id);
+
+      if (roleError) throw roleError;
+
+      // Update full_name in profiles
+      if (formData.full_name !== selectedUser.full_name) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ full_name: formData.full_name })
+          .eq('id', selectedUser.id);
+
+        if (profileError) throw profileError;
+      }
+
+      // Log the action
+      await supabase.from('access_logs').insert({
+        user_id: selectedUser.id,
+        email: selectedUser.email,
+        action: 'role_updated',
+        ip_address: 'admin_action'
+      });
+
+      toast.success('Usuário atualizado com sucesso!');
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast.error(error.message || 'Erro ao atualizar usuário');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    setFormLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { 
+          action: 'delete',
+          userId: selectedUser.id
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Usuário excluído com sucesso!');
+      setIsDeleteDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Erro ao excluir usuário');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const openEditDialog = (u: UserWithRole) => {
+    setSelectedUser(u);
+    setFormData({ 
+      email: u.email, 
+      password: '', 
+      full_name: u.full_name || '', 
+      role: u.role as AppRole 
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (u: UserWithRole) => {
+    setSelectedUser(u);
+    setIsDeleteDialogOpen(true);
+  };
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
   };
@@ -202,6 +338,12 @@ export default function Admin() {
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Sessão Invalidada</Badge>;
       case 'all_sessions_invalidated':
         return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Todas Sessões Invalidadas</Badge>;
+      case 'role_updated':
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Role Atualizado</Badge>;
+      case 'user_created':
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Usuário Criado</Badge>;
+      case 'user_deleted':
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Usuário Excluído</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
     }
@@ -311,9 +453,18 @@ export default function Admin() {
 
           <TabsContent value="users">
             <Card>
-              <CardHeader>
-                <CardTitle>Usuários Cadastrados</CardTitle>
-                <CardDescription>Lista de todos os usuários do sistema</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Usuários Cadastrados</CardTitle>
+                  <CardDescription>Lista de todos os usuários do sistema</CardDescription>
+                </div>
+                <Button onClick={() => {
+                  setFormData({ email: '', password: '', full_name: '', role: 'user' });
+                  setIsCreateDialogOpen(true);
+                }}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Novo Usuário
+                </Button>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -323,7 +474,7 @@ export default function Admin() {
                       <TableHead>Nome</TableHead>
                       <TableHead>Função</TableHead>
                       <TableHead>Cadastrado em</TableHead>
-                      <TableHead>Ações</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -333,17 +484,38 @@ export default function Admin() {
                         <TableCell>{u.full_name || '-'}</TableCell>
                         <TableCell>{getRoleBadge(u.role)}</TableCell>
                         <TableCell>{formatDate(u.created_at)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => invalidateAllUserSessions(u.id)}
-                            disabled={u.id === user?.id}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Ban className="h-4 w-4 mr-1" />
-                            Desconectar
-                          </Button>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(u)}
+                              className="h-8 w-8"
+                              title="Editar"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => invalidateAllUserSessions(u.id)}
+                              disabled={u.id === user?.id}
+                              className="h-8 w-8 text-orange-500 hover:text-orange-600"
+                              title="Desconectar"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openDeleteDialog(u)}
+                              disabled={u.id === user?.id}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -453,6 +625,132 @@ export default function Admin() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Create User Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Usuário</DialogTitle>
+              <DialogDescription>Preencha os dados do novo usuário</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="usuario@exemplo.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Nome Completo</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Nome do usuário"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Função</Label>
+                <Select value={formData.role} onValueChange={(value: AppRole) => setFormData({ ...formData, role: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleCreateUser} disabled={formLoading}>
+                {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Criar Usuário
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit User Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Usuário</DialogTitle>
+              <DialogDescription>Atualize os dados do usuário {selectedUser?.email}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_full_name">Nome Completo</Label>
+                <Input
+                  id="edit_full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Nome do usuário"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_role">Função</Label>
+                <Select value={formData.role} onValueChange={(value: AppRole) => setFormData({ ...formData, role: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleUpdateRole} disabled={formLoading}>
+                {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Salvar Alterações
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete User Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o usuário <strong>{selectedUser?.email}</strong>? 
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteUser} 
+                disabled={formLoading}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
