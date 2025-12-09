@@ -174,6 +174,58 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
+    } else if (action === 'reset_password') {
+      const { userId, password } = body;
+
+      if (!userId || !password) {
+        return new Response(
+          JSON.stringify({ error: 'ID do usuário e nova senha são obrigatórios' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (password.length < 6) {
+        return new Response(
+          JSON.stringify({ error: 'Senha deve ter no mínimo 6 caracteres' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user email for logging
+      const { data: profileData } = await supabaseAdmin
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .maybeSingle();
+
+      // Update user password
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        password
+      });
+
+      if (updateError) {
+        console.error('Reset password error:', updateError);
+        return new Response(
+          JSON.stringify({ error: updateError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Password reset for user:', userId);
+
+      // Log the action
+      await supabaseAdmin.from('access_logs').insert({
+        user_id: userId,
+        email: profileData?.email || userId,
+        action: 'password_reset',
+        ip_address: 'admin_action'
+      });
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
     } else {
       return new Response(
         JSON.stringify({ error: 'Ação inválida' }),
