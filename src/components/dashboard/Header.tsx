@@ -1,5 +1,7 @@
 import { LayoutDashboard, Kanban, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -24,6 +26,20 @@ interface HeaderProps {
   onDateRangeChange: (range: DateRange, preset: DateFilterPreset) => void;
 }
 
+const getDateLabel = (preset: DateFilterPreset, dateRange: DateRange): string | null => {
+  if (preset === "all") return null;
+  if (preset === "7days") return "Últimos 7 dias";
+  if (preset === "30days") return "Últimos 30 dias";
+  if (preset === "lastMonth") return "Mês anterior";
+  if (preset === "custom" && dateRange.from) {
+    if (dateRange.to) {
+      return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
+    }
+    return format(dateRange.from, "dd/MM/yyyy", { locale: ptBR });
+  }
+  return null;
+};
+
 export function Header({
   lastUpdate,
   selectedVendedor,
@@ -36,6 +52,8 @@ export function Header({
   datePreset,
   onDateRangeChange
 }: HeaderProps) {
+  const dateLabel = getDateLabel(datePreset, dateRange);
+  
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-xl shadow-lg">
       <div className="mx-auto max-w-[1600px] px-6 py-4">
@@ -50,7 +68,10 @@ export function Header({
               <h1 className="text-2xl font-black tracking-tight text-foreground bg-clip-text">
                 EVOLVE BI
               </h1>
-              <p className="text-sm font-medium text-primary">Inteligência Comercial Estratégica</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-primary">Inteligência Comercial Estratégica</p>
+                <span className="text-xs text-muted-foreground">• {lastUpdate}</span>
+              </div>
             </div>
           </div>
 
@@ -102,14 +123,21 @@ export function Header({
               onDateRangeChange={onDateRangeChange}
             />
 
+            {/* Date Range Label */}
+            {dateLabel && (
+              <div className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/30 px-3 py-1.5 text-sm">
+                <span className="font-semibold text-primary">{dateLabel}</span>
+                <button 
+                  onClick={() => onDateRangeChange({ from: undefined, to: undefined }, "all")}
+                  className="text-primary/70 hover:text-primary ml-1"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {/* Theme Toggle */}
             <ThemeToggle />
-
-            <div className="flex items-center gap-2 rounded-lg bg-secondary/50 border border-border/50 px-4 py-2 text-sm">
-              <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span className="text-muted-foreground">Atualizado:</span>
-              <span className="font-medium text-foreground">{lastUpdate}</span>
-            </div>
           </div>
         </div>
       </div>
