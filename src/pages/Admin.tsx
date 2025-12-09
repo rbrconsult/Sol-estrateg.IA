@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -61,8 +61,10 @@ export default function Admin() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole });
+  const [newPassword, setNewPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
@@ -324,6 +326,48 @@ export default function Admin() {
     setIsDeleteDialogOpen(true);
   };
 
+  const openPasswordDialog = (u: UserWithRole) => {
+    setSelectedUser(u);
+    setNewPassword('');
+    setIsPasswordDialogOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser || !newPassword) {
+      toast.error('Nova senha é obrigatória');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast.error('Senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+    
+    setFormLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { 
+          action: 'reset_password',
+          userId: selectedUser.id,
+          password: newPassword
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Senha alterada com sucesso!');
+      setIsPasswordDialogOpen(false);
+      setSelectedUser(null);
+      setNewPassword('');
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast.error(error.message || 'Erro ao alterar senha');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
   };
@@ -344,6 +388,8 @@ export default function Admin() {
         return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Usuário Criado</Badge>;
       case 'user_deleted':
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Usuário Excluído</Badge>;
+      case 'password_reset':
+        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Senha Alterada</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
     }
@@ -494,6 +540,15 @@ export default function Admin() {
                               title="Editar"
                             >
                               <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openPasswordDialog(u)}
+                              className="h-8 w-8 text-purple-500 hover:text-purple-600"
+                              title="Alterar Senha"
+                            >
+                              <Key className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -751,6 +806,35 @@ export default function Admin() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Reset Password Dialog */}
+        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Senha</DialogTitle>
+              <DialogDescription>Defina uma nova senha para {selectedUser?.email}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new_password">Nova Senha</Label>
+                <Input
+                  id="new_password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleResetPassword} disabled={formLoading}>
+                {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Salvar Senha
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
