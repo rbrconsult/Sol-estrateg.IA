@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Calendar, CalendarDays } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DateRange as DayPickerDateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
@@ -55,9 +56,9 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
     setOpen(false);
   };
 
-  const handleCustomDateSelect = (range: DateRange | undefined) => {
+  const handleCustomDateSelect = (range: DayPickerDateRange | undefined) => {
     if (range) {
-      setTempRange(range);
+      setTempRange({ from: range.from, to: range.to });
     }
   };
 
@@ -103,7 +104,7 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
           <span className="hidden sm:inline">{getButtonLabel()}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="end">
+      <PopoverContent className="w-auto p-0 pointer-events-auto" align="end">
         <div className="p-3 border-b border-border">
           <p className="text-sm font-medium text-foreground mb-2">Filtrar por período</p>
           <div className="flex flex-wrap gap-2">
@@ -128,11 +129,12 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
           </p>
           <CalendarComponent
             mode="range"
-            selected={tempRange}
+            selected={tempRange as DayPickerDateRange}
             onSelect={handleCustomDateSelect}
             numberOfMonths={1}
             locale={ptBR}
             className="pointer-events-auto"
+            initialFocus
           />
           <div className="mt-3 flex justify-end gap-2">
             <Button 
