@@ -1,4 +1,4 @@
-import { Calendar, LayoutDashboard, Kanban, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DateFilter, DateRange, DateFilterPreset } from "./DateFilter";
 
 interface HeaderProps {
   lastUpdate: string;
@@ -18,6 +19,9 @@ interface HeaderProps {
   onPreVendedorChange: (value: string) => void;
   vendedores: string[];
   preVendedores: string[];
+  dateRange: DateRange;
+  datePreset: DateFilterPreset;
+  onDateRangeChange: (range: DateRange, preset: DateFilterPreset) => void;
 }
 
 export function Header({
@@ -27,7 +31,10 @@ export function Header({
   onVendedorChange,
   onPreVendedorChange,
   vendedores,
-  preVendedores
+  preVendedores,
+  dateRange,
+  datePreset,
+  onDateRangeChange
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-xl shadow-lg">
@@ -89,9 +96,11 @@ export function Header({
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" className="border-border/50 bg-secondary/50 hover:bg-secondary hover:border-primary/50">
-              <Calendar className="h-4 w-4" />
-            </Button>
+            <DateFilter
+              dateRange={dateRange}
+              preset={datePreset}
+              onDateRangeChange={onDateRangeChange}
+            />
 
             {/* Theme Toggle */}
             <ThemeToggle />
