@@ -27,7 +27,15 @@ interface DateFilterProps {
 
 export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterProps) {
   const [open, setOpen] = useState(false);
-  const [tempRange, setTempRange] = useState<DateRange>(dateRange);
+  const [tempRange, setTempRange] = useState<DateRange>({ from: undefined, to: undefined });
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      // Reset temp range when opening
+      setTempRange({ from: undefined, to: undefined });
+    }
+    setOpen(isOpen);
+  };
 
   const handlePresetClick = (newPreset: DateFilterPreset) => {
     const today = new Date();
@@ -58,14 +66,14 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
 
   const handleCustomDateSelect = (range: DayPickerDateRange | undefined) => {
     if (range) {
-      setTempRange({ from: range.from, to: range.to });
-    }
-  };
-
-  const applyCustomRange = () => {
-    if (tempRange.from) {
-      onDateRangeChange(tempRange, "custom");
-      setOpen(false);
+      const newRange = { from: range.from, to: range.to };
+      setTempRange(newRange);
+      
+      // Auto-apply when both dates are selected
+      if (range.from && range.to) {
+        onDateRangeChange(newRange, "custom");
+        setOpen(false);
+      }
     }
   };
 
@@ -91,7 +99,7 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
   ];
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button 
           variant="outline" 
@@ -136,20 +144,16 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
             className="pointer-events-auto"
             initialFocus
           />
-          <div className="mt-3 flex justify-end gap-2">
+          <div className="mt-3 flex justify-between items-center">
+            <p className="text-xs text-muted-foreground">
+              {tempRange.from && !tempRange.to ? "Selecione a data final" : "Selecione início e fim"}
+            </p>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => setOpen(false)}
             >
-              Cancelar
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={applyCustomRange}
-              disabled={!tempRange.from}
-            >
-              Aplicar
+              Fechar
             </Button>
           </div>
         </div>
