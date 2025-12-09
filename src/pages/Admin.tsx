@@ -727,7 +727,6 @@ export default function Admin() {
                   <SelectContent>
                     <SelectItem value="user">Usuário</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -768,7 +767,6 @@ export default function Admin() {
                   <SelectContent>
                     <SelectItem value="user">Usuário</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
