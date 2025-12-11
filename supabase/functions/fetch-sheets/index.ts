@@ -23,26 +23,31 @@ interface SheetRow {
   sla_proposta: string;
   ultima_atualizacao: string;
   dados_projeto: string;
+  // Novos campos CRM Pipedrive-style
+  origem_lead: string;
+  data_primeiro_contato: string;
+  data_ultimo_contato: string;
+  numero_followups: string;
+  proxima_atividade: string;
+  probabilidade: string;
+  motivo_perda: string;
+  tempo_na_etapa: string;
+  desconto: string;
 }
 
 // Normalize private key to proper PEM format
 function normalizePrivateKey(key: string): string {
-  // Remove any surrounding quotes
   let normalizedKey = key.replace(/^["']|["']$/g, '');
-  
-  // Replace escaped newlines with actual newlines
   normalizedKey = normalizedKey.replace(/\\n/g, '\n');
   
-  // Extract the base64 content (remove headers/footers and whitespace)
   const beginMarker = '-----BEGIN PRIVATE KEY-----';
   const endMarker = '-----END PRIVATE KEY-----';
   
   let content = normalizedKey
     .replace(beginMarker, '')
     .replace(endMarker, '')
-    .replace(/[\s\n\r]/g, ''); // Remove all whitespace
+    .replace(/[\s\n\r]/g, '');
   
-  // Reformat to proper PEM with 64-char lines
   const lines: string[] = [];
   for (let i = 0; i < content.length; i += 64) {
     lines.push(content.substring(i, i + 64));
@@ -158,8 +163,9 @@ serve(async (req) => {
     const accessToken = await getAccessToken(CLIENT_EMAIL, PRIVATE_KEY);
 
     // Fetch data from Google Sheets API with OAuth2
+    // Expandido para colunas A:Y para incluir novos campos
     const sheetName = 'Página1';
-    const range = `${sheetName}!A:P`;
+    const range = `${sheetName}!A:Y`;
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}`;
 
     console.log('Fetching from Google Sheets...');
@@ -219,6 +225,16 @@ serve(async (req) => {
         sla_proposta: row[13] || '',
         ultima_atualizacao: row[14] || '',
         dados_projeto: row[15] || '',
+        // Novos campos CRM - colunas Q até Y (índices 16-24)
+        origem_lead: row[16] || '',
+        data_primeiro_contato: row[17] || '',
+        data_ultimo_contato: row[18] || '',
+        numero_followups: row[19] || '0',
+        proxima_atividade: row[20] || '',
+        probabilidade: row[21] || '50',
+        motivo_perda: row[22] || '',
+        tempo_na_etapa: row[23] || '0',
+        desconto: row[24] || '0',
       };
     }).filter((p: SheetRow) => p.projeto_id);
 
