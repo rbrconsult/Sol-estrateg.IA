@@ -34,3 +34,30 @@ export function formatCurrencyFull(value: number): string {
 export function formatPercent(value: number, decimals: number = 1): string {
   return `${value.toFixed(decimals)}%`;
 }
+
+/**
+ * Formata número com separador de milhares
+ */
+export function formatNumber(value: number, decimals: number = 0): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+
+/**
+ * Formata potência (kWp ou MWp)
+ */
+export function formatPower(value: number): string {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)} MWp`;
+  }
+  return `${value.toFixed(1)} kWp`;
+}
+
+/**
+ * Formata dias
+ */
+export function formatDays(value: number): string {
+  return `${Math.round(value)}d`;
+}

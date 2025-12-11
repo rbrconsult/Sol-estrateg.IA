@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { RefreshCw, AlertCircle, LayoutDashboard, Kanban } from "lucide-react";
+import { useMemo } from "react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
@@ -28,45 +27,19 @@ const Pipeline = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-[1800px] px-6 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            {/* Logo and Title */}
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-glow-primary">
-                <span className="text-xl font-bold text-primary-foreground">E</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                  Pipeline
-                </h1>
-                <p className="text-sm text-muted-foreground">Visão Kanban dos Projetos</p>
-              </div>
-            </div>
-
-            {/* Navigation and Status */}
-            <div className="flex flex-wrap items-center gap-3">
-              <Link to="/">
-                <Button variant="outline" className="border-border bg-background">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  BI Estratégico
-                </Button>
-              </Link>
-              
-              <Button variant="default" disabled>
-                <Kanban className="mr-2 h-4 w-4" />
-                Pipeline
-              </Button>
-
-              <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span>Atualizado: {lastUpdate}</span>
-              </div>
-            </div>
+      {/* Page Header */}
+      <div className="border-b border-border bg-card/50 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Pipeline</h1>
+            <p className="text-sm text-muted-foreground">Visão Kanban dos Projetos</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Atualizado: {lastUpdate}</span>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="mx-auto max-w-[1800px] px-6 py-8">
         {/* Error State */}
