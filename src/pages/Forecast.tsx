@@ -1,10 +1,9 @@
 import { useMemo } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { adaptSheetData, getForecastData, getKPIs } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
-import { TrendingUp, AlertTriangle, Target, Zap, Calendar } from "lucide-react";
+import { TrendingUp, AlertTriangle, Target, Zap, Calendar, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
@@ -22,21 +21,17 @@ export default function Forecast() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center h-96">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (error || !forecastData) {
     return (
-      <MainLayout>
-        <div className="p-6">
-          <p className="text-destructive">Erro ao carregar dados</p>
-        </div>
-      </MainLayout>
+      <div className="p-6">
+        <p className="text-destructive">Erro ao carregar dados</p>
+      </div>
     );
   }
 
@@ -47,13 +42,12 @@ export default function Forecast() {
   ];
 
   return (
-    <MainLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Forecast</h1>
-          <p className="text-muted-foreground">Previsão de receita e potência</p>
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Forecast</h1>
+        <p className="text-muted-foreground">Previsão de receita e potência</p>
+      </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -286,6 +280,6 @@ export default function Forecast() {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 }
