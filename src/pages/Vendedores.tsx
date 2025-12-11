@@ -1,11 +1,10 @@
 import { useMemo } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { adaptSheetData, getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
-import { Users, TrendingUp, Target, DollarSign, Activity, Clock, XCircle } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend } from "recharts";
+import { Users, TrendingUp, DollarSign, XCircle, RefreshCw } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
@@ -22,21 +21,17 @@ export default function Vendedores() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center h-96">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="p-6">
-          <p className="text-destructive">Erro ao carregar dados</p>
-        </div>
-      </MainLayout>
+      <div className="p-6">
+        <p className="text-destructive">Erro ao carregar dados</p>
+      </div>
     );
   }
 
@@ -58,13 +53,12 @@ export default function Vendedores() {
   }));
 
   return (
-    <MainLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Performance dos Vendedores</h1>
-          <p className="text-muted-foreground">Análise detalhada por vendedor</p>
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Performance dos Vendedores</h1>
+        <p className="text-muted-foreground">Análise detalhada por vendedor</p>
+      </div>
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -217,6 +211,6 @@ export default function Vendedores() {
           </Card>
         )}
       </div>
-    </MainLayout>
+    </div>
   );
 }

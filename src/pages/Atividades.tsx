@@ -1,11 +1,9 @@
 import { useMemo } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { adaptSheetData, getAtividadesData, getVendedorPerformance } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
-import { Activity, Clock, AlertTriangle, Phone, Calendar, Trophy, Zap } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Activity, Clock, AlertTriangle, Phone, Calendar, Trophy, Zap, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function Atividades() {
@@ -21,21 +19,17 @@ export default function Atividades() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center h-96">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (error || !atividadesData) {
     return (
-      <MainLayout>
-        <div className="p-6">
-          <p className="text-destructive">Erro ao carregar dados</p>
-        </div>
-      </MainLayout>
+      <div className="p-6">
+        <p className="text-destructive">Erro ao carregar dados</p>
+      </div>
     );
   }
 
@@ -51,13 +45,12 @@ export default function Atividades() {
     .slice(0, 5);
 
   return (
-    <MainLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Atividades & Follow-ups</h1>
-          <p className="text-muted-foreground">Gestão de contatos e atividades comerciais</p>
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Atividades & Follow-ups</h1>
+        <p className="text-muted-foreground">Gestão de contatos e atividades comerciais</p>
+      </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -280,6 +273,6 @@ export default function Atividades() {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 }
