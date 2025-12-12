@@ -11,9 +11,11 @@ import {
   AlertTriangle,
   CheckCircle
 } from "lucide-react";
-import { isWithinInterval, parseISO, isValid } from "date-fns";
+import { isWithinInterval, parseISO, isValid, subDays, format } from "date-fns";
 import { Header } from "@/components/dashboard/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
+import { FunnelKPIs } from "@/components/dashboard/FunnelKPIs";
+import { LeadsTrendsChart } from "@/components/dashboard/LeadsTrendsChart";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { PowerFunnel } from "@/components/dashboard/PowerFunnel";
 import { StatusFunnel } from "@/components/dashboard/StatusFunnel";
@@ -207,61 +209,63 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* KPIs Section - Otimizado */}
+        {/* KPIs Estilo Garrido - Funil Horizontal */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Indicadores Principais</h2>
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-8">
-            <KPICard
-              title="Propostas"
-              value={kpis.totalNegocios}
-              subtitle="Total criadas"
-              icon={Briefcase}
-              delay={50}
-            />
-            <KPICard
-              title="Pipeline"
-              value={formatCurrency(kpis.valorPipeline)}
-              subtitle={`${kpis.totalNegocios} propostas`}
-              icon={TrendingUp}
-              delay={70}
-            />
-            <KPICard
-              title="Conversão"
-              value={`${kpis.taxaConversao.toFixed(1)}%`}
-              subtitle={`${kpis.negociosGanhos} ganhos`}
-              icon={Target}
-              variant="success"
-              delay={90}
-            />
-            <KPICard
-              title="Ganhos"
-              value={formatCurrency(kpis.valorGanho)}
-              subtitle={`${kpis.negociosGanhos} fechados`}
-              icon={CheckCircle}
-              variant="success"
-              delay={110}
-            />
-            <KPICard
-              title="Perdidos"
-              value={formatCurrency(kpis.valorPerdido)}
-              subtitle={`${kpis.negociosPerdidos} props`}
-              icon={AlertTriangle}
-              variant="danger"
-              delay={130}
-            />
+          <FunnelKPIs 
+            data={[
+              { 
+                label: 'Propostas', 
+                value: kpis.totalNegocios.toLocaleString('pt-BR'),
+                trend: { percentage: 0, absolute: 0, isPositive: null }
+              },
+              { 
+                label: 'Pipeline', 
+                value: formatCurrency(kpis.valorPipeline),
+                highlight: true,
+                trend: { percentage: 0, absolute: 0, isPositive: null }
+              },
+              { 
+                label: 'Ganhos', 
+                value: formatCurrency(kpis.valorGanho),
+                trend: { percentage: kpis.taxaConversao, absolute: kpis.negociosGanhos, isPositive: kpis.taxaConversao > 10 }
+              },
+              { 
+                label: 'Oportunidades', 
+                value: kpis.negociosAbertos.toLocaleString('pt-BR'),
+                trend: { percentage: 0, absolute: 0, isPositive: null }
+              },
+              { 
+                label: 'Conversão', 
+                value: `${kpis.taxaConversao.toFixed(1)}%`,
+                trend: { percentage: kpis.taxaConversao, absolute: kpis.negociosGanhos, isPositive: kpis.taxaConversao > 10 }
+              }
+            ]}
+            conversionRates={[
+              kpis.totalNegocios > 0 ? Math.round((kpis.valorPipeline / kpis.totalNegocios / 1000) * 100) / 100 : 0,
+              kpis.valorPipeline > 0 ? Math.round((kpis.valorGanho / kpis.valorPipeline) * 100) : 0,
+              kpis.negociosAbertos > 0 ? Math.round((kpis.negociosAbertos / kpis.totalNegocios) * 100) : 0,
+              Math.round(kpis.taxaConversao)
+            ]}
+          />
+        </section>
+
+        {/* KPIs Detalhados */}
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-foreground mb-4">Indicadores Detalhados</h2>
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-6">
             <KPICard
               title="Ticket Médio"
               value={formatCurrency(kpis.ticketMedio)}
               subtitle="Por proposta"
               icon={DollarSign}
-              delay={150}
+              delay={50}
             />
             <KPICard
               title="Ciclo"
               value={`${kpis.cicloProposta}d`}
               subtitle="Proj → Prop"
               icon={Clock}
-              delay={170}
+              delay={70}
             />
             <KPICard
               title="Potência"
@@ -269,7 +273,30 @@ const Index = () => {
               subtitle="Total kWp"
               icon={Zap}
               variant="warning"
-              delay={190}
+              delay={90}
+            />
+            <KPICard
+              title="Ganhos"
+              value={kpis.negociosGanhos}
+              subtitle={formatCurrency(kpis.valorGanho)}
+              icon={CheckCircle}
+              variant="success"
+              delay={110}
+            />
+            <KPICard
+              title="Perdidos"
+              value={kpis.negociosPerdidos}
+              subtitle={formatCurrency(kpis.valorPerdido)}
+              icon={AlertTriangle}
+              variant="danger"
+              delay={130}
+            />
+            <KPICard
+              title="Abertos"
+              value={kpis.negociosAbertos}
+              subtitle="Em andamento"
+              icon={Target}
+              delay={150}
             />
           </div>
         </section>
