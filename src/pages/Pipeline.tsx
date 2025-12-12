@@ -26,83 +26,77 @@ const Pipeline = () => {
   const hasData = proposals.length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="p-6 space-y-6">
       {/* Page Header */}
-      <div className="border-b border-border bg-card/50 px-6 py-4">
+      <div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Pipeline</h1>
-            <p className="text-sm text-muted-foreground">Visão Kanban dos Projetos</p>
+            <h1 className="text-3xl font-bold text-foreground">Pipeline</h1>
+            <p className="text-muted-foreground">Visão Kanban dos Projetos • Atualizado: {lastUpdate}</p>
           </div>
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span>Atualizado: {lastUpdate}</span>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </div>
       </div>
 
-      <main className="mx-auto max-w-[1800px] px-6 py-8">
-        {/* Error State */}
-        {error && (
-          <Alert className="mb-6 border-red-500/50 bg-red-500/10">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <AlertDescription className="flex items-center justify-between text-red-200">
-              <span>Erro ao carregar dados: {error.message}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isFetching}
-                className="ml-4 text-red-200 hover:text-red-100 hover:bg-red-500/20"
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-                Tentar novamente
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Success State with Data */}
-        {hasData && !error && (
-          <div className="mb-6 flex items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-green-500/20 px-3 py-1 text-sm text-green-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-              {proposals.length} propostas carregadas
-            </span>
+      {/* Error State */}
+      {error && (
+        <Alert className="border-destructive/50 bg-destructive/10">
+          <AlertCircle className="h-4 w-4 text-destructive" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Erro ao carregar dados: {error.message}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="text-muted-foreground hover:text-foreground"
+              className="ml-4"
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              Atualizar
+              Tentar novamente
             </Button>
-          </div>
-        )}
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="mb-6 flex items-center justify-center gap-2 text-muted-foreground">
-            <RefreshCw className="h-5 w-5 animate-spin" />
-            Carregando dados do Google Sheets...
-          </div>
-        )}
+      {/* Success State with Data */}
+      {hasData && !error && (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-2 rounded-full bg-chart-2/20 px-3 py-1 text-sm text-chart-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-chart-2" />
+            {proposals.length} propostas carregadas
+          </span>
+        </div>
+      )}
 
-        {/* Kanban Board */}
-        {hasData && <KanbanBoard proposals={proposals} />}
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+          <RefreshCw className="h-5 w-5 animate-spin" />
+          Carregando dados do Google Sheets...
+        </div>
+      )}
 
-        {/* Empty State */}
-        {!isLoading && !hasData && !error && (
-          <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
-            <AlertCircle className="h-4 w-4 text-amber-500" />
-            <AlertDescription className="text-amber-200">
-              Nenhum dado encontrado. Verifique se a planilha contém dados.
-            </AlertDescription>
-          </Alert>
-        )}
-      </main>
+      {/* Kanban Board */}
+      {hasData && <KanbanBoard proposals={proposals} />}
+
+      {/* Empty State */}
+      {!isLoading && !hasData && !error && (
+        <Alert className="border-warning/50 bg-warning/10">
+          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertDescription>
+            Nenhum dado encontrado. Verifique se a planilha contém dados.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

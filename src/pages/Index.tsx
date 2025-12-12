@@ -120,7 +120,7 @@ const Index = () => {
   const hasData = proposals.length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="p-6 space-y-6">
       <Header
         lastUpdate={lastUpdate}
         selectedVendedor={selectedVendedor}
@@ -134,7 +134,7 @@ const Index = () => {
         onDateRangeChange={handleDateRangeChange}
       />
 
-      <main className="mx-auto max-w-[1600px] px-6 py-8">
+      <div>
         {/* Error State */}
         {error && (
           <Alert className="mb-6 border-red-500/50 bg-red-500/10">
@@ -319,7 +319,7 @@ const Index = () => {
         <footer className="mt-12 border-t border-border pt-6 text-center text-sm text-muted-foreground">
           <p>© 2024 EVOLVE - BI Estratégico. Todos os direitos reservados.</p>
         </footer>
-      </main>
+      </div>
     </div>
   );
 };
