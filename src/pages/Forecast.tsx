@@ -278,7 +278,6 @@ export default function Forecast() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
