@@ -84,17 +84,27 @@ export function Sidebar() {
     >
       {/* Header */}
       <div className="p-4 border-b border-border/50">
-        <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
-            <span className="text-lg font-black text-primary-foreground tracking-tighter">E</span>
-            <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <h1 className="text-lg font-black tracking-tight text-foreground">EVOLVE</h1>
-              <p className="text-xs text-muted-foreground truncate">CRM Solar</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
+              <span className="text-lg font-black text-primary-foreground tracking-tighter">E</span>
+              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
-          )}
+            {!collapsed && (
+              <div className="overflow-hidden">
+                <h1 className="text-lg font-black tracking-tight text-foreground">EVOLVE</h1>
+                <p className="text-xs text-muted-foreground truncate">CRM Solar</p>
+              </div>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-8 w-8 shrink-0 hover:bg-primary/10"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
 
@@ -175,15 +185,6 @@ export function Sidebar() {
           {!collapsed && <span className="ml-2">Sair</span>}
         </Button>
 
-        {/* Collapse Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full"
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
       </div>
     </aside>
   );
