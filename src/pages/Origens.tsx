@@ -272,7 +272,6 @@ export default function Origens() {
             </div>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }

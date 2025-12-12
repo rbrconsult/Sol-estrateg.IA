@@ -210,7 +210,6 @@ export default function Vendedores() {
             </CardContent>
           </Card>
         )}
-      </div>
     </div>
   );
 }

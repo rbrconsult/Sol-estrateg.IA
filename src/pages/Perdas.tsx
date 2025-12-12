@@ -298,7 +298,6 @@ export default function Perdas() {
             </div>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
