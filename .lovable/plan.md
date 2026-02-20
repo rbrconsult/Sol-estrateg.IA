@@ -1,79 +1,101 @@
 
-# Reformulacao do Formulario de Chamados
+# Notificacoes WhatsApp via Evolution API + Popup Profissional
 
-## Resumo das Alteracoes
+## Resumo
 
-O formulario de abertura de chamados sera redesenhado com novos campos, upload de anexos e prioridade automatica baseada na categoria selecionada.
+Ao abrir um chamado, o sistema vai:
+1. Mostrar um popup profissional confirmando a abertura do chamado
+2. Enviar uma mensagem WhatsApp para o usuario que abriu o chamado
+3. Enviar uma mensagem WhatsApp para a central de comandos RBR Consult (+55 17 99733-5222)
 
-## Novos Campos do Formulario
+## Etapas
 
-| Campo | Tipo | Obrigatorio |
-|-------|------|-------------|
-| Titulo | Input texto | Sim |
-| Fluxo | Dropdown com lista fixa | Sim |
-| Descricao do Problema | Textarea | Sim |
-| Nome do Cliente | Input texto | Sim |
-| Telefone do Cliente | Input texto | Sim |
-| Detalhes do Problema | Textarea | Nao |
-| Anexo (imagem/documento) | Upload de arquivo | Nao |
-| Categoria | Dropdown (manter atual) | Sim |
-| Prioridade | Calculada automaticamente | --- |
+### 1. Adicionar campo de telefone no perfil do usuario
 
-## Lista de Fluxos (Dropdown)
+Adicionar coluna `phone` na tabela `profiles` para que cada usuario tenha seu numero de WhatsApp cadastrado. Isso permite saber para qual numero enviar a notificacao quando ele abrir um chamado.
 
-- Fluxo 1 - Captura de Leads Meta Ads e Disparo inicial whatsapp + IA
-- Fluxo 2 - Captura de Leads Site GERAL e Disparo inicial whatsapp + IA
-- Robo FUP FRIO
-- Robo SDR / Sol
-- Fluxo Remarketing
+### 2. Tela para o usuario cadastrar seu telefone
 
-## Logica de Prioridade Automatica
+Ao abrir um chamado, se o usuario nao tiver telefone cadastrado no perfil, o sistema pedira que ele informe antes de prosseguir. Apos cadastrado, o numero fica salvo para os proximos chamados.
 
-A prioridade sera definida automaticamente com base na categoria:
+### 3. Armazenar credenciais da Evolution API como secrets
 
-| Categoria | Prioridade | SLA |
-|-----------|-----------|-----|
-| Urgencia | Critica | 4h |
-| Bug | Alta | 24h |
-| Melhoria | Media | 48h |
-| Duvida | Baixa | 72h |
+Salvar as credenciais de forma segura no backend:
+- `EVOLUTION_API_URL` = https://api.rbrsistemas.com
+- `EVOLUTION_API_KEY` = 34228796396A-4285-A3DC-EEF91521C390
+- `EVOLUTION_INSTANCE_NAME` = RBR Flow
+- `CENTRAL_WHATSAPP_NUMBER` = 5517997335222
 
-O campo de prioridade nao aparecera mais no formulario para o usuario.
+### 4. Criar funcao backend `notify-ticket-whatsapp`
 
-## Upload de Anexos
+Uma funcao backend que recebe os dados do chamado e envia duas mensagens via Evolution API:
 
-- Criar um bucket de storage chamado `ticket-attachments` (publico para leitura)
-- Permitir upload de imagens (jpg, png, webp) e documentos (pdf)
-- Limite de 10MB por arquivo
-- Armazenar a URL do arquivo na tabela `support_tickets`
+**Mensagem para o usuario (quem abriu):**
+```
+Ola, {nome}! Seu chamado #{numero} foi aberto com sucesso.
+
+Titulo: {titulo}
+Fluxo: {fluxo}
+Categoria: {categoria}
+Prioridade: {prioridade}
+SLA: {sla_horas}h
+
+Acompanhe o status pelo painel ou por aqui. Responderemos em breve!
+
+RBR Consult
+```
+
+**Mensagem para a central de comandos:**
+```
+NOVO CHAMADO #{numero}
+
+Aberto por: {nome_usuario}
+Titulo: {titulo}
+Fluxo: {fluxo}
+Plataforma: {plataforma}
+Cliente: {cliente_nome} - {cliente_telefone}
+Categoria: {categoria}
+Prioridade: {prioridade}
+SLA: {sla_horas}h
+
+Descricao: {descricao}
+```
+
+### 5. Popup profissional de confirmacao
+
+Apos criar o chamado com sucesso, exibir um dialog elegante com:
+- Icone de check animado (verde)
+- Titulo: "Chamado Aberto com Sucesso!"
+- Numero do protocolo do chamado
+- Mensagem: "Voce recebera uma confirmacao no seu WhatsApp com os detalhes do chamado."
+- Botao "Acompanhar Chamado" que leva direto ao detalhe
+- Botao "Fechar"
+
+### 6. Integrar no fluxo de criacao
+
+Apos o insert do chamado no banco:
+1. Buscar o telefone do usuario no perfil
+2. Chamar a funcao backend `notify-ticket-whatsapp`
+3. Exibir o popup de confirmacao (independente do sucesso do WhatsApp, para nao bloquear o usuario)
 
 ## Detalhes Tecnicos
 
-### 1. Migracao do Banco de Dados
+### Migracao do banco
+- `ALTER TABLE profiles ADD COLUMN phone text;`
 
-Adicionar colunas na tabela `support_tickets`:
-- `fluxo` (text, nullable) - nome do fluxo selecionado
-- `cliente_nome` (text, nullable) - nome do cliente
-- `cliente_telefone` (text, nullable) - telefone do cliente
-- `detalhes` (text, nullable) - detalhes adicionais do problema
-- `attachment_url` (text, nullable) - URL do anexo
+### Edge Function `notify-ticket-whatsapp`
+- Recebe: dados do chamado + telefone do usuario
+- Chama a Evolution API (`POST /message/sendText/{instance}`) duas vezes (usuario + central)
+- Retorna sucesso/erro sem bloquear o fluxo principal
 
-Criar bucket de storage `ticket-attachments` com politicas RLS para upload (usuarios autenticados) e leitura (publica).
+### Arquivos modificados
+- `supabase/functions/notify-ticket-whatsapp/index.ts` (novo)
+- `supabase/config.toml` (registrar nova funcao)
+- `src/components/chamados/TicketForm.tsx` (chamar funcao + popup)
+- `src/components/chamados/SuccessDialog.tsx` (novo - popup profissional)
 
-### 2. Atualizar TicketForm.tsx
-
-- Adicionar os novos campos ao formulario
-- Implementar dropdown de fluxos com lista fixa
-- Remover campo de prioridade e calcular automaticamente pela categoria
-- Adicionar componente de upload de arquivo usando Supabase Storage
-- Abrir formulario em um Dialog/Modal ao inves de expandir inline
-
-### 3. Atualizar TicketDetail.tsx
-
-- Exibir os novos campos (fluxo, cliente, telefone, detalhes)
-- Mostrar anexo com link para download/visualizacao
-
-### 4. Atualizar TicketList.tsx
-
-- Adicionar coluna "Fluxo" na tabela
-- Exibir nome do cliente quando disponivel
+### Secrets necessarios
+- EVOLUTION_API_URL
+- EVOLUTION_API_KEY
+- EVOLUTION_INSTANCE_NAME
+- CENTRAL_WHATSAPP_NUMBER
