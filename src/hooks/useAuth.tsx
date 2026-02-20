@@ -3,6 +3,15 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const IMPERSONATION_KEY = 'evolve_impersonation';
+
+interface ImpersonationInfo {
+  originalAccessToken: string;
+  originalRefreshToken: string;
+  targetEmail: string;
+  targetName: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -11,6 +20,10 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   userRole: string | null;
+  isImpersonating: boolean;
+  impersonationInfo: ImpersonationInfo | null;
+  startImpersonation: (targetUserId: string) => Promise<void>;
+  stopImpersonation: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +35,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonationInfo, setImpersonationInfo] = useState<ImpersonationInfo | null>(null);
+
+  // Check for impersonation state on load
+  useEffect(() => {
+    const stored = localStorage.getItem(IMPERSONATION_KEY);
+    if (stored) {
+      try {
+        const info = JSON.parse(stored) as ImpersonationInfo;
+        setImpersonationInfo(info);
+        setIsImpersonating(true);
+      } catch {
+        localStorage.removeItem(IMPERSONATION_KEY);
+      }
+    }
+  }, []);
 
   const getSessionToken = () => {
     return localStorage.getItem(SESSION_KEY) || crypto.randomUUID();
@@ -83,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         fetchUserRole(session.user.id);
         
-        // Validate session on load
         const sessionToken = localStorage.getItem(SESSION_KEY);
         if (sessionToken) {
           validateSession(session.user.id, sessionToken);
@@ -95,9 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [validateSession]);
 
-  // Periodic session validation (every 30 seconds)
+  // Periodic session validation (every 30 seconds) - skip during impersonation
   useEffect(() => {
-    if (!user) return;
+    if (!user || isImpersonating) return;
     
     const sessionToken = localStorage.getItem(SESSION_KEY);
     if (!sessionToken) return;
@@ -107,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [user, validateSession]);
+  }, [user, validateSession, isImpersonating]);
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -170,12 +198,110 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await trackSession('logout', user.id, user.email || '', sessionToken);
     }
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(IMPERSONATION_KEY);
+    setIsImpersonating(false);
+    setImpersonationInfo(null);
     await supabase.auth.signOut();
     setUserRole(null);
   };
 
+  const startImpersonation = async (targetUserId: string) => {
+    try {
+      // Save current session before switching
+      const currentSession = await supabase.auth.getSession();
+      if (!currentSession.data.session) {
+        toast.error('Sessão atual inválida');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('impersonate-user', {
+        body: { targetUserId }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Store original session for restoration
+      const info: ImpersonationInfo = {
+        originalAccessToken: currentSession.data.session.access_token,
+        originalRefreshToken: currentSession.data.session.refresh_token,
+        targetEmail: data.targetEmail,
+        targetName: data.targetName,
+      };
+      localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(info));
+
+      // Use the verification URL to sign in as the target user
+      // Fetch the verification URL to exchange for a session
+      const verifyResponse = await fetch(data.verificationUrl, {
+        method: 'GET',
+        redirect: 'follow',
+      });
+
+      // The verification URL redirects and sets the session
+      // We need to extract tokens from the redirect URL
+      const redirectUrl = verifyResponse.url;
+      const hashParams = new URL(redirectUrl).hash.substring(1);
+      const params = new URLSearchParams(hashParams);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        setIsImpersonating(true);
+        setImpersonationInfo(info);
+        toast.success(`Impersonando ${data.targetName || data.targetEmail}`);
+        
+        // Navigate to home
+        window.location.href = '/';
+      } else {
+        throw new Error('Não foi possível obter a sessão do usuário alvo');
+      }
+    } catch (error: any) {
+      console.error('Impersonation error:', error);
+      toast.error(error.message || 'Erro ao impersonar usuário');
+      localStorage.removeItem(IMPERSONATION_KEY);
+    }
+  };
+
+  const stopImpersonation = async () => {
+    try {
+      const info = impersonationInfo;
+      if (!info) {
+        toast.error('Dados de impersonação não encontrados');
+        return;
+      }
+
+      // Restore original admin session
+      await supabase.auth.setSession({
+        access_token: info.originalAccessToken,
+        refresh_token: info.originalRefreshToken,
+      });
+
+      localStorage.removeItem(IMPERSONATION_KEY);
+      setIsImpersonating(false);
+      setImpersonationInfo(null);
+      toast.success('Voltou para sua conta de administrador');
+      
+      // Navigate to admin
+      window.location.href = '/admin';
+    } catch (error: any) {
+      console.error('Error stopping impersonation:', error);
+      toast.error('Erro ao restaurar sessão. Faça login novamente.');
+      localStorage.removeItem(IMPERSONATION_KEY);
+      await supabase.auth.signOut();
+      window.location.href = '/auth';
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, userRole }}>
+    <AuthContext.Provider value={{ 
+      user, session, loading, signIn, signUp, signOut, userRole,
+      isImpersonating, impersonationInfo, startImpersonation, stopImpersonation
+    }}>
       {children}
     </AuthContext.Provider>
   );

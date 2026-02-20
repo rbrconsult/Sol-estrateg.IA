@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
@@ -28,6 +29,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ImpersonationBanner />
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
