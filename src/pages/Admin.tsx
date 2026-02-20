@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -49,7 +49,7 @@ interface UserSession {
 }
 
 export default function Admin() {
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading, startImpersonation } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([]);
@@ -66,6 +66,7 @@ export default function Admin() {
   const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole });
   const [newPassword, setNewPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
+  const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null);
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
       toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
@@ -390,6 +391,8 @@ export default function Admin() {
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Usuário Excluído</Badge>;
       case 'password_reset':
         return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Senha Alterada</Badge>;
+      case 'user_impersonation':
+        return <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Impersonação</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
     }
@@ -532,6 +535,24 @@ export default function Admin() {
                         <TableCell>{formatDate(u.created_at)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={async () => {
+                                setImpersonateLoading(u.id);
+                                await startImpersonation(u.id);
+                                setImpersonateLoading(null);
+                              }}
+                              disabled={u.id === user?.id || impersonateLoading === u.id}
+                              className="h-8 w-8 text-primary hover:text-primary"
+                              title="Impersonar Usuário"
+                            >
+                              {impersonateLoading === u.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
