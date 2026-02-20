@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Send } from "lucide-react";
+import { Plus, Send, Paperclip, X } from "lucide-react";
 
 interface TicketFormProps {
   onTicketCreated: () => void;
@@ -21,30 +21,116 @@ const SLA_HOURS: Record<string, number> = {
   baixa: 72,
 };
 
+const CATEGORY_PRIORITY: Record<string, string> = {
+  urgencia: "critica",
+  bug: "alta",
+  melhoria: "media",
+  duvida: "baixa",
+};
+
+const FLUXOS = [
+  "Fluxo 1 - Captura de Leads Meta Ads e Disparo inicial whatsapp + IA",
+  "Fluxo 2 - Captura de Leads Site GERAL e Disparo inicial whatsapp + IA",
+  "Robo FUP FRIO",
+  "Robo SDR / Sol",
+  "Fluxo Remarketing",
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+
 export function TicketForm({ onTicketCreated }: TicketFormProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [titulo, setTitulo] = useState("");
+  const [fluxo, setFluxo] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [clienteNome, setClienteNome] = useState("");
+  const [clienteTelefone, setClienteTelefone] = useState("");
+  const [detalhes, setDetalhes] = useState("");
   const [categoria, setCategoria] = useState("duvida");
-  const [prioridade, setPrioridade] = useState("media");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const prioridade = CATEGORY_PRIORITY[categoria] || "media";
+
+  const priorityLabel: Record<string, string> = {
+    critica: "🔴 Crítica (4h)",
+    alta: "🟠 Alta (24h)",
+    media: "🟡 Média (48h)",
+    baixa: "🟢 Baixa (72h)",
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!ALLOWED_TYPES.includes(selected.type)) {
+      toast.error("Tipo de arquivo não suportado. Use JPG, PNG, WEBP ou PDF.");
+      return;
+    }
+    if (selected.size > MAX_FILE_SIZE) {
+      toast.error("Arquivo muito grande. Limite de 10MB.");
+      return;
+    }
+    setFile(selected);
+  };
+
+  const resetForm = () => {
+    setTitulo("");
+    setFluxo("");
+    setDescricao("");
+    setClienteNome("");
+    setClienteTelefone("");
+    setDetalhes("");
+    setCategoria("duvida");
+    setFile(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
+
+    let attachmentUrl: string | null = null;
+
+    // Upload file if exists
+    if (file) {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("ticket-attachments")
+        .upload(path, file);
+
+      if (uploadError) {
+        toast.error("Erro ao enviar anexo: " + uploadError.message);
+        setLoading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("ticket-attachments")
+        .getPublicUrl(path);
+
+      attachmentUrl = urlData.publicUrl;
+    }
+
     const slaHours = SLA_HOURS[prioridade];
     const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000).toISOString();
 
     const { error } = await supabase.from("support_tickets" as any).insert({
       user_id: user.id,
       titulo,
+      fluxo,
       descricao,
+      cliente_nome: clienteNome,
+      cliente_telefone: clienteTelefone,
+      detalhes: detalhes || null,
       categoria,
       prioridade,
       sla_deadline: slaDeadline,
+      attachment_url: attachmentUrl,
     });
 
     setLoading(false);
@@ -55,75 +141,109 @@ export function TicketForm({ onTicketCreated }: TicketFormProps) {
     }
 
     toast.success("Chamado aberto com sucesso!");
-    setTitulo("");
-    setDescricao("");
-    setCategoria("duvida");
-    setPrioridade("media");
+    resetForm();
     setOpen(false);
     onTicketCreated();
   };
 
-  if (!open) {
-    return (
-      <Button onClick={() => setOpen(true)} className="gap-2">
-        <Plus className="h-4 w-4" /> Abrir Chamado
-      </Button>
-    );
-  }
-
   return (
-    <Card className="border-primary/30">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Novo Chamado</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" /> Abrir Chamado
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Novo Chamado</DialogTitle>
+        </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="titulo">Título</Label>
+            <Label htmlFor="titulo">Título *</Label>
             <Input id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Descreva o problema brevemente" required />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="descricao">Descrição</Label>
-            <Textarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Detalhe o problema, passos para reproduzir, etc." rows={4} required />
+            <Label>Fluxo *</Label>
+            <Select value={fluxo} onValueChange={setFluxo} required>
+              <SelectTrigger><SelectValue placeholder="Selecione o fluxo" /></SelectTrigger>
+              <SelectContent>
+                {FLUXOS.map((f) => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="descricao">Descrição do Problema *</Label>
+            <Textarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descreva o problema em detalhes" rows={3} required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Select value={categoria} onValueChange={setCategoria}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bug">🐛 Bug</SelectItem>
-                  <SelectItem value="duvida">❓ Dúvida</SelectItem>
-                  <SelectItem value="melhoria">✨ Melhoria</SelectItem>
-                  <SelectItem value="urgencia">🚨 Urgência</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="clienteNome">Nome do Cliente *</Label>
+              <Input id="clienteNome" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do cliente" required />
             </div>
-
             <div className="space-y-2">
-              <Label>Prioridade</Label>
-              <Select value={prioridade} onValueChange={setPrioridade}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="baixa">🟢 Baixa (72h)</SelectItem>
-                  <SelectItem value="media">🟡 Média (48h)</SelectItem>
-                  <SelectItem value="alta">🟠 Alta (24h)</SelectItem>
-                  <SelectItem value="critica">🔴 Crítica (4h)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="clienteTelefone">Telefone do Cliente *</Label>
+              <Input id="clienteTelefone" value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} placeholder="(00) 00000-0000" required />
             </div>
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit" disabled={loading} className="gap-2">
+          <div className="space-y-2">
+            <Label htmlFor="detalhes">Detalhes do Problema</Label>
+            <Textarea id="detalhes" value={detalhes} onChange={(e) => setDetalhes(e.target.value)} placeholder="Informações adicionais (opcional)" rows={2} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Categoria *</Label>
+            <Select value={categoria} onValueChange={setCategoria}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bug">🐛 Bug</SelectItem>
+                <SelectItem value="duvida">❓ Dúvida</SelectItem>
+                <SelectItem value="melhoria">✨ Melhoria</SelectItem>
+                <SelectItem value="urgencia">🚨 Urgência</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Prioridade automática: {priorityLabel[prioridade]}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Anexo (imagem ou PDF)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.pdf"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {file ? (
+              <div className="flex items-center gap-2 text-sm bg-muted/30 rounded-lg p-2">
+                <Paperclip className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate flex-1">{file.name}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFile(null)}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="h-4 w-4" /> Adicionar Anexo
+              </Button>
+            )}
+          </div>
+
+          <div className="flex gap-2 justify-end pt-2">
+            <Button type="button" variant="ghost" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
+            <Button type="submit" disabled={loading || !fluxo} className="gap-2">
               <Send className="h-4 w-4" /> {loading ? "Enviando..." : "Enviar Chamado"}
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

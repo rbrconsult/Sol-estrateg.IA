@@ -71,10 +71,15 @@ export type Database = {
       support_tickets: {
         Row: {
           assigned_to: string | null
+          attachment_url: string | null
           categoria: Database["public"]["Enums"]["ticket_category"]
+          cliente_nome: string | null
+          cliente_telefone: string | null
           closed_at: string | null
           created_at: string
           descricao: string
+          detalhes: string | null
+          fluxo: string | null
           id: string
           prioridade: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
@@ -86,10 +91,15 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          attachment_url?: string | null
           categoria?: Database["public"]["Enums"]["ticket_category"]
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
           closed_at?: string | null
           created_at?: string
           descricao: string
+          detalhes?: string | null
+          fluxo?: string | null
           id?: string
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
@@ -101,10 +111,15 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          attachment_url?: string | null
           categoria?: Database["public"]["Enums"]["ticket_category"]
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
           closed_at?: string | null
           created_at?: string
           descricao?: string
+          detalhes?: string | null
+          fluxo?: string | null
           id?: string
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
