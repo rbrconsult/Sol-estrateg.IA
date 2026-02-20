@@ -36,6 +36,12 @@ const FLUXOS = [
   "Fluxo Remarketing",
 ];
 
+const PLATAFORMAS = [
+  "Krolic",
+  "Solar Market",
+  "Drive | Planilhas",
+];
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
@@ -45,6 +51,7 @@ export function TicketForm({ onTicketCreated }: TicketFormProps) {
   const [loading, setLoading] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [fluxo, setFluxo] = useState("");
+  const [plataforma, setPlataforma] = useState("");
   const [descricao, setDescricao] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [clienteTelefone, setClienteTelefone] = useState("");
@@ -79,6 +86,7 @@ export function TicketForm({ onTicketCreated }: TicketFormProps) {
   const resetForm = () => {
     setTitulo("");
     setFluxo("");
+    setPlataforma("");
     setDescricao("");
     setClienteNome("");
     setClienteTelefone("");
@@ -123,6 +131,7 @@ export function TicketForm({ onTicketCreated }: TicketFormProps) {
       user_id: user.id,
       titulo,
       fluxo,
+      plataforma: plataforma || null,
       descricao,
       cliente_nome: clienteNome,
       cliente_telefone: clienteTelefone,
@@ -170,6 +179,18 @@ export function TicketForm({ onTicketCreated }: TicketFormProps) {
               <SelectContent>
                 {FLUXOS.map((f) => (
                   <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Plataforma</Label>
+            <Select value={plataforma} onValueChange={setPlataforma}>
+              <SelectTrigger><SelectValue placeholder="Selecione a plataforma" /></SelectTrigger>
+              <SelectContent>
+                {PLATAFORMAS.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -81,6 +81,7 @@ export type Database = {
           detalhes: string | null
           fluxo: string | null
           id: string
+          plataforma: string | null
           prioridade: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
           sla_deadline: string
@@ -101,6 +102,7 @@ export type Database = {
           detalhes?: string | null
           fluxo?: string | null
           id?: string
+          plataforma?: string | null
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
           sla_deadline: string
@@ -121,6 +123,7 @@ export type Database = {
           detalhes?: string | null
           fluxo?: string | null
           id?: string
+          plataforma?: string | null
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
           sla_deadline?: string
