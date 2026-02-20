@@ -254,7 +254,14 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
               )}
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-1">
+            {isAdmin && (
+              <Button variant="ghost" size="icon" onClick={handleDelete} className="text-destructive hover:bg-destructive/10" title="Excluir chamado">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Ticket info */}
