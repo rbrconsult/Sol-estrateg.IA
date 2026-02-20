@@ -241,7 +241,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* WhatsApp do Usuário */}
             <div className="space-y-2">
-              <Label htmlFor="userPhone">Seu WhatsApp *</Label>
+              <Label htmlFor="userPhone">WhatsApp para notificação *</Label>
               <Input
                 id="userPhone"
                 value={userPhone}
@@ -257,7 +257,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
                 maxLength={15}
                 required
               />
-              <p className="text-xs text-muted-foreground">Você receberá notificações neste número</p>
+              <p className="text-xs text-muted-foreground">Quem deve ser notificado sobre este chamado?</p>
             </div>
 
             <div className="space-y-2">
