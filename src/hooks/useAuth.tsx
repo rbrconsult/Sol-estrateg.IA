@@ -112,9 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         fetchUserRole(session.user.id);
         
-        const sessionToken = localStorage.getItem(SESSION_KEY);
-        if (sessionToken) {
-          validateSession(session.user.id, sessionToken);
+        // Skip session validation if impersonating
+        const isImpersonatingNow = !!localStorage.getItem(IMPERSONATION_KEY);
+        if (!isImpersonatingNow) {
+          const sessionToken = localStorage.getItem(SESSION_KEY);
+          if (sessionToken) {
+            validateSession(session.user.id, sessionToken);
+          }
         }
       }
       setLoading(false);
