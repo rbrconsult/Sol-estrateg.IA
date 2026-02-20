@@ -1,37 +1,45 @@
 
-# Notificacoes WhatsApp via Evolution API + Popup Profissional
+
+# WhatsApp Notifications + Popup Profissional + Config no Admin
 
 ## Resumo
 
-Ao abrir um chamado, o sistema vai:
-1. Mostrar um popup profissional confirmando a abertura do chamado
-2. Enviar uma mensagem WhatsApp para o usuario que abriu o chamado
-3. Enviar uma mensagem WhatsApp para a central de comandos RBR Consult (+55 17 99733-5222)
+Implementar o sistema completo de notificacoes WhatsApp ao abrir chamado, com popup de confirmacao profissional e uma aba de configuracoes no Painel de Administracao para gerenciar as credenciais da Evolution API.
 
-## Etapas
+## 1. Tabela de Configuracoes no Banco
 
-### 1. Adicionar campo de telefone no perfil do usuario
+Criar uma tabela `app_settings` para armazenar as configuracoes da Evolution API de forma editavel pelo admin, sem depender de secrets fixos:
 
-Adicionar coluna `phone` na tabela `profiles` para que cada usuario tenha seu numero de WhatsApp cadastrado. Isso permite saber para qual numero enviar a notificacao quando ele abrir um chamado.
+- `key` (text, primary key): nome da configuracao
+- `value` (text): valor da configuracao
+- `updated_at` (timestamp)
 
-### 2. Tela para o usuario cadastrar seu telefone
+Valores iniciais:
+- `evolution_api_url` = `https://api.rbrsistemas.com`
+- `evolution_api_key` = `34228796396A-4285-A3DC-EEF91521C390`
+- `evolution_instance_name` = `RBR Flow`
+- `central_whatsapp_number` = `5517997335222`
 
-Ao abrir um chamado, se o usuario nao tiver telefone cadastrado no perfil, o sistema pedira que ele informe antes de prosseguir. Apos cadastrado, o numero fica salvo para os proximos chamados.
+RLS: somente `super_admin` pode ler e editar.
 
-### 3. Armazenar credenciais da Evolution API como secrets
+## 2. Aba "Configuracoes" no Painel de Administracao
 
-Salvar as credenciais de forma segura no backend:
-- `EVOLUTION_API_URL` = https://api.rbrsistemas.com
-- `EVOLUTION_API_KEY` = 34228796396A-4285-A3DC-EEF91521C390
-- `EVOLUTION_INSTANCE_NAME` = RBR Flow
-- `CENTRAL_WHATSAPP_NUMBER` = 5517997335222
+Adicionar uma nova aba no Admin (`/admin`) com:
 
-### 4. Criar funcao backend `notify-ticket-whatsapp`
+- Campos editaveis para URL da API, API Key, Nome da Instancia e Numero da Central
+- Botao "Salvar Configuracoes"
+- Indicador visual de status (salvo/nao salvo)
+- Campo de API Key com mascara (mostra parcialmente, tipo `34228***C390`)
 
-Uma funcao backend que recebe os dados do chamado e envia duas mensagens via Evolution API:
+## 3. Edge Function `notify-ticket-whatsapp`
 
-**Mensagem para o usuario (quem abriu):**
-```
+Funcao backend que:
+1. Busca as credenciais da Evolution API na tabela `app_settings`
+2. Envia mensagem WhatsApp para o usuario que abriu o chamado
+3. Envia mensagem WhatsApp para a central de comandos
+
+Mensagem para o usuario:
+```text
 Ola, {nome}! Seu chamado #{numero} foi aberto com sucesso.
 
 Titulo: {titulo}
@@ -45,8 +53,8 @@ Acompanhe o status pelo painel ou por aqui. Responderemos em breve!
 RBR Consult
 ```
 
-**Mensagem para a central de comandos:**
-```
+Mensagem para a central:
+```text
 NOVO CHAMADO #{numero}
 
 Aberto por: {nome_usuario}
@@ -61,41 +69,47 @@ SLA: {sla_horas}h
 Descricao: {descricao}
 ```
 
-### 5. Popup profissional de confirmacao
+## 4. Popup Profissional de Confirmacao
 
-Apos criar o chamado com sucesso, exibir um dialog elegante com:
+Novo componente `SuccessDialog.tsx` exibido apos criar o chamado:
+
 - Icone de check animado (verde)
 - Titulo: "Chamado Aberto com Sucesso!"
-- Numero do protocolo do chamado
-- Mensagem: "Voce recebera uma confirmacao no seu WhatsApp com os detalhes do chamado."
-- Botao "Acompanhar Chamado" que leva direto ao detalhe
+- Numero do protocolo
+- Mensagem: "Voce recebera uma confirmacao no seu WhatsApp"
+- Botao "Acompanhar Chamado"
 - Botao "Fechar"
 
-### 6. Integrar no fluxo de criacao
+## 5. Campo de Telefone no Perfil
 
-Apos o insert do chamado no banco:
-1. Buscar o telefone do usuario no perfil
-2. Chamar a funcao backend `notify-ticket-whatsapp`
-3. Exibir o popup de confirmacao (independente do sucesso do WhatsApp, para nao bloquear o usuario)
+Se o usuario nao tiver telefone cadastrado no perfil, o formulario de chamado pedira para informar antes de enviar. O numero fica salvo para os proximos chamados.
+
+## 6. Integracao no Fluxo de Criacao
+
+Apos inserir o chamado no banco:
+1. Buscar telefone do usuario no perfil
+2. Chamar a edge function `notify-ticket-whatsapp` (sem bloquear o fluxo)
+3. Exibir o popup de confirmacao
+
+---
 
 ## Detalhes Tecnicos
 
-### Migracao do banco
-- `ALTER TABLE profiles ADD COLUMN phone text;`
-
-### Edge Function `notify-ticket-whatsapp`
-- Recebe: dados do chamado + telefone do usuario
-- Chama a Evolution API (`POST /message/sendText/{instance}`) duas vezes (usuario + central)
-- Retorna sucesso/erro sem bloquear o fluxo principal
+### Arquivos novos
+- `supabase/functions/notify-ticket-whatsapp/index.ts` - Edge function
+- `src/components/chamados/SuccessDialog.tsx` - Popup profissional
 
 ### Arquivos modificados
-- `supabase/functions/notify-ticket-whatsapp/index.ts` (novo)
-- `supabase/config.toml` (registrar nova funcao)
-- `src/components/chamados/TicketForm.tsx` (chamar funcao + popup)
-- `src/components/chamados/SuccessDialog.tsx` (novo - popup profissional)
+- `src/pages/Admin.tsx` - Nova aba "Configuracoes" com formulario da Evolution API
+- `src/components/chamados/TicketForm.tsx` - Integrar chamada da edge function + popup + campo telefone do perfil
 
-### Secrets necessarios
-- EVOLUTION_API_URL
-- EVOLUTION_API_KEY
-- EVOLUTION_INSTANCE_NAME
-- CENTRAL_WHATSAPP_NUMBER
+### Migracao SQL
+- Criar tabela `app_settings` com RLS para super_admin
+- Inserir valores iniciais das credenciais Evolution API
+
+### Fluxo da Edge Function
+1. Recebe dados do chamado via POST
+2. Consulta `app_settings` para obter credenciais
+3. Chama `POST https://{url}/message/sendText/{instance}` da Evolution API duas vezes
+4. Retorna status sem bloquear o frontend
+
