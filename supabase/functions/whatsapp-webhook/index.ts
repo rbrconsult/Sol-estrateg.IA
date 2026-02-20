@@ -12,7 +12,9 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    console.log("Webhook received:", JSON.stringify(payload).slice(0, 500));
+    console.log("Webhook received - event:", payload?.event);
+    console.log("Webhook payload keys:", Object.keys(payload || {}));
+    console.log("Webhook payload preview:", JSON.stringify(payload).slice(0, 800));
 
     // Evolution API sends messages in data object
     const data = payload?.data;
