@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    console.log("Webhook proxy received payload");
+    console.log("Webhook proxy received payload:", JSON.stringify(payload).slice(0, 1000));
 
     // Forward to both webhooks in parallel
     const targets = [
