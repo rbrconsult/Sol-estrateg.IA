@@ -1,68 +1,79 @@
 
-# Plano de Correção de Segurança - Evolve CRM
+# Reformulacao do Formulario de Chamados
 
-## Resumo
-Corrigir vulnerabilidades identificadas na análise de segurança sem impactar a usabilidade.
+## Resumo das Alteracoes
 
----
+O formulario de abertura de chamados sera redesenhado com novos campos, upload de anexos e prioridade automatica baseada na categoria selecionada.
 
-## 1. Hash de Tokens de Sessão (CRÍTICO)
-**Problema:** Tokens em texto plano na `user_sessions`, acessíveis via SELECT.
+## Novos Campos do Formulario
 
-**Solução:**
-- Habilitar extensão `pgcrypto` 
-- Criar função `hash_session_token(text)` com SHA-256
-- Edge function `track-session`: fazer hash antes de INSERT/query
-- Invalidar sessões existentes (forçar re-login único)
-- Remover acesso direto do usuário à tabela `user_sessions`
+| Campo | Tipo | Obrigatorio |
+|-------|------|-------------|
+| Titulo | Input texto | Sim |
+| Fluxo | Dropdown com lista fixa | Sim |
+| Descricao do Problema | Textarea | Sim |
+| Nome do Cliente | Input texto | Sim |
+| Telefone do Cliente | Input texto | Sim |
+| Detalhes do Problema | Textarea | Nao |
+| Anexo (imagem/documento) | Upload de arquivo | Nao |
+| Categoria | Dropdown (manter atual) | Sim |
+| Prioridade | Calculada automaticamente | --- |
 
-**Impacto:** Re-login único. Transparente depois.
+## Lista de Fluxos (Dropdown)
 
----
+- Fluxo 1 - Captura de Leads Meta Ads e Disparo inicial whatsapp + IA
+- Fluxo 2 - Captura de Leads Site GERAL e Disparo inicial whatsapp + IA
+- Robo FUP FRIO
+- Robo SDR / Sol
+- Fluxo Remarketing
 
-## 2. Remover RLS desnecessário em `user_sessions`
-**Problema:** Usuários podem SELECT/UPDATE/INSERT direto, expondo tokens.
+## Logica de Prioridade Automatica
 
-**Solução:** Remover políticas de usuário. Manter apenas super_admin. Toda operação já usa edge function com service role.
+A prioridade sera definida automaticamente com base na categoria:
 
-**Impacto:** Nenhum.
+| Categoria | Prioridade | SLA |
+|-----------|-----------|-----|
+| Urgencia | Critica | 4h |
+| Bug | Alta | 24h |
+| Melhoria | Media | 48h |
+| Duvida | Baixa | 72h |
 
----
+O campo de prioridade nao aparecera mais no formulario para o usuario.
 
-## 3. Remover INSERT direto em `access_logs`
-**Problema:** Qualquer usuário pode inserir logs (poluição de audit trail).
+## Upload de Anexos
 
-**Solução:** Remover política INSERT de usuário. Inserção já acontece via edge function.
+- Criar um bucket de storage chamado `ticket-attachments` (publico para leitura)
+- Permitir upload de imagens (jpg, png, webp) e documentos (pdf)
+- Limite de 10MB por arquivo
+- Armazenar a URL do arquivo na tabela `support_tickets`
 
-**Impacto:** Nenhum.
+## Detalhes Tecnicos
 
----
+### 1. Migracao do Banco de Dados
 
-## 4. Habilitar Proteção Contra Senhas Vazadas
-**Problema:** Senhas comprometidas podem ser usadas.
+Adicionar colunas na tabela `support_tickets`:
+- `fluxo` (text, nullable) - nome do fluxo selecionado
+- `cliente_nome` (text, nullable) - nome do cliente
+- `cliente_telefone` (text, nullable) - telefone do cliente
+- `detalhes` (text, nullable) - detalhes adicionais do problema
+- `attachment_url` (text, nullable) - URL do anexo
 
-**Solução:** Configurar no auth (HaveIBeenPwned check).
+Criar bucket de storage `ticket-attachments` com politicas RLS para upload (usuarios autenticados) e leitura (publica).
 
-**Impacto:** Senhas fracas/vazadas rejeitadas no cadastro.
+### 2. Atualizar TicketForm.tsx
 
----
+- Adicionar os novos campos ao formulario
+- Implementar dropdown de fluxos com lista fixa
+- Remover campo de prioridade e calcular automaticamente pela categoria
+- Adicionar componente de upload de arquivo usando Supabase Storage
+- Abrir formulario em um Dialog/Modal ao inves de expandir inline
 
-## 5. Permitir Agentes Verem Tickets Atribuídos
-**Problema:** `assigned_to` não tem acesso via RLS.
+### 3. Atualizar TicketDetail.tsx
 
-**Solução:** Adicionar `OR assigned_to = auth.uid()` nas políticas SELECT/UPDATE de `support_tickets` e `ticket_messages`.
+- Exibir os novos campos (fluxo, cliente, telefone, detalhes)
+- Mostrar anexo com link para download/visualizacao
 
-**Impacto:** Melhora usabilidade para agentes.
+### 4. Atualizar TicketList.tsx
 
----
-
-## 6. Super Admin ver perfis (profiles)
-**Solução:** Adicionar SELECT para super_admin na tabela `profiles`.
-
----
-
-## Ordem de Execução
-1. Migração SQL (pgcrypto + hash function + RLS adjustments)
-2. Atualizar edge function `track-session`
-3. Habilitar leaked password protection
-4. Marcar findings como resolvidos
+- Adicionar coluna "Fluxo" na tabela
+- Exibir nome do cliente quando disponivel
