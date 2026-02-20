@@ -112,6 +112,9 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           {ticket.fluxo && (
             <p className="text-xs"><span className="font-medium">Fluxo:</span> {ticket.fluxo}</p>
           )}
+          {ticket.plataforma && (
+            <p className="text-xs"><span className="font-medium">Plataforma:</span> {ticket.plataforma}</p>
+          )}
           {ticket.cliente_nome && (
             <p className="text-xs"><span className="font-medium">Cliente:</span> {ticket.cliente_nome} {ticket.cliente_telefone && `• ${ticket.cliente_telefone}`}</p>
           )}
