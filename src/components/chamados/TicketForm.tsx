@@ -172,6 +172,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
         prioridade,
         sla_deadline: slaDeadline,
         attachment_url: attachmentUrl,
+        notification_phone: userPhone.replace(/\D/g, ""),
       })
       .select("id")
       .single();

@@ -103,6 +103,7 @@ export type Database = {
           first_response_at: string | null
           fluxo: string | null
           id: string
+          notification_phone: string | null
           plataforma: string | null
           prioridade: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
@@ -125,6 +126,7 @@ export type Database = {
           first_response_at?: string | null
           fluxo?: string | null
           id?: string
+          notification_phone?: string | null
           plataforma?: string | null
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
@@ -147,6 +149,7 @@ export type Database = {
           first_response_at?: string | null
           fluxo?: string | null
           id?: string
+          notification_phone?: string | null
           plataforma?: string | null
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
@@ -163,6 +166,7 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          source: string | null
           ticket_id: string
           user_id: string
         }
@@ -170,6 +174,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          source?: string | null
           ticket_id: string
           user_id: string
         }
@@ -177,6 +182,7 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          source?: string | null
           ticket_id?: string
           user_id?: string
         }

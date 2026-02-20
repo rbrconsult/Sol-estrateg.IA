@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SLATimer } from "./SLATimer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, X, CheckCircle, Undo2, Clock, Trash2 } from "lucide-react";
+import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -340,11 +340,18 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                   key={msg.id}
                   className={cn(
                     "rounded-lg p-3 text-sm",
+                    msg.source === "whatsapp" ? "bg-emerald-500/10 mr-8 border border-emerald-500/20" :
                     msg.user_id === user?.id ? "bg-primary/10 ml-8" : "bg-muted/50 mr-8"
                   )}
                 >
                   <p>{msg.message}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    {msg.source === "whatsapp" && (
+                      <MessageCircle className="h-3 w-3 text-emerald-400" />
+                    )}
+                    {msg.source === "whatsapp" && (
+                      <span className="text-emerald-400 font-medium">WhatsApp • </span>
+                    )}
                     {format(new Date(msg.created_at), "dd/MM HH:mm", { locale: ptBR })}
                   </p>
                 </div>
