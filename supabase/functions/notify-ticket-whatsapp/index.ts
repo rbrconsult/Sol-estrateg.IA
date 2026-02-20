@@ -12,21 +12,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const {
-      ticketId,
-      ticketNumero,
-      titulo,
-      fluxo,
-      plataforma,
-      clienteNome,
-      clienteTelefone,
-      categoria,
-      prioridade,
-      slaHoras,
-      descricao,
-      userPhone,
-      userName,
-    } = await req.json();
+    const body = await req.json();
+    const { type = "new" } = body;
 
     // Create admin client to read app_settings
     const supabaseAdmin = createClient(
@@ -70,24 +57,79 @@ Deno.serve(async (req) => {
       );
     }
 
-    const prioridadeLabel: Record<string, string> = {
-      critica: "🔴 Crítica",
-      alta: "🟠 Alta",
-      media: "🟡 Média",
-      baixa: "🟢 Baixa",
+    const sendMessage = async (number: string, text: string) => {
+      const url = `${apiUrl}/message/sendText/${encodeURIComponent(instanceName)}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: apiKey,
+        },
+        body: JSON.stringify({ number, text }),
+      });
+      const data = await response.json();
+      return { status: response.status, data };
     };
 
-    const categoriaLabel: Record<string, string> = {
-      bug: "🐛 Bug",
-      duvida: "❓ Dúvida",
-      melhoria: "✨ Melhoria",
-      urgencia: "🚨 Urgência",
-    };
+    const results: Record<string, unknown> = {};
 
-    const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : ticketNumero;
+    if (type === "return") {
+      // Handle ticket return notification
+      const { ticketId, titulo, reason, userPhone, userName } = body;
+      const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A";
 
-    // Message to user
-    const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi aberto com sucesso.
+      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} precisa de complemento.
+
+📋 *${titulo}*
+
+⚠️ Motivo da devolução:
+${reason}
+
+Por favor, acesse o painel e responda com as informações solicitadas para que possamos dar continuidade ao atendimento.
+
+RBR Consult`;
+
+      if (userPhone) {
+        const cleanPhone = userPhone.replace(/\D/g, "");
+        if (cleanPhone.length >= 10) {
+          const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+          try {
+            results.user = await sendMessage(phoneWithCountry, userMessage);
+          } catch (e) {
+            console.error("Error sending return notification to user:", e);
+            results.user = { error: String(e) };
+          }
+        }
+      }
+
+      // Notify central
+      if (centralNumber) {
+        const centralMsg = `*CHAMADO DEVOLVIDO #${shortId}*\n\nTítulo: ${titulo}\nDevolvido para: ${userName || "N/A"}\nMotivo: ${reason}`;
+        try {
+          results.central = await sendMessage(centralNumber, centralMsg);
+        } catch (e) {
+          console.error("Error sending to central:", e);
+          results.central = { error: String(e) };
+        }
+      }
+    } else {
+      // Handle new ticket notification (existing logic)
+      const {
+        ticketId, ticketNumero, titulo, fluxo, plataforma,
+        clienteNome, clienteTelefone, categoria, prioridade,
+        slaHoras, descricao, userPhone, userName,
+      } = body;
+
+      const prioridadeLabel: Record<string, string> = {
+        critica: "🔴 Crítica", alta: "🟠 Alta", media: "🟡 Média", baixa: "🟢 Baixa",
+      };
+      const categoriaLabel: Record<string, string> = {
+        bug: "🐛 Bug", duvida: "❓ Dúvida", melhoria: "✨ Melhoria", urgencia: "🚨 Urgência",
+      };
+
+      const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : ticketNumero;
+
+      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi aberto com sucesso.
 
 Título: ${titulo}
 Fluxo: ${fluxo || "N/A"}
@@ -99,8 +141,7 @@ Acompanhe o status pelo painel ou por aqui. Responderemos em breve!
 
 RBR Consult`;
 
-    // Message to central
-    const centralMessage = `*NOVO CHAMADO #${shortId}*
+      const centralMessage = `*NOVO CHAMADO #${shortId}*
 
 Aberto por: ${userName || "N/A"}
 Título: ${titulo}
@@ -113,46 +154,26 @@ SLA: ${slaHoras}h
 
 Descrição: ${descricao}`;
 
-    const sendMessage = async (number: string, text: string) => {
-      const url = `${apiUrl}/message/sendText/${encodeURIComponent(instanceName)}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: apiKey,
-        },
-        body: JSON.stringify({
-          number,
-          text,
-        }),
-      });
-      const data = await response.json();
-      return { status: response.status, data };
-    };
-
-    const results: Record<string, unknown> = {};
-
-    // Send to user if phone provided
-    if (userPhone) {
-      const cleanPhone = userPhone.replace(/\D/g, "");
-      if (cleanPhone.length >= 10) {
-        const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
-        try {
-          results.user = await sendMessage(phoneWithCountry, userMessage);
-        } catch (e) {
-          console.error("Error sending to user:", e);
-          results.user = { error: String(e) };
+      if (userPhone) {
+        const cleanPhone = userPhone.replace(/\D/g, "");
+        if (cleanPhone.length >= 10) {
+          const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+          try {
+            results.user = await sendMessage(phoneWithCountry, userMessage);
+          } catch (e) {
+            console.error("Error sending to user:", e);
+            results.user = { error: String(e) };
+          }
         }
       }
-    }
 
-    // Send to central
-    if (centralNumber) {
-      try {
-        results.central = await sendMessage(centralNumber, centralMessage);
-      } catch (e) {
-        console.error("Error sending to central:", e);
-        results.central = { error: String(e) };
+      if (centralNumber) {
+        try {
+          results.central = await sendMessage(centralNumber, centralMessage);
+        } catch (e) {
+          console.error("Error sending to central:", e);
+          results.central = { error: String(e) };
+        }
       }
     }
 

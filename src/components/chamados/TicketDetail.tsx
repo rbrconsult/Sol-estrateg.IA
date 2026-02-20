@@ -154,6 +154,29 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
     await recordStatusChange(oldStatus, "aguardando_usuario", returnReason.trim());
 
+    // Send WhatsApp notification to ticket owner
+    try {
+      // Get ticket owner's phone from profiles
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("phone, full_name")
+        .eq("id", ticket.user_id)
+        .single();
+
+      await supabase.functions.invoke("notify-ticket-whatsapp", {
+        body: {
+          type: "return",
+          ticketId,
+          titulo: ticket.titulo,
+          reason: returnReason.trim(),
+          userPhone: ownerProfile?.phone || null,
+          userName: ownerProfile?.full_name || null,
+        },
+      });
+    } catch (e) {
+      console.error("Error sending return WhatsApp notification:", e);
+    }
+
     setReturning(false);
     setReturnReason("");
     setReturnOpen(false);
