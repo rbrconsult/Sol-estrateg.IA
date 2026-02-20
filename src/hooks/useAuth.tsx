@@ -238,15 +238,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(info));
 
       // Set the impersonated session using tokens from the edge function
-      await supabase.auth.setSession({
+      const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
+
+      if (sessionError) {
+        throw new Error('Falha ao definir sessão: ' + sessionError.message);
+      }
 
       setIsImpersonating(true);
       setImpersonationInfo(info);
       toast.success(`Impersonando ${data.targetName || data.targetEmail}`);
       
+      // Small delay to ensure session is persisted before reload
+      await new Promise(resolve => setTimeout(resolve, 500));
       window.location.href = '/';
     } catch (error: any) {
       console.error('Impersonation error:', error);
