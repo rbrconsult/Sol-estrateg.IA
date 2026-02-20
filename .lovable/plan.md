@@ -1,115 +1,80 @@
 
 
-# WhatsApp Notifications + Popup Profissional + Config no Admin
+# Receber Respostas do WhatsApp nos Chamados
 
-## Resumo
+## Objetivo
+Quando um cliente responder a mensagem do WhatsApp, a resposta aparece automaticamente como mensagem dentro do chamado no painel.
 
-Implementar o sistema completo de notificacoes WhatsApp ao abrir chamado, com popup de confirmacao profissional e uma aba de configuracoes no Painel de Administracao para gerenciar as credenciais da Evolution API.
+## Como vai funcionar
 
-## 1. Tabela de Configuracoes no Banco
+1. O sistema envia uma notificacao WhatsApp ao abrir o chamado (ja funciona)
+2. O cliente responde pelo WhatsApp
+3. A Evolution API envia essa resposta para o nosso webhook
+4. O webhook identifica o chamado pelo numero de telefone e insere a mensagem
+5. O painel atualiza em tempo real (ja funciona via realtime)
 
-Criar uma tabela `app_settings` para armazenar as configuracoes da Evolution API de forma editavel pelo admin, sem depender de secrets fixos:
+## Etapas de Implementacao
 
-- `key` (text, primary key): nome da configuracao
-- `value` (text): valor da configuracao
-- `updated_at` (timestamp)
+### 1. Adicionar coluna `notification_phone` na tabela `support_tickets`
+- Armazena o numero de WhatsApp informado na abertura do chamado
+- Permite buscar o chamado correto quando chega uma resposta do WhatsApp
 
-Valores iniciais:
-- `evolution_api_url` = `https://api.rbrsistemas.com`
-- `evolution_api_key` = `34228796396A-4285-A3DC-EEF91521C390`
-- `evolution_instance_name` = `RBR Flow`
-- `central_whatsapp_number` = `5517997335222`
+### 2. Adicionar coluna `source` na tabela `ticket_messages`
+- Valores: `panel` (padrao) ou `whatsapp`
+- Permite diferenciar visualmente mensagens vindas do WhatsApp
 
-RLS: somente `super_admin` pode ler e editar.
+### 3. Criar RLS para permitir insercao via service role
+- O webhook usa `SUPABASE_SERVICE_ROLE_KEY`, que bypassa RLS automaticamente
+- Nenhuma politica adicional necessaria
 
-## 2. Aba "Configuracoes" no Painel de Administracao
+### 4. Criar Edge Function `whatsapp-webhook`
+- Recebe o payload da Evolution API (POST)
+- Extrai o numero do remetente (`data.key.remoteJid`) e o texto (`data.message.conversation` ou `data.message.extendedTextMessage.text`)
+- Filtra: ignora mensagens enviadas por nos (fromMe), status updates, e mensagens sem texto
+- Busca o chamado aberto mais recente onde `notification_phone` corresponde ao numero
+- Insere a mensagem na tabela `ticket_messages` com `source = 'whatsapp'`
+- Se o ticket estiver em `aguardando_usuario`, muda para `em_andamento` automaticamente
+- Configurado com `verify_jwt = false` no config.toml (webhook externo)
 
-Adicionar uma nova aba no Admin (`/admin`) com:
+### 5. Atualizar `TicketForm.tsx`
+- Salvar o numero de notificacao no campo `notification_phone` do chamado ao criar
 
-- Campos editaveis para URL da API, API Key, Nome da Instancia e Numero da Central
-- Botao "Salvar Configuracoes"
-- Indicador visual de status (salvo/nao salvo)
-- Campo de API Key com mascara (mostra parcialmente, tipo `34228***C390`)
+### 6. Atualizar `TicketDetail.tsx`
+- Exibir um icone do WhatsApp nas mensagens que vieram do webhook (`source = 'whatsapp'`)
 
-## 3. Edge Function `notify-ticket-whatsapp`
-
-Funcao backend que:
-1. Busca as credenciais da Evolution API na tabela `app_settings`
-2. Envia mensagem WhatsApp para o usuario que abriu o chamado
-3. Envia mensagem WhatsApp para a central de comandos
-
-Mensagem para o usuario:
-```text
-Ola, {nome}! Seu chamado #{numero} foi aberto com sucesso.
-
-Titulo: {titulo}
-Fluxo: {fluxo}
-Categoria: {categoria}
-Prioridade: {prioridade}
-SLA: {sla_horas}h
-
-Acompanhe o status pelo painel ou por aqui. Responderemos em breve!
-
-RBR Consult
-```
-
-Mensagem para a central:
-```text
-NOVO CHAMADO #{numero}
-
-Aberto por: {nome_usuario}
-Titulo: {titulo}
-Fluxo: {fluxo}
-Plataforma: {plataforma}
-Cliente: {cliente_nome} - {cliente_telefone}
-Categoria: {categoria}
-Prioridade: {prioridade}
-SLA: {sla_horas}h
-
-Descricao: {descricao}
-```
-
-## 4. Popup Profissional de Confirmacao
-
-Novo componente `SuccessDialog.tsx` exibido apos criar o chamado:
-
-- Icone de check animado (verde)
-- Titulo: "Chamado Aberto com Sucesso!"
-- Numero do protocolo
-- Mensagem: "Voce recebera uma confirmacao no seu WhatsApp"
-- Botao "Acompanhar Chamado"
-- Botao "Fechar"
-
-## 5. Campo de Telefone no Perfil
-
-Se o usuario nao tiver telefone cadastrado no perfil, o formulario de chamado pedira para informar antes de enviar. O numero fica salvo para os proximos chamados.
-
-## 6. Integracao no Fluxo de Criacao
-
-Apos inserir o chamado no banco:
-1. Buscar telefone do usuario no perfil
-2. Chamar a edge function `notify-ticket-whatsapp` (sem bloquear o fluxo)
-3. Exibir o popup de confirmacao
+### 7. Configuracao na Evolution API
+- Voce precisara configurar o webhook na Evolution API apontando para a URL da funcao
+- A URL sera: `https://xffzjdulkdgyicsllznp.supabase.co/functions/v1/whatsapp-webhook`
+- Evento: `MESSAGES_UPSERT`
 
 ---
 
 ## Detalhes Tecnicos
 
+### Migracao SQL
+- `ALTER TABLE support_tickets ADD COLUMN notification_phone text;`
+- `ALTER TABLE ticket_messages ADD COLUMN source text DEFAULT 'panel';`
+
 ### Arquivos novos
-- `supabase/functions/notify-ticket-whatsapp/index.ts` - Edge function
-- `src/components/chamados/SuccessDialog.tsx` - Popup profissional
+- `supabase/functions/whatsapp-webhook/index.ts`
 
 ### Arquivos modificados
-- `src/pages/Admin.tsx` - Nova aba "Configuracoes" com formulario da Evolution API
-- `src/components/chamados/TicketForm.tsx` - Integrar chamada da edge function + popup + campo telefone do perfil
+- `supabase/config.toml` -- adicionar `[functions.whatsapp-webhook]` com `verify_jwt = false`
+- `src/components/chamados/TicketForm.tsx` -- salvar `notification_phone` no insert
+- `src/components/chamados/TicketDetail.tsx` -- icone WhatsApp nas mensagens com `source = 'whatsapp'`
 
-### Migracao SQL
-- Criar tabela `app_settings` com RLS para super_admin
-- Inserir valores iniciais das credenciais Evolution API
+### Logica do Webhook (resumo)
+```text
+1. Recebe POST da Evolution API
+2. Verifica se e mensagem recebida (nao enviada por nos)
+3. Extrai numero (remove @s.whatsapp.net) e texto
+4. Busca ticket: notification_phone LIKE %numero%, status != resolvido/fechado, ORDER BY created_at DESC
+5. Insere em ticket_messages com user_id = ticket.user_id e source = 'whatsapp'
+6. Se status = aguardando_usuario, atualiza para em_andamento
+7. Retorna 200 OK
+```
 
-### Fluxo da Edge Function
-1. Recebe dados do chamado via POST
-2. Consulta `app_settings` para obter credenciais
-3. Chama `POST https://{url}/message/sendText/{instance}` da Evolution API duas vezes
-4. Retorna status sem bloquear o frontend
-
+### Seguranca
+- Sem JWT (webhook externo), mas validacao pelo formato do payload da Evolution API
+- Usa `SUPABASE_SERVICE_ROLE_KEY` para operacoes no banco (bypassa RLS)
+- Apenas mensagens de texto sao processadas
