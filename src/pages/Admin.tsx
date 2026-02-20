@@ -67,6 +67,7 @@ export default function Admin() {
   const [newPassword, setNewPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null);
+  const [impersonateTarget, setImpersonateTarget] = useState<UserWithRole | null>(null);
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
       toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
@@ -538,11 +539,7 @@ export default function Admin() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={async () => {
-                                setImpersonateLoading(u.id);
-                                await startImpersonation(u.id);
-                                setImpersonateLoading(null);
-                              }}
+                            onClick={() => setImpersonateTarget(u)}
                               disabled={u.id === user?.id || impersonateLoading === u.id}
                               className="h-8 w-8 text-primary hover:text-primary"
                               title="Impersonar Usuário"
@@ -854,6 +851,32 @@ export default function Admin() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      {/* Impersonation Confirmation Dialog */}
+      <AlertDialog open={!!impersonateTarget} onOpenChange={(open) => !open && setImpersonateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Impersonação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você será conectado como <strong>{impersonateTarget?.full_name || impersonateTarget?.email}</strong>. Sua sessão atual será preservada para restauração posterior.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!impersonateTarget) return;
+                setImpersonateLoading(impersonateTarget.id);
+                await startImpersonation(impersonateTarget.id);
+                setImpersonateLoading(null);
+                setImpersonateTarget(null);
+              }}
+            >
+              {impersonateLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Impersonar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </div>
   );
