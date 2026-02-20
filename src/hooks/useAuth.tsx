@@ -207,7 +207,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const startImpersonation = async (targetUserId: string) => {
     try {
-      // Save current session before switching
       const currentSession = await supabase.auth.getSession();
       if (!currentSession.data.session) {
         toast.error('Sessão atual inválida');
@@ -221,6 +220,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      if (!data?.access_token || !data?.refresh_token) {
+        throw new Error('Não foi possível obter a sessão do usuário alvo');
+      }
+
       // Store original session for restoration
       const info: ImpersonationInfo = {
         originalAccessToken: currentSession.data.session.access_token,
@@ -230,36 +233,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(info));
 
-      // Use the verification URL to sign in as the target user
-      // Fetch the verification URL to exchange for a session
-      const verifyResponse = await fetch(data.verificationUrl, {
-        method: 'GET',
-        redirect: 'follow',
+      // Set the impersonated session using tokens from the edge function
+      await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
       });
 
-      // The verification URL redirects and sets the session
-      // We need to extract tokens from the redirect URL
-      const redirectUrl = verifyResponse.url;
-      const hashParams = new URL(redirectUrl).hash.substring(1);
-      const params = new URLSearchParams(hashParams);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-
-      if (accessToken && refreshToken) {
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        setIsImpersonating(true);
-        setImpersonationInfo(info);
-        toast.success(`Impersonando ${data.targetName || data.targetEmail}`);
-        
-        // Navigate to home
-        window.location.href = '/';
-      } else {
-        throw new Error('Não foi possível obter a sessão do usuário alvo');
-      }
+      setIsImpersonating(true);
+      setImpersonationInfo(info);
+      toast.success(`Impersonando ${data.targetName || data.targetEmail}`);
+      
+      window.location.href = '/';
     } catch (error: any) {
       console.error('Impersonation error:', error);
       toast.error(error.message || 'Erro ao impersonar usuário');
