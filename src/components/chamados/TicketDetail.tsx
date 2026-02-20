@@ -107,7 +107,23 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
         <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="bg-muted/30 rounded-lg p-4 text-sm">{ticket.descricao}</div>
+        <div className="bg-muted/30 rounded-lg p-4 text-sm space-y-2">
+          <p>{ticket.descricao}</p>
+          {ticket.fluxo && (
+            <p className="text-xs"><span className="font-medium">Fluxo:</span> {ticket.fluxo}</p>
+          )}
+          {ticket.cliente_nome && (
+            <p className="text-xs"><span className="font-medium">Cliente:</span> {ticket.cliente_nome} {ticket.cliente_telefone && `• ${ticket.cliente_telefone}`}</p>
+          )}
+          {ticket.detalhes && (
+            <p className="text-xs"><span className="font-medium">Detalhes:</span> {ticket.detalhes}</p>
+          )}
+          {ticket.attachment_url && (
+            <a href={ticket.attachment_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline inline-flex items-center gap-1">
+              📎 Ver Anexo
+            </a>
+          )}
+        </div>
 
         <ScrollArea className="h-64 pr-4">
           <div className="space-y-3">

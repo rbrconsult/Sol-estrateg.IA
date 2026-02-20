@@ -11,6 +11,8 @@ interface Ticket {
   status: string;
   sla_deadline: string;
   created_at: string;
+  fluxo?: string;
+  cliente_nome?: string;
 }
 
 interface TicketListProps {
@@ -56,6 +58,7 @@ export function TicketList({ tickets, onSelectTicket, selectedTicketId }: Ticket
           <TableRow className="bg-muted/30">
             <TableHead className="w-20">ID</TableHead>
             <TableHead>Título</TableHead>
+            <TableHead>Fluxo</TableHead>
             <TableHead className="w-24">Categoria</TableHead>
             <TableHead className="w-24">Prioridade</TableHead>
             <TableHead className="w-28">Status</TableHead>
@@ -75,7 +78,11 @@ export function TicketList({ tickets, onSelectTicket, selectedTicketId }: Ticket
               <TableCell className="font-mono text-xs text-muted-foreground">
                 #{ticket.id.slice(0, 6)}
               </TableCell>
-              <TableCell className="font-medium">{ticket.titulo}</TableCell>
+              <TableCell className="font-medium">
+                <div>{ticket.titulo}</div>
+                {ticket.cliente_nome && <div className="text-xs text-muted-foreground">{ticket.cliente_nome}</div>}
+              </TableCell>
+              <TableCell className="text-xs">{ticket.fluxo || "—"}</TableCell>
               <TableCell>
                 <span>{categoryEmojis[ticket.categoria] || ""} {ticket.categoria}</span>
               </TableCell>
