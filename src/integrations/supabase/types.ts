@@ -100,6 +100,7 @@ export type Database = {
           created_at: string
           descricao: string
           detalhes: string | null
+          first_response_at: string | null
           fluxo: string | null
           id: string
           plataforma: string | null
@@ -121,6 +122,7 @@ export type Database = {
           created_at?: string
           descricao: string
           detalhes?: string | null
+          first_response_at?: string | null
           fluxo?: string | null
           id?: string
           plataforma?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           created_at?: string
           descricao?: string
           detalhes?: string | null
+          first_response_at?: string | null
           fluxo?: string | null
           id?: string
           plataforma?: string | null
@@ -180,6 +183,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_status_history: {
+        Row: {
+          changed_by: string
+          created_at: string
+          id: string
+          new_status: string
+          old_status: string | null
+          reason: string | null
+          ticket_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_status: string
+          old_status?: string | null
+          reason?: string | null
+          ticket_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_status?: string
+          old_status?: string | null
+          reason?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_status_history_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "support_tickets"
@@ -267,7 +308,12 @@ export type Database = {
       app_role: "super_admin" | "admin" | "user"
       ticket_category: "bug" | "duvida" | "melhoria" | "urgencia"
       ticket_priority: "baixa" | "media" | "alta" | "critica"
-      ticket_status: "aberto" | "em_andamento" | "resolvido" | "fechado"
+      ticket_status:
+        | "aberto"
+        | "em_andamento"
+        | "resolvido"
+        | "fechado"
+        | "aguardando_usuario"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,7 +444,13 @@ export const Constants = {
       app_role: ["super_admin", "admin", "user"],
       ticket_category: ["bug", "duvida", "melhoria", "urgencia"],
       ticket_priority: ["baixa", "media", "alta", "critica"],
-      ticket_status: ["aberto", "em_andamento", "resolvido", "fechado"],
+      ticket_status: [
+        "aberto",
+        "em_andamento",
+        "resolvido",
+        "fechado",
+        "aguardando_usuario",
+      ],
     },
   },
 } as const
