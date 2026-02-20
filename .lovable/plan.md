@@ -1,83 +1,68 @@
 
-# Sistema de Chamados com SLA
+# Plano de Correção de Segurança - Evolve CRM
 
-## Objetivo
-Criar uma pagina de chamados integrada ao Evolve Sales Insights onde o cliente abre tickets de suporte, com contagem automatica de SLA desde a abertura ate a resolucao.
+## Resumo
+Corrigir vulnerabilidades identificadas na análise de segurança sem impactar a usabilidade.
 
-## Estrutura do Banco de Dados
+---
 
-Duas tabelas novas:
+## 1. Hash de Tokens de Sessão (CRÍTICO)
+**Problema:** Tokens em texto plano na `user_sessions`, acessíveis via SELECT.
 
-**support_tickets** - Armazena os chamados
-- id, titulo, descricao, categoria (bug, duvida, melhoria, urgencia)
-- prioridade (baixa, media, alta, critica) com SLAs diferentes
-- status (aberto, em_andamento, resolvido, fechado)
-- user_id (quem abriu), assigned_to (quem atende)
-- created_at (inicio do SLA), resolved_at, closed_at
-- sla_deadline (calculado automaticamente pela prioridade)
+**Solução:**
+- Habilitar extensão `pgcrypto` 
+- Criar função `hash_session_token(text)` com SHA-256
+- Edge function `track-session`: fazer hash antes de INSERT/query
+- Invalidar sessões existentes (forçar re-login único)
+- Remover acesso direto do usuário à tabela `user_sessions`
 
-**ticket_messages** - Historico de mensagens/atualizacoes
-- id, ticket_id, user_id, message, created_at
+**Impacto:** Re-login único. Transparente depois.
 
-### SLAs por Prioridade
-| Prioridade | SLA Resposta | SLA Resolucao |
-|------------|-------------|---------------|
-| Critica    | 1 hora      | 4 horas       |
-| Alta       | 4 horas     | 24 horas      |
-| Media      | 8 horas     | 48 horas      |
-| Baixa      | 24 horas    | 72 horas      |
+---
 
-## Interface - Pagina /chamados
+## 2. Remover RLS desnecessário em `user_sessions`
+**Problema:** Usuários podem SELECT/UPDATE/INSERT direto, expondo tokens.
 
-### 1. Cabecalho com KPIs
-- Total de chamados abertos
-- Chamados dentro do SLA (verde)
-- Chamados proximo de vencer (amarelo)
-- Chamados fora do SLA (vermelho)
+**Solução:** Remover políticas de usuário. Manter apenas super_admin. Toda operação já usa edge function com service role.
 
-### 2. Formulario de Abertura
-- Titulo, descricao, categoria, prioridade
-- Ao salvar, calcula automaticamente o sla_deadline
+**Impacto:** Nenhum.
 
-### 3. Lista de Chamados
-- Tabela com colunas: ID, Titulo, Prioridade, Status, SLA restante (timer visual)
-- Badge de cor indicando tempo restante do SLA
-- Clique para abrir detalhes e historico de mensagens
+---
 
-### 4. Timer de SLA
-- Contador regressivo em tempo real mostrando quanto tempo resta
-- Muda de cor: verde > amarelo (25% restante) > vermelho (vencido)
+## 3. Remover INSERT direto em `access_logs`
+**Problema:** Qualquer usuário pode inserir logs (poluição de audit trail).
 
-## Navegacao
-- Novo item "Chamados" no sidebar com icone de headset
-- Rota /chamados protegida por autenticacao
+**Solução:** Remover política INSERT de usuário. Inserção já acontece via edge function.
 
-## Seguranca (RLS)
-- Usuarios veem apenas seus proprios chamados
-- Super admins veem todos os chamados
-- Qualquer usuario autenticado pode criar chamados
+**Impacto:** Nenhum.
 
-## Detalhes Tecnicos
+---
 
-### Tabelas SQL
-```text
-- support_tickets: com enum ticket_priority e ticket_status
-- ticket_messages: com FK para support_tickets
-- RLS policies para ambas as tabelas
-- Realtime habilitado para atualizacoes em tempo real
-```
+## 4. Habilitar Proteção Contra Senhas Vazadas
+**Problema:** Senhas comprometidas podem ser usadas.
 
-### Componentes React
-- src/pages/Chamados.tsx - pagina principal
-- src/components/chamados/TicketForm.tsx - formulario de abertura
-- src/components/chamados/TicketList.tsx - lista com SLA timer
-- src/components/chamados/TicketDetail.tsx - detalhes + mensagens
-- src/components/chamados/SLATimer.tsx - contador regressivo visual
+**Solução:** Configurar no auth (HaveIBeenPwned check).
 
-### Alteracoes em arquivos existentes
-- src/App.tsx - nova rota /chamados
-- src/components/layout/Sidebar.tsx - novo item no menu
+**Impacto:** Senhas fracas/vazadas rejeitadas no cadastro.
 
-## Estimativa
-- 4-6 mensagens para implementar completo
-- ~10-15 creditos
+---
+
+## 5. Permitir Agentes Verem Tickets Atribuídos
+**Problema:** `assigned_to` não tem acesso via RLS.
+
+**Solução:** Adicionar `OR assigned_to = auth.uid()` nas políticas SELECT/UPDATE de `support_tickets` e `ticket_messages`.
+
+**Impacto:** Melhora usabilidade para agentes.
+
+---
+
+## 6. Super Admin ver perfis (profiles)
+**Solução:** Adicionar SELECT para super_admin na tabela `profiles`.
+
+---
+
+## Ordem de Execução
+1. Migração SQL (pgcrypto + hash function + RLS adjustments)
+2. Atualizar edge function `track-session`
+3. Habilitar leaked password protection
+4. Marcar findings como resolvidos
