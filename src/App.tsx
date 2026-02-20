@@ -16,6 +16,7 @@ import Perdas from "./pages/Perdas";
 import Origens from "./pages/Origens";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import Chamados from "./pages/Chamados";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,11 @@ const App = () => (
               <Route path="/admin" element={
                 <ProtectedRoute>
                   <MainLayout><Admin /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/chamados" element={
+                <ProtectedRoute>
+                  <MainLayout><Chamados /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
