@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SLATimer } from "./SLATimer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, X, CheckCircle, Undo2, Clock } from "lucide-react";
+import { Send, X, CheckCircle, Undo2, Clock, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -159,6 +159,21 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     setReturnOpen(false);
     toast.success("Chamado devolvido ao usuário.");
     fetchData();
+    onUpdated();
+  };
+
+  const handleDelete = async () => {
+    if (!user || !isAdmin) return;
+    const { error } = await supabase
+      .from("support_tickets" as any)
+      .delete()
+      .eq("id", ticketId);
+    if (error) {
+      toast.error("Erro ao excluir chamado");
+      return;
+    }
+    toast.success("Chamado excluído!");
+    onClose();
     onUpdated();
   };
 
@@ -342,6 +357,11 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                   {(isAdmin || ticket.user_id === user?.id) && (
                     <Button size="icon" variant="outline" onClick={handleResolve} className="text-emerald-400 hover:bg-emerald-500/10" title="Resolver">
                       <CheckCircle className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button size="icon" variant="outline" onClick={handleDelete} className="text-destructive hover:bg-destructive/10" title="Excluir chamado">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
