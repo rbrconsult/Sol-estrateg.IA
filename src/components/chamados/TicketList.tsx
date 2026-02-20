@@ -31,6 +31,7 @@ const priorityLabels: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   aberto: "Aberto",
   em_andamento: "Em Andamento",
+  aguardando_usuario: "Aguard. Usuário",
   resolvido: "Resolvido",
   fechado: "Fechado",
 };
@@ -107,6 +108,7 @@ export function TicketList({ tickets, onSelectTicket, selectedTicketId }: Ticket
                     "text-xs",
                     ticket.status === "aberto" && "border-blue-500/50 text-blue-400",
                     ticket.status === "em_andamento" && "border-amber-500/50 text-amber-400",
+                    ticket.status === "aguardando_usuario" && "border-purple-500/50 text-purple-400",
                     ticket.status === "resolvido" && "border-emerald-500/50 text-emerald-400",
                     ticket.status === "fechado" && "border-muted-foreground/50 text-muted-foreground"
                   )}
