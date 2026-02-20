@@ -208,7 +208,25 @@ export function TicketForm({ onTicketCreated }: TicketFormProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="clienteTelefone">Telefone do Cliente *</Label>
-              <Input id="clienteTelefone" value={clienteTelefone} onChange={(e) => setClienteTelefone(e.target.value)} placeholder="(00) 00000-0000" required />
+              <Input
+                id="clienteTelefone"
+                value={clienteTelefone}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  let formatted = digits;
+                  if (digits.length > 2) {
+                    formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                  }
+                  if (digits.length > 7) {
+                    formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                  }
+                  setClienteTelefone(formatted);
+                }}
+                placeholder="(00) 00000-0000"
+                inputMode="numeric"
+                maxLength={15}
+                required
+              />
             </div>
           </div>
 
