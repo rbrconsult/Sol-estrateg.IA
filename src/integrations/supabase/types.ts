@@ -214,6 +214,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      hash_session_token: { Args: { token: string }; Returns: string }
       invalidate_other_sessions: {
         Args: { p_current_session: string; p_user_id: string }
         Returns: undefined

@@ -5,6 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Hash session token using Web Crypto API (SHA-256)
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(token)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -18,12 +27,14 @@ Deno.serve(async (req) => {
 
     const { action, user_id, email, session_token } = await req.json()
     
-    // Get IP from headers
     const ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                        req.headers.get('cf-connecting-ip') || 
                        req.headers.get('x-real-ip') || 
                        'unknown'
     const user_agent = req.headers.get('user-agent') || 'unknown'
+
+    // Hash the token before any DB operation
+    const hashedToken = await hashToken(session_token)
 
     console.log(`Track session: action=${action}, user_id=${user_id}, ip=${ip_address}`)
 
@@ -39,12 +50,12 @@ Deno.serve(async (req) => {
         console.error('Error invalidating sessions:', invalidateError)
       }
 
-      // Create new session
+      // Create new session with hashed token
       const { error: sessionError } = await supabaseClient
         .from('user_sessions')
         .insert({
           user_id,
-          session_token,
+          session_token: hashedToken,
           ip_address,
           user_agent,
           is_active: true
@@ -76,12 +87,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'logout') {
-      // Mark session as inactive
+      // Mark session as inactive using hashed token
       const { error: sessionError } = await supabaseClient
         .from('user_sessions')
         .update({ is_active: false })
         .eq('user_id', user_id)
-        .eq('session_token', session_token)
+        .eq('session_token', hashedToken)
 
       if (sessionError) {
         console.error('Error deactivating session:', sessionError)
@@ -109,12 +120,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'validate') {
-      // Check if session is still valid
+      // Check if session is still valid using hashed token
       const { data, error } = await supabaseClient
         .from('user_sessions')
         .select('is_active')
         .eq('user_id', user_id)
-        .eq('session_token', session_token)
+        .eq('session_token', hashedToken)
         .single()
 
       if (error || !data?.is_active) {
@@ -129,7 +140,7 @@ Deno.serve(async (req) => {
         .from('user_sessions')
         .update({ last_activity: new Date().toISOString() })
         .eq('user_id', user_id)
-        .eq('session_token', session_token)
+        .eq('session_token', hashedToken)
 
       return new Response(
         JSON.stringify({ valid: true }),
