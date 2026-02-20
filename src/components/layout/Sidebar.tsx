@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Sparkles,
   LogOut,
-  Shield
+  Shield,
+  Headset
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,12 @@ const menuItems = [
     icon: Target, 
     path: "/origens",
     description: "Origem dos Leads"
+  },
+  { 
+    title: "Chamados", 
+    icon: Headset, 
+    path: "/chamados",
+    description: "Suporte & SLA"
   },
 ];
 
