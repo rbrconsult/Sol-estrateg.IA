@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -68,6 +68,16 @@ export default function Admin() {
   const [formLoading, setFormLoading] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null);
   const [impersonateTarget, setImpersonateTarget] = useState<UserWithRole | null>(null);
+
+  // Settings state
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [evolutionUrl, setEvolutionUrl] = useState('');
+  const [evolutionKey, setEvolutionKey] = useState('');
+  const [evolutionInstance, setEvolutionInstance] = useState('');
+  const [centralNumber, setCentralNumber] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
       toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
@@ -78,6 +88,7 @@ export default function Admin() {
   useEffect(() => {
     if (userRole === 'super_admin') {
       fetchData();
+      fetchSettings();
     }
   }, [userRole]);
 
@@ -410,6 +421,56 @@ export default function Admin() {
     }
   };
 
+  const fetchSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('app_settings' as any)
+        .select('key, value');
+      if (error) throw error;
+      const settings: Record<string, string> = {};
+      (data as any[])?.forEach((s: any) => { settings[s.key] = s.value; });
+      setEvolutionUrl(settings.evolution_api_url || '');
+      setEvolutionKey(settings.evolution_api_key || '');
+      setEvolutionInstance(settings.evolution_instance_name || '');
+      setCentralNumber(settings.central_whatsapp_number || '');
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSettingsSaving(true);
+    try {
+      const updates = [
+        { key: 'evolution_api_url', value: evolutionUrl },
+        { key: 'evolution_api_key', value: evolutionKey },
+        { key: 'evolution_instance_name', value: evolutionInstance },
+        { key: 'central_whatsapp_number', value: centralNumber },
+      ];
+      for (const u of updates) {
+        const { error } = await supabase
+          .from('app_settings' as any)
+          .update({ value: u.value, updated_at: new Date().toISOString() })
+          .eq('key', u.key);
+        if (error) throw error;
+      }
+      toast.success('Configurações salvas com sucesso!');
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      toast.error('Erro ao salvar configurações: ' + (error.message || ''));
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const maskApiKey = (key: string) => {
+    if (!key || key.length < 8) return key;
+    return key.substring(0, 5) + '***' + key.substring(key.length - 4);
+  };
+
   const parseUserAgent = (ua: string | null) => {
     if (!ua || ua === 'unknown') return 'Desconhecido';
     if (ua.includes('Chrome')) return 'Chrome';
@@ -499,6 +560,7 @@ export default function Admin() {
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
+            <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -694,6 +756,58 @@ export default function Admin() {
                     )}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Configurações da Evolution API (WhatsApp)
+                </CardTitle>
+                <CardDescription>Configure as credenciais para envio de notificações via WhatsApp</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {settingsLoading ? (
+                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                ) : (
+                  <div className="space-y-4 max-w-lg">
+                    <div className="space-y-2">
+                      <Label>URL da API</Label>
+                      <Input value={evolutionUrl} onChange={(e) => setEvolutionUrl(e.target.value)} placeholder="https://api.exemplo.com" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>API Key</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type={showApiKey ? "text" : "password"}
+                          value={showApiKey ? evolutionKey : maskApiKey(evolutionKey)}
+                          onChange={(e) => { setShowApiKey(true); setEvolutionKey(e.target.value); }}
+                          onFocus={() => setShowApiKey(true)}
+                          placeholder="Chave da API"
+                        />
+                        <Button type="button" variant="outline" size="icon" onClick={() => setShowApiKey(!showApiKey)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nome da Instância</Label>
+                      <Input value={evolutionInstance} onChange={(e) => setEvolutionInstance(e.target.value)} placeholder="Nome da instância" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Número da Central (WhatsApp)</Label>
+                      <Input value={centralNumber} onChange={(e) => setCentralNumber(e.target.value)} placeholder="5517999999999" />
+                      <p className="text-xs text-muted-foreground">Formato: código do país + DDD + número (ex: 5517997335222)</p>
+                    </div>
+                    <Button onClick={handleSaveSettings} disabled={settingsSaving} className="gap-2">
+                      {settingsSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar Configurações
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
