@@ -112,6 +112,41 @@ RBR Consult`;
           results.central = { error: String(e) };
         }
       }
+    } else if (type === "reopen") {
+      // Handle ticket reopen notification
+      const { ticketId, titulo, userPhone, userName } = body;
+      const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A";
+
+      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi reaberto.
+
+📋 *${titulo}*
+
+🔄 O chamado voltou para atendimento. Acompanhe pelo painel ou por aqui.
+
+RBR Consult`;
+
+      if (userPhone) {
+        const cleanPhone = userPhone.replace(/\D/g, "");
+        if (cleanPhone.length >= 10) {
+          const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+          try {
+            results.user = await sendMessage(phoneWithCountry, userMessage);
+          } catch (e) {
+            console.error("Error sending reopen notification to user:", e);
+            results.user = { error: String(e) };
+          }
+        }
+      }
+
+      if (centralNumber) {
+        const centralMsg = `*CHAMADO REABERTO #${shortId}*\n\nTítulo: ${titulo}\nUsuário: ${userName || "N/A"}`;
+        try {
+          results.central = await sendMessage(centralNumber, centralMsg);
+        } catch (e) {
+          console.error("Error sending reopen to central:", e);
+          results.central = { error: String(e) };
+        }
+      }
     } else {
       // Handle new ticket notification (existing logic)
       const {

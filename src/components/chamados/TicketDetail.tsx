@@ -241,6 +241,28 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     }
 
     await recordStatusChange(oldStatus, "em_andamento", "Chamado reaberto");
+
+    // Send WhatsApp notification to ticket owner
+    try {
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("phone, full_name")
+        .eq("id", ticket.user_id)
+        .single();
+
+      await supabase.functions.invoke("notify-ticket-whatsapp", {
+        body: {
+          type: "reopen",
+          ticketId,
+          titulo: ticket.titulo,
+          userPhone: ownerProfile?.phone || null,
+          userName: ownerProfile?.full_name || null,
+        },
+      });
+    } catch (e) {
+      console.error("Error sending reopen WhatsApp notification:", e);
+    }
+
     toast.success("Chamado reaberto!");
     onUpdated();
     fetchData();
