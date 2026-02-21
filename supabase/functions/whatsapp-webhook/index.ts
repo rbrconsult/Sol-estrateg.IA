@@ -123,11 +123,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If ticket is aguardando_usuario, move to em_andamento
+    // If ticket is aguardando_usuario, move to em_andamento and resume SLA
     if (matchedTicket.status === "aguardando_usuario") {
+      // Fetch full ticket to get sla_paused_at and sla_deadline
+      const { data: fullTicket } = await supabaseAdmin
+        .from("support_tickets")
+        .select("sla_paused_at, sla_deadline, sla_paused_total_ms")
+        .eq("id", matchedTicket.id)
+        .single();
+
+      const updateData: Record<string, any> = { status: "em_andamento", sla_paused_at: null };
+      if (fullTicket?.sla_paused_at) {
+        const pausedMs = Date.now() - new Date(fullTicket.sla_paused_at).getTime();
+        updateData.sla_deadline = new Date(new Date(fullTicket.sla_deadline).getTime() + pausedMs).toISOString();
+        updateData.sla_paused_total_ms = (fullTicket.sla_paused_total_ms || 0) + pausedMs;
+      }
+
       await supabaseAdmin
         .from("support_tickets")
-        .update({ status: "em_andamento" })
+        .update(updateData)
         .eq("id", matchedTicket.id);
 
       // Record status change

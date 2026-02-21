@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Clock, AlertTriangle, XCircle } from "lucide-react";
+import { Clock, AlertTriangle, XCircle, PauseCircle } from "lucide-react";
 
 interface SLATimerProps {
   deadline: string;
   createdAt: string;
+  pausedAt?: string | null;
   className?: string;
 }
 
@@ -24,14 +25,12 @@ function getTimeRemaining(deadline: string) {
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-  const total = new Date(deadline).getTime() - new Date().getTime();
-  const totalSLA = new Date(deadline).getTime() - new Date().getTime();
-  const percentage = Math.max(0, (diff / (new Date(deadline).getTime() - new Date().getTime())) * 100);
-
-  return { hours, minutes, isOverdue: false, percentage };
+  return { hours, minutes, isOverdue: false, percentage: 100 };
 }
 
-function getSLAStatus(deadline: string, createdAt: string) {
+function getSLAStatus(deadline: string, createdAt: string, pausedAt?: string | null) {
+  if (pausedAt) return "paused";
+
   const now = new Date().getTime();
   const end = new Date(deadline).getTime();
   const start = new Date(createdAt).getTime();
@@ -43,17 +42,33 @@ function getSLAStatus(deadline: string, createdAt: string) {
   return "ok";
 }
 
-export function SLATimer({ deadline, createdAt, className }: SLATimerProps) {
+export function SLATimer({ deadline, createdAt, pausedAt, className }: SLATimerProps) {
   const [, setTick] = useState(0);
 
   useEffect(() => {
+    if (pausedAt) return; // Don't tick when paused
     const interval = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pausedAt]);
+
+  const status = getSLAStatus(deadline, createdAt, pausedAt);
+
+  if (status === "paused") {
+    return (
+      <Badge
+        className={cn(
+          "gap-1 font-mono text-xs bg-purple-500/20 text-purple-400 border-purple-500/30",
+          className
+        )}
+        variant="outline"
+      >
+        <PauseCircle className="h-3 w-3" />
+        <span>Pausado</span>
+      </Badge>
+    );
+  }
 
   const { hours, minutes, isOverdue } = getTimeRemaining(deadline);
-  const status = getSLAStatus(deadline, createdAt);
-
   const Icon = status === "overdue" ? XCircle : status === "warning" ? AlertTriangle : Clock;
 
   return (

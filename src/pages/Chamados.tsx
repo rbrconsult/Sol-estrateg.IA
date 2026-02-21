@@ -61,9 +61,9 @@ export default function Chamados() {
   }, [fetchTickets]);
 
   const openTickets = tickets.filter((t) => t.status === "aberto" || t.status === "em_andamento");
-  const withinSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at) === "ok").length;
-  const warningSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at) === "warning").length;
-  const overdueSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at) === "overdue").length;
+  const withinSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "ok").length;
+  const warningSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "warning").length;
+  const overdueSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "overdue").length;
 
   return (
     <div className="space-y-6">
