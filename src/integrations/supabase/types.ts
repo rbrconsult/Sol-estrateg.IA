@@ -108,6 +108,8 @@ export type Database = {
           prioridade: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
           sla_deadline: string
+          sla_paused_at: string | null
+          sla_paused_total_ms: number
           status: Database["public"]["Enums"]["ticket_status"]
           titulo: string
           updated_at: string
@@ -131,6 +133,8 @@ export type Database = {
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
           sla_deadline: string
+          sla_paused_at?: string | null
+          sla_paused_total_ms?: number
           status?: Database["public"]["Enums"]["ticket_status"]
           titulo: string
           updated_at?: string
@@ -154,6 +158,8 @@ export type Database = {
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
           sla_deadline?: string
+          sla_paused_at?: string | null
+          sla_paused_total_ms?: number
           status?: Database["public"]["Enums"]["ticket_status"]
           titulo?: string
           updated_at?: string

@@ -105,9 +105,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
     // Auto-return: if ticket is aguardando_usuario and user (non-admin) responds, change to em_andamento
     if (ticket?.status === "aguardando_usuario" && ticket?.user_id === user.id) {
+      // Resume SLA: calculate paused time and extend deadline
+      const updateData: any = { status: "em_andamento", sla_paused_at: null };
+      if (ticket.sla_paused_at) {
+        const pausedMs = Date.now() - new Date(ticket.sla_paused_at).getTime();
+        const newDeadline = new Date(new Date(ticket.sla_deadline).getTime() + pausedMs).toISOString();
+        updateData.sla_deadline = newDeadline;
+        updateData.sla_paused_total_ms = (ticket.sla_paused_total_ms || 0) + pausedMs;
+      }
       await supabase
         .from("support_tickets" as any)
-        .update({ status: "em_andamento" })
+        .update(updateData)
         .eq("id", ticketId);
       await recordStatusChange("aguardando_usuario", "em_andamento");
     }
@@ -149,7 +157,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     const oldStatus = ticket?.status || "aberto";
     await supabase
       .from("support_tickets" as any)
-      .update({ status: "aguardando_usuario" })
+      .update({ status: "aguardando_usuario", sla_paused_at: new Date().toISOString() })
       .eq("id", ticketId);
 
     await recordStatusChange(oldStatus, "aguardando_usuario", returnReason.trim());
@@ -273,7 +281,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                 {statusLabels[ticket.status] || ticket.status}
               </Badge>
               {!isResolved && (
-                <SLATimer deadline={ticket.sla_deadline} createdAt={ticket.created_at} />
+                <SLATimer deadline={ticket.sla_deadline} createdAt={ticket.created_at} pausedAt={ticket.sla_paused_at} />
               )}
             </div>
           </div>

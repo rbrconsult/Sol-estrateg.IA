@@ -13,6 +13,7 @@ interface Ticket {
   created_at: string;
   fluxo?: string;
   cliente_nome?: string;
+  sla_paused_at?: string | null;
 }
 
 interface TicketListProps {
@@ -118,7 +119,7 @@ export function TicketList({ tickets, onSelectTicket, selectedTicketId }: Ticket
               </TableCell>
               <TableCell>
                 {ticket.status !== "fechado" && ticket.status !== "resolvido" ? (
-                  <SLATimer deadline={ticket.sla_deadline} createdAt={ticket.created_at} />
+                  <SLATimer deadline={ticket.sla_deadline} createdAt={ticket.created_at} pausedAt={ticket.sla_paused_at} />
                 ) : (
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
