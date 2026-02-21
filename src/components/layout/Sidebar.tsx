@@ -21,15 +21,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-interface MenuItem {
-  title: string;
-  icon: React.ElementType;
-  path: string;
-  description: string;
-  external?: boolean;
-}
-
-const menuItems: MenuItem[] = [
+const menuItems = [
   { 
     title: "Dashboard", 
     icon: LayoutDashboard, 
@@ -81,9 +73,8 @@ const menuItems: MenuItem[] = [
   { 
     title: "Monitoramento", 
     icon: Activity, 
-    path: "https://status.rbrsistemas.com/status/evolve",
-    description: "Status do Sistema",
-    external: true
+    path: "/monitoramento",
+    description: "Status do Sistema"
   },
 ];
 
@@ -133,15 +124,18 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
-          const isActive = !item.external && location.pathname === item.path;
-          const linkClass = cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-            isActive 
-              ? "bg-primary text-primary-foreground shadow-md" 
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-          );
-          const content = (
-            <>
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                isActive 
+                  ? "bg-primary text-primary-foreground shadow-md" 
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              )}
+            >
               <item.icon className={cn("h-5 w-5 shrink-0", isActive && "animate-pulse")} />
               {!collapsed && (
                 <div className="overflow-hidden">
@@ -154,20 +148,6 @@ export function Sidebar() {
                   </p>
                 </div>
               )}
-            </>
-          );
-
-          if (item.external) {
-            return (
-              <a key={item.path} href={item.path} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                {content}
-              </a>
-            );
-          }
-
-          return (
-            <Link key={item.path} to={item.path} className={linkClass}>
-              {content}
             </Link>
           );
         })}
