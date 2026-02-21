@@ -38,9 +38,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Extract phone number (remove @s.whatsapp.net)
-    const remoteJid = data.key?.remoteJid || "";
-    const phone = remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "");
+    // Extract phone number - prefer remoteJidAlt (has real number) over remoteJid (may use @lid format)
+    const remoteJid = data.key?.remoteJidAlt || data.key?.remoteJid || "";
+    const phone = remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "").replace("@lid", "");
     if (!phone) {
       return new Response(JSON.stringify({ ok: true, skipped: "no phone" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
