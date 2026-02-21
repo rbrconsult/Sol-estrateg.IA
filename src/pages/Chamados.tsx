@@ -5,7 +5,7 @@ import { TicketForm } from "@/components/chamados/TicketForm";
 import { TicketList } from "@/components/chamados/TicketList";
 import { TicketDetail } from "@/components/chamados/TicketDetail";
 import { Card, CardContent } from "@/components/ui/card";
-import { Headset, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { Headset, CheckCircle, AlertTriangle, XCircle, PauseCircle } from "lucide-react";
 import { getSLAStatus } from "@/components/chamados/SLATimer";
 
 interface KPIProps {
@@ -60,7 +60,9 @@ export default function Chamados() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchTickets]);
 
-  const openTickets = tickets.filter((t) => t.status === "aberto" || t.status === "em_andamento");
+  const activeTickets = tickets.filter((t) => !["resolvido", "fechado"].includes(t.status));
+  const openTickets = activeTickets.filter((t) => t.status === "aberto" || t.status === "em_andamento");
+  const aguardandoUsuario = activeTickets.filter((t) => t.status === "aguardando_usuario").length;
   const withinSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "ok").length;
   const warningSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "warning").length;
   const overdueSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "overdue").length;
@@ -77,8 +79,9 @@ export default function Chamados() {
         <TicketForm onTicketCreated={fetchTickets} onSelectTicket={setSelectedTicketId} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KPICard icon={Headset} label="Abertos" value={openTickets.length} color="bg-blue-500/20 text-blue-400" />
+        <KPICard icon={PauseCircle} label="Aguardando Usuário" value={aguardandoUsuario} color="bg-purple-500/20 text-purple-400" />
         <KPICard icon={CheckCircle} label="Dentro do SLA" value={withinSLA} color="bg-emerald-500/20 text-emerald-400" />
         <KPICard icon={AlertTriangle} label="Próx. de Vencer" value={warningSLA} color="bg-amber-500/20 text-amber-400" />
         <KPICard icon={XCircle} label="Fora do SLA" value={overdueSLA} color="bg-destructive/20 text-destructive" />
