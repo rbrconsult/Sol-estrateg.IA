@@ -223,6 +223,29 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     }
 
     await recordStatusChange(oldStatus, "resolvido");
+
+    // Send WhatsApp notification to ticket owner
+    try {
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("phone, full_name")
+        .eq("id", ticket.user_id)
+        .single();
+
+      await supabase.functions.invoke("notify-ticket-whatsapp", {
+        body: {
+          type: "resolved",
+          ticketId,
+          ticketNumero: String(ticket.ticket_number || 0).padStart(4, "0"),
+          titulo: ticket.titulo,
+          userPhone: ticket.notification_phone || ownerProfile?.phone || null,
+          userName: ownerProfile?.full_name || null,
+        },
+      });
+    } catch (e) {
+      console.error("Error sending resolve WhatsApp notification:", e);
+    }
+
     toast.success("Chamado marcado como resolvido!");
     onUpdated();
     fetchData();

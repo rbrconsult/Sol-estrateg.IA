@@ -112,6 +112,43 @@ RBR Consult`;
           results.central = { error: String(e) };
         }
       }
+    } else if (type === "resolved") {
+      // Handle ticket resolved notification
+      const { ticketId, titulo, userPhone, userName } = body;
+      const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
+
+      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi finalizado. ✅
+
+📋 *${titulo}*
+
+O atendimento foi concluído. Caso precise de algo mais, basta reabrir pelo painel ou abrir um novo chamado.
+
+Obrigado por utilizar nosso suporte!
+
+RBR Consult`;
+
+      if (userPhone) {
+        const cleanPhone = userPhone.replace(/\D/g, "");
+        if (cleanPhone.length >= 10) {
+          const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+          try {
+            results.user = await sendMessage(phoneWithCountry, userMessage);
+          } catch (e) {
+            console.error("Error sending resolved notification to user:", e);
+            results.user = { error: String(e) };
+          }
+        }
+      }
+
+      if (centralNumber) {
+        const centralMsg = `*CHAMADO FINALIZADO #${shortId}*\n\nTítulo: ${titulo}\nUsuário: ${userName || "N/A"}`;
+        try {
+          results.central = await sendMessage(centralNumber, centralMsg);
+        } catch (e) {
+          console.error("Error sending resolved to central:", e);
+          results.central = { error: String(e) };
+        }
+      }
     } else if (type === "reopen") {
       // Handle ticket reopen notification
       const { ticketId, titulo, userPhone, userName } = body;
