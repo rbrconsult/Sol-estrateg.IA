@@ -69,6 +69,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
   // Success dialog
   const [successOpen, setSuccessOpen] = useState(false);
   const [createdTicketId, setCreatedTicketId] = useState("");
+  const [createdTicketNumber, setCreatedTicketNumber] = useState<number>(0);
 
   const prioridade = CATEGORY_PRIORITY[categoria] || "media";
 
@@ -174,7 +175,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
         attachment_url: attachmentUrl,
         notification_phone: userPhone.replace(/\D/g, ""),
       })
-      .select("id")
+      .select("id, ticket_number")
       .single();
 
     setLoading(false);
@@ -185,6 +186,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     }
 
     const ticketId = (ticketData as any)?.id || "";
+    const ticketNumber = (ticketData as any)?.ticket_number || 0;
 
     // Save phone to profile if not saved yet
     if (userPhone) {
@@ -205,6 +207,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     supabase.functions.invoke("notify-ticket-whatsapp", {
       body: {
         ticketId,
+        ticketNumero: String(ticketNumber).padStart(4, "0"),
         titulo,
         fluxo,
         plataforma,
@@ -221,6 +224,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
 
     // Show success dialog
     setCreatedTicketId(ticketId);
+    setCreatedTicketNumber(ticketNumber);
     resetForm();
     setOpen(false);
     setSuccessOpen(true);
@@ -383,6 +387,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
           onSelectTicket?.(createdTicketId);
         }}
         ticketId={createdTicketId}
+        ticketNumber={createdTicketNumber}
       />
     </>
   );

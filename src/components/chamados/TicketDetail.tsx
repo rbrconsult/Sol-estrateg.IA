@@ -175,6 +175,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
         body: {
           type: "return",
           ticketId,
+          ticketNumero: String(ticket.ticket_number || 0).padStart(4, "0"),
           titulo: ticket.titulo,
           reason: returnReason.trim(),
           userPhone: ownerProfile?.phone || null,
@@ -254,6 +255,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
         body: {
           type: "reopen",
           ticketId,
+          ticketNumero: String(ticket.ticket_number || 0).padStart(4, "0"),
           titulo: ticket.titulo,
           userPhone: ownerProfile?.phone || null,
           userName: ownerProfile?.full_name || null,
@@ -307,7 +309,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           <div className="space-y-1">
             <CardTitle className="text-lg">{ticket.titulo}</CardTitle>
             <div className="flex gap-2 items-center flex-wrap">
-              <Badge variant="outline" className="text-xs">#{ticket.id.slice(0, 6)}</Badge>
+              <Badge variant="outline" className="text-xs">#{String(ticket.ticket_number || 0).padStart(4, "0")}</Badge>
               <Badge
                 variant="outline"
                 className={cn(

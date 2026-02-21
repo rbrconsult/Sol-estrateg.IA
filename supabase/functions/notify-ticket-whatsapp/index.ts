@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     if (type === "return") {
       // Handle ticket return notification
       const { ticketId, titulo, reason, userPhone, userName } = body;
-      const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A";
+      const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
       const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} precisa de complemento.
 
@@ -115,7 +115,7 @@ RBR Consult`;
     } else if (type === "reopen") {
       // Handle ticket reopen notification
       const { ticketId, titulo, userPhone, userName } = body;
-      const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A";
+      const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
       const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi reaberto.
 
@@ -162,7 +162,7 @@ RBR Consult`;
         bug: "🐛 Bug", duvida: "❓ Dúvida", melhoria: "✨ Melhoria", urgencia: "🚨 Urgência",
       };
 
-      const shortId = ticketId ? ticketId.substring(0, 8).toUpperCase() : ticketNumero;
+      const shortId = ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
       const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi aberto com sucesso.
 
