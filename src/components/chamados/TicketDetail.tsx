@@ -245,7 +245,6 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     onUpdated();
     fetchData();
   };
-  };
 
   // Calculate time metrics
   const getTimeMetrics = () => {
