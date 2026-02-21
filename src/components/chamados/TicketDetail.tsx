@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SLATimer } from "./SLATimer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle } from "lucide-react";
+import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -227,6 +227,26 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     fetchData();
   };
 
+  const handleReopen = async () => {
+    if (!user) return;
+    const oldStatus = ticket?.status || "resolvido";
+    const { error } = await supabase
+      .from("support_tickets" as any)
+      .update({ status: "em_andamento", resolved_at: null, closed_at: null })
+      .eq("id", ticketId);
+
+    if (error) {
+      toast.error("Erro ao reabrir chamado");
+      return;
+    }
+
+    await recordStatusChange(oldStatus, "em_andamento", "Chamado reaberto");
+    toast.success("Chamado reaberto!");
+    onUpdated();
+    fetchData();
+  };
+  };
+
   // Calculate time metrics
   const getTimeMetrics = () => {
     if (!ticket) return null;
@@ -366,6 +386,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
               ))}
             </div>
           </ScrollArea>
+
+          {/* Reopen button for resolved/closed tickets */}
+          {isResolved && (isAdmin || ticket.user_id === user?.id) && (
+            <Button
+              variant="outline"
+              onClick={handleReopen}
+              className="w-full gap-2 text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+            >
+              <RotateCcw className="h-4 w-4" /> Reabrir Chamado
+            </Button>
+          )}
 
           {/* Input area */}
           {!isResolved && (
