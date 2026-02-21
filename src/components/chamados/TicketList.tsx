@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface Ticket {
   id: string;
+  ticket_number?: number;
   titulo: string;
   categoria: string;
   prioridade: string;
@@ -78,7 +79,7 @@ export function TicketList({ tickets, onSelectTicket, selectedTicketId }: Ticket
               onClick={() => onSelectTicket(ticket.id)}
             >
               <TableCell className="font-mono text-xs text-muted-foreground">
-                #{ticket.id.slice(0, 6)}
+                #{String(ticket.ticket_number || 0).padStart(4, "0")}
               </TableCell>
               <TableCell className="font-medium">
                 <div>{ticket.titulo}</div>

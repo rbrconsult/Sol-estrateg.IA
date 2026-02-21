@@ -7,10 +7,11 @@ interface SuccessDialogProps {
   onClose: () => void;
   onViewTicket: () => void;
   ticketId: string;
+  ticketNumber?: number;
 }
 
-export function SuccessDialog({ open, onClose, onViewTicket, ticketId }: SuccessDialogProps) {
-  const shortId = ticketId.substring(0, 8).toUpperCase();
+export function SuccessDialog({ open, onClose, onViewTicket, ticketId, ticketNumber }: SuccessDialogProps) {
+  const shortId = ticketNumber ? String(ticketNumber).padStart(4, "0") : ticketId.substring(0, 8).toUpperCase();
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>

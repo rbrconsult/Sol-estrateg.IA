@@ -111,6 +111,7 @@ export type Database = {
           sla_paused_at: string | null
           sla_paused_total_ms: number
           status: Database["public"]["Enums"]["ticket_status"]
+          ticket_number: number
           titulo: string
           updated_at: string
           user_id: string
@@ -136,6 +137,7 @@ export type Database = {
           sla_paused_at?: string | null
           sla_paused_total_ms?: number
           status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_number?: number
           titulo: string
           updated_at?: string
           user_id: string
@@ -161,6 +163,7 @@ export type Database = {
           sla_paused_at?: string | null
           sla_paused_total_ms?: number
           status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_number?: number
           titulo?: string
           updated_at?: string
           user_id?: string
