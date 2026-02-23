@@ -46,7 +46,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   // Create/Edit org dialog
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
-  const [orgForm, setOrgForm] = useState({ name: '', slug: '' });
+  const [orgForm, setOrgForm] = useState({ name: '', slug: '', googleSheetId: '' });
 
   // Delete org dialog
   const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
@@ -103,17 +103,18 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
     }
     setFormLoading(true);
     try {
+      const settings = { google_sheet_id: orgForm.googleSheetId || null };
       if (editingOrg) {
         const { error } = await supabase
           .from('organizations')
-          .update({ name: orgForm.name, slug: orgForm.slug })
+          .update({ name: orgForm.name, slug: orgForm.slug, settings })
           .eq('id', editingOrg.id);
         if (error) throw error;
         toast.success('Organização atualizada!');
       } else {
         const { error } = await supabase
           .from('organizations')
-          .insert({ name: orgForm.name, slug: orgForm.slug });
+          .insert({ name: orgForm.name, slug: orgForm.slug, settings });
         if (error) throw error;
         toast.success('Organização criada!');
       }
@@ -154,13 +155,14 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
 
   const openEditOrg = (org: Organization) => {
     setEditingOrg(org);
-    setOrgForm({ name: org.name, slug: org.slug });
+    const sheetId = (org.settings as any)?.google_sheet_id || '';
+    setOrgForm({ name: org.name, slug: org.slug, googleSheetId: sheetId });
     setIsOrgDialogOpen(true);
   };
 
   const openCreateOrg = () => {
     setEditingOrg(null);
-    setOrgForm({ name: '', slug: '' });
+    setOrgForm({ name: '', slug: '', googleSheetId: '' });
     setIsOrgDialogOpen(true);
   };
 
@@ -366,6 +368,15 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
                 placeholder="slug-da-organizacao"
               />
               <p className="text-xs text-muted-foreground">Identificador único (apenas letras minúsculas, números e hifens)</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Google Sheet ID</Label>
+              <Input
+                value={orgForm.googleSheetId}
+                onChange={(e) => setOrgForm({ ...orgForm, googleSheetId: e.target.value.trim() })}
+                placeholder="Ex: 18LfyoHUA7Yk4VBEi-hXHy600pzxBWpqinSvFEIIT1ng"
+              />
+              <p className="text-xs text-muted-foreground">ID da planilha Google Sheets vinculada a esta organização</p>
             </div>
           </div>
           <DialogFooter>
