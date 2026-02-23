@@ -547,6 +547,45 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Resolve with hours dialog */}
+      <Dialog open={resolveOpen} onOpenChange={setResolveOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5 text-emerald-400" /> Resolver Chamado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Informe quantas horas foram gastas na resolução deste chamado (opcional).
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="workHours">Horas trabalhadas</Label>
+              <Input
+                id="workHours"
+                type="number"
+                step="0.5"
+                min="0"
+                value={workHoursInput}
+                onChange={(e) => setWorkHoursInput(e.target.value)}
+                placeholder="Ex: 2.5"
+                inputMode="decimal"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setResolveOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={handleResolve}
+              disabled={resolving}
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            >
+              <CheckCircle className="h-4 w-4" /> {resolving ? "Resolvendo..." : "Resolver"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
