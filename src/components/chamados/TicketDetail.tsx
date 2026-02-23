@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw, Timer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,6 +55,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
   const [resolveOpen, setResolveOpen] = useState(false);
   const [workHoursInput, setWorkHoursInput] = useState("");
   const [resolving, setResolving] = useState(false);
+  const [hoursMode, setHoursMode] = useState<"manual" | "real">("manual");
 
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
@@ -220,7 +222,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     if (!user) return;
     setResolving(true);
     const oldStatus = ticket?.status || "aberto";
-    const workHours = workHoursInput ? parseFloat(workHoursInput) : null;
+    
+    let workHours: number | null = null;
+    if (hoursMode === "manual") {
+      workHours = workHoursInput ? parseFloat(workHoursInput) : null;
+    } else {
+      // Calculate real hours: (now - created_at - sla_paused_total_ms)
+      const created = new Date(ticket.created_at).getTime();
+      const pausedMs = ticket.sla_paused_total_ms || 0;
+      workHours = Math.max(0, (Date.now() - created - pausedMs) / 3600000);
+      workHours = Math.round(workHours * 100) / 100;
+    }
 
     const { error } = await supabase
       .from("support_tickets" as any)
@@ -500,14 +512,11 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                       <Undo2 className="h-4 w-4" />
                     </Button>
                   )}
-                  {(isAdmin || ticket.user_id === user?.id) && (
+                  {userRole === "super_admin" && (
                     <Button size="icon" variant="outline" onClick={() => {
-                      if (userRole === "super_admin") {
-                        handleResolve();
-                      } else {
-                        setWorkHoursInput("");
-                        setResolveOpen(true);
-                      }
+                      setHoursMode("manual");
+                      setWorkHoursInput("");
+                      setResolveOpen(true);
                     }} className="text-emerald-400 hover:bg-emerald-500/10" title="Resolver">
                       <CheckCircle className="h-4 w-4" />
                     </Button>
@@ -565,21 +574,45 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Informe quantas horas foram gastas na resolução deste chamado (opcional).
+              Escolha como registrar as horas deste chamado.
             </p>
-            <div className="space-y-2">
-              <Label htmlFor="workHours">Horas trabalhadas</Label>
-              <Input
-                id="workHours"
-                type="number"
-                step="0.5"
-                min="0"
-                value={workHoursInput}
-                onChange={(e) => setWorkHoursInput(e.target.value)}
-                placeholder="Ex: 2.5"
-                inputMode="decimal"
-              />
-            </div>
+            <RadioGroup value={hoursMode} onValueChange={(v) => setHoursMode(v as "manual" | "real")} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="manual" id="hours-manual" />
+                <Label htmlFor="hours-manual">Horas manuais</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="real" id="hours-real" />
+                <Label htmlFor="hours-real">Horas reais (tempo decorrido)</Label>
+              </div>
+            </RadioGroup>
+            {hoursMode === "manual" ? (
+              <div className="space-y-2">
+                <Label htmlFor="workHours">Horas trabalhadas</Label>
+                <Input
+                  id="workHours"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={workHoursInput}
+                  onChange={(e) => setWorkHoursInput(e.target.value)}
+                  placeholder="Ex: 2.5"
+                  inputMode="decimal"
+                />
+              </div>
+            ) : (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="text-muted-foreground">Tempo calculado automaticamente:</p>
+                <p className="text-lg font-semibold text-emerald-400 mt-1">
+                  {ticket ? (() => {
+                    const created = new Date(ticket.created_at).getTime();
+                    const pausedMs = ticket.sla_paused_total_ms || 0;
+                    const hours = Math.max(0, (Date.now() - created - pausedMs) / 3600000);
+                    return `${Math.round(hours * 100) / 100}h`;
+                  })() : "—"}
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setResolveOpen(false)}>Cancelar</Button>
