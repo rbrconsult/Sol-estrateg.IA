@@ -222,7 +222,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     if (!user) return;
     setResolving(true);
     const oldStatus = ticket?.status || "aberto";
-    const workHours = workHoursInput ? parseFloat(workHoursInput) : null;
+    
+    let workHours: number | null = null;
+    if (hoursMode === "manual") {
+      workHours = workHoursInput ? parseFloat(workHoursInput) : null;
+    } else {
+      // Calculate real hours: (now - created_at - sla_paused_total_ms)
+      const created = new Date(ticket.created_at).getTime();
+      const pausedMs = ticket.sla_paused_total_ms || 0;
+      workHours = Math.max(0, (Date.now() - created - pausedMs) / 3600000);
+      workHours = Math.round(workHours * 100) / 100;
+    }
 
     const { error } = await supabase
       .from("support_tickets" as any)
