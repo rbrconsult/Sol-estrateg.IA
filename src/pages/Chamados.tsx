@@ -33,7 +33,7 @@ function KPICard({ icon: Icon, label, value, color }: KPIProps) {
 }
 
 export default function Chamados() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string>();
   const [loading, setLoading] = useState(true);
