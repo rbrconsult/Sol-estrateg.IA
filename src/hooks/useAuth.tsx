@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchUserRole(session.user.id);
-        
+        fetchOrganizationId(session.user.id);
         // Skip session validation if impersonating
         const isImpersonatingNow = !!localStorage.getItem(IMPERSONATION_KEY);
         if (!isImpersonatingNow) {
