@@ -103,17 +103,18 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
     }
     setFormLoading(true);
     try {
+      const settings = { google_sheet_id: orgForm.googleSheetId || null };
       if (editingOrg) {
         const { error } = await supabase
           .from('organizations')
-          .update({ name: orgForm.name, slug: orgForm.slug })
+          .update({ name: orgForm.name, slug: orgForm.slug, settings })
           .eq('id', editingOrg.id);
         if (error) throw error;
         toast.success('Organização atualizada!');
       } else {
         const { error } = await supabase
           .from('organizations')
-          .insert({ name: orgForm.name, slug: orgForm.slug });
+          .insert({ name: orgForm.name, slug: orgForm.slug, settings });
         if (error) throw error;
         toast.success('Organização criada!');
       }
