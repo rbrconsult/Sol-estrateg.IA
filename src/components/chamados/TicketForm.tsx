@@ -42,6 +42,8 @@ const PLATAFORMAS = [
   "Krolic",
   "Solar Market",
   "Drive | Planilhas",
+  "Make",
+  "ChatGPT",
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
