@@ -247,7 +247,8 @@ export default function Admin() {
           email: formData.email,
           password: formData.password,
           full_name: formData.full_name,
-          role: formData.role
+          role: formData.role,
+          organization_id: formData.organization_id
         }
       });
 
