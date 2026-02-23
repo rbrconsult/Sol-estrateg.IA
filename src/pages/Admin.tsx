@@ -532,7 +532,7 @@ export default function Admin() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -542,6 +542,17 @@ export default function Admin() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Organizações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{organizations.length}</div>
             </CardContent>
           </Card>
           <Card>
