@@ -156,7 +156,8 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const openEditOrg = (org: Organization) => {
     setEditingOrg(org);
     const sheetId = (org.settings as any)?.google_sheet_id || '';
-    setOrgForm({ name: org.name, slug: org.slug, googleSheetId: sheetId });
+    const statusUrl = (org.settings as any)?.status_url || '';
+    setOrgForm({ name: org.name, slug: org.slug, googleSheetId: sheetId, statusUrl });
     setIsOrgDialogOpen(true);
   };
 
