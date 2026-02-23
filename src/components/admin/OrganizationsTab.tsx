@@ -163,7 +163,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
 
   const openCreateOrg = () => {
     setEditingOrg(null);
-    setOrgForm({ name: '', slug: '', googleSheetId: '' });
+    setOrgForm({ name: '', slug: '', googleSheetId: '', statusUrl: '' });
     setIsOrgDialogOpen(true);
   };
 
