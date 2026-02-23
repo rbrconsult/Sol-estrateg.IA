@@ -50,6 +50,11 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
   const [returnReason, setReturnReason] = useState("");
   const [returning, setReturning] = useState(false);
 
+  // Resolve dialog state
+  const [resolveOpen, setResolveOpen] = useState(false);
+  const [workHoursInput, setWorkHoursInput] = useState("");
+  const [resolving, setResolving] = useState(false);
+
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
   const fetchData = async () => {
