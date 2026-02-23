@@ -99,15 +99,32 @@ Deno.serve(async (req) => {
 
       console.log('User created:', newUser.user?.id);
 
-      // Update role if not default 'user'
-      if (role && role !== 'user' && newUser.user) {
-        const { error: roleUpdateError } = await supabaseAdmin
-          .from('user_roles')
-          .update({ role })
-          .eq('user_id', newUser.user.id);
+      if (newUser.user) {
+        // Update role if not default 'user'
+        if (role && role !== 'user') {
+          const { error: roleUpdateError } = await supabaseAdmin
+            .from('user_roles')
+            .update({ role })
+            .eq('user_id', newUser.user.id);
 
-        if (roleUpdateError) {
-          console.error('Role update error:', roleUpdateError);
+          if (roleUpdateError) {
+            console.error('Role update error:', roleUpdateError);
+          }
+        }
+
+        // Update profile and org membership to correct organization
+        if (orgId !== '00000000-0000-0000-0000-000000000001') {
+          // Update profile org
+          await supabaseAdmin
+            .from('profiles')
+            .update({ organization_id: orgId })
+            .eq('id', newUser.user.id);
+
+          // Update org membership (trigger creates with default org)
+          await supabaseAdmin
+            .from('organization_members')
+            .update({ organization_id: orgId })
+            .eq('user_id', newUser.user.id);
         }
       }
 
