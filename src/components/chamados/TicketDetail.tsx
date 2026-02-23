@@ -55,6 +55,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
   const [resolveOpen, setResolveOpen] = useState(false);
   const [workHoursInput, setWorkHoursInput] = useState("");
   const [resolving, setResolving] = useState(false);
+  const [hoursMode, setHoursMode] = useState<"manual" | "real">("manual");
 
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
