@@ -218,14 +218,22 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
   const handleResolve = async () => {
     if (!user) return;
+    setResolving(true);
     const oldStatus = ticket?.status || "aberto";
+    const workHours = workHoursInput ? parseFloat(workHoursInput) : null;
+
     const { error } = await supabase
       .from("support_tickets" as any)
-      .update({ status: "resolvido", resolved_at: new Date().toISOString() })
+      .update({ 
+        status: "resolvido", 
+        resolved_at: new Date().toISOString(),
+        work_hours: workHours,
+      })
       .eq("id", ticketId);
 
     if (error) {
       toast.error("Erro ao resolver chamado");
+      setResolving(false);
       return;
     }
 
@@ -253,6 +261,9 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
       console.error("Error sending resolve WhatsApp notification:", e);
     }
 
+    setResolving(false);
+    setWorkHoursInput("");
+    setResolveOpen(false);
     toast.success("Chamado marcado como resolvido!");
     onUpdated();
     fetchData();
