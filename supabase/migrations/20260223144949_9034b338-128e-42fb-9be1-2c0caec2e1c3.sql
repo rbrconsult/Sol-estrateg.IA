@@ -1,0 +1,1 @@
+ALTER TABLE public.support_tickets ADD COLUMN work_hours numeric NULL;
