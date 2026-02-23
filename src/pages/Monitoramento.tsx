@@ -1,17 +1,35 @@
-import { Activity, ExternalLink, Globe, Shield, Server, Wifi } from "lucide-react";
+import { Activity, ExternalLink, Globe, Shield, Server, Wifi, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-const STATUS_URL = "https://status.rbrsistemas.com/status/evolve";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Monitoramento() {
+  const { organizationId } = useAuth();
+
+  const { data: statusUrl } = useQuery({
+    queryKey: ['org-status-url', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return null;
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', organizationId)
+        .single();
+      if (error || !data) return null;
+      return (data.settings as any)?.status_url || null;
+    },
+    enabled: !!organizationId,
+  });
+
   return (
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Activity className="h-6 w-6 text-primary" /> Monitoramento
         </h1>
-        <p className="text-sm text-muted-foreground">Acompanhe o status dos sistemas Evolve</p>
+        <p className="text-sm text-muted-foreground">Acompanhe o status dos sistemas</p>
       </div>
 
       <div className="flex items-center justify-center" style={{ minHeight: "calc(100vh - 14rem)" }}>
@@ -29,7 +47,7 @@ export default function Monitoramento() {
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Status dos Sistemas</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Verifique a disponibilidade e desempenho de todos os serviços da plataforma Evolve em tempo real.
+                Verifique a disponibilidade e desempenho de todos os serviços da plataforma em tempo real.
               </p>
             </div>
 
@@ -48,11 +66,18 @@ export default function Monitoramento() {
               </div>
             </div>
 
-            <Button asChild size="lg" className="gap-2 w-full">
-              <a href={STATUS_URL} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" /> Acessar Painel de Status
-              </a>
-            </Button>
+            {statusUrl ? (
+              <Button asChild size="lg" className="gap-2 w-full">
+                <a href={statusUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" /> Acessar Painel de Status
+                </a>
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <AlertTriangle className="h-4 w-4" />
+                <span>Painel de status não configurado para esta organização</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
