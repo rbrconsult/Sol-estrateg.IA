@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonationInfo, setImpersonationInfo] = useState<ImpersonationInfo | null>(null);
 
