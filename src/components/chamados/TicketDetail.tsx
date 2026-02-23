@@ -512,14 +512,11 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                       <Undo2 className="h-4 w-4" />
                     </Button>
                   )}
-                  {(isAdmin || ticket.user_id === user?.id) && (
+                  {userRole === "super_admin" && (
                     <Button size="icon" variant="outline" onClick={() => {
-                      if (userRole === "super_admin") {
-                        handleResolve();
-                      } else {
-                        setWorkHoursInput("");
-                        setResolveOpen(true);
-                      }
+                      setHoursMode("manual");
+                      setWorkHoursInput("");
+                      setResolveOpen(true);
                     }} className="text-emerald-400 hover:bg-emerald-500/10" title="Resolver">
                       <CheckCircle className="h-4 w-4" />
                     </Button>
