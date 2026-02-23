@@ -64,7 +64,8 @@ export default function Admin() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
-  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole });
+  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole, organization_id: '00000000-0000-0000-0000-000000000001' });
+  const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [newPassword, setNewPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null);
