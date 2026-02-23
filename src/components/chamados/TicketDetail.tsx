@@ -574,21 +574,45 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Informe quantas horas foram gastas na resolução deste chamado (opcional).
+              Escolha como registrar as horas deste chamado.
             </p>
-            <div className="space-y-2">
-              <Label htmlFor="workHours">Horas trabalhadas</Label>
-              <Input
-                id="workHours"
-                type="number"
-                step="0.5"
-                min="0"
-                value={workHoursInput}
-                onChange={(e) => setWorkHoursInput(e.target.value)}
-                placeholder="Ex: 2.5"
-                inputMode="decimal"
-              />
-            </div>
+            <RadioGroup value={hoursMode} onValueChange={(v) => setHoursMode(v as "manual" | "real")} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="manual" id="hours-manual" />
+                <Label htmlFor="hours-manual">Horas manuais</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="real" id="hours-real" />
+                <Label htmlFor="hours-real">Horas reais (tempo decorrido)</Label>
+              </div>
+            </RadioGroup>
+            {hoursMode === "manual" ? (
+              <div className="space-y-2">
+                <Label htmlFor="workHours">Horas trabalhadas</Label>
+                <Input
+                  id="workHours"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={workHoursInput}
+                  onChange={(e) => setWorkHoursInput(e.target.value)}
+                  placeholder="Ex: 2.5"
+                  inputMode="decimal"
+                />
+              </div>
+            ) : (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="text-muted-foreground">Tempo calculado automaticamente:</p>
+                <p className="text-lg font-semibold text-emerald-400 mt-1">
+                  {ticket ? (() => {
+                    const created = new Date(ticket.created_at).getTime();
+                    const pausedMs = ticket.sla_paused_total_ms || 0;
+                    const hours = Math.max(0, (Date.now() - created - pausedMs) / 3600000);
+                    return `${Math.round(hours * 100) / 100}h`;
+                  })() : "—"}
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setResolveOpen(false)}>Cancelar</Button>
