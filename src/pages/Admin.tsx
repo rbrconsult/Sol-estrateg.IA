@@ -257,7 +257,7 @@ export default function Admin() {
 
       toast.success('Usuário criado com sucesso!');
       setIsCreateDialogOpen(false);
-      setFormData({ email: '', password: '', full_name: '', role: 'user' });
+      setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001' });
       fetchUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
