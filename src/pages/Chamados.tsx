@@ -88,7 +88,7 @@ export default function Chamados() {
         <KPICard icon={XCircle} label="Fora do SLA" value={overdueSLA} color="bg-destructive/20 text-destructive" />
       </div>
 
-      {userRole === "super_admin" && <TeamMetrics />}
+      <TeamMetrics />
 
       <div className={selectedTicketId ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
         <div>
