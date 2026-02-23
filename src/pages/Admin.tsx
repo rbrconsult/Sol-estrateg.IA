@@ -343,7 +343,8 @@ export default function Admin() {
       email: u.email, 
       password: '', 
       full_name: u.full_name || '', 
-      role: u.role as AppRole 
+      role: u.role as AppRole,
+      organization_id: '00000000-0000-0000-0000-000000000001'
     });
     setIsEditDialogOpen(true);
   };
