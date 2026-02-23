@@ -583,6 +583,7 @@ export default function Admin() {
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="organizations">Organizações</TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
