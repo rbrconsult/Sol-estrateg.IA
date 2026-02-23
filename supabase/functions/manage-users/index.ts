@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     console.log('Action requested:', action, 'by user:', requestingUser.email);
 
     if (action === 'create') {
-      const { email, password, full_name, role } = body;
+      const { email, password, full_name, role, organization_id } = body;
 
       if (!email || !password) {
         return new Response(
