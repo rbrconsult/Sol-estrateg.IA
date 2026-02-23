@@ -20,6 +20,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   userRole: string | null;
+  organizationId: string | null;
   isImpersonating: boolean;
   impersonationInfo: ImpersonationInfo | null;
   startImpersonation: (targetUserId: string) => Promise<void>;
