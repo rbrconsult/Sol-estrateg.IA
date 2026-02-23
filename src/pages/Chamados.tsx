@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TicketForm } from "@/components/chamados/TicketForm";
 import { TicketList } from "@/components/chamados/TicketList";
 import { TicketDetail } from "@/components/chamados/TicketDetail";
+import { TeamMetrics } from "@/components/chamados/TeamMetrics";
 import { Card, CardContent } from "@/components/ui/card";
 import { Headset, CheckCircle, AlertTriangle, XCircle, PauseCircle } from "lucide-react";
 import { getSLAStatus } from "@/components/chamados/SLATimer";
