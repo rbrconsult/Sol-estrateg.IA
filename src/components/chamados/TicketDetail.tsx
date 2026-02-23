@@ -398,6 +398,12 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center gap-3">
               <Clock className="h-4 w-4 text-emerald-400" />
               <div className="text-xs space-y-0.5">
+                {ticket.work_hours != null && (
+                  <p className="font-semibold text-emerald-400 flex items-center gap-1">
+                    <Timer className="h-3 w-3" />
+                    Horas trabalhadas: {ticket.work_hours}h
+                  </p>
+                )}
                 {metrics.firstResponse && <p><span className="font-medium">Primeira resposta:</span> {metrics.firstResponse}</p>}
                 {metrics.totalTime && <p><span className="font-medium">Tempo total:</span> {metrics.totalTime}</p>}
               </div>
