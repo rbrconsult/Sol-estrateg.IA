@@ -101,9 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
+            fetchOrganizationId(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
+          setOrganizationId(null);
         }
       }
     );
