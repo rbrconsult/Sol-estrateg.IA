@@ -20,6 +20,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   userRole: string | null;
+  organizationId: string | null;
   isImpersonating: boolean;
   impersonationInfo: ImpersonationInfo | null;
   startImpersonation: (targetUserId: string) => Promise<void>;
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonationInfo, setImpersonationInfo] = useState<ImpersonationInfo | null>(null);
 
@@ -99,9 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
+            fetchOrganizationId(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
+          setOrganizationId(null);
         }
       }
     );
@@ -111,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchUserRole(session.user.id);
-        
+        fetchOrganizationId(session.user.id);
         // Skip session validation if impersonating
         const isImpersonatingNow = !!localStorage.getItem(IMPERSONATION_KEY);
         if (!isImpersonatingNow) {
@@ -158,6 +162,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching user role:', error);
       setUserRole('user');
+    }
+  };
+
+  const fetchOrganizationId = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching organization:', error);
+        setOrganizationId(null);
+      } else {
+        setOrganizationId(data?.organization_id || null);
+      }
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      setOrganizationId(null);
     }
   };
 
@@ -293,7 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ 
-      user, session, loading, signIn, signUp, signOut, userRole,
+      user, session, loading, signIn, signUp, signOut, userRole, organizationId,
       isImpersonating, impersonationInfo, startImpersonation, stopImpersonation
     }}>
       {children}
