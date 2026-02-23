@@ -113,10 +113,15 @@ export function TeamMetrics() {
   filtered.forEach((t: any) => {
     memberSet.add(t.assigned_to || t.user_id);
     if (t.resolved_at) {
-      const created = new Date(t.created_at).getTime();
-      const resolved = new Date(t.resolved_at).getTime();
-      const pausedMs = t.sla_paused_total_ms || 0;
-      totalWorkHours += Math.max(0, resolved - created - pausedMs) / (1000 * 60 * 60);
+      // Use manual work_hours if available, otherwise calculate from timestamps
+      if (t.work_hours != null) {
+        totalWorkHours += t.work_hours;
+      } else {
+        const created = new Date(t.created_at).getTime();
+        const resolved = new Date(t.resolved_at).getTime();
+        const pausedMs = t.sla_paused_total_ms || 0;
+        totalWorkHours += Math.max(0, resolved - created - pausedMs) / (1000 * 60 * 60);
+      }
     }
     if (t.first_response_at) {
       const created = new Date(t.created_at).getTime();
