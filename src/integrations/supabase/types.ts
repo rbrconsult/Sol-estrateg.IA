@@ -115,6 +115,7 @@ export type Database = {
           titulo: string
           updated_at: string
           user_id: string
+          work_hours: number | null
         }
         Insert: {
           assigned_to?: string | null
@@ -141,6 +142,7 @@ export type Database = {
           titulo: string
           updated_at?: string
           user_id: string
+          work_hours?: number | null
         }
         Update: {
           assigned_to?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           titulo?: string
           updated_at?: string
           user_id?: string
+          work_hours?: number | null
         }
         Relationships: []
       }

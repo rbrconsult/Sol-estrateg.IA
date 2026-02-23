@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { SLATimer } from "./SLATimer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw } from "lucide-react";
+import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw, Timer } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -47,6 +49,11 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnReason, setReturnReason] = useState("");
   const [returning, setReturning] = useState(false);
+
+  // Resolve dialog state
+  const [resolveOpen, setResolveOpen] = useState(false);
+  const [workHoursInput, setWorkHoursInput] = useState("");
+  const [resolving, setResolving] = useState(false);
 
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
@@ -211,14 +218,22 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
   const handleResolve = async () => {
     if (!user) return;
+    setResolving(true);
     const oldStatus = ticket?.status || "aberto";
+    const workHours = workHoursInput ? parseFloat(workHoursInput) : null;
+
     const { error } = await supabase
       .from("support_tickets" as any)
-      .update({ status: "resolvido", resolved_at: new Date().toISOString() })
+      .update({ 
+        status: "resolvido", 
+        resolved_at: new Date().toISOString(),
+        work_hours: workHours,
+      })
       .eq("id", ticketId);
 
     if (error) {
       toast.error("Erro ao resolver chamado");
+      setResolving(false);
       return;
     }
 
@@ -246,6 +261,9 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
       console.error("Error sending resolve WhatsApp notification:", e);
     }
 
+    setResolving(false);
+    setWorkHoursInput("");
+    setResolveOpen(false);
     toast.success("Chamado marcado como resolvido!");
     onUpdated();
     fetchData();
@@ -380,6 +398,12 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center gap-3">
               <Clock className="h-4 w-4 text-emerald-400" />
               <div className="text-xs space-y-0.5">
+                {ticket.work_hours != null && (
+                  <p className="font-semibold text-emerald-400 flex items-center gap-1">
+                    <Timer className="h-3 w-3" />
+                    Horas trabalhadas: {ticket.work_hours}h
+                  </p>
+                )}
                 {metrics.firstResponse && <p><span className="font-medium">Primeira resposta:</span> {metrics.firstResponse}</p>}
                 {metrics.totalTime && <p><span className="font-medium">Tempo total:</span> {metrics.totalTime}</p>}
               </div>
@@ -477,7 +501,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                     </Button>
                   )}
                   {(isAdmin || ticket.user_id === user?.id) && (
-                    <Button size="icon" variant="outline" onClick={handleResolve} className="text-emerald-400 hover:bg-emerald-500/10" title="Resolver">
+                    <Button size="icon" variant="outline" onClick={() => { setWorkHoursInput(""); setResolveOpen(true); }} className="text-emerald-400 hover:bg-emerald-500/10" title="Resolver">
                       <CheckCircle className="h-4 w-4" />
                     </Button>
                   )}
@@ -519,6 +543,45 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
               className="gap-2"
             >
               <Undo2 className="h-4 w-4" /> {returning ? "Enviando..." : "Devolver"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resolve with hours dialog */}
+      <Dialog open={resolveOpen} onOpenChange={setResolveOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5 text-emerald-400" /> Resolver Chamado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Informe quantas horas foram gastas na resolução deste chamado (opcional).
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="workHours">Horas trabalhadas</Label>
+              <Input
+                id="workHours"
+                type="number"
+                step="0.5"
+                min="0"
+                value={workHoursInput}
+                onChange={(e) => setWorkHoursInput(e.target.value)}
+                placeholder="Ex: 2.5"
+                inputMode="decimal"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setResolveOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={handleResolve}
+              disabled={resolving}
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            >
+              <CheckCircle className="h-4 w-4" /> {resolving ? "Resolvendo..." : "Resolver"}
             </Button>
           </DialogFooter>
         </DialogContent>
