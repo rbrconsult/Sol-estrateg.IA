@@ -81,11 +81,12 @@ Deno.serve(async (req) => {
       }
 
       // Create user with admin API
+      const orgId = organization_id || '00000000-0000-0000-0000-000000000001';
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        email_confirm: true, // Auto-confirm email
-        user_metadata: { full_name }
+        email_confirm: true,
+        user_metadata: { full_name, organization_id: orgId }
       });
 
       if (createError) {
