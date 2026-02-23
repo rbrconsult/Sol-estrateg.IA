@@ -91,8 +91,19 @@ export default function Admin() {
     if (userRole === 'super_admin') {
       fetchData();
       fetchSettings();
+      fetchOrganizationsList();
     }
   }, [userRole]);
+
+  const fetchOrganizationsList = async () => {
+    try {
+      const { data, error } = await supabase.from('organizations').select('id, name').order('name');
+      if (error) throw error;
+      setOrganizations(data || []);
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
