@@ -55,8 +55,8 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
   const [fluxo, setFluxo] = useState("");
   const [plataforma, setPlataforma] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [clienteNome, setClienteNome] = useState("");
-  const [clienteTelefone, setClienteTelefone] = useState("");
+  const [clienteNome, setClienteNome] = useState("Gabriel");
+  const [clienteTelefone, setClienteTelefone] = useState("(17) 99124-4540");
   const [detalhes, setDetalhes] = useState("");
   const [categoria, setCategoria] = useState("duvida");
   const [file, setFile] = useState<File | null>(null);
@@ -114,8 +114,8 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     setFluxo("");
     setPlataforma("");
     setDescricao("");
-    setClienteNome("");
-    setClienteTelefone("");
+    setClienteNome("Gabriel");
+    setClienteTelefone("(17) 99124-4540");
     setDetalhes("");
     setCategoria("duvida");
     setFile(null);
