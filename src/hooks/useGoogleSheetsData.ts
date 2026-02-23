@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Proposal {
   etapa: string;
@@ -28,8 +29,10 @@ interface SheetsResponse {
   message?: string;
 }
 
-async function fetchSheetsData(): Promise<SheetsResponse> {
-  const { data, error } = await supabase.functions.invoke<SheetsResponse>('fetch-sheets');
+async function fetchSheetsData(organizationId: string | null): Promise<SheetsResponse> {
+  const { data, error } = await supabase.functions.invoke<SheetsResponse>('fetch-sheets', {
+    body: { organization_id: organizationId },
+  });
   
   if (error) {
     console.error('Error fetching sheets data:', error);
@@ -48,11 +51,14 @@ async function fetchSheetsData(): Promise<SheetsResponse> {
 }
 
 export function useGoogleSheetsData() {
+  const { organizationId } = useAuth();
+
   return useQuery({
-    queryKey: ['google-sheets-data'],
-    queryFn: fetchSheetsData,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+    queryKey: ['google-sheets-data', organizationId],
+    queryFn: () => fetchSheetsData(organizationId),
+    staleTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 60 * 10,
     retry: 2,
+    enabled: !!organizationId,
   });
 }
