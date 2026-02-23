@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TicketForm } from "@/components/chamados/TicketForm";
 import { TicketList } from "@/components/chamados/TicketList";
 import { TicketDetail } from "@/components/chamados/TicketDetail";
+import { TeamMetrics } from "@/components/chamados/TeamMetrics";
 import { Card, CardContent } from "@/components/ui/card";
 import { Headset, CheckCircle, AlertTriangle, XCircle, PauseCircle } from "lucide-react";
 import { getSLAStatus } from "@/components/chamados/SLATimer";
@@ -32,7 +33,7 @@ function KPICard({ icon: Icon, label, value, color }: KPIProps) {
 }
 
 export default function Chamados() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,8 @@ export default function Chamados() {
         <KPICard icon={AlertTriangle} label="Próx. de Vencer" value={warningSLA} color="bg-amber-500/20 text-amber-400" />
         <KPICard icon={XCircle} label="Fora do SLA" value={overdueSLA} color="bg-destructive/20 text-destructive" />
       </div>
+
+      {userRole === "super_admin" && <TeamMetrics />}
 
       <div className={selectedTicketId ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
         <div>
