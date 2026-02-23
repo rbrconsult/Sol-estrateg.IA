@@ -114,8 +114,8 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     setFluxo("");
     setPlataforma("");
     setDescricao("");
-    setClienteNome("");
-    setClienteTelefone("");
+    setClienteNome("Gabriel");
+    setClienteTelefone("(17) 99124-4540");
     setDetalhes("");
     setCategoria("duvida");
     setFile(null);
