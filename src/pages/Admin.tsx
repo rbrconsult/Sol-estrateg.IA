@@ -15,8 +15,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import OrganizationsTab from '@/components/admin/OrganizationsTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -63,7 +64,8 @@ export default function Admin() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
-  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole });
+  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole, organization_id: '00000000-0000-0000-0000-000000000001' });
+  const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [newPassword, setNewPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null);
@@ -89,8 +91,19 @@ export default function Admin() {
     if (userRole === 'super_admin') {
       fetchData();
       fetchSettings();
+      fetchOrganizationsList();
     }
   }, [userRole]);
+
+  const fetchOrganizationsList = async () => {
+    try {
+      const { data, error } = await supabase.from('organizations').select('id, name').order('name');
+      if (error) throw error;
+      setOrganizations(data || []);
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -234,7 +247,8 @@ export default function Admin() {
           email: formData.email,
           password: formData.password,
           full_name: formData.full_name,
-          role: formData.role
+          role: formData.role,
+          organization_id: formData.organization_id
         }
       });
 
@@ -243,7 +257,7 @@ export default function Admin() {
 
       toast.success('Usuário criado com sucesso!');
       setIsCreateDialogOpen(false);
-      setFormData({ email: '', password: '', full_name: '', role: 'user' });
+      setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001' });
       fetchUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -329,7 +343,8 @@ export default function Admin() {
       email: u.email, 
       password: '', 
       full_name: u.full_name || '', 
-      role: u.role as AppRole 
+      role: u.role as AppRole,
+      organization_id: '00000000-0000-0000-0000-000000000001'
     });
     setIsEditDialogOpen(true);
   };
@@ -518,7 +533,7 @@ export default function Admin() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -528,6 +543,17 @@ export default function Admin() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Organizações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{organizations.length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -558,6 +584,7 @@ export default function Admin() {
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="organizations">Organizações</TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -571,7 +598,7 @@ export default function Admin() {
                   <CardDescription>Lista de todos os usuários do sistema</CardDescription>
                 </div>
                 <Button onClick={() => {
-                  setFormData({ email: '', password: '', full_name: '', role: 'user' });
+                  setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001' });
                   setIsCreateDialogOpen(true);
                 }}>
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -658,6 +685,10 @@ export default function Admin() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="organizations">
+            <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
           </TabsContent>
 
           <TabsContent value="sessions">
@@ -859,6 +890,19 @@ export default function Admin() {
                   <SelectContent>
                     <SelectItem value="user">Usuário</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="organization">Organização</Label>
+                <Select value={formData.organization_id} onValueChange={(value) => setFormData({ ...formData, organization_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {organizations.map(org => (
+                      <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
