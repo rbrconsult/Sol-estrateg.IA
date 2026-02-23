@@ -62,12 +62,69 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          settings: Json | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          settings?: Json | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          settings?: Json | null
+          slug?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           email: string | null
           full_name: string | null
           id: string
+          organization_id: string | null
           phone: string | null
           updated_at: string
         }
@@ -76,6 +133,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -84,10 +142,19 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_tickets: {
         Row: {
@@ -104,6 +171,7 @@ export type Database = {
           fluxo: string | null
           id: string
           notification_phone: string | null
+          organization_id: string | null
           plataforma: string | null
           prioridade: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
@@ -131,6 +199,7 @@ export type Database = {
           fluxo?: string | null
           id?: string
           notification_phone?: string | null
+          organization_id?: string | null
           plataforma?: string | null
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
@@ -158,6 +227,7 @@ export type Database = {
           fluxo?: string | null
           id?: string
           notification_phone?: string | null
+          organization_id?: string | null
           plataforma?: string | null
           prioridade?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
@@ -171,7 +241,15 @@ export type Database = {
           user_id?: string
           work_hours?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_messages: {
         Row: {
@@ -305,6 +383,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_org: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
