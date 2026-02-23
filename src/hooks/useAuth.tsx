@@ -163,6 +163,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchOrganizationId = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching organization:', error);
+        setOrganizationId(null);
+      } else {
+        setOrganizationId(data?.organization_id || null);
+      }
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      setOrganizationId(null);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
