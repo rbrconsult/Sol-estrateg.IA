@@ -46,7 +46,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   // Create/Edit org dialog
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
-  const [orgForm, setOrgForm] = useState({ name: '', slug: '' });
+  const [orgForm, setOrgForm] = useState({ name: '', slug: '', googleSheetId: '' });
 
   // Delete org dialog
   const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
