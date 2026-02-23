@@ -204,13 +204,12 @@ export function TeamMetrics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <MetricCard icon={CheckCircle2} label="Resolvidos" value={totalResolved} color="bg-emerald-500/15 text-emerald-500" />
         <MetricCard icon={Clock} label="Em Aberto" value={totalOpen} color="bg-blue-500/15 text-blue-500" />
         <MetricCard icon={Timer} label="Horas Totais" value={formatHours(totalWorkHours)} subtitle="Tempo de trabalho" color="bg-amber-500/15 text-amber-500" />
         <MetricCard icon={TrendingUp} label="Tempo Médio" value={formatHours(avgResolution)} subtitle="Por chamado" color="bg-purple-500/15 text-purple-500" />
         <MetricCard icon={Zap} label="1ª Resposta" value={avgFirstResp > 0 ? `${avgFirstResp}min` : "—"} subtitle="Média" color="bg-orange-500/15 text-orange-500" />
-        <MetricCard icon={Users} label="Membros" value={memberSet.size} subtitle="Ativos" color="bg-cyan-500/15 text-cyan-500" />
       </div>
     </div>
   );
