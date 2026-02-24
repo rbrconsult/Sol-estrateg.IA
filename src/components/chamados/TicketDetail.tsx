@@ -73,6 +73,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     if (messagesRes.data) setMessages(messagesRes.data as any[]);
     if (historyRes.data) setStatusHistory(historyRes.data as any[]);
     setLoading(false);
+    setInitialLoad(false);
   };
 
   useEffect(() => {
