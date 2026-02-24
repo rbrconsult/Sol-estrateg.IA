@@ -1,183 +1,113 @@
 
 
-# Reestruturacao do BI Estrategico -- Modelo Executivo
+# Dashboard de Leads e Robo -- Plano de Implementacao
 
 ## Visao Geral
 
-Reorganizar a pagina "/" (BI Estrategico) de "painel tecnico/contabil" para "BI decisor/executivo", priorizando receita sobre volume, criando novos componentes estrategicos e reduzindo excesso visual. Nenhuma alteracao no backend.
+Criar uma nova pagina `/leads` com dashboard completo de captacao de leads e metricas do robo de atendimento. Inicialmente com dados mockados, depois substituiremos por dados reais do Make/banco de dados.
 
 ---
 
-## Nova Ordem dos Blocos na Pagina
+## Estrutura da Pagina
+
+A pagina sera dividida em **4 blocos principais**:
 
 ```text
-+--------------------------------------------------+
-| BLOCO 1: Visao Executiva (4 cards grandes)       |
-| Receita Prevista | Receita Fechada | Conversao   |
-| Ticket Medio                                      |
-| + linha secundaria: propostas, abertos, pipeline  |
-+--------------------------------------------------+
-| BLOCO 2: Meta vs Realizado + Health Score         |
-| [Barra de progresso da meta] [Health Score badge] |
-+--------------------------------------------------+
-| BLOCO 3: Alertas Estrategicos                     |
-| Lista de 3-5 alertas calculados automaticamente   |
-+--------------------------------------------------+
-| BLOCO 4: Funil de Vendas (R$ e kWh)              |
-| Com taxas entre etapas e destaque de gargalo      |
-+--------------------------------------------------+
-| BLOCO 5: Performance Comercial                    |
-| Separado em 2 sub-blocos:                         |
-|   Performance Comercial | Volume Operacional      |
-+--------------------------------------------------+
-| BLOCO 6: Ranking + Tendencias (mantidos)          |
-+--------------------------------------------------+
++------------------------------------------------------------------+
+|  BLOCO 1: KPIs Gerais (cards no topo)                            |
+|  [Total Leads] [Qualificados] [Desqualificados] [Taxa Qualif.]   |
++------------------------------------------------------------------+
+|  BLOCO 2: Analise de Leads                                       |
+|  +---------------------------+  +------------------------------+ |
+|  | Leads por Origem (pizza)  |  | Leads por Dia da Semana      | |
+|  | Meta, LP, Site, Orcamento |  | (barras - Seg a Dom)         | |
+|  +---------------------------+  +------------------------------+ |
+|  +---------------------------+  +------------------------------+ |
+|  | Leads por Horario (barras)|  | Leads por Cidade/UF (tabela) | |
+|  | (faixas horárias)         |  | + "Quanto Gasta" por regiao  | |
+|  +---------------------------+  +------------------------------+ |
+|  +------------------------------------------------------+       |
+|  | Tendencia de Leads ao longo do tempo (area chart)     |       |
+|  +------------------------------------------------------+       |
++------------------------------------------------------------------+
+|  BLOCO 3: Metricas do Robo                                       |
+|  [Atendidos] [Msgs Enviadas] [Tempo Medio Resp.] [Tempo FUP]    |
+|  +---------------------------+  +------------------------------+ |
+|  | Agendamentos por Tipo     |  | Comportamento FUP Frio       | |
+|  | WhatsApp/Reuniao/Ligacao  |  | (timeline ou barras)         | |
+|  +---------------------------+  +------------------------------+ |
++------------------------------------------------------------------+
+|  BLOCO 4: Tabela Detalhada de Leads                              |
+|  Data | Origem | Cidade | UF | Gasto | Status | Agendamento     |
++------------------------------------------------------------------+
 ```
 
 ---
 
-## Arquivos Novos
+## O Que Voce Precisa Me Fornecer
 
-### 1. `src/components/dashboard/ExecutiveKPIs.tsx`
+Para estruturar os dados mockados de forma realista, preciso que voce me confirme os **campos** que chegam do Make. Aqui esta o que estou assumindo:
 
-4 cards grandes em grid 2x2 (mobile) / 4 colunas (desktop):
-
-| Card | Valor | Subtitulo |
-|---|---|---|
-| Receita Prevista | `kpis.receitaPrevista` (pipeline ponderado por probabilidade) | "Pipeline ponderado" |
-| Receita Fechada | `kpis.valorGanho` | "X negocios ganhos" |
-| Conversao Real | `kpis.taxaConversao` | "Ganhos / Total" |
-| Ticket Medio | `kpis.ticketMedio` | "Por proposta" |
-
-Linha secundaria abaixo com badges menores: total propostas, abertos, pipeline bruto.
-
-Estilo: cards maiores que os atuais KPICards, com destaque monetario (font-size maior para valores em R$), cores mais sutis, menos sombra.
-
-### 2. `src/components/dashboard/GoalProgress.tsx`
-
-Componente "Meta vs Realizado":
-- Meta configuravel via `useState` com valor padrao (ex: R$ 5.000.000) -- editavel inline pelo usuario (salvo em localStorage por enquanto, sem backend)
-- Barra de progresso visual com 3 segmentos:
-  - Verde: valor fechado (`kpis.valorGanho`)
-  - Azul: pipeline ponderado (`kpis.receitaPrevista`)
-  - Cinza: gap restante
-- Texto: "X% da meta atingida" + valor absoluto do gap
-- Props: `meta`, `valorFechado`, `receitaPrevista`
-
-### 3. `src/components/dashboard/HealthScore.tsx`
-
-Widget "Saude do Pipeline":
-- Calcula score 0-100 baseado em 4 fatores (pesos iguais de 25 cada):
-  1. **Conversao**: `taxaConversao >= 15% = 25pts`, `>= 10% = 18pts`, `>= 5% = 10pts`, else `0`
-  2. **Ciclo**: `cicloProposta <= 7d = 25pts`, `<= 15d = 18pts`, `<= 30d = 10pts`, else `0`
-  3. **Distribuicao**: Se nenhum vendedor concentra >50% do pipeline = 25pts, >60% = 10pts, >70% = 0pts
-  4. **Fluxo**: % de propostas paradas >15 dias. `<20% = 25pts`, `<40% = 15pts`, else `0`
-- Visual: badge grande com icone e cor:
-  - 75-100: Verde "Saudavel"
-  - 50-74: Amarelo "Atencao"  
-  - 0-49: Vermelho "Risco"
-- Props: `proposals`, `kpis`, `vendedorPerformance`
-
-### 4. `src/components/dashboard/StrategicAlerts.tsx`
-
-Card com lista de alertas calculados automaticamente a partir dos dados:
-
-Alertas possiveis (exibir apenas os relevantes, max 5):
-1. "X% das oportunidades estao paradas ha +15 dias" (se > 20%)
-2. "Conversao caiu para X%" (se < 10%)
-3. "1 vendedor concentra X% do pipeline" (se > 50%)
-4. "X% das perdas sao por [principal motivo]" (se tiver dados de perda)
-5. "Ciclo medio de X dias acima da media" (se > 20 dias)
-6. "X propostas sem atualizacao ha +30 dias"
-7. "Pipeline ponderado cobre apenas X% da meta"
-
-Cada alerta: icone de severidade (vermelho/amarelo) + texto + valor.
-
-Props: `proposals`, `kpis`, `vendedorPerformance`, `meta`
+| Campo | Descricao |
+|-------|-----------|
+| `data_entrada` | Data/hora que o lead chegou |
+| `origem` | Meta, Landing Page, Site, Orcamento, Organico |
+| `nome` | Nome do lead |
+| `telefone` | Telefone |
+| `cidade` | Cidade |
+| `uf` | Estado |
+| `gasto_mensal` | Quanto gasta de energia |
+| `status` | qualificado, desqualificado, pendente |
+| `tipo_agendamento` | whatsapp, reuniao_online, ligacao, null |
+| `robo_mensagens` | Qtde de mensagens que o robo enviou |
+| `robo_tempo_resposta_lead` | Tempo que o lead demorou a responder (segundos) |
+| `robo_tempo_fup_frio` | Tempo medio de retorno no FUP frio |
+| `robo_atendeu` | Se o robo atendeu (boolean) |
 
 ---
 
-## Arquivos Alterados
+## Detalhes Tecnicos
 
-### 5. `src/pages/Index.tsx`
+### Arquivos a Criar
 
-Reestruturar completamente o JSX (mantendo toda a logica de dados existente):
+1. **`src/pages/Leads.tsx`** -- Pagina principal do dashboard com todos os blocos
+2. **`src/data/leadsMockData.ts`** -- Dados mockados (50-100 leads) com distribuicao realista por origem, cidade, horario, dia da semana
+3. **`src/components/leads/LeadsKPIs.tsx`** -- Cards de KPI do topo (Total, Qualificados, Desqualificados, Taxa)
+4. **`src/components/leads/LeadsByOrigin.tsx`** -- Grafico pizza por origem
+5. **`src/components/leads/LeadsByDayOfWeek.tsx`** -- Grafico barras por dia da semana
+6. **`src/components/leads/LeadsByHour.tsx`** -- Grafico barras por faixa horaria
+7. **`src/components/leads/LeadsByLocation.tsx`** -- Tabela cidade/UF com gasto medio
+8. **`src/components/leads/RoboMetrics.tsx`** -- KPIs e graficos do robo
+9. **`src/components/leads/LeadsTable.tsx`** -- Tabela detalhada com todos os leads
 
-**Remover:**
-- `FunnelKPIs` (substituido por `ExecutiveKPIs`)
-- Secao "Indicadores Detalhados" com 6 `KPICard` (redistribuido entre ExecutiveKPIs e sub-blocos)
-- `StatusFunnel` (ciclo de vida) -- informacao ja coberta pelos novos blocos
-- `StageProgress` -- redundante com funil melhorado
+### Arquivos a Alterar
 
-**Adicionar (nesta ordem):**
-1. `ExecutiveKPIs` -- visao de receita
-2. `GoalProgress` + `HealthScore` lado a lado (grid 2 colunas)
-3. `StrategicAlerts`
-4. `StrategicFunnel` + `PowerFunnel` (mantidos, lado a lado)
-5. `ComercialResponsavelStats` + `VendedorFunnel` (mantidos)
-6. `VendedorRanking` (mantido)
-7. `TrendsChart` (mantido)
+1. **`src/App.tsx`** -- Adicionar rota `/leads`
+2. **`src/components/layout/Sidebar.tsx`** -- Adicionar item "Leads" no menu
 
-**Novos imports necessarios:**
-- `ExecutiveKPIs`, `GoalProgress`, `HealthScore`, `StrategicAlerts`
+### Bibliotecas Utilizadas
 
-**Remover imports nao mais usados:**
-- `FunnelKPIs`, `KPICard`, `StatusFunnel`, `StageProgress`
-- Icones nao mais usados: `Briefcase`, `Zap`, `Target`, `CheckCircle`, `AlertTriangle`, `Clock`, `DollarSign`
+- `recharts` (ja instalado) para todos os graficos
+- Componentes UI existentes (`Card`, `Table`, `Tabs`, `Badge`)
+- `date-fns` (ja instalado) para manipulacao de datas
+- `lucide-react` para icones
 
-### 6. `src/components/dashboard/StrategicFunnel.tsx`
+### Padrao de Dados Mock
 
-Melhorias no funil existente:
-- Adicionar taxa de conversao entre etapas (badge entre barras mostrando % de passagem da etapa anterior para a atual)
-- Destacar gargalo: etapa com menor taxa de passagem recebe borda vermelha e label "Gargalo"
-- Mostrar valor acumulado por etapa
-
----
-
-## Melhorias Visuais Globais
-
-Aplicar no `ExecutiveKPIs` e novos componentes:
-- Menos sombra nos cards (shadow-sm ao inves de shadow-card)
-- Cores mais sutis e dessaturadas
-- Maior destaque para valores monetarios (text-3xl a text-4xl para R$)
-- Labels menores e mais discretos
-- Sem elementos decorativos "glow" nos novos componentes
+Os dados mockados terao distribuicao realista:
+- **Origens**: Meta (40%), Landing Page (25%), Site (15%), Orcamento (12%), Organico (8%)
+- **Dias**: maior volume Seg-Qui, menor Sab-Dom
+- **Horarios**: pico entre 9h-12h e 14h-17h
+- **Cidades**: MG, SP, RJ, ES com pesos diferentes
+- **Status**: 45% qualificados, 30% desqualificados, 25% pendentes
 
 ---
 
-## Dados Ja Disponiveis (sem alteracao no dataAdapter)
+## Sequencia de Implementacao
 
-Todos os valores necessarios ja existem em `getKPIs()`:
-- `receitaPrevista` (pipeline ponderado) -- ja calculado na linha 208
-- `valorGanho` -- linha 161
-- `taxaConversao` -- linha 166
-- `ticketMedio` -- linha 169
-- `cicloProposta` -- linha 203
-- `negociosGanhos`, `negociosPerdidos`, `negociosAbertos` -- linhas 213-215
-
-Para alertas e health score, dados de `vendedorPerformance` e `proposals` ja fornecem:
-- Concentracao por vendedor
-- `tempoNaEtapa` por proposta
-- `motivoPerda` por proposta
-
----
-
-## O Que NAO Sera Alterado
-
-- `src/data/dataAdapter.ts` -- nenhuma funcao nova necessaria
-- Backend / Edge Functions
-- Google Sheets / integracao
-- Outras paginas (Pipeline, Forecast, etc.)
-- Sidebar, Auth, Layout
-
----
-
-## Ordem de Implementacao
-
-1. Criar `ExecutiveKPIs.tsx`
-2. Criar `GoalProgress.tsx`
-3. Criar `HealthScore.tsx`
-4. Criar `StrategicAlerts.tsx`
-5. Atualizar `StrategicFunnel.tsx` (taxas entre etapas + gargalo)
-6. Reestruturar `Index.tsx` (nova ordem de blocos)
+1. Criar os dados mockados (`leadsMockData.ts`)
+2. Criar os componentes de grafico e KPI (todos em paralelo)
+3. Criar a pagina principal (`Leads.tsx`) montando os blocos
+4. Registrar a rota e o menu
+5. Revisar visual e ajustar responsividade
 
