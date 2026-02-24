@@ -103,10 +103,10 @@ Deno.serve(async (req) => {
 
     if (type === "return") {
       // Handle ticket return notification
-      const { ticketId, titulo, reason, userPhone, userName } = body;
+      const { ticketId, titulo, reason, userPhone, userName, organizationId } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} precisa de complemento.
+      const userMessage = `Olá! O chamado #${shortId} precisa de complemento.
 
 📋 *${titulo}*
 
@@ -117,15 +117,30 @@ Por favor, acesse o painel e responda com as informações solicitadas para que 
 
 RBR Consult`;
 
+      // Collect phones to notify: notification_phone + org members
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending return notification to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      // Notify org members
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending return to org member ${i}:`, e);
           }
         }
       }
