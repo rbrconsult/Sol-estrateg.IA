@@ -583,8 +583,9 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="modules">Módulos</TabsTrigger>
             <TabsTrigger value="organizations">Organizações</TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
