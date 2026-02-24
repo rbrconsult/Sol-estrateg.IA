@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SLATimer } from "./SLATimer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw, Timer } from "lucide-react";
+import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw, Timer, Forward } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
