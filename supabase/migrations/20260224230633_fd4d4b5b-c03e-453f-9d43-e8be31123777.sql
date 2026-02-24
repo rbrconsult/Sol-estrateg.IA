@@ -1,0 +1,1 @@
+UPDATE public.support_tickets SET status = 'aguardando_usuario', sla_paused_at = now() WHERE ticket_number = 6;
