@@ -26,8 +26,8 @@ export default function ModulesTab({ users }: ModulesTabProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
 
-  // Filter out super_admins — they always have full access
-  const manageableUsers = users.filter(u => u.role !== 'super_admin');
+  // All users are manageable, including super_admins (for demo/convention purposes)
+  const manageableUsers = users;
 
   useEffect(() => {
     if (selectedUserId) {
