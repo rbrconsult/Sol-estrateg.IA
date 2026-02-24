@@ -86,7 +86,11 @@ const menuItems = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onResetOnboarding?: () => void;
+}
+
+export function Sidebar({ onResetOnboarding }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
