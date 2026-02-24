@@ -372,6 +372,30 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     const selectedMember = orgMembers.find(m => m.phone === forwardPhone);
 
     try {
+      // Update ticket: assign to forwarded user and pause SLA
+      const oldStatus = ticket?.status || "aberto";
+      const updateData: any = {
+        assigned_to: selectedMember?.id || null,
+        status: "aguardando_usuario",
+        sla_paused_at: new Date().toISOString(),
+      };
+
+      await supabase
+        .from("support_tickets" as any)
+        .update(updateData)
+        .eq("id", ticketId);
+
+      await recordStatusChange(oldStatus, "aguardando_usuario", `Encaminhado para ${selectedMember?.full_name || forwardPhone}`);
+
+      // Add message to ticket history
+      if (user) {
+        await supabase.from("ticket_messages" as any).insert({
+          ticket_id: ticketId,
+          user_id: user.id,
+          message: `📨 Chamado encaminhado para ${selectedMember?.full_name || forwardPhone}. SLA pausado.`,
+        });
+      }
+
       await supabase.functions.invoke("notify-ticket-whatsapp", {
         body: {
           type: "forward",
@@ -394,6 +418,8 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
     setForwarding(false);
     setForwardOpen(false);
+    fetchData();
+    onUpdated();
   };
 
   // Calculate time metrics
