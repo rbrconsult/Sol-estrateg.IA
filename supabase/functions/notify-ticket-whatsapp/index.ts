@@ -256,7 +256,7 @@ RBR Consult`;
       const {
         ticketId, ticketNumero, titulo, fluxo, plataforma,
         clienteNome, clienteTelefone, categoria, prioridade,
-        slaHoras, descricao, userPhone, userName,
+        slaHoras, descricao, userPhone, userName, organizationId,
       } = body;
 
       const prioridadeLabel: Record<string, string> = {
@@ -268,7 +268,7 @@ RBR Consult`;
 
       const shortId = ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi aberto com sucesso.
+      const userMessage = `Olá! Um novo chamado #${shortId} foi aberto.
 
 Título: ${titulo}
 Fluxo: ${fluxo || "N/A"}
@@ -293,15 +293,29 @@ SLA: ${slaHoras}h
 
 Descrição: ${descricao}`;
 
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      // Notify org members
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending new ticket to org member ${i}:`, e);
           }
         }
       }
