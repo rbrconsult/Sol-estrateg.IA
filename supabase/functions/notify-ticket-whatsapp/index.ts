@@ -205,11 +205,10 @@ RBR Consult`;
         }
       }
     } else if (type === "reopen") {
-      // Handle ticket reopen notification
-      const { ticketId, titulo, userPhone, userName } = body;
+      const { ticketId, titulo, userPhone, userName, organizationId } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi reaberto.
+      const userMessage = `Olá! O chamado #${shortId} foi reaberto.
 
 📋 *${titulo}*
 
@@ -217,15 +216,28 @@ RBR Consult`;
 
 RBR Consult`;
 
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending reopen notification to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending reopen to org member ${i}:`, e);
           }
         }
       }
