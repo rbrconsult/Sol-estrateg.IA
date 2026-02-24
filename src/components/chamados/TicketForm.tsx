@@ -408,7 +408,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
 
             <div className="flex gap-2 justify-end pt-2">
               <Button type="button" variant="ghost" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
-              <Button type="submit" disabled={loading || !fluxo} className="gap-2">
+              <Button type="submit" disabled={loading || !fluxo || (isSuperAdmin && !selectedOrgId)} className="gap-2">
                 <Send className="h-4 w-4" /> {loading ? "Enviando..." : "Enviar Chamado"}
               </Button>
             </div>
