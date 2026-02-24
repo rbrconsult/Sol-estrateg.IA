@@ -59,8 +59,10 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
+  const [initialLoad, setInitialLoad] = useState(true);
+
   const fetchData = async () => {
-    setLoading(true);
+    if (initialLoad) setLoading(true);
     const [ticketRes, messagesRes, historyRes] = await Promise.all([
       supabase.from("support_tickets" as any).select("*").eq("id", ticketId).single(),
       supabase.from("ticket_messages" as any).select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }),
