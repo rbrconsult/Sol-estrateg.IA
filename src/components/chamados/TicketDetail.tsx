@@ -314,7 +314,6 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
     await recordStatusChange(oldStatus, "em_andamento", "Chamado reaberto");
 
-    // Send WhatsApp notification to ticket owner
     try {
       const { data: ownerProfile } = await supabase
         .from("profiles")
@@ -340,6 +339,61 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     toast.success("Chamado reaberto!");
     onUpdated();
     fetchData();
+  };
+
+  const handleOpenForward = async () => {
+    // Fetch org members with phone
+    const orgId = ticket?.organization_id;
+    if (orgId) {
+      const { data: members } = await supabase
+        .from("organization_members" as any)
+        .select("user_id")
+        .eq("organization_id", orgId);
+
+      if (members && members.length > 0) {
+        const userIds = (members as any[]).map((m: any) => m.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, phone")
+          .in("id", userIds)
+          .not("phone", "is", null);
+
+        setOrgMembers((profiles as any[] || []).filter((p: any) => p.phone));
+      }
+    }
+    setForwardPhone("");
+    setForwardOpen(true);
+  };
+
+  const handleForward = async () => {
+    if (!forwardPhone || !ticket) return;
+    setForwarding(true);
+
+    const selectedMember = orgMembers.find(m => m.phone === forwardPhone);
+
+    try {
+      await supabase.functions.invoke("notify-ticket-whatsapp", {
+        body: {
+          type: "forward",
+          ticketId,
+          ticketNumero: String(ticket.ticket_number || 0).padStart(4, "0"),
+          titulo: ticket.titulo,
+          descricao: ticket.descricao,
+          categoria: ticket.categoria,
+          prioridade: ticket.prioridade,
+          fluxo: ticket.fluxo || null,
+          targetPhone: forwardPhone,
+          targetName: selectedMember?.full_name || null,
+        },
+      });
+      toast.success(`Chamado encaminhado para ${selectedMember?.full_name || forwardPhone}`);
+    } catch (e) {
+      console.error("Error forwarding ticket:", e);
+      toast.error("Erro ao encaminhar chamado");
+    }
+
+    setForwarding(false);
+    setForwardOpen(false);
   };
 
   // Calculate time metrics
