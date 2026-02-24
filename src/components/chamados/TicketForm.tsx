@@ -174,6 +174,11 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     const slaHours = SLA_HOURS[prioridade];
     const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000).toISOString();
 
+    // Determine organization_id
+    const ticketOrgId = isSuperAdmin
+      ? (selectedOrgId || organizationId)
+      : organizationId;
+
     const { data: ticketData, error } = await supabase
       .from("support_tickets" as any)
       .insert({
@@ -190,6 +195,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
         sla_deadline: slaDeadline,
         attachment_url: attachmentUrl,
         notification_phone: userPhone.replace(/\D/g, ""),
+        organization_id: ticketOrgId,
       })
       .select("id, ticket_number")
       .single();
