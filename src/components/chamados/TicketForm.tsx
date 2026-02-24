@@ -241,6 +241,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
         descricao,
         userPhone: userPhone.replace(/\D/g, ""),
         userName: profileData?.full_name || user.email,
+        organizationId: ticketOrgId,
       },
     }).catch((err) => console.error("WhatsApp notification error:", err));
 

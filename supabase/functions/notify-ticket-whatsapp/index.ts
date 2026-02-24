@@ -57,6 +57,34 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Helper: get org members' phones (excluding a specific phone to avoid duplicates)
+    const getOrgMemberPhones = async (organizationId: string, excludePhones: string[] = []): Promise<string[]> => {
+      if (!organizationId) return [];
+      const { data: members } = await supabaseAdmin
+        .from("organization_members")
+        .select("user_id")
+        .eq("organization_id", organizationId);
+      if (!members || members.length === 0) return [];
+
+      const userIds = members.map((m: any) => m.user_id);
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("phone")
+        .in("id", userIds)
+        .not("phone", "is", null);
+
+      if (!profiles) return [];
+      const phones: string[] = [];
+      for (const p of profiles) {
+        if (!p.phone) continue;
+        const clean = p.phone.replace(/\D/g, "");
+        if (clean.length >= 10 && !excludePhones.includes(clean)) {
+          phones.push(clean.startsWith("55") ? clean : `55${clean}`);
+        }
+      }
+      return phones;
+    };
+
     const sendMessage = async (number: string, text: string) => {
       const url = `${apiUrl}/message/sendText/${encodeURIComponent(instanceName)}`;
       const response = await fetch(url, {
@@ -75,10 +103,10 @@ Deno.serve(async (req) => {
 
     if (type === "return") {
       // Handle ticket return notification
-      const { ticketId, titulo, reason, userPhone, userName } = body;
+      const { ticketId, titulo, reason, userPhone, userName, organizationId } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} precisa de complemento.
+      const userMessage = `Olá! O chamado #${shortId} precisa de complemento.
 
 📋 *${titulo}*
 
@@ -89,15 +117,30 @@ Por favor, acesse o painel e responda com as informações solicitadas para que 
 
 RBR Consult`;
 
+      // Collect phones to notify: notification_phone + org members
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending return notification to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      // Notify org members
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending return to org member ${i}:`, e);
           }
         }
       }
@@ -113,11 +156,10 @@ RBR Consult`;
         }
       }
     } else if (type === "resolved") {
-      // Handle ticket resolved notification
-      const { ticketId, titulo, userPhone, userName } = body;
+      const { ticketId, titulo, userPhone, userName, organizationId } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi finalizado. ✅
+      const userMessage = `Olá! O chamado #${shortId} foi finalizado. ✅
 
 📋 *${titulo}*
 
@@ -127,15 +169,28 @@ Obrigado por utilizar nosso suporte!
 
 RBR Consult`;
 
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending resolved notification to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending resolved to org member ${i}:`, e);
           }
         }
       }
@@ -150,11 +205,10 @@ RBR Consult`;
         }
       }
     } else if (type === "reopen") {
-      // Handle ticket reopen notification
-      const { ticketId, titulo, userPhone, userName } = body;
+      const { ticketId, titulo, userPhone, userName, organizationId } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi reaberto.
+      const userMessage = `Olá! O chamado #${shortId} foi reaberto.
 
 📋 *${titulo}*
 
@@ -162,15 +216,28 @@ RBR Consult`;
 
 RBR Consult`;
 
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending reopen notification to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending reopen to org member ${i}:`, e);
           }
         }
       }
@@ -189,7 +256,7 @@ RBR Consult`;
       const {
         ticketId, ticketNumero, titulo, fluxo, plataforma,
         clienteNome, clienteTelefone, categoria, prioridade,
-        slaHoras, descricao, userPhone, userName,
+        slaHoras, descricao, userPhone, userName, organizationId,
       } = body;
 
       const prioridadeLabel: Record<string, string> = {
@@ -201,7 +268,7 @@ RBR Consult`;
 
       const shortId = ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
-      const userMessage = `Olá, ${userName || "usuário"}! Seu chamado #${shortId} foi aberto com sucesso.
+      const userMessage = `Olá! Um novo chamado #${shortId} foi aberto.
 
 Título: ${titulo}
 Fluxo: ${fluxo || "N/A"}
@@ -226,15 +293,29 @@ SLA: ${slaHoras}h
 
 Descrição: ${descricao}`;
 
+      const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
         if (cleanPhone.length >= 10) {
           const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
           try {
             results.user = await sendMessage(phoneWithCountry, userMessage);
+            sentPhones.push(cleanPhone);
           } catch (e) {
             console.error("Error sending to user:", e);
             results.user = { error: String(e) };
+          }
+        }
+      }
+
+      // Notify org members
+      if (organizationId) {
+        const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
+        for (let i = 0; i < orgPhones.length; i++) {
+          try {
+            results[`orgMember${i}`] = await sendMessage(orgPhones[i], userMessage);
+          } catch (e) {
+            console.error(`Error sending new ticket to org member ${i}:`, e);
           }
         }
       }

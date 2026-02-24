@@ -59,8 +59,10 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
+  const [initialLoad, setInitialLoad] = useState(true);
+
   const fetchData = async () => {
-    setLoading(true);
+    if (initialLoad) setLoading(true);
     const [ticketRes, messagesRes, historyRes] = await Promise.all([
       supabase.from("support_tickets" as any).select("*").eq("id", ticketId).single(),
       supabase.from("ticket_messages" as any).select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }),
@@ -71,6 +73,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     if (messagesRes.data) setMessages(messagesRes.data as any[]);
     if (historyRes.data) setStatusHistory(historyRes.data as any[]);
     setLoading(false);
+    setInitialLoad(false);
   };
 
   useEffect(() => {
@@ -189,6 +192,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           reason: returnReason.trim(),
           userPhone: ownerProfile?.phone || null,
           userName: ownerProfile?.full_name || null,
+          organizationId: ticket.organization_id || null,
         },
       });
     } catch (e) {
@@ -267,6 +271,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           titulo: ticket.titulo,
           userPhone: ticket.notification_phone || ownerProfile?.phone || null,
           userName: ownerProfile?.full_name || null,
+          organizationId: ticket.organization_id || null,
         },
       });
     } catch (e) {
@@ -312,6 +317,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           titulo: ticket.titulo,
           userPhone: ownerProfile?.phone || null,
           userName: ownerProfile?.full_name || null,
+          organizationId: ticket.organization_id || null,
         },
       });
     } catch (e) {
