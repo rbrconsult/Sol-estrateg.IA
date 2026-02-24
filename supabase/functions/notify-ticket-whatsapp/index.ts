@@ -57,6 +57,34 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Helper: get org members' phones (excluding a specific phone to avoid duplicates)
+    const getOrgMemberPhones = async (organizationId: string, excludePhones: string[] = []): Promise<string[]> => {
+      if (!organizationId) return [];
+      const { data: members } = await supabaseAdmin
+        .from("organization_members")
+        .select("user_id")
+        .eq("organization_id", organizationId);
+      if (!members || members.length === 0) return [];
+
+      const userIds = members.map((m: any) => m.user_id);
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("phone")
+        .in("id", userIds)
+        .not("phone", "is", null);
+
+      if (!profiles) return [];
+      const phones: string[] = [];
+      for (const p of profiles) {
+        if (!p.phone) continue;
+        const clean = p.phone.replace(/\D/g, "");
+        if (clean.length >= 10 && !excludePhones.includes(clean)) {
+          phones.push(clean.startsWith("55") ? clean : `55${clean}`);
+        }
+      }
+      return phones;
+    };
+
     const sendMessage = async (number: string, text: string) => {
       const url = `${apiUrl}/message/sendText/${encodeURIComponent(instanceName)}`;
       const response = await fetch(url, {
