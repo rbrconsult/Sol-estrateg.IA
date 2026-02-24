@@ -8,6 +8,7 @@ import { TeamMetrics } from "@/components/chamados/TeamMetrics";
 import { Card, CardContent } from "@/components/ui/card";
 import { Headset, CheckCircle, AlertTriangle, XCircle, PauseCircle } from "lucide-react";
 import { getSLAStatus } from "@/components/chamados/SLATimer";
+import { HelpButton } from "@/components/HelpButton";
 
 interface KPIProps {
   icon: React.ElementType;
