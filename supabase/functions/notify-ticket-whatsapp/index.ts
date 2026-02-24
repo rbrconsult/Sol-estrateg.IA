@@ -263,16 +263,16 @@ RBR Consult`;
         bug: "🐛 Bug", duvida: "❓ Dúvida", melhoria: "✨ Melhoria", urgencia: "🚨 Urgência",
       };
 
-      const forwardMsg = `📨 *CHAMADO ENCAMINHADO #${shortId}*
+      const forwardMsg = `Olá, ${targetName || "responsável"}! O chamado #${shortId} está pendente da sua atuação. ⚠️
 
-Título: ${titulo}
+📋 *${titulo}*
 Fluxo: ${fluxo || "N/A"}
 Categoria: ${categoriaLabel[categoria] || categoria}
 Prioridade: ${prioridadeLabel[prioridade] || prioridade}
 
 Descrição: ${descricao}
 
-Acesse o painel para mais detalhes.
+Por favor, acesse o painel e atue neste chamado.
 
 RBR Consult`;
 
