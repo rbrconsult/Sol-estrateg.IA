@@ -35,6 +35,8 @@ const Pipeline = () => {
             <h1 className="text-3xl font-bold text-foreground">Pipeline</h1>
             <p className="text-muted-foreground">Visão Kanban dos Projetos • Atualizado: {lastUpdate}</p>
           </div>
+          <div className="flex items-center gap-2">
+            <HelpButton moduleId="pipeline" label="Ajuda do Pipeline" />
           <Button
             variant="outline"
             size="sm"
