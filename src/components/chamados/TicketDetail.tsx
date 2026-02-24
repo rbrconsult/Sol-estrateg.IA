@@ -585,6 +585,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                       <Undo2 className="h-4 w-4" />
                     </Button>
                   )}
+                  {isAdmin && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={handleOpenForward}
+                      className="text-blue-400 hover:bg-blue-500/10"
+                      title="Encaminhar via WhatsApp"
+                    >
+                      <Forward className="h-4 w-4" />
+                    </Button>
+                  )}
                   {userRole === "super_admin" && (
                     <Button size="icon" variant="outline" onClick={() => {
                       setHoursMode("manual");
