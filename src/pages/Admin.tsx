@@ -249,7 +249,8 @@ export default function Admin() {
           password: formData.password,
           full_name: formData.full_name,
           role: formData.role,
-          organization_id: formData.organization_id
+          organization_id: formData.organization_id,
+          phone: formData.phone
         }
       });
 
