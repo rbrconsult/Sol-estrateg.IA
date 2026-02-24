@@ -15,7 +15,8 @@ import {
   Shield,
   Headset,
   HelpCircle,
-  RotateCcw
+  RotateCcw,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,12 @@ const menuItems = [
     icon: HelpCircle, 
     path: "/ajuda",
     description: "Central de Ajuda"
+  },
+  { 
+    title: "Leads", 
+    icon: Zap, 
+    path: "/leads",
+    description: "Captação & Robô"
   },
 ];
 

@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
 import Ajuda from "./pages/Ajuda";
+import Leads from "./pages/Leads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,11 @@ const App = () => (
               <Route path="/ajuda" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/leads" element={
+                <ProtectedRoute>
+                  <MainLayout><Leads /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
