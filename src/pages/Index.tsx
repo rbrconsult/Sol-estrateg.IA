@@ -40,7 +40,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
-import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { HelpButton } from "@/components/HelpButton";
 
 const Index = () => {
@@ -141,7 +140,7 @@ const Index = () => {
         <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
       </div>
 
-      <SetupChecklist />
+      
 
       <div>
         {/* Error State */}
