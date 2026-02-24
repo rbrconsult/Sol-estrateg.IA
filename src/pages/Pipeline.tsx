@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { adaptSheetData } from "@/data/dataAdapter";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
+import { HelpButton } from "@/components/HelpButton";
 
 const Pipeline = () => {
   const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
