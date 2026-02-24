@@ -1,38 +1,25 @@
 import { useState, useMemo } from "react";
-import { 
-  Briefcase, 
-  TrendingUp, 
-  DollarSign, 
-  Clock,
-  RefreshCw,
-  AlertCircle,
-  Zap,
-  Target,
-  AlertTriangle,
-  CheckCircle
-} from "lucide-react";
-import { isWithinInterval, parseISO, isValid, subDays, format } from "date-fns";
+import { RefreshCw, AlertCircle } from "lucide-react";
+import { isWithinInterval, parseISO, isValid } from "date-fns";
 import { Header } from "@/components/dashboard/Header";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { FunnelKPIs } from "@/components/dashboard/FunnelKPIs";
-import { LeadsTrendsChart } from "@/components/dashboard/LeadsTrendsChart";
+import { ExecutiveKPIs } from "@/components/dashboard/ExecutiveKPIs";
+import { GoalProgress } from "@/components/dashboard/GoalProgress";
+import { HealthScore } from "@/components/dashboard/HealthScore";
+import { StrategicAlerts } from "@/components/dashboard/StrategicAlerts";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { PowerFunnel } from "@/components/dashboard/PowerFunnel";
-import { StatusFunnel } from "@/components/dashboard/StatusFunnel";
 import { ComercialResponsavelStats } from "@/components/dashboard/ComercialResponsavelStats";
 import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
 import { VendedorRanking } from "@/components/dashboard/VendedorRanking";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
-import { StageProgress } from "@/components/dashboard/StageProgress";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { 
-  adaptSheetData, 
-  extractVendedores, 
+import {
+  adaptSheetData,
+  extractVendedores,
   extractPreVendedores,
   getKPIs,
   getFunnelData,
   getPowerFunnelData,
-  getStatusFunnelData,
   getVendedorPerformance,
   getPreVendedorPerformance,
   getMonthlyData
@@ -42,12 +29,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
 import { HelpButton } from "@/components/HelpButton";
 
+const STORAGE_KEY = "sol_insights_meta";
+
 const Index = () => {
   const [selectedVendedor, setSelectedVendedor] = useState("todos");
   const [selectedPreVendedor, setSelectedPreVendedor] = useState("todos");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
-  
+
   const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
 
   const handleDateRangeChange = (range: DateRange, preset: DateFilterPreset) => {
@@ -55,7 +44,6 @@ const Index = () => {
     setDatePreset(preset);
   };
 
-  // Processa dados do Google Sheets
   const { proposals, vendedores, preVendedores, lastUpdate } = useMemo(() => {
     if (sheetsData?.data && sheetsData.data.length > 0) {
       const adapted = adaptSheetData(sheetsData.data);
@@ -66,32 +54,19 @@ const Index = () => {
         lastUpdate: new Date(sheetsData.lastUpdate).toLocaleString('pt-BR')
       };
     }
-    return {
-      proposals: [],
-      vendedores: [],
-      preVendedores: [],
-      lastUpdate: new Date().toLocaleString('pt-BR')
-    };
+    return { proposals: [], vendedores: [], preVendedores: [], lastUpdate: new Date().toLocaleString('pt-BR') };
   }, [sheetsData]);
 
   const filteredProposals = useMemo(() => {
     return proposals.filter(p => {
       if (selectedVendedor !== "todos" && p.representante !== selectedVendedor) return false;
       if (selectedPreVendedor !== "todos" && p.responsavel !== selectedPreVendedor) return false;
-      
-      // Date filter
       if (dateRange.from) {
         const proposalDate = p.dataCriacaoProposta ? parseISO(p.dataCriacaoProposta) : null;
         if (!proposalDate || !isValid(proposalDate)) return false;
-        
-        const interval = {
-          start: dateRange.from,
-          end: dateRange.to || dateRange.from
-        };
-        
+        const interval = { start: dateRange.from, end: dateRange.to || dateRange.from };
         if (!isWithinInterval(proposalDate, interval)) return false;
       }
-      
       return true;
     });
   }, [proposals, selectedVendedor, selectedPreVendedor, dateRange]);
@@ -99,26 +74,14 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
   const powerFunnelData = useMemo(() => getPowerFunnelData(filteredProposals), [filteredProposals]);
-  const statusFunnelData = useMemo(() => getStatusFunnelData(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
   const preVendedorPerformance = useMemo(() => getPreVendedorPerformance(filteredProposals), [filteredProposals]);
   const monthlyData = useMemo(() => getMonthlyData(filteredProposals), [filteredProposals]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      notation: 'compact',
-      maximumFractionDigits: 1
-    }).format(value);
-  };
-
-  const formatPower = (value: number) => {
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)} MWp`;
-    }
-    return `${value.toFixed(1)} kWp`;
-  };
+  const meta = useMemo(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? Number(saved) : 5_000_000;
+  }, []);
 
   const hasData = proposals.length > 0;
 
@@ -140,24 +103,14 @@ const Index = () => {
         <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
       </div>
 
-      
-
       <div>
         {/* Error State */}
         {error && (
-          <Alert className="mb-6 border-red-500/50 bg-red-500/10">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <AlertDescription className="flex items-center justify-between text-red-200">
-              <span>
-                Erro ao carregar dados: {error.message}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isFetching}
-                className="ml-4 text-red-200 hover:text-red-100 hover:bg-red-500/20"
-              >
+          <Alert className="mb-6 border-destructive/50 bg-destructive/10">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Erro ao carregar dados: {error.message}</span>
+              <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="ml-4">
                 <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
                 Tentar novamente
               </Button>
@@ -165,27 +118,21 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* Success State with Data */}
+        {/* Success badge */}
         {hasData && !error && (
           <div className="mb-6 flex items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-green-500/20 px-3 py-1 text-sm text-green-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
               {proposals.length} propostas carregadas
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading */}
         {isLoading && (
           <div className="mb-6 flex items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="h-5 w-5 animate-spin" />
@@ -193,21 +140,13 @@ const Index = () => {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty */}
         {!isLoading && !hasData && !error && (
-          <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
-            <AlertCircle className="h-4 w-4 text-amber-500" />
-            <AlertDescription className="flex items-center justify-between text-amber-200">
-              <span>
-                Nenhum dado encontrado. Verifique se a planilha contém dados.
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isFetching}
-                className="ml-4 text-amber-200 hover:text-amber-100 hover:bg-amber-500/20"
-              >
+          <Alert className="mb-6 border-warning/50 bg-warning/10">
+            <AlertCircle className="h-4 w-4 text-warning" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Nenhum dado encontrado. Verifique se a planilha contém dados.</span>
+              <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="ml-4">
                 <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
                 Tentar novamente
               </Button>
@@ -215,140 +154,66 @@ const Index = () => {
           </Alert>
         )}
 
-        {/* KPIs Estilo Garrido - Funil Horizontal */}
+        {/* BLOCO 1: Visão Executiva */}
         <section className="mb-8">
-          <FunnelKPIs 
-            data={[
-              { 
-                label: 'Propostas', 
-                value: kpis.totalNegocios.toLocaleString('pt-BR'),
-                trend: { percentage: 0, absolute: 0, isPositive: null }
-              },
-              { 
-                label: 'Pipeline', 
-                value: formatCurrency(kpis.valorPipeline),
-                highlight: true,
-                trend: { percentage: 0, absolute: 0, isPositive: null }
-              },
-              { 
-                label: 'Ganhos', 
-                value: formatCurrency(kpis.valorGanho),
-                trend: { percentage: kpis.taxaConversao, absolute: kpis.negociosGanhos, isPositive: kpis.taxaConversao > 10 }
-              },
-              { 
-                label: 'Oportunidades', 
-                value: kpis.negociosAbertos.toLocaleString('pt-BR'),
-                trend: { percentage: 0, absolute: 0, isPositive: null }
-              },
-              { 
-                label: 'Conversão', 
-                value: `${kpis.taxaConversao.toFixed(1)}%`,
-                trend: { percentage: kpis.taxaConversao, absolute: kpis.negociosGanhos, isPositive: kpis.taxaConversao > 10 }
-              }
-            ]}
-            conversionRates={[
-              kpis.totalNegocios > 0 ? Math.round((kpis.valorPipeline / kpis.totalNegocios / 1000) * 100) / 100 : 0,
-              kpis.valorPipeline > 0 ? Math.round((kpis.valorGanho / kpis.valorPipeline) * 100) : 0,
-              kpis.negociosAbertos > 0 ? Math.round((kpis.negociosAbertos / kpis.totalNegocios) * 100) : 0,
-              Math.round(kpis.taxaConversao)
-            ]}
+          <ExecutiveKPIs
+            receitaPrevista={kpis.receitaPrevista}
+            valorGanho={kpis.valorGanho}
+            taxaConversao={kpis.taxaConversao}
+            ticketMedio={kpis.ticketMedio}
+            totalPropostas={kpis.totalNegocios}
+            negociosAbertos={kpis.negociosAbertos}
+            valorPipeline={kpis.valorPipeline}
+            negociosGanhos={kpis.negociosGanhos}
           />
         </section>
 
-        {/* KPIs Detalhados */}
-        <section className="mb-8">
-          <h2 className="text-lg font-bold text-foreground mb-4">Indicadores Detalhados</h2>
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:grid-cols-6">
-            <KPICard
-              title="Ticket Médio"
-              value={formatCurrency(kpis.ticketMedio)}
-              subtitle="Por proposta"
-              icon={DollarSign}
-              delay={50}
-            />
-            <KPICard
-              title="Ciclo"
-              value={`${kpis.cicloProposta}d`}
-              subtitle="Proj → Prop"
-              icon={Clock}
-              delay={70}
-            />
-            <KPICard
-              title="Potência"
-              value={formatPower(kpis.potenciaTotal)}
-              subtitle="Total kWp"
-              icon={Zap}
-              variant="warning"
-              delay={90}
-            />
-            <KPICard
-              title="Ganhos"
-              value={kpis.negociosGanhos}
-              subtitle={formatCurrency(kpis.valorGanho)}
-              icon={CheckCircle}
-              variant="success"
-              delay={110}
-            />
-            <KPICard
-              title="Perdidos"
-              value={kpis.negociosPerdidos}
-              subtitle={formatCurrency(kpis.valorPerdido)}
-              icon={AlertTriangle}
-              variant="danger"
-              delay={130}
-            />
-            <KPICard
-              title="Abertos"
-              value={kpis.negociosAbertos}
-              subtitle="Em andamento"
-              icon={Target}
-              delay={150}
-            />
+        {/* BLOCO 2: Meta vs Realizado + Health Score */}
+        <section className="mb-8 grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <GoalProgress valorFechado={kpis.valorGanho} receitaPrevista={kpis.receitaPrevista} />
           </div>
+          <HealthScore proposals={filteredProposals} kpis={kpis} vendedorPerformance={vendedorPerformance} />
         </section>
 
-        {/* Funil Estratégico R$ e kWh */}
+        {/* BLOCO 3: Alertas Estratégicos */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Funil de Vendas</h2>
+          <StrategicAlerts
+            proposals={filteredProposals}
+            kpis={kpis}
+            vendedorPerformance={vendedorPerformance}
+            meta={meta}
+          />
+        </section>
+
+        {/* BLOCO 4: Funil Estratégico R$ e kWh */}
+        <section className="mb-8">
+          <h2 className="text-lg font-bold text-foreground mb-4">Funil de Vendas</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <StrategicFunnel data={funnelData} proposals={filteredProposals} />
             <PowerFunnel data={powerFunnelData} proposals={filteredProposals} />
           </div>
         </section>
 
-        {/* Ciclo de Vida (Status Funnel) - Linha separada */}
+        {/* BLOCO 5: Performance Comercial */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Ciclo de Vida</h2>
-          <StatusFunnel data={statusFunnelData} proposals={filteredProposals} />
-        </section>
-
-        {/* Comercial Responsável e Vendedores */}
-        <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Performance Comercial</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">Performance Comercial</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <ComercialResponsavelStats data={preVendedorPerformance} />
             <VendedorFunnel data={vendedorPerformance} proposals={filteredProposals} />
           </div>
         </section>
 
-        {/* Progresso por Etapas */}
-        <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Progresso por Etapas</h2>
-          <StageProgress proposals={filteredProposals} />
-        </section>
-
-        {/* Ranking de Vendedores */}
+        {/* BLOCO 6: Ranking + Tendências */}
         <section className="mb-8">
           <VendedorRanking data={vendedorPerformance} />
         </section>
 
-        {/* Tendências */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Tendências Mensais</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">Tendências Mensais</h2>
           <TrendsChart data={monthlyData} />
         </section>
 
-        {/* Footer */}
         <footer className="mt-12 border-t border-border pt-6 text-center text-sm text-muted-foreground">
           <p>© 2024 SOL Insights - BI, CRM e Inteligência Comercial. Todos os direitos reservados.</p>
         </footer>

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
-import { DollarSign, ChevronRight } from "lucide-react";
+import { DollarSign, ChevronRight, AlertTriangle } from "lucide-react";
 
 interface FunnelStage {
   etapa: string;
@@ -16,7 +16,6 @@ interface StrategicFunnelProps {
   proposals: Proposal[];
 }
 
-// Ordem estratégica do funil de vendas
 const FUNNEL_ORDER = [
   'TRAFEGO PAGO',
   'PROSPECÇÃO',
@@ -41,16 +40,12 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Ordenar dados pela ordem estratégica do funil
   const sortedData = useMemo(() => {
     const ordered: FunnelStage[] = [];
     FUNNEL_ORDER.forEach(etapa => {
       const found = data.find(d => d.etapa === etapa);
-      if (found) {
-        ordered.push(found);
-      }
+      if (found) ordered.push(found);
     });
-    // Adiciona etapas que não estão no FUNNEL_ORDER
     data.forEach(d => {
       if (!FUNNEL_ORDER.includes(d.etapa) && !ordered.find(o => o.etapa === d.etapa)) {
         ordered.push(d);
@@ -61,6 +56,31 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
 
   const maxValue = useMemo(() => Math.max(...sortedData.map(d => d.valor), 1), [sortedData]);
   const totalQty = useMemo(() => sortedData.reduce((acc, d) => acc + d.quantidade, 0), [sortedData]);
+
+  // Calculate conversion rates between stages + find bottleneck
+  const stageConversions = useMemo(() => {
+    const rates: (number | null)[] = [];
+    for (let i = 0; i < sortedData.length; i++) {
+      if (i === 0 || sortedData[i - 1].quantidade === 0) {
+        rates.push(null);
+      } else {
+        rates.push(Math.round((sortedData[i].quantidade / sortedData[i - 1].quantidade) * 100));
+      }
+    }
+    return rates;
+  }, [sortedData]);
+
+  const bottleneckIndex = useMemo(() => {
+    let minRate = Infinity;
+    let minIdx = -1;
+    stageConversions.forEach((rate, i) => {
+      if (rate !== null && rate < minRate) {
+        minRate = rate;
+        minIdx = i;
+      }
+    });
+    return minIdx;
+  }, [stageConversions]);
 
   const handleStageClick = (etapa: string) => {
     setSelectedStage(etapa);
@@ -75,62 +95,72 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
   const totalValue = sortedData.reduce((acc, d) => acc + d.valor, 0);
   const totalProjects = sortedData.reduce((acc, d) => acc + d.quantidade, 0);
 
+  // Accumulated value
+  const accumulatedValues = useMemo(() => {
+    let acc = 0;
+    return sortedData.map(d => { acc += d.valor; return acc; });
+  }, [sortedData]);
+
   return (
     <>
-      <div className="rounded-xl border border-border bg-card p-6 shadow-card opacity-0 animate-fade-up" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm opacity-0 animate-fade-up" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
         <div className="mb-6 flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-success" />
+          <DollarSign className="h-5 w-5 text-primary" />
           <div>
             <h3 className="text-lg font-semibold text-foreground">Funil de Vendas (R$)</h3>
             <p className="text-sm text-muted-foreground">Clique para ver os projetos</p>
           </div>
         </div>
 
-        {/* Funnel Bars */}
-        <div className="space-y-3">
+        <div className="space-y-1">
           {sortedData.map((stage, index) => {
             const widthPercent = Math.max(15, (stage.valor / maxValue) * 100);
-            const percentOfTotal = totalQty > 0 ? ((stage.quantidade / totalQty) * 100).toFixed(0) : '0';
             const percentOfValue = totalValue > 0 ? ((stage.valor / totalValue) * 100).toFixed(0) : '0';
             const color = stageColors[index % stageColors.length];
+            const isBottleneck = index === bottleneckIndex;
+            const convRate = stageConversions[index];
 
             return (
-              <div
-                key={stage.etapa}
-                className="group cursor-pointer"
-                onClick={() => handleStageClick(stage.etapa)}
-              >
-                {/* Stage Label */}
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{stage.etapa}</span>
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div key={stage.etapa}>
+                {/* Conversion rate badge between stages */}
+                {convRate !== null && (
+                  <div className="flex items-center justify-center my-1">
+                    <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      isBottleneck
+                        ? "bg-destructive/10 text-destructive border border-destructive/30"
+                        : "bg-muted/50 text-muted-foreground"
+                    }`}>
+                      {isBottleneck && <AlertTriangle className="h-2.5 w-2.5" />}
+                      {convRate}% passagem
+                      {isBottleneck && " · Gargalo"}
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {percentOfValue}% do valor
-                  </span>
-                </div>
+                )}
 
-                {/* Bar Container */}
-                <div className="relative h-10 w-full rounded-lg bg-muted/30 overflow-hidden group-hover:bg-muted/50 transition-colors">
-                  {/* Filled Bar */}
-                  <div
-                    className={`absolute left-0 top-0 h-full ${color} rounded-lg transition-all duration-300 group-hover:brightness-110`}
-                    style={{ width: `${widthPercent}%` }}
-                  />
-                  
-                  {/* Content inside bar */}
-                  <div className="absolute inset-0 flex items-center px-3">
-                    <div 
-                      className="flex items-center justify-between w-full"
+                <div
+                  className={`group cursor-pointer ${isBottleneck ? "ring-1 ring-destructive/40 rounded-lg" : ""}`}
+                  onClick={() => handleStageClick(stage.etapa)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-foreground">{stage.etapa}</span>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {percentOfValue}% · Acum: {formatCurrencyAbbrev(accumulatedValues[index])}
+                    </span>
+                  </div>
+
+                  <div className="relative h-10 w-full rounded-lg bg-muted/30 overflow-hidden group-hover:bg-muted/50 transition-colors">
+                    <div
+                      className={`absolute left-0 top-0 h-full ${color} rounded-lg transition-all duration-300 group-hover:brightness-110`}
                       style={{ width: `${widthPercent}%` }}
-                    >
-                      <span className="text-sm font-bold text-white drop-shadow-sm">
-                        {stage.quantidade}
-                      </span>
-                      <span className="text-sm font-semibold text-white drop-shadow-sm">
-                        {formatCurrencyAbbrev(stage.valor)}
-                      </span>
+                    />
+                    <div className="absolute inset-0 flex items-center px-3">
+                      <div className="flex items-center justify-between w-full" style={{ width: `${widthPercent}%` }}>
+                        <span className="text-sm font-bold text-white drop-shadow-sm">{stage.quantidade}</span>
+                        <span className="text-sm font-semibold text-white drop-shadow-sm">{formatCurrencyAbbrev(stage.valor)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -139,7 +169,6 @@ export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {
           })}
         </div>
 
-        {/* Summary */}
         <div className="mt-6 grid grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Pipeline Total</p>
