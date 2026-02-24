@@ -155,7 +155,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link
