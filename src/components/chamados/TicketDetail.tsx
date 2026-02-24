@@ -710,6 +710,48 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Forward dialog */}
+      <Dialog open={forwardOpen} onOpenChange={setForwardOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Forward className="h-5 w-5 text-blue-400" /> Encaminhar Chamado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Selecione o membro da organização para encaminhar este chamado via WhatsApp.
+            </p>
+            {orgMembers.length > 0 ? (
+              <Select value={forwardPhone} onValueChange={setForwardPhone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o destinatário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.phone}>
+                      {m.full_name || m.phone} • {m.phone}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum membro com telefone cadastrado.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setForwardOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={handleForward}
+              disabled={forwarding || !forwardPhone}
+              className="gap-2"
+            >
+              <Forward className="h-4 w-4" /> {forwarding ? "Enviando..." : "Encaminhar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
