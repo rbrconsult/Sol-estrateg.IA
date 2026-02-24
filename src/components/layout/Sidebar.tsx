@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
 
 const menuItems = [
