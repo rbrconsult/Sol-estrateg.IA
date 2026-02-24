@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,7 +51,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
 export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps) {
-  const { user } = useAuth();
+  const { user, userRole, organizationId } = useAuth();
+  const isSuperAdmin = userRole === "super_admin";
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [titulo, setTitulo] = useState("");
@@ -63,6 +65,17 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
   const [categoria, setCategoria] = useState("duvida");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+
+  // Fetch organizations for super_admin
+  const { data: organizations } = useQuery({
+    queryKey: ["organizations-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("organizations").select("id, name").order("name");
+      return (data as any[]) || [];
+    },
+    enabled: isSuperAdmin,
+  });
 
   // Phone from profile
   const [userPhone, setUserPhone] = useState("");
@@ -121,6 +134,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     setDetalhes("");
     setCategoria("duvida");
     setFile(null);
+    setSelectedOrgId("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,6 +174,11 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     const slaHours = SLA_HOURS[prioridade];
     const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000).toISOString();
 
+    // Determine organization_id
+    const ticketOrgId = isSuperAdmin
+      ? (selectedOrgId || organizationId)
+      : organizationId;
+
     const { data: ticketData, error } = await supabase
       .from("support_tickets" as any)
       .insert({
@@ -176,6 +195,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
         sla_deadline: slaDeadline,
         attachment_url: attachmentUrl,
         notification_phone: userPhone.replace(/\D/g, ""),
+        organization_id: ticketOrgId,
       })
       .select("id, ticket_number")
       .single();
@@ -246,6 +266,21 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
             <DialogTitle>Novo Chamado</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Seleção de Empresa (apenas super_admin) */}
+            {isSuperAdmin && organizations && (
+              <div className="space-y-2">
+                <Label>Empresa *</Label>
+                <Select value={selectedOrgId} onValueChange={setSelectedOrgId} required>
+                  <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((org: any) => (
+                      <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* WhatsApp do Usuário */}
             <div className="space-y-2">
               <Label htmlFor="userPhone">WhatsApp para notificação *</Label>
@@ -373,7 +408,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
 
             <div className="flex gap-2 justify-end pt-2">
               <Button type="button" variant="ghost" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
-              <Button type="submit" disabled={loading || !fluxo} className="gap-2">
+              <Button type="submit" disabled={loading || !fluxo || (isSuperAdmin && !selectedOrgId)} className="gap-2">
                 <Send className="h-4 w-4" /> {loading ? "Enviando..." : "Enviar Chamado"}
               </Button>
             </div>
