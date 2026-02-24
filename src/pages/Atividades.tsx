@@ -4,6 +4,7 @@ import { adaptSheetData, getAtividadesData, getVendedorPerformance, Proposal } f
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Activity, Clock, AlertTriangle, Phone, Calendar, Trophy, Zap, RefreshCw, ChevronDown, ChevronUp, X, User, MapPin } from "lucide-react";
+import { HelpButton } from "@/components/HelpButton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
