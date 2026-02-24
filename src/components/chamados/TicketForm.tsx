@@ -51,7 +51,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
 export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps) {
-  const { user } = useAuth();
+  const { user, userRole, organizationId } = useAuth();
+  const isSuperAdmin = userRole === "super_admin";
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [titulo, setTitulo] = useState("");
@@ -64,6 +65,17 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
   const [categoria, setCategoria] = useState("duvida");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+
+  // Fetch organizations for super_admin
+  const { data: organizations } = useQuery({
+    queryKey: ["organizations-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("organizations").select("id, name").order("name");
+      return (data as any[]) || [];
+    },
+    enabled: isSuperAdmin,
+  });
 
   // Phone from profile
   const [userPhone, setUserPhone] = useState("");
