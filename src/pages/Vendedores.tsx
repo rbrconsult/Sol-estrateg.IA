@@ -56,9 +56,12 @@ export default function Vendedores() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Performance dos Vendedores</h1>
-        <p className="text-muted-foreground">Análise detalhada por vendedor</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Performance dos Vendedores</h1>
+          <p className="text-muted-foreground">Análise detalhada por vendedor</p>
+        </div>
+        <HelpButton moduleId="vendedores" label="Ajuda de Vendedores" />
       </div>
 
         {/* Gráficos */}

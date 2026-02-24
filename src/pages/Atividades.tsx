@@ -223,9 +223,12 @@ export default function Atividades() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Atividades & Follow-ups</h1>
-        <p className="text-muted-foreground">Clique nos cards para ver os leads relacionados</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Atividades & Follow-ups</h1>
+          <p className="text-muted-foreground">Clique nos cards para ver os leads relacionados</p>
+        </div>
+        <HelpButton moduleId="atividades" label="Ajuda de Atividades" />
       </div>
 
       {/* KPIs Clicáveis */}

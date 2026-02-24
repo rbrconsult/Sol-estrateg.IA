@@ -126,18 +126,23 @@ const Index = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <Header
-        lastUpdate={lastUpdate}
-        selectedVendedor={selectedVendedor}
-        selectedPreVendedor={selectedPreVendedor}
-        onVendedorChange={setSelectedVendedor}
-        onPreVendedorChange={setSelectedPreVendedor}
-        vendedores={vendedores}
-        preVendedores={preVendedores}
-        dateRange={dateRange}
-        datePreset={datePreset}
-        onDateRangeChange={handleDateRangeChange}
-      />
+      <div className="flex items-center justify-between">
+        <Header
+          lastUpdate={lastUpdate}
+          selectedVendedor={selectedVendedor}
+          selectedPreVendedor={selectedPreVendedor}
+          onVendedorChange={setSelectedVendedor}
+          onPreVendedorChange={setSelectedPreVendedor}
+          vendedores={vendedores}
+          preVendedores={preVendedores}
+          dateRange={dateRange}
+          datePreset={datePreset}
+          onDateRangeChange={handleDateRangeChange}
+        />
+        <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
+      </div>
+
+      <SetupChecklist />
 
       <div>
         {/* Error State */}

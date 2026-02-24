@@ -78,7 +78,10 @@ export default function Chamados() {
           </h1>
           <p className="text-sm text-muted-foreground">Abra e acompanhe seus chamados de suporte</p>
         </div>
-        <TicketForm onTicketCreated={fetchTickets} onSelectTicket={setSelectedTicketId} />
+        <div className="flex items-center gap-2">
+          <HelpButton moduleId="chamados" label="Ajuda de Chamados" />
+          <TicketForm onTicketCreated={fetchTickets} onSelectTicket={setSelectedTicketId} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

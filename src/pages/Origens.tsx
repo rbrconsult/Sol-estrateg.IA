@@ -58,9 +58,12 @@ export default function Origens() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Origem dos Leads</h1>
-        <p className="text-muted-foreground">Análise de canais de aquisição</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Origem dos Leads</h1>
+          <p className="text-muted-foreground">Análise de canais de aquisição</p>
+        </div>
+        <HelpButton moduleId="origens" label="Ajuda de Origens" />
       </div>
 
         {/* KPIs */}

@@ -26,11 +26,14 @@ export default function Monitoramento() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Activity className="h-6 w-6 text-primary" /> Monitoramento
-        </h1>
-        <p className="text-sm text-muted-foreground">Acompanhe o status dos sistemas</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Activity className="h-6 w-6 text-primary" /> Monitoramento
+          </h1>
+          <p className="text-sm text-muted-foreground">Acompanhe o status dos sistemas</p>
+        </div>
+        <HelpButton moduleId="monitoramento" label="Ajuda de Monitoramento" />
       </div>
 
       <div className="flex items-center justify-center" style={{ minHeight: "calc(100vh - 14rem)" }}>

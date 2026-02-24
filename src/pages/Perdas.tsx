@@ -38,9 +38,12 @@ export default function Perdas() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Análise de Perdas</h1>
-        <p className="text-muted-foreground">Entenda os motivos das perdas e otimize o processo comercial</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Análise de Perdas</h1>
+          <p className="text-muted-foreground">Entenda os motivos das perdas e otimize o processo comercial</p>
+        </div>
+        <HelpButton moduleId="perdas" label="Ajuda de Perdas" />
       </div>
 
         {/* KPIs */}

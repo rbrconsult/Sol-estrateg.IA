@@ -47,6 +47,7 @@ const Pipeline = () => {
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
+          </div>
         </div>
       </div>
 
