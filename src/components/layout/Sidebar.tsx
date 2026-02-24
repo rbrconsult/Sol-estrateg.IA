@@ -27,6 +27,12 @@ import { toast } from "sonner";
 
 const menuItems = [
   { 
+    title: "Leads", 
+    icon: Zap, 
+    path: "/leads",
+    description: "Captação & Robô"
+  },
+  { 
     title: "Dashboard", 
     icon: LayoutDashboard, 
     path: "/",
@@ -85,12 +91,6 @@ const menuItems = [
     icon: HelpCircle, 
     path: "/ajuda",
     description: "Central de Ajuda"
-  },
-  { 
-    title: "Leads", 
-    icon: Zap, 
-    path: "/leads",
-    description: "Captação & Robô"
   },
 ];
 
