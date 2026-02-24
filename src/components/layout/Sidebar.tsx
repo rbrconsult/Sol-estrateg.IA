@@ -95,7 +95,26 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
+  const { hasAccess } = useModulePermissions();
 
+  // Map paths to module keys for filtering
+  const pathToModule: Record<string, string> = {
+    '/': 'dashboard',
+    '/pipeline': 'pipeline',
+    '/forecast': 'forecast',
+    '/atividades': 'atividades',
+    '/vendedores': 'vendedores',
+    '/perdas': 'perdas',
+    '/origens': 'origens',
+    '/chamados': 'chamados',
+    '/monitoramento': 'monitoramento',
+    '/ajuda': 'ajuda',
+  };
+
+  const visibleMenuItems = menuItems.filter(item => {
+    const moduleKey = pathToModule[item.path];
+    return moduleKey ? hasAccess(moduleKey) : true;
+  });
   const handleSignOut = async () => {
     await signOut();
     toast.success('Logout realizado com sucesso!');
