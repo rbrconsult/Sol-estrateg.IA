@@ -65,7 +65,7 @@ export default function Admin() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
-  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole, organization_id: '00000000-0000-0000-0000-000000000001' });
+  const [formData, setFormData] = useState({ email: '', password: '', full_name: '', role: 'user' as AppRole, organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [newPassword, setNewPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
@@ -249,7 +249,8 @@ export default function Admin() {
           password: formData.password,
           full_name: formData.full_name,
           role: formData.role,
-          organization_id: formData.organization_id
+          organization_id: formData.organization_id,
+          phone: formData.phone
         }
       });
 
@@ -258,7 +259,7 @@ export default function Admin() {
 
       toast.success('Usuário criado com sucesso!');
       setIsCreateDialogOpen(false);
-      setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001' });
+      setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
       fetchUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -345,7 +346,8 @@ export default function Admin() {
       password: '', 
       full_name: u.full_name || '', 
       role: u.role as AppRole,
-      organization_id: '00000000-0000-0000-0000-000000000001'
+      organization_id: '00000000-0000-0000-0000-000000000001',
+      phone: ''
     });
     setIsEditDialogOpen(true);
   };
@@ -600,7 +602,7 @@ export default function Admin() {
                   <CardDescription>Lista de todos os usuários do sistema</CardDescription>
                 </div>
                 <Button onClick={() => {
-                  setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001' });
+                  setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
                   setIsCreateDialogOpen(true);
                 }}>
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -898,6 +900,15 @@ export default function Admin() {
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone (WhatsApp)</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="5517991244540"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="organization">Organização</Label>

@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     console.log('Action requested:', action, 'by user:', requestingUser.email);
 
     if (action === 'create') {
-      const { email, password, full_name, role, organization_id } = body;
+      const { email, password, full_name, role, organization_id, phone } = body;
 
       if (!email || !password) {
         return new Response(
@@ -112,15 +112,22 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Update profile and org membership to correct organization
+        // Update profile with phone and org
+        const profileUpdate: Record<string, any> = {};
+        if (phone) profileUpdate.phone = phone;
         if (orgId !== '00000000-0000-0000-0000-000000000001') {
-          // Update profile org
+          profileUpdate.organization_id = orgId;
+        }
+        
+        if (Object.keys(profileUpdate).length > 0) {
           await supabaseAdmin
             .from('profiles')
-            .update({ organization_id: orgId })
+            .update(profileUpdate)
             .eq('id', newUser.user.id);
+        }
 
-          // Update org membership (trigger creates with default org)
+        // Update org membership to correct organization
+        if (orgId !== '00000000-0000-0000-0000-000000000001') {
           await supabaseAdmin
             .from('organization_members')
             .update({ organization_id: orgId })
