@@ -92,6 +92,11 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/leads" element={
+                <ProtectedRoute>
+                  <MainLayout><Leads /></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

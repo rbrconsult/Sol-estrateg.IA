@@ -86,6 +86,12 @@ const menuItems = [
     path: "/ajuda",
     description: "Central de Ajuda"
   },
+  { 
+    title: "Leads", 
+    icon: Zap, 
+    path: "/leads",
+    description: "Captação & Robô"
+  },
 ];
 
 interface SidebarProps {
