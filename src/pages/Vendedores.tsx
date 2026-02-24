@@ -4,6 +4,7 @@ import { adaptSheetData, getVendedorPerformance, getPerdasData } from "@/data/da
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
 import { Users, TrendingUp, DollarSign, XCircle, RefreshCw } from "lucide-react";
+import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
