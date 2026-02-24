@@ -85,6 +85,11 @@ const App = () => (
                   <MainLayout><Monitoramento /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/ajuda" element={
+                <ProtectedRoute>
+                  <MainLayout><Ajuda /></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

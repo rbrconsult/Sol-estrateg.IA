@@ -124,6 +124,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          onboarding_completed: boolean
           organization_id: string | null
           phone: string | null
           updated_at: string
@@ -133,6 +134,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          onboarding_completed?: boolean
           organization_id?: string | null
           phone?: string | null
           updated_at?: string
@@ -142,6 +144,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          onboarding_completed?: boolean
           organization_id?: string | null
           phone?: string | null
           updated_at?: string

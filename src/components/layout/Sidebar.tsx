@@ -78,6 +78,12 @@ const menuItems = [
     path: "/monitoramento",
     description: "Status do Sistema"
   },
+  { 
+    title: "Ajuda", 
+    icon: HelpCircle, 
+    path: "/ajuda",
+    description: "Central de Ajuda"
+  },
 ];
 
 export function Sidebar() {
