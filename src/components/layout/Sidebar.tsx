@@ -196,6 +196,19 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
           </div>
         )}
 
+        {/* Refazer Onboarding */}
+        {!collapsed && onResetOnboarding && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onResetOnboarding}
+            className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Refazer Tour
+          </Button>
+        )}
+
         {/* Logout */}
         <Button
           variant="ghost"
