@@ -140,7 +140,7 @@ const Index = () => {
         <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
       </div>
 
-      <SetupChecklist />
+      
 
       <div>
         {/* Error State */}
