@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SLATimer } from "./SLATimer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw, Timer } from "lucide-react";
+import { Send, X, CheckCircle, Undo2, Clock, Trash2, MessageCircle, RotateCcw, Timer, Forward } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -22,6 +22,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TicketDetailProps {
   ticketId: string;
@@ -56,6 +63,12 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
   const [workHoursInput, setWorkHoursInput] = useState("");
   const [resolving, setResolving] = useState(false);
   const [hoursMode, setHoursMode] = useState<"manual" | "real">("manual");
+
+  // Forward dialog state
+  const [forwardOpen, setForwardOpen] = useState(false);
+  const [forwardPhone, setForwardPhone] = useState("");
+  const [forwarding, setForwarding] = useState(false);
+  const [orgMembers, setOrgMembers] = useState<{ id: string; full_name: string; phone: string }[]>([]);
 
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
@@ -301,7 +314,6 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
 
     await recordStatusChange(oldStatus, "em_andamento", "Chamado reaberto");
 
-    // Send WhatsApp notification to ticket owner
     try {
       const { data: ownerProfile } = await supabase
         .from("profiles")
@@ -327,6 +339,61 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
     toast.success("Chamado reaberto!");
     onUpdated();
     fetchData();
+  };
+
+  const handleOpenForward = async () => {
+    // Fetch org members with phone
+    const orgId = ticket?.organization_id;
+    if (orgId) {
+      const { data: members } = await supabase
+        .from("organization_members" as any)
+        .select("user_id")
+        .eq("organization_id", orgId);
+
+      if (members && members.length > 0) {
+        const userIds = (members as any[]).map((m: any) => m.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, phone")
+          .in("id", userIds)
+          .not("phone", "is", null);
+
+        setOrgMembers((profiles as any[] || []).filter((p: any) => p.phone));
+      }
+    }
+    setForwardPhone("");
+    setForwardOpen(true);
+  };
+
+  const handleForward = async () => {
+    if (!forwardPhone || !ticket) return;
+    setForwarding(true);
+
+    const selectedMember = orgMembers.find(m => m.phone === forwardPhone);
+
+    try {
+      await supabase.functions.invoke("notify-ticket-whatsapp", {
+        body: {
+          type: "forward",
+          ticketId,
+          ticketNumero: String(ticket.ticket_number || 0).padStart(4, "0"),
+          titulo: ticket.titulo,
+          descricao: ticket.descricao,
+          categoria: ticket.categoria,
+          prioridade: ticket.prioridade,
+          fluxo: ticket.fluxo || null,
+          targetPhone: forwardPhone,
+          targetName: selectedMember?.full_name || null,
+        },
+      });
+      toast.success(`Chamado encaminhado para ${selectedMember?.full_name || forwardPhone}`);
+    } catch (e) {
+      console.error("Error forwarding ticket:", e);
+      toast.error("Erro ao encaminhar chamado");
+    }
+
+    setForwarding(false);
+    setForwardOpen(false);
   };
 
   // Calculate time metrics
@@ -518,6 +585,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
                       <Undo2 className="h-4 w-4" />
                     </Button>
                   )}
+                  {isAdmin && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={handleOpenForward}
+                      className="text-blue-400 hover:bg-blue-500/10"
+                      title="Encaminhar via WhatsApp"
+                    >
+                      <Forward className="h-4 w-4" />
+                    </Button>
+                  )}
                   {userRole === "super_admin" && (
                     <Button size="icon" variant="outline" onClick={() => {
                       setHoursMode("manual");
@@ -628,6 +706,48 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
               className="gap-2 bg-emerald-600 hover:bg-emerald-700"
             >
               <CheckCircle className="h-4 w-4" /> {resolving ? "Resolvendo..." : "Resolver"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forward dialog */}
+      <Dialog open={forwardOpen} onOpenChange={setForwardOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Forward className="h-5 w-5 text-blue-400" /> Encaminhar Chamado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Selecione o membro da organização para encaminhar este chamado via WhatsApp.
+            </p>
+            {orgMembers.length > 0 ? (
+              <Select value={forwardPhone} onValueChange={setForwardPhone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o destinatário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.phone}>
+                      {m.full_name || m.phone} • {m.phone}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum membro com telefone cadastrado.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setForwardOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={handleForward}
+              disabled={forwarding || !forwardPhone}
+              className="gap-2"
+            >
+              <Forward className="h-4 w-4" /> {forwarding ? "Enviando..." : "Encaminhar"}
             </Button>
           </DialogFooter>
         </DialogContent>

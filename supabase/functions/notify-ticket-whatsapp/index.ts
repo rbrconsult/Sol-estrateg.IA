@@ -251,6 +251,54 @@ RBR Consult`;
           results.central = { error: String(e) };
         }
       }
+    } else if (type === "forward") {
+      // Handle forwarding ticket to a specific person
+      const { ticketId, titulo, descricao, categoria, prioridade, fluxo, targetPhone, targetName } = body;
+      const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
+
+      const prioridadeLabel: Record<string, string> = {
+        critica: "🔴 Crítica", alta: "🟠 Alta", media: "🟡 Média", baixa: "🟢 Baixa",
+      };
+      const categoriaLabel: Record<string, string> = {
+        bug: "🐛 Bug", duvida: "❓ Dúvida", melhoria: "✨ Melhoria", urgencia: "🚨 Urgência",
+      };
+
+      const forwardMsg = `📨 *CHAMADO ENCAMINHADO #${shortId}*
+
+Título: ${titulo}
+Fluxo: ${fluxo || "N/A"}
+Categoria: ${categoriaLabel[categoria] || categoria}
+Prioridade: ${prioridadeLabel[prioridade] || prioridade}
+
+Descrição: ${descricao}
+
+Acesse o painel para mais detalhes.
+
+RBR Consult`;
+
+      if (targetPhone) {
+        const cleanPhone = targetPhone.replace(/\D/g, "");
+        if (cleanPhone.length >= 10) {
+          const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+          try {
+            results.target = await sendMessage(phoneWithCountry, forwardMsg);
+          } catch (e) {
+            console.error("Error forwarding ticket:", e);
+            results.target = { error: String(e) };
+          }
+        }
+      }
+
+      // Notify central
+      if (centralNumber) {
+        const centralMsg = `*CHAMADO ENCAMINHADO #${shortId}*\n\nTítulo: ${titulo}\nEncaminhado para: ${targetName || targetPhone || "N/A"}`;
+        try {
+          results.central = await sendMessage(centralNumber, centralMsg);
+        } catch (e) {
+          console.error("Error sending forward to central:", e);
+          results.central = { error: String(e) };
+        }
+      }
     } else {
       // Handle new ticket notification (existing logic)
       const {
