@@ -134,6 +134,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
     setDetalhes("");
     setCategoria("duvida");
     setFile(null);
+    setSelectedOrgId("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
