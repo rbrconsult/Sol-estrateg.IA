@@ -192,6 +192,7 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
           reason: returnReason.trim(),
           userPhone: ownerProfile?.phone || null,
           userName: ownerProfile?.full_name || null,
+          organizationId: ticket.organization_id || null,
         },
       });
     } catch (e) {
