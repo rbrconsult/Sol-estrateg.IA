@@ -689,6 +689,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="modules">
+            <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
+          </TabsContent>
+
           <TabsContent value="organizations">
             <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
           </TabsContent>
