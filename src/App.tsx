@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
 import Ajuda from "./pages/Ajuda";
+import Leads from "./pages/Leads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
