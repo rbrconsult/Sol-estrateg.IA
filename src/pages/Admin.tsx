@@ -901,6 +901,15 @@ export default function Admin() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="phone">Telefone (WhatsApp)</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="5517991244540"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="organization">Organização</Label>
                 <Select value={formData.organization_id} onValueChange={(value) => setFormData({ ...formData, organization_id: value })}>
                   <SelectTrigger>
