@@ -13,7 +13,9 @@ import {
   Sparkles,
   LogOut,
   Shield,
-  Headset
+  Headset,
+  HelpCircle,
+  RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -76,9 +78,19 @@ const menuItems = [
     path: "/monitoramento",
     description: "Status do Sistema"
   },
+  { 
+    title: "Ajuda", 
+    icon: HelpCircle, 
+    path: "/ajuda",
+    description: "Central de Ajuda"
+  },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onResetOnboarding?: () => void;
+}
+
+export function Sidebar({ onResetOnboarding }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
@@ -100,13 +112,13 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
-              <span className="text-lg font-black text-primary-foreground tracking-tighter">E</span>
+              <span className="text-lg font-black text-primary-foreground tracking-tighter">S</span>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <h1 className="text-lg font-black tracking-tight text-foreground">EVOLVE</h1>
-                <p className="text-xs text-muted-foreground truncate">CRM Solar</p>
+                <h1 className="text-lg font-black tracking-tight text-foreground">SOL Insights</h1>
+                <p className="text-xs text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
             )}
           </div>
@@ -182,6 +194,19 @@ export function Sidebar() {
               <p className="text-xs text-warning font-semibold">Super Admin</p>
             )}
           </div>
+        )}
+
+        {/* Refazer Onboarding */}
+        {!collapsed && onResetOnboarding && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onResetOnboarding}
+            className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Refazer Tour
+          </Button>
         )}
 
         {/* Logout */}

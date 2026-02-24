@@ -29,7 +29,7 @@ export interface Proposal {
   desconto: number;
 }
 
-// Etapas reais da planilha EVOLVE
+// Etapas reais da planilha SOL Insights
 export const etapasReais = [
   'TRAFEGO PAGO',
   'PROSPECÇÃO',

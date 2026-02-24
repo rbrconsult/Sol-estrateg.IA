@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
 import { TrendingUp, AlertTriangle, Target, Zap, Calendar, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
+import { HelpButton } from "@/components/HelpButton";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
@@ -44,9 +45,12 @@ export default function Forecast() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Forecast</h1>
-        <p className="text-muted-foreground">Previsão de receita e potência</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Forecast</h1>
+          <p className="text-muted-foreground">Previsão de receita e potência</p>
+        </div>
+        <HelpButton moduleId="forecast" label="Ajuda do Forecast" />
       </div>
 
         {/* KPIs */}

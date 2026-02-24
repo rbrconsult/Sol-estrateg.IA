@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { adaptSheetData } from "@/data/dataAdapter";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
+import { HelpButton } from "@/components/HelpButton";
 
 const Pipeline = () => {
   const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
@@ -34,6 +35,8 @@ const Pipeline = () => {
             <h1 className="text-3xl font-bold text-foreground">Pipeline</h1>
             <p className="text-muted-foreground">Visão Kanban dos Projetos • Atualizado: {lastUpdate}</p>
           </div>
+          <div className="flex items-center gap-2">
+            <HelpButton moduleId="pipeline" label="Ajuda do Pipeline" />
           <Button
             variant="outline"
             size="sm"
@@ -44,6 +47,7 @@ const Pipeline = () => {
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
+          </div>
         </div>
       </div>
 

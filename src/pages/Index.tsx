@@ -40,6 +40,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
+import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
+import { HelpButton } from "@/components/HelpButton";
 
 const Index = () => {
   const [selectedVendedor, setSelectedVendedor] = useState("todos");
@@ -123,18 +125,23 @@ const Index = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <Header
-        lastUpdate={lastUpdate}
-        selectedVendedor={selectedVendedor}
-        selectedPreVendedor={selectedPreVendedor}
-        onVendedorChange={setSelectedVendedor}
-        onPreVendedorChange={setSelectedPreVendedor}
-        vendedores={vendedores}
-        preVendedores={preVendedores}
-        dateRange={dateRange}
-        datePreset={datePreset}
-        onDateRangeChange={handleDateRangeChange}
-      />
+      <div className="flex items-center justify-between">
+        <Header
+          lastUpdate={lastUpdate}
+          selectedVendedor={selectedVendedor}
+          selectedPreVendedor={selectedPreVendedor}
+          onVendedorChange={setSelectedVendedor}
+          onPreVendedorChange={setSelectedPreVendedor}
+          vendedores={vendedores}
+          preVendedores={preVendedores}
+          dateRange={dateRange}
+          datePreset={datePreset}
+          onDateRangeChange={handleDateRangeChange}
+        />
+        <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
+      </div>
+
+      <SetupChecklist />
 
       <div>
         {/* Error State */}
@@ -344,7 +351,7 @@ const Index = () => {
 
         {/* Footer */}
         <footer className="mt-12 border-t border-border pt-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 EVOLVE - BI Estratégico. Todos os direitos reservados.</p>
+          <p>© 2024 SOL Insights - BI, CRM e Inteligência Comercial. Todos os direitos reservados.</p>
         </footer>
       </div>
     </div>

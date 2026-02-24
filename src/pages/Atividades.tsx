@@ -4,6 +4,7 @@ import { adaptSheetData, getAtividadesData, getVendedorPerformance, Proposal } f
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Activity, Clock, AlertTriangle, Phone, Calendar, Trophy, Zap, RefreshCw, ChevronDown, ChevronUp, X, User, MapPin } from "lucide-react";
+import { HelpButton } from "@/components/HelpButton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -222,9 +223,12 @@ export default function Atividades() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Atividades & Follow-ups</h1>
-        <p className="text-muted-foreground">Clique nos cards para ver os leads relacionados</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Atividades & Follow-ups</h1>
+          <p className="text-muted-foreground">Clique nos cards para ver os leads relacionados</p>
+        </div>
+        <HelpButton moduleId="atividades" label="Ajuda de Atividades" />
       </div>
 
       {/* KPIs Clicáveis */}

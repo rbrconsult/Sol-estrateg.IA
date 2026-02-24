@@ -4,6 +4,7 @@ import { adaptSheetData, getOrigensData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Target, TrendingUp, DollarSign, Clock, Users, RefreshCw } from "lucide-react";
+import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -57,9 +58,12 @@ export default function Origens() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Origem dos Leads</h1>
-        <p className="text-muted-foreground">Análise de canais de aquisição</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Origem dos Leads</h1>
+          <p className="text-muted-foreground">Análise de canais de aquisição</p>
+        </div>
+        <HelpButton moduleId="origens" label="Ajuda de Origens" />
       </div>
 
         {/* KPIs */}
