@@ -266,6 +266,21 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
             <DialogTitle>Novo Chamado</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Seleção de Empresa (apenas super_admin) */}
+            {isSuperAdmin && organizations && (
+              <div className="space-y-2">
+                <Label>Empresa *</Label>
+                <Select value={selectedOrgId} onValueChange={setSelectedOrgId} required>
+                  <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((org: any) => (
+                      <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* WhatsApp do Usuário */}
             <div className="space-y-2">
               <Label htmlFor="userPhone">WhatsApp para notificação *</Label>
