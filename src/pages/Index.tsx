@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { 
   Briefcase, 
+  Briefcase, 
   TrendingUp, 
   DollarSign, 
   Clock,
