@@ -15,9 +15,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2 } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
+import ModulesTab from '@/components/admin/ModulesTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -582,8 +583,9 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="modules">Módulos</TabsTrigger>
             <TabsTrigger value="organizations">Organizações</TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
@@ -685,6 +687,10 @@ export default function Admin() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="modules">
+            <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
           </TabsContent>
 
           <TabsContent value="organizations">

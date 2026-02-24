@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ModuleGuard } from "@/components/ModuleGuard";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
@@ -37,37 +38,37 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={
                 <ProtectedRoute>
-                  <MainLayout><Index /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="dashboard"><Index /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/pipeline" element={
                 <ProtectedRoute>
-                  <MainLayout><Pipeline /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="pipeline"><Pipeline /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/forecast" element={
                 <ProtectedRoute>
-                  <MainLayout><Forecast /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="forecast"><Forecast /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/atividades" element={
                 <ProtectedRoute>
-                  <MainLayout><Atividades /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="atividades"><Atividades /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/vendedores" element={
                 <ProtectedRoute>
-                  <MainLayout><Vendedores /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="vendedores"><Vendedores /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/perdas" element={
                 <ProtectedRoute>
-                  <MainLayout><Perdas /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="perdas"><Perdas /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/origens" element={
                 <ProtectedRoute>
-                  <MainLayout><Origens /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="origens"><Origens /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={
@@ -77,17 +78,17 @@ const App = () => (
               } />
               <Route path="/chamados" element={
                 <ProtectedRoute>
-                  <MainLayout><Chamados /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="chamados"><Chamados /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/monitoramento" element={
                 <ProtectedRoute>
-                  <MainLayout><Monitoramento /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Monitoramento /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/ajuda" element={
                 <ProtectedRoute>
-                  <MainLayout><Ajuda /></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
