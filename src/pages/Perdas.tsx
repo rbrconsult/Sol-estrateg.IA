@@ -4,6 +4,7 @@ import { adaptSheetData, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { XCircle, TrendingDown, AlertTriangle, Target, Users, Lightbulb, RefreshCw } from "lucide-react";
+import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
