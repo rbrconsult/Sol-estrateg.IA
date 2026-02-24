@@ -102,9 +102,9 @@ export default function Auth() {
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-2xl font-bold text-primary">E</span>
+              <span className="text-2xl font-bold text-primary">S</span>
             </div>
-            <span className="text-2xl font-bold">EVOLVE</span>
+            <span className="text-2xl font-bold">SOL Insights</span>
           </div>
           <CardTitle className="text-xl">Acesso ao Dashboard</CardTitle>
           <CardDescription>

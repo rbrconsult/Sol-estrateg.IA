@@ -344,7 +344,7 @@ const Index = () => {
 
         {/* Footer */}
         <footer className="mt-12 border-t border-border pt-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 EVOLVE - BI Estratégico. Todos os direitos reservados.</p>
+          <p>© 2024 SOL Insights - BI, CRM e Inteligência Comercial. Todos os direitos reservados.</p>
         </footer>
       </div>
     </div>

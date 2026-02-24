@@ -100,13 +100,13 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
-              <span className="text-lg font-black text-primary-foreground tracking-tighter">E</span>
+              <span className="text-lg font-black text-primary-foreground tracking-tighter">S</span>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <h1 className="text-lg font-black tracking-tight text-foreground">EVOLVE</h1>
-                <p className="text-xs text-muted-foreground truncate">CRM Solar</p>
+                <h1 className="text-lg font-black tracking-tight text-foreground">SOL Insights</h1>
+                <p className="text-xs text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
             )}
           </div>
