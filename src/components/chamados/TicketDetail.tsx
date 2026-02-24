@@ -64,6 +64,12 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
   const [resolving, setResolving] = useState(false);
   const [hoursMode, setHoursMode] = useState<"manual" | "real">("manual");
 
+  // Forward dialog state
+  const [forwardOpen, setForwardOpen] = useState(false);
+  const [forwardPhone, setForwardPhone] = useState("");
+  const [forwarding, setForwarding] = useState(false);
+  const [orgMembers, setOrgMembers] = useState<{ id: string; full_name: string; phone: string }[]>([]);
+
   const isAdmin = userRole === "super_admin" || userRole === "admin";
 
   const [initialLoad, setInitialLoad] = useState(true);
