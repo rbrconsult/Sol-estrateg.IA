@@ -1,78 +1,147 @@
 
 
-## Vincular Planilha Google Sheets por Organizacao
+# Plano de Execucao -- SOL Insights
 
-### Problema atual
-Hoje existe apenas uma planilha fixa (secret `GOOGLE_SHEET_ID`) que alimenta todos os dados. Quando uma nova empresa for criada, nao ha como vincular uma planilha diferente a ela.
+## Visao Geral
 
-### Solucao
-
-Armazenar o ID da planilha Google Sheets nas configuracoes (`settings`) de cada organizacao, e fazer o sistema carregar os dados da planilha correta com base na organizacao do usuario logado.
+Rebranding da plataforma de EVOLVE para SOL Insights, criacao de Central de Ajuda, Onboarding Guiado e Checklist de Configuracao. Nenhuma alteracao no backend, integracao com Google Sheets, API Evolution, logica de BI ou SLA.
 
 ---
 
-### Mudancas necessarias
+## FASE 1 -- Rebranding (Baixo Risco)
 
-**1. Tela Admin - Formulario de organizacao (OrganizationsTab.tsx)**
+### 1.1 Arquivos a alterar
 
-Adicionar um campo "Google Sheet ID" no dialog de criar/editar organizacao. O valor sera salvo no campo `settings` (jsonb) da tabela `organizations`:
-
-```json
-{ "google_sheet_id": "18LfyoHUA7Yk4VBEi-hXHy600pzxBWpqinSvFEIIT1ng" }
-```
-
-**2. Edge Function fetch-sheets**
-
-- Receber o `organization_id` como parametro no body da requisicao
-- Buscar a organizacao no banco para obter o `google_sheet_id` dos `settings`
-- Se nao encontrar, usar o fallback do secret `GOOGLE_SHEET_ID` (compatibilidade)
-- Usar o sheet ID da organizacao para buscar os dados
-
-**3. Hook useGoogleSheetsData.ts**
-
-- Importar o `organizationId` do `useAuth()`
-- Enviar o `organization_id` no body da chamada a edge function
-- Incluir o `organizationId` na query key para cache separado por empresa
-
-**4. Migrar dado existente**
-
-- Atualizar a organizacao Evolve Energia no banco para incluir o sheet ID atual nos settings
-
----
-
-### Fluxo completo
-
-```text
-Admin cria org "Solar Plus"
-        |
-        v
-Preenche Google Sheet ID no formulario
-        |
-        v
-Salva em organizations.settings.google_sheet_id
-        |
-        v
-Usuario da Solar Plus faz login
-        |
-        v
-useAuth() retorna organization_id
-        |
-        v
-fetch-sheets recebe org_id -> busca sheet_id -> retorna dados da planilha correta
-```
-
-### Detalhes tecnicos
-
-| Arquivo | Mudanca |
+| Arquivo | Alteracao |
 |---|---|
-| `src/components/admin/OrganizationsTab.tsx` | Novo campo "Google Sheet ID" no dialog de criar/editar |
-| `supabase/functions/fetch-sheets/index.ts` | Aceitar `organization_id`, buscar sheet ID do banco |
-| `src/hooks/useGoogleSheetsData.ts` | Enviar `organization_id` na chamada, cache por org |
-| Migracao SQL | UPDATE organizations SET settings para Evolve Energia |
+| `index.html` | Title, meta tags (title, description, author, og:title, og:description), favicon letra "E" para "S" |
+| `src/components/layout/Sidebar.tsx` | Logo "E" para "S", texto "EVOLVE" para "SOL Insights", subtitulo "CRM Solar" para "BI, CRM e Suporte" |
+| `src/pages/Auth.tsx` | Logo "E" para "S", texto "EVOLVE" para "SOL Insights" |
+| `src/pages/Index.tsx` | Footer "EVOLVE" para "SOL Insights" |
+| `src/data/dataAdapter.ts` | Comentario "planilha EVOLVE" (cosmetic) |
 
-### Seguranca
+### 1.2 Nao alterar
+- `src/hooks/useAuth.tsx`: chaves internas `evolve_impersonation` e `evolve_session_token` sao chaves de localStorage, nao visíveis ao usuario. Manter para evitar logout em massa.
+- `src/components/admin/OrganizationsTab.tsx`: placeholder de URL e exemplo, manter como esta.
 
-- A edge function validara o JWT do usuario antes de processar
-- Usuarios so conseguem buscar dados da propria organizacao (via `get_user_org`)
-- Super admins podem consultar qualquer organizacao
+---
+
+## FASE 2 -- Central de Ajuda (`/ajuda`)
+
+### 2.1 Novos arquivos
+
+- `src/pages/Ajuda.tsx` -- Pagina principal com sidebar de categorias, campo de busca e area de conteudo.
+- `src/data/helpContent.ts` -- Conteudo estatico estruturado em array de objetos com `{ id, title, icon, sections: [{ title, content }] }` para cada modulo.
+
+### 2.2 Categorias de conteudo
+
+Primeiros Passos, BI Estrategico, Pipeline, Forecast, Atividades, Vendedores, Perdas, Origens, Chamados, Admin, Monitoramento.
+
+Cada categoria tera:
+- O que e
+- Para que serve
+- Como funciona
+- Boas praticas
+
+### 2.3 Alteracoes em arquivos existentes
+
+| Arquivo | Alteracao |
+|---|---|
+| `src/App.tsx` | Adicionar rota `/ajuda` protegida com MainLayout |
+| `src/components/layout/Sidebar.tsx` | Adicionar item "Ajuda" com icone `HelpCircle` no menu |
+
+---
+
+## FASE 3 -- Onboarding Guiado
+
+### 3.1 Migracao de banco
+
+Adicionar coluna `onboarding_completed` na tabela `profiles`:
+
+```sql
+ALTER TABLE public.profiles
+ADD COLUMN onboarding_completed boolean NOT NULL DEFAULT false;
+```
+
+### 3.2 Novos arquivos
+
+- `src/components/onboarding/OnboardingModal.tsx` -- Modal com stepper de boas-vindas, 5-7 etapas com ilustracoes/icones, botoes "Proximo"/"Pular". Ao finalizar, atualiza `profiles.onboarding_completed = true`.
+
+### 3.3 Alteracoes em arquivos existentes
+
+| Arquivo | Alteracao |
+|---|---|
+| `src/components/layout/MainLayout.tsx` | Importar e renderizar `OnboardingModal` condicionalmente (se `onboarding_completed === false`) |
+
+### 3.4 Etapas do tour
+
+1. Boas-vindas ao SOL Insights
+2. Dashboard -- visao geral dos KPIs
+3. Pipeline -- acompanhe propostas no Kanban
+4. Chamados -- abra e acompanhe tickets
+5. Ajuda -- acesse a Central de Ajuda
+6. Finalizacao -- pronto para comecar
+
+### 3.5 Botao "Refazer Onboarding"
+
+Adicionar opcao no footer da Sidebar para resetar o flag e reexibir o tour.
+
+---
+
+## FASE 4 -- Checklist de Configuracao Inicial
+
+### 4.1 Novos arquivos
+
+- `src/components/dashboard/SetupChecklist.tsx` -- Card com checklist que detecta automaticamente:
+  - Google Sheet configurado (verifica se dados retornam da API)
+  - Vendedores cadastrados (verifica se existem propostas com vendedores)
+  - Primeira proposta inserida (count > 0)
+  - Usuarios criados (count de membros da org > 1)
+  - Monitoramento configurado (verifica `status_url` na org)
+
+### 4.2 Alteracoes em arquivos existentes
+
+| Arquivo | Alteracao |
+|---|---|
+| `src/pages/Index.tsx` | Renderizar `SetupChecklist` no topo do dashboard (visivel apenas se nem todos os itens estao completos) |
+
+---
+
+## FASE 5 -- Icones de Ajuda Contextual
+
+### 5.1 Novos arquivos
+
+- `src/components/HelpButton.tsx` -- Botao circular `?` que recebe `moduleId` como prop e gera link para `/ajuda#moduleId`.
+
+### 5.2 Alteracoes em arquivos existentes
+
+Adicionar `HelpButton` no header de cada pagina principal:
+- `src/pages/Index.tsx` (moduleId: "bi-estrategico")
+- `src/pages/Pipeline.tsx` (moduleId: "pipeline")
+- `src/pages/Forecast.tsx` (moduleId: "forecast")
+- `src/pages/Atividades.tsx` (moduleId: "atividades")
+- `src/pages/Vendedores.tsx` (moduleId: "vendedores")
+- `src/pages/Perdas.tsx` (moduleId: "perdas")
+- `src/pages/Origens.tsx` (moduleId: "origens")
+- `src/pages/Chamados.tsx` (moduleId: "chamados")
+- `src/pages/Monitoramento.tsx` (moduleId: "monitoramento")
+
+---
+
+## Ordem de Execucao
+
+1. **Fase 1** -- Rebranding (6 arquivos, risco zero)
+2. **Fase 2** -- Central de Ajuda (2 novos + 2 alterados)
+3. **Fase 3** -- Onboarding (1 migracao + 2 novos + 1 alterado)
+4. **Fase 4** -- Checklist (1 novo + 1 alterado)
+5. **Fase 5** -- Icones de ajuda (1 novo + 9 alterados)
+
+## O que NAO sera alterado
+
+- Estrutura multi-tenant e RLS
+- Conexao Google Sheets / Edge Functions
+- API Evolution / WhatsApp
+- Logica de BI, funis e KPIs
+- SLA de chamados
+- Sistema de roles e autenticacao
 
