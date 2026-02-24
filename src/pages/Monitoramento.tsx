@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { HelpButton } from "@/components/HelpButton";
 
 export default function Monitoramento() {
   const { organizationId } = useAuth();
