@@ -71,7 +71,7 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
   const { data: organizations } = useQuery({
     queryKey: ["organizations-list"],
     queryFn: async () => {
-      const { data } = await supabase.from("organizations").select("id, name").order("name");
+      const { data } = await supabase.from("organizations").select("id, name").neq("id", "00000000-0000-0000-0000-000000000001").order("name");
       return (data as any[]) || [];
     },
     enabled: isSuperAdmin,
