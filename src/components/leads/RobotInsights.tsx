@@ -1,4 +1,4 @@
-import { Bot, ArrowRight, AlertTriangle, MessageSquare, Zap, TrendingUp, Phone } from "lucide-react";
+import { Bot, ArrowRight, AlertTriangle, MessageSquare, Zap, TrendingUp, CheckCircle, Send, Users, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Proposal } from "@/data/dataAdapter";
 import type { MakeRecord } from "@/hooks/useMakeDataStore";
@@ -25,6 +25,19 @@ function hoursSince(dateStr: string): number {
 
 export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
   const abertos = proposals.filter(p => p.status === "Aberto");
+
+  /* ═══ 0. Destaques Positivos ═══ */
+  const qualificados = proposals.filter(p => p.solQualificado).length;
+  const totalEnviados = makeRecords.filter(r => r.data_envio).length;
+  const phonesUnicos = new Set(makeRecords.filter(r => r.telefone).map(r => r.telefone)).size;
+  const leadsQuentes = abertos.filter(p => p.temperatura === "QUENTE").length;
+
+  const destaques = [
+    { label: "Qualificados pela Sol", value: qualificados, icon: CheckCircle, color: "text-primary" },
+    { label: "Mensagens Enviadas", value: totalEnviados, icon: Send, color: "text-primary" },
+    { label: "Leads Contactados", value: phonesUnicos, icon: Users, color: "text-primary" },
+    { label: "Leads Quentes", value: leadsQuentes, icon: Flame, color: "text-warning" },
+  ];
 
   /* ═══ 1. Métricas Sol vs FUP Frio ═══ */
   const solRecords = makeRecords.filter(r => r.robo === "sol");
@@ -87,7 +100,6 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
       existing.count++;
       if (r.status_resposta === "respondeu") existing.responded = true;
     } else {
-      // Try to find name from proposals
       const prop = abertos.find(p => p.clienteTelefone && normalizePhone(p.clienteTelefone) === r.telefone);
       phoneMap.set(r.telefone, {
         count: 1,
@@ -104,35 +116,24 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
   const excessoFups = fupEntries.filter(e => e.count >= 5 && !e.responded).sort((a, b) => b.count - a.count);
 
   /* ═══ 3. Funil de Conversão dos Robôs ═══ */
-  const totalEnviados = makeRecords.filter(r => r.data_envio).length;
   const totalResponderam = makeRecords.filter(r => r.status_resposta === "respondeu").length;
 
-  // Leads que responderam E foram qualificados pela Sol
-  const phonesResponderam = new Set(
-    makeRecords.filter(r => r.status_resposta === "respondeu").map(r => r.telefone)
-  );
-  const qualificadosComResp = abertos.filter(p => {
-    if (!p.solQualificado || !p.clienteTelefone) return false;
-    return phonesResponderam.has(normalizePhone(p.clienteTelefone));
-  }).length;
+  // Qualificados direto das proposals (sem depender de phonesResponderam)
+  const qualificadosFunil = proposals.filter(p => p.solQualificado).length;
 
-  const fechadosComResp = proposals.filter(p => {
-    if (p.status !== "Ganho" || !p.clienteTelefone) return false;
-    return phonesResponderam.has(normalizePhone(p.clienteTelefone));
-  }).length;
+  const fechados = proposals.filter(p => p.status === "Ganho").length;
 
   const funnel = [
-    { label: "Enviados", value: totalEnviados, color: "bg-muted-foreground/60" },
+    { label: "Enviados", value: totalEnviados, color: "bg-primary/40" },
     { label: "Responderam", value: totalResponderam, color: "bg-primary/60" },
-    { label: "Qualificados", value: qualificadosComResp, color: "bg-primary/80" },
-    { label: "Fechados", value: fechadosComResp, color: "bg-primary" },
+    { label: "Qualificados", value: qualificadosFunil, color: "bg-primary/80" },
+    { label: "Fechados", value: fechados, color: "bg-primary" },
   ];
   const maxFunnel = Math.max(...funnel.map(f => f.value), 1);
 
   /* ═══ 4. Alertas de Ação Imediata ═══ */
   const alertas: { type: "urgent" | "warning" | "info"; title: string; desc: string; count: number }[] = [];
 
-  // Leads quentes sem contato de robô
   const quentesSemRobo = abertos.filter(p => {
     if (p.temperatura !== "QUENTE") return false;
     const records = getMakeData(p);
@@ -147,13 +148,11 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
     });
   }
 
-  // Leads que responderam mas não foram atendidos (sem atividade comercial recente)
   const responderamSemAtend = abertos.filter(p => {
     if (!p.clienteTelefone) return false;
     const records = getMakeData(p);
     const respondeu = records.some(r => r.status_resposta === "respondeu");
     if (!respondeu) return false;
-    // Se está há mais de 2 dias na mesma etapa após responder, possivelmente não atendido
     return p.tempoNaEtapa > 2;
   });
   if (responderamSemAtend.length > 0) {
@@ -165,7 +164,6 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
     });
   }
 
-  // Leads ignorando follow-ups há mais de 3 dias
   const ignorando3d = makeRecords.filter(r => {
     if (r.status_resposta === "respondeu") return false;
     return hoursSince(r.data_envio) > 72;
@@ -174,7 +172,7 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
     alertas.push({
       type: "info",
       title: "Sem resposta há +3 dias",
-      desc: `${ignorando3d.length} leads ignoraram mensagens dos robôs`,
+      desc: `${ignorando3d.length} leads aguardando retorno`,
       count: ignorando3d.length,
     });
   }
@@ -193,6 +191,24 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
       </div>
 
       <div className="p-6 space-y-6">
+        {/* ── Row 0: Destaques Positivos ── */}
+        <div>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+            <TrendingUp className="h-3 w-3" /> Destaques
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {destaques.map((d, i) => (
+              <div key={i} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <d.icon className={cn("h-3.5 w-3.5", d.color)} />
+                  <p className="text-[10px] text-muted-foreground uppercase">{d.label}</p>
+                </div>
+                <p className={cn("text-2xl font-bold tabular-nums", d.color)}>{d.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* ── Row 1: Sol vs FUP Frio ── */}
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
@@ -214,9 +230,9 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
                     <p className="text-[10px] text-muted-foreground uppercase">Taxa Resp.</p>
                     <p className={cn(
                       "text-xl font-bold tabular-nums",
-                      robot.taxa >= 30 ? "text-primary" : robot.taxa >= 15 ? "text-warning" : "text-destructive"
+                      robot.taxa >= 30 ? "text-primary" : robot.taxa >= 15 ? "text-warning" : robot.total === 0 ? "text-muted-foreground" : "text-destructive"
                     )}>
-                      {robot.taxa.toFixed(0)}%
+                      {robot.total > 0 ? `${robot.taxa.toFixed(0)}%` : "—"}
                     </p>
                   </div>
                   <div>
@@ -226,7 +242,6 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
                     </p>
                   </div>
                 </div>
-                {/* mini progress */}
                 <div className="mt-3 h-1.5 rounded-full bg-secondary/50 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary/60 transition-all duration-700"
@@ -241,13 +256,13 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
         {/* ── Row 2: Follow-up Count ── */}
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
-            <MessageSquare className="h-3 w-3" /> Follow-up Count
+            <MessageSquare className="h-3 w-3" /> Acompanhamento Ativo
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-lg border border-border/50 p-3">
               <p className="text-[10px] text-muted-foreground uppercase">Média FUPs/Lead</p>
               <p className="text-2xl font-bold text-foreground tabular-nums">{mediaFups.toFixed(1)}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">{fupEntries.length} leads contactados</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{fupEntries.length} leads em acompanhamento</p>
             </div>
             <div className="rounded-lg border border-border/50 p-3">
               <p className="text-[10px] text-muted-foreground uppercase">FUPs até Resposta</p>
@@ -258,11 +273,13 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
               <p className="text-[10px] text-muted-foreground uppercase">Excesso (+5 FUPs)</p>
               <p className={cn(
                 "text-2xl font-bold tabular-nums",
-                excessoFups.length > 0 ? "text-warning" : "text-primary"
+                excessoFups.length === 0 ? "text-primary" : "text-warning"
               )}>
-                {excessoFups.length}
+                {excessoFups.length === 0 ? "✓" : excessoFups.length}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-1">sem resposta</p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {excessoFups.length === 0 ? "Nenhum excesso" : "sem resposta"}
+              </p>
             </div>
             <div className="rounded-lg border border-border/50 p-3">
               <p className="text-[10px] text-muted-foreground uppercase">Taxa Conversão FUP</p>
@@ -273,7 +290,6 @@ export function RobotInsights({ proposals, makeRecords, getMakeData }: Props) {
             </div>
           </div>
 
-          {/* Top leads with excess FUPs */}
           {excessoFups.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {excessoFups.slice(0, 5).map((e, i) => (
