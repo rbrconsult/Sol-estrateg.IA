@@ -156,11 +156,12 @@ export default function Leads() {
   const etapaData = useMemo(() => getLeadsByEtapa(filtered), [filtered]);
   const tempPorEtapa = useMemo(() => getTemperaturaPorEtapa(filtered), [filtered]);
   const solPerf = useMemo(() => getSolPerformance(filtered), [filtered]);
-  const scorePorOrigem = useMemo(() => getScorePorOrigem(filtered), [filtered]);
+  const origensExcluidas = ["sem etiqueta", "presencial", "orgânico", "organico", "indicação", "indicacao"];
+  const scorePorOrigem = useMemo(() => getScorePorOrigem(filtered).filter(o => !origensExcluidas.includes(o.origem.toLowerCase())), [filtered]);
   const solSdr = useMemo(() => getSolSDRMetrics(filtered), [filtered]);
   const gargalos = useMemo(() => getGargalosData(filtered), [filtered]);
   const quentesAband = useMemo(() => getLeadsQuentesAbandonados(filtered), [filtered]);
-  const roiOrigem = useMemo(() => getROIPorOrigem(filtered), [filtered]);
+  const roiOrigem = useMemo(() => getROIPorOrigem(filtered).filter(o => !origensExcluidas.includes(o.origem.toLowerCase())), [filtered]);
 
   const valorTotal = useMemo(() => filtered.reduce((a, p) => a + p.valorProposta, 0), [filtered]);
   const ticketMedio = useMemo(() => filtered.length > 0 ? valorTotal / filtered.length : 0, [valorTotal, filtered]);
