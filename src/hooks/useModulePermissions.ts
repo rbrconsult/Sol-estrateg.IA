@@ -14,6 +14,7 @@ export const MODULE_DEFINITIONS = [
   { key: 'chamados', label: 'Chamados', description: 'Suporte & SLA', path: '/chamados' },
   { key: 'monitoramento', label: 'Monitoramento', description: 'Status do Sistema', path: '/monitoramento' },
   { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
+  { key: 'conferencia', label: 'Conferência', description: 'Painel SOL SDR', path: '/conferencia' },
 ] as const;
 
 export type ModuleKey = typeof MODULE_DEFINITIONS[number]['key'];
