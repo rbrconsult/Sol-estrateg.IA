@@ -39,14 +39,29 @@ export function normalizePhone(phone: string): string {
 /** Parse raw Make Data Store records into typed MakeRecords */
 function parseRecords(raw: any[]): MakeRecord[] {
   return raw.map((r) => {
-    // Data Store records can come as { key, data } or flat objects
     const d = r.data || r;
+    const phone = normalizePhone(String(d.telefone || r.key || ''));
+    
+    // Determine robot type from available fields
+    const hasFollowup = !!d.followup_count || !!d.ultima_mensagem;
+    const robo = d.robo || d.bot || d.tipo_robo || (hasFollowup ? 'fup_frio' : 'sol');
+
+    // Determine status from available data
+    let statusResposta = String(d.status_resposta || d.status || d.response_status || '').toLowerCase();
+    if (!statusResposta || statusResposta === 'undefined') {
+      if (d.followup_count && d.followup_count > 0) {
+        statusResposta = 'aguardando';
+      } else {
+        statusResposta = 'aguardando';
+      }
+    }
+
     return {
-      telefone: normalizePhone(String(d.telefone || d.phone || d.numero || '')),
-      robo: String(d.robo || d.bot || d.tipo_robo || 'desconhecido').toLowerCase(),
+      telefone: phone,
+      robo: String(robo).toLowerCase(),
       ultima_mensagem: String(d.ultima_mensagem || d.last_message || d.mensagem || ''),
-      data_envio: String(d.data_envio || d.sent_at || d.data || ''),
-      status_resposta: String(d.status_resposta || d.status || d.response_status || 'aguardando').toLowerCase(),
+      data_envio: String(d.ultima_mensagem || d['Data e Hora | Cadastro do Lead'] || d.data_envio || d.sent_at || ''),
+      status_resposta: statusResposta as any,
       data_resposta: d.data_resposta || d.response_date || undefined,
       historico: Array.isArray(d.historico || d.history)
         ? (d.historico || d.history).map((h: any) => ({

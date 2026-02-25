@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -35,9 +34,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get Make secrets
-    const makeApiKey = Deno.env.get("MAKE_API_KEY");
-    const makeDataStoreId = Deno.env.get("MAKE_DATASTORE_ID");
+    const makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
+    const makeDataStoreId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
 
     if (!makeApiKey || !makeDataStoreId) {
       console.error("Missing MAKE_API_KEY or MAKE_DATASTORE_ID");
@@ -47,24 +45,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch data from Make Data Store with pagination
+    console.log(`Make config: key length=${makeApiKey.length}, first8=${makeApiKey.substring(0, 8)}, dsId=${makeDataStoreId}`);
+
     const allRecords: any[] = [];
     let offset = 0;
-    const limit = 500;
+    const limit = 100;
     let hasMore = true;
 
     while (hasMore) {
-      const url = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}&cols[]=*`;
-      
-      console.log(`Fetching Make Data Store: offset=${offset}`);
-      const trimmedKey = makeApiKey.trim();
-      console.log(`API Key length: ${trimmedKey.length}, first 8 chars: ${trimmedKey.substring(0, 8)}, DS ID: ${makeDataStoreId}`);
-      
-      const url = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId.trim()}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
-      
-      const makeRes = await fetch(url, {
+      const apiUrl = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+      console.log(`Fetching: ${apiUrl}`);
+
+      const makeRes = await fetch(apiUrl, {
         headers: {
-          Authorization: `Token ${trimmedKey}`,
+          "Authorization": `Token ${makeApiKey}`,
           "Content-Type": "application/json",
         },
       });
@@ -79,10 +73,9 @@ Deno.serve(async (req) => {
       }
 
       const makeData = await makeRes.json();
-      console.log("Make API response keys:", Object.keys(makeData));
-      
+      console.log("Make response keys:", Object.keys(makeData));
+
       const records = makeData?.records || makeData?.data || [];
-      
       if (Array.isArray(records)) {
         allRecords.push(...records);
       }
@@ -91,7 +84,7 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    console.log(`Total records fetched: ${allRecords.length}`);
+    console.log(`Total records: ${allRecords.length}`);
 
     return new Response(
       JSON.stringify({ data: allRecords, count: allRecords.length, lastUpdate: new Date().toISOString() }),
