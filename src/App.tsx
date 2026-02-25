@@ -22,6 +22,7 @@ import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
+import Conferencia from "./pages/Conferencia";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,7 @@ const App = () => (
                   <MainLayout><Leads /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/conferencia" element={<Conferencia />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
