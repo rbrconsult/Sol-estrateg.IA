@@ -1,71 +1,89 @@
 
 
-# Plano: Verificacao e Enriquecimento do Dashboard de Leads com SLA
+# Plano: Corrigir Metricas Zeradas e Destacar Pontos Positivos
 
-## Diagnostico dos Leads Ausentes
+## Problema Raiz
 
-Analisando o codigo, identifiquei dois possiveis motivos para leads qualificados hoje nao aparecerem:
+O componente `RobotInsights` depende de `status_resposta === "respondeu"` para calcular taxas de resposta, mas o parser do Make (`useMakeDataStore.ts`, linhas 50-56) **sempre** atribui `'aguardando'` quando o campo vem vazio. Como o Make.com provavelmente nao envia esse campo preenchido, **todas as taxas ficam 0%**.
 
-1. **Filtro obrigatorio de `projeto_id`** (fetch-sheets, linha 140): Linhas da planilha sem `projeto_id` preenchido sao descartadas silenciosamente. Se "Marcos Giacomo" ou "Edmilson J Ragnoli" ainda nao tiverem `projeto_id`, eles nao chegam ao frontend.
-
-2. **Cache de 5 minutos**: O React Query armazena os dados por 5 minutos (`staleTime`). Se os dados foram inseridos na planilha apos o ultimo fetch, nao aparecerao ate o proximo ciclo (maximo 10 min de `refetchInterval`).
+Alem disso:
+- O funil mostra "Qualificados = 0" porque exige match de telefone com `phonesResponderam` (vazio)
+- O funil "Enviados" usa cor cinza (`bg-muted-foreground/60`) em vez de cor positiva
+- Os 12 leads qualificados do Google Sheets nao aparecem em nenhum destaque
+- O "76 leads contactados sem resposta" e apresentado de forma negativa
 
 ## Correcoes Propostas
 
-### 1. Tornar `projeto_id` opcional no filtro
-- **Arquivo**: `supabase/functions/fetch-sheets/index.ts` (linha 140)
-- **Mudanca**: Remover o `.filter((p: SheetRow) => p.projeto_id)` ou tornar o filtro mais permissivo, permitindo linhas que tenham ao menos `nome_cliente` preenchido
-- Gerar um ID sintetico para leads sem `projeto_id` (ja feito no `adaptSheetData` com `PROP-XXXX`)
+### 1. Melhorar deteccao de "respondeu" no parser (useMakeDataStore.ts)
 
-### 2. Adicionar botao "Atualizar Dados" no header
-- **Arquivo**: `src/pages/Leads.tsx`
-- Botao que invalida o cache do React Query (`queryClient.invalidateQueries`) para forcar re-fetch imediato dos dados da planilha e do Make.com
+Adicionar heuristicas para detectar resposta:
+- Se `data_resposta` existe e nao e vazio -> `respondeu`
+- Se existir campo `respondeu`, `replied`, `response` nos dados -> `respondeu`
+- Se o historico contem mensagens do tipo `recebida` -> `respondeu`
 
-### 3. Melhorar o SLAMetrics com dados disponiveis
-- **Arquivo**: `src/components/leads/SLAMetrics.tsx`
-- Usar `ultima_atualizacao` como fallback quando `data_qualificacao_sol` estiver vazio
-- Calcular SLA do 1o atendimento usando `data_criacao_proposta` como alternativa a `data_criacao_projeto`
-- Usar campo `ultima_mensagem` do Make.com como proxy para tempo de resposta dos robos quando `data_resposta` nao existir
+```text
+Antes:
+  status_resposta = 'aguardando' (sempre)
 
-### 4. Adicionar busca por nome na tabela
-- **Arquivo**: `src/pages/Leads.tsx`
-- Campo de busca textual para localizar rapidamente leads como "Marcos Giacomo" na tabela detalhada
-
-## Detalhes Tecnicos
-
-### Alteracao no filtro de parseRows (fetch-sheets)
-```typescript
-// De:
-.filter((p: SheetRow) => p.projeto_id);
-// Para:
-.filter((p: SheetRow) => p.projeto_id || p.nome_cliente);
+Depois:
+  Se data_resposta preenchido -> 'respondeu'
+  Se historico tem mensagem 'recebida' -> 'respondeu'
+  Se status contém 'respond' ou 'replied' -> 'respondeu'
+  Senão -> 'aguardando'
 ```
 
-### Botao de Refresh
-```typescript
-const queryClient = useQueryClient();
-const handleRefresh = () => {
-  queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
-  queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
-};
+### 2. Funil usa dados do Google Sheets para "Qualificados" (RobotInsights.tsx)
+
+Em vez de exigir match com `phonesResponderam`, contar qualificados direto das proposals:
+```text
+Antes:  qualificadosComResp = proposals com solQualificado E telefone em phonesResponderam
+Depois: qualificados = proposals.filter(p => p.solQualificado).length  (= 12)
 ```
 
-### Fallbacks no SLAMetrics
-- `dataCriacaoProjeto` vazio -> usar `dataCriacaoProposta`
-- `dataQualificacaoSol` vazio -> usar `ultimaAtualizacao` (para leads qualificados)
-- Robot SLA: usar diferenca entre `data_envio` e a data atual para leads "aguardando"
+### 3. Corrigir cores do funil (RobotInsights.tsx)
+
+```text
+Antes:
+  Enviados   -> bg-muted-foreground/60 (cinza)
+  Responderam -> bg-primary/60
+  Qualificados -> bg-primary/80
+  Fechados   -> bg-primary
+
+Depois:
+  Enviados   -> bg-primary/40 (azul claro)
+  Responderam -> bg-primary/60
+  Qualificados -> bg-primary/80
+  Fechados   -> bg-primary
+```
+
+### 4. Adicionar secao "Destaques Positivos" no topo do RobotInsights
+
+Nova row antes do comparativo, mostrando conquistas:
+- **Leads Qualificados**: 12 (da planilha, `solQualificado`)
+- **Mensagens Enviadas**: 48 (total do Make)
+- **Leads Contactados**: 76 (phones unicos)
+- **Leads Quentes**: contagem de temperatura QUENTE
+
+Usar cores verdes/primarias e icones positivos (CheckCircle, TrendingUp).
+
+### 5. Reframe metricas negativas
+
+- "76 leads contactados, FUP sem resposta" -> mudar para "76 leads em acompanhamento ativo"
+- "Excesso (+5 FUPs)" com valor 0 -> mostrar como "Nenhum excesso" com cor verde
+- Esconder alertas quando count = 0
 
 ## Arquivos Modificados
 
 | Arquivo | Mudanca |
 |---|---|
-| `supabase/functions/fetch-sheets/index.ts` | Filtro permissivo para leads sem projeto_id |
-| `src/pages/Leads.tsx` | Botao refresh, campo busca por nome |
-| `src/components/leads/SLAMetrics.tsx` | Fallbacks para KPIs de SLA |
+| `src/hooks/useMakeDataStore.ts` | Heuristicas para detectar `respondeu` |
+| `src/components/leads/RobotInsights.tsx` | Destaques positivos, funil com dados reais, cores corrigidas, reframe negativo |
 
 ## Resultado Esperado
 
-- Leads como "Marcos Giacomo" (Score 60, MORNO) e "Edmilson J Ragnoli" (Trafego Pago) aparecerao imediatamente no dashboard
-- KPIs de SLA mostrarao valores reais em vez de "--"
-- Botao de refresh permitira ver dados recem-inseridos sem esperar o cache
+- Taxa de resposta reflete dados reais (nao mais 0%)
+- Funil mostra 12 qualificados em azul forte
+- "Enviados = 48" em cor azul (nao cinza)
+- Nova secao de destaques com os pontos positivos no topo
+- Metricas negativas reescritas de forma construtiva
 
