@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { useMakeDataStore, buildMakeMap, normalizePhone, type MakeRecord } from "@/hooks/useMakeDataStore";
 import {
   adaptSheetData,
   getLeadsKPIs,
@@ -94,11 +95,23 @@ function KPICard({ label, value, suffix, isDecimal }: { label: string; value: nu
 /* ═══════════════════ MAIN ═══════════════════ */
 export default function Leads() {
   const { data: sheetsData, isLoading, error, refetch } = useGoogleSheetsData();
+  const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
   const proposals = useMemo(() => {
     if (!sheetsData?.data) return [];
     return adaptSheetData(sheetsData.data);
   }, [sheetsData]);
+
+  const makeMap = useMemo(() => buildMakeMap(makeRecords || []), [makeRecords]);
+
+  /** Get Make records for a proposal by phone */
+  const getMakeData = (p: Proposal): MakeRecord[] => {
+    if (!p.clienteTelefone) return [];
+    const phone = normalizePhone(p.clienteTelefone);
+    return makeMap.get(phone) || [];
+  };
+
+  const [expandedLead, setExpandedLead] = useState<string | null>(null);
 
   /* ── filters ── */
   const [periodo, setPeriodo] = useState("30d");
@@ -233,6 +246,70 @@ export default function Leads() {
     return () => clearInterval(id);
   }, []);
 
+  // Make-enriched alerts
+  const makeAlerts = useMemo(() => {
+    if (!makeRecords?.length) return [];
+    const result: { type: "alert" | "info" | "success"; title: string; desc: string }[] = [];
+    const ignored3days = makeRecords.filter(r => {
+      if (r.status_resposta !== 'ignorou') return false;
+      if (!r.data_envio) return false;
+      const sent = new Date(r.data_envio);
+      const diffDays = (Date.now() - sent.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays > 3;
+    });
+    if (ignored3days.length > 0) {
+      result.push({ type: "alert", title: `${ignored3days.length} leads ignoraram FUP há +3 dias`, desc: "Leads que não responderam ao follow-up frio há mais de 3 dias." });
+    }
+    const responderam = makeRecords.filter(r => r.status_resposta === 'respondeu');
+    if (makeRecords.length > 0) {
+      const taxaResp = ((responderam.length / makeRecords.length) * 100).toFixed(0);
+      result.push({ type: "info", title: `Taxa de resposta: ${taxaResp}%`, desc: `${responderam.length} de ${makeRecords.length} leads responderam aos robôs.` });
+    }
+    const hotNoFup = filtered.filter(p => {
+      if (p.temperatura !== 'QUENTE') return false;
+      const records = getMakeData(p);
+      return records.length === 0;
+    });
+    if (hotNoFup.length > 0) {
+      result.push({ type: "alert", title: `${hotNoFup.length} leads quentes sem follow-up`, desc: "Leads quentes que ainda não foram contatados pelos robôs." });
+    }
+    return result;
+  }, [makeRecords, filtered]);
+
+  // Robot activity stats
+  const robotStats = useMemo(() => {
+    if (!makeRecords?.length) return null;
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecords = makeRecords.filter(r => r.data_envio?.startsWith(today));
+    const solToday = todayRecords.filter(r => r.robo === 'sol');
+    const fupToday = todayRecords.filter(r => r.robo === 'fup_frio');
+    const responderam = makeRecords.filter(r => r.status_resposta === 'respondeu');
+    const taxaResposta = makeRecords.length > 0 ? (responderam.length / makeRecords.length) * 100 : 0;
+    const temposResposta = makeRecords
+      .filter(r => r.data_envio && r.data_resposta)
+      .map(r => (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / (1000 * 60 * 60));
+    const tempoMedio = temposResposta.length > 0
+      ? temposResposta.reduce((a, b) => a + b, 0) / temposResposta.length
+      : 0;
+    const semResposta3d = makeRecords.filter(r => {
+      if (r.status_resposta === 'respondeu') return false;
+      if (!r.data_envio) return false;
+      return (Date.now() - new Date(r.data_envio).getTime()) / (1000 * 60 * 60 * 24) > 3;
+    });
+    return {
+      totalMsgsHoje: todayRecords.length,
+      solHoje: solToday.length,
+      fupHoje: fupToday.length,
+      taxaResposta,
+      tempoMedioHoras: tempoMedio,
+      semResposta3d: semResposta3d.length,
+      totalRecords: makeRecords.length,
+    };
+  }, [makeRecords]);
+
+  /* ── top leads for table ── */
+  const tableLeads = filtered.slice(0, 15);
+
   /* ── loading / error ── */
   if (isLoading) {
     return (
@@ -267,20 +344,17 @@ export default function Leads() {
   if (solPerf.conversaoSolFechamento > 0) {
     alerts.push({ type: "success", title: `Conversão Sol → Fechamento: ${solPerf.conversaoSolFechamento.toFixed(1)}%`, desc: `De ${solPerf.totalQualificados} qualificados pela Sol.` });
   }
-  // Leads não qualificados parados
   const naoQualStale = filtered.filter(p => !p.solQualificado && p.tempoNaEtapa > 5);
   if (naoQualStale.length > 0) {
     alerts.push({ type: "alert", title: `${naoQualStale.length} leads sem qualificação há +5 dias`, desc: "Leads aguardando análise da Sol há mais de 5 dias." });
   }
-  // Sol today activity
   if (solHoje.qualificados > 0) {
     alerts.push({ type: "success", title: `Sol qualificou ${solHoje.qualificados} leads hoje`, desc: `${solHoje.quentes} quentes · ${solHoje.mornos} mornos · ${solHoje.frios} frios` });
   } else {
     alerts.push({ type: "info", title: "Nenhuma qualificação hoje", desc: "A Sol ainda não processou leads hoje." });
   }
-
-  /* ── top leads for table ── */
-  const tableLeads = filtered.slice(0, 15);
+  // Append Make alerts
+  alerts.push(...makeAlerts);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -562,6 +636,39 @@ export default function Leads() {
           </div>
         </section>
 
+        {/* ══════ ATIVIDADE DOS ROBÔS ══════ */}
+        {robotStats && (
+          <section className="mt-6 rounded-xl border border-primary/20 bg-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Bot className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground tracking-tight">Atividade dos Robôs</h3>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Sol & FUP Frio · {robotStats.totalRecords} registros</p>
+                </div>
+              </div>
+              {makeLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            </div>
+            <div className="p-6 grid grid-cols-2 md:grid-cols-6 gap-3">
+              {[
+                { label: "Msgs Hoje", value: robotStats.totalMsgsHoje },
+                { label: "Sol Hoje", value: robotStats.solHoje },
+                { label: "FUP Frio Hoje", value: robotStats.fupHoje },
+                { label: "Taxa Resposta", value: `${robotStats.taxaResposta.toFixed(0)}%` },
+                { label: "Tempo Médio (h)", value: robotStats.tempoMedioHoras > 0 ? robotStats.tempoMedioHoras.toFixed(1) : "—" },
+                { label: "Sem Resposta +3d", value: robotStats.semResposta3d },
+              ].map((m, i) => (
+                <div key={i} className="rounded-lg bg-secondary/40 p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{m.label}</p>
+                  <p className="text-xl font-bold text-foreground tabular-nums">{m.value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ══════ Tabela ══════ */}
         <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
           <div className="px-5 py-4 border-b border-border/40">
@@ -571,40 +678,124 @@ export default function Leads() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {["Cliente", "Etapa", "Qualificado", "Status", "Temperatura", "Score", "SLA (dias)", "Valor"].map(h => (
+                  {["Cliente", "Etapa", "Status", "Temperatura", "Score", "Últ. Contato", "Status FUP", "SLA (dias)", "Valor"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {tableLeads.map((l, i) => (
-                  <tr key={l.id || i} className="border-b border-border/20 transition-colors hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium text-foreground">{l.nomeCliente}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{l.etapa}</td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        "text-[10px] font-semibold px-2 py-0.5 rounded",
-                        l.solQualificado
-                          ? "bg-emerald-500/10 text-emerald-500"
-                          : "bg-secondary text-muted-foreground"
-                      )}>
-                        {l.solQualificado ? "Sim" : "Pendente"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        "text-[11px] font-medium px-2 py-0.5 rounded",
-                        l.status === "Ganho" ? "bg-emerald-500/10 text-emerald-500" :
-                        l.status === "Perdido" ? "bg-destructive/10 text-destructive" :
-                        "bg-secondary text-muted-foreground"
-                      )}>{l.status}</span>
-                    </td>
-                    <td className="px-4 py-3">{l.temperatura ? <TempDot temp={l.temperatura} /> : "—"}</td>
-                    <td className="px-4 py-3 text-xs font-semibold text-foreground tabular-nums">{l.solScore > 0 ? l.solScore.toFixed(1) : "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs tabular-nums">{l.tempoNaEtapa}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{formatCurrencyAbbrev(l.valorProposta)}</td>
-                  </tr>
-                ))}
+                {tableLeads.map((l, i) => {
+                  const makeData = getMakeData(l);
+                  const latestMake = makeData.length > 0
+                    ? makeData.reduce((a, b) => (a.data_envio > b.data_envio ? a : b))
+                    : null;
+                  const isExpanded = expandedLead === (l.id || String(i));
+
+                  return (
+                    <>
+                      <tr
+                        key={l.id || i}
+                        className={cn(
+                          "border-b border-border/20 transition-colors hover:bg-secondary/30",
+                          makeData.length > 0 && "cursor-pointer"
+                        )}
+                        onClick={() => makeData.length > 0 && setExpandedLead(isExpanded ? null : (l.id || String(i)))}
+                      >
+                        <td className="px-4 py-3 font-medium text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            {makeData.length > 0 && (
+                              isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                            )}
+                            {l.nomeCliente}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{l.etapa}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn(
+                            "text-[11px] font-medium px-2 py-0.5 rounded",
+                            l.status === "Ganho" ? "bg-primary/10 text-primary" :
+                            l.status === "Perdido" ? "bg-destructive/10 text-destructive" :
+                            "bg-secondary text-muted-foreground"
+                          )}>{l.status}</span>
+                        </td>
+                        <td className="px-4 py-3">{l.temperatura ? <TempDot temp={l.temperatura} /> : "—"}</td>
+                        <td className="px-4 py-3 text-xs font-semibold text-foreground tabular-nums">{l.solScore > 0 ? l.solScore.toFixed(1) : "—"}</td>
+                        <td className="px-4 py-3">
+                          {latestMake ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px]">{latestMake.robo === 'sol' ? '🤖' : '❄️'}</span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {latestMake.data_envio ? format(new Date(latestMake.data_envio), "dd/MM HH:mm", { locale: ptBR }) : "—"}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground/50">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {latestMake ? (
+                            <span className={cn(
+                              "text-[10px] font-semibold px-2 py-0.5 rounded",
+                              latestMake.status_resposta === 'respondeu' ? "bg-primary/10 text-primary" :
+                              latestMake.status_resposta === 'ignorou' ? "bg-destructive/10 text-destructive" :
+                              latestMake.status_resposta === 'aguardando' ? "bg-warning/10 text-warning" :
+                              "bg-secondary text-muted-foreground"
+                            )}>
+                              {latestMake.status_resposta === 'respondeu' ? 'Respondeu' :
+                               latestMake.status_resposta === 'ignorou' ? 'Ignorou' :
+                               latestMake.status_resposta === 'aguardando' ? 'Aguardando' : latestMake.status_resposta}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-secondary/50 text-muted-foreground/50">Sem contato</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs tabular-nums">{l.tempoNaEtapa}</td>
+                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{formatCurrencyAbbrev(l.valorProposta)}</td>
+                      </tr>
+                      {/* ── Timeline expandida ── */}
+                      {isExpanded && makeData.length > 0 && (
+                        <tr key={`${l.id || i}-timeline`}>
+                          <td colSpan={9} className="px-6 py-4 bg-secondary/20">
+                            <div className="space-y-2">
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <MessageSquare className="h-3 w-3" /> Histórico de interações
+                              </p>
+                              {makeData
+                                .flatMap(r => r.historico.length > 0
+                                  ? r.historico.map(h => ({ ...h, robo: r.robo }))
+                                  : [{ tipo: 'enviada' as const, mensagem: r.ultima_mensagem, data: r.data_envio, robo: r.robo }]
+                                )
+                                .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+                                .slice(0, 10)
+                                .map((h, idx) => (
+                                  <div key={idx} className={cn(
+                                    "flex items-start gap-3 rounded-lg p-2.5",
+                                    h.tipo === 'recebida' ? "bg-primary/5" : "bg-card"
+                                  )}>
+                                    <span className="text-[10px] mt-0.5">{h.robo === 'sol' ? '🤖' : '❄️'}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                                          {h.tipo === 'recebida' ? 'Resposta do lead' : `Robô ${h.robo === 'sol' ? 'Sol' : 'FUP Frio'}`}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground/60">
+                                          {h.data ? format(new Date(h.data), "dd/MM/yy HH:mm", { locale: ptBR }) : ""}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-foreground leading-relaxed truncate">{h.mensagem || "—"}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              {makeData.flatMap(r => r.historico).length === 0 && (
+                                <p className="text-xs text-muted-foreground">Última mensagem: {makeData[0]?.ultima_mensagem || "—"}</p>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
