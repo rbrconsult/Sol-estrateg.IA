@@ -175,6 +175,20 @@ export default function Leads() {
     return data;
   }, [proposals, periodo, dateFrom, dateTo, etapaFilter, temperaturaFilter, responsavelFilter]);
 
+  /* ── filtered Make records (synced with filtered proposals) ── */
+  const filteredPhones = useMemo(() => {
+    const phones = new Set<string>();
+    for (const p of filtered) {
+      if (p.clienteTelefone) phones.add(normalizePhone(p.clienteTelefone));
+    }
+    return phones;
+  }, [filtered]);
+
+  const filteredMakeRecords = useMemo(() => {
+    if (!makeRecords?.length) return [];
+    return makeRecords.filter(r => r.telefone && filteredPhones.has(r.telefone));
+  }, [makeRecords, filteredPhones]);
+
   /* ── computed data ── */
   const kpis = useMemo(() => getLeadsKPIs(filtered), [filtered]);
   const etapaData = useMemo(() => getLeadsByEtapa(filtered), [filtered]);
@@ -259,9 +273,9 @@ export default function Leads() {
 
   // Make-enriched alerts
   const makeAlerts = useMemo(() => {
-    if (!makeRecords?.length) return [];
+    if (!filteredMakeRecords.length) return [];
     const result: { type: "alert" | "info" | "success"; title: string; desc: string }[] = [];
-    const ignored3days = makeRecords.filter(r => {
+    const ignored3days = filteredMakeRecords.filter(r => {
       if (r.status_resposta !== 'ignorou') return false;
       if (!r.data_envio) return false;
       const sent = new Date(r.data_envio);
@@ -271,10 +285,10 @@ export default function Leads() {
     if (ignored3days.length > 0) {
       result.push({ type: "alert", title: `${ignored3days.length} leads ignoraram FUP há +3 dias`, desc: "Leads que não responderam ao follow-up frio há mais de 3 dias." });
     }
-    const responderam = makeRecords.filter(r => r.status_resposta === 'respondeu');
-    if (makeRecords.length > 0) {
-      const taxaResp = ((responderam.length / makeRecords.length) * 100).toFixed(0);
-      result.push({ type: "info", title: `Taxa de resposta: ${taxaResp}%`, desc: `${responderam.length} de ${makeRecords.length} leads responderam aos robôs.` });
+    const responderam = filteredMakeRecords.filter(r => r.status_resposta === 'respondeu');
+    if (filteredMakeRecords.length > 0) {
+      const taxaResp = ((responderam.length / filteredMakeRecords.length) * 100).toFixed(0);
+      result.push({ type: "info", title: `Taxa de resposta: ${taxaResp}%`, desc: `${responderam.length} de ${filteredMakeRecords.length} leads responderam aos robôs.` });
     }
     const hotNoFup = filtered.filter(p => {
       if (p.temperatura !== 'QUENTE') return false;
@@ -285,24 +299,24 @@ export default function Leads() {
       result.push({ type: "alert", title: `${hotNoFup.length} leads quentes sem follow-up`, desc: "Leads quentes que ainda não foram contatados pelos robôs." });
     }
     return result;
-  }, [makeRecords, filtered]);
+  }, [filteredMakeRecords, filtered]);
 
   // Robot activity stats
   const robotStats = useMemo(() => {
-    if (!makeRecords?.length) return null;
+    if (!filteredMakeRecords.length) return null;
     const today = new Date().toISOString().split('T')[0];
-    const todayRecords = makeRecords.filter(r => r.data_envio?.startsWith(today));
+    const todayRecords = filteredMakeRecords.filter(r => r.data_envio?.startsWith(today));
     const solToday = todayRecords.filter(r => r.robo === 'sol');
     const fupToday = todayRecords.filter(r => r.robo === 'fup_frio');
-    const responderam = makeRecords.filter(r => r.status_resposta === 'respondeu');
-    const taxaResposta = makeRecords.length > 0 ? (responderam.length / makeRecords.length) * 100 : 0;
-    const temposResposta = makeRecords
+    const responderam = filteredMakeRecords.filter(r => r.status_resposta === 'respondeu');
+    const taxaResposta = filteredMakeRecords.length > 0 ? (responderam.length / filteredMakeRecords.length) * 100 : 0;
+    const temposResposta = filteredMakeRecords
       .filter(r => r.data_envio && r.data_resposta)
       .map(r => (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / (1000 * 60 * 60));
     const tempoMedio = temposResposta.length > 0
       ? temposResposta.reduce((a, b) => a + b, 0) / temposResposta.length
       : 0;
-    const semResposta3d = makeRecords.filter(r => {
+    const semResposta3d = filteredMakeRecords.filter(r => {
       if (r.status_resposta === 'respondeu') return false;
       if (!r.data_envio) return false;
       return (Date.now() - new Date(r.data_envio).getTime()) / (1000 * 60 * 60 * 24) > 3;
@@ -314,9 +328,9 @@ export default function Leads() {
       taxaResposta,
       tempoMedioHoras: tempoMedio,
       semResposta3d: semResposta3d.length,
-      totalRecords: makeRecords.length,
+      totalRecords: filteredMakeRecords.length,
     };
-  }, [makeRecords]);
+  }, [filteredMakeRecords]);
 
   /* ── top leads for table ── */
   const tableLeads = useMemo(() => {
@@ -567,10 +581,10 @@ export default function Leads() {
         </section>
 
         {/* ══════ SLA DE ATENDIMENTO ══════ */}
-        <SLAMetrics proposals={filtered} makeRecords={makeRecords || []} />
+        <SLAMetrics proposals={filtered} makeRecords={filteredMakeRecords} />
 
         {/* ══════ ROBÔS & FOLLOW-UP ══════ */}
-        <RobotInsights proposals={filtered} makeRecords={makeRecords || []} getMakeData={getMakeData} />
+        <RobotInsights proposals={filtered} makeRecords={filteredMakeRecords} getMakeData={getMakeData} />
 
         {/* ══════ ROI Summary ══════ */}
         <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
