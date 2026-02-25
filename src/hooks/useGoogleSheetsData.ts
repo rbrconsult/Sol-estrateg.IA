@@ -19,6 +19,15 @@ export interface Proposal {
   sla_proposta: string;
   ultima_atualizacao: string;
   dados_projeto: string;
+  sol_qualificado: string;
+  sol_score: string;
+  temperatura: string;
+  data_qualificacao_sol: string;
+  nota_completa: string;
+  tempo_na_etapa: string;
+  sol_sdr: string;
+  tempo_sol_sdr: string;
+  etiquetas: string;
 }
 
 interface SheetsResponse {

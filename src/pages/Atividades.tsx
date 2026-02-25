@@ -151,8 +151,8 @@ function LeadList({ leads, type, onClose }: LeadListProps) {
                       {lead.tempoNaEtapa > 0 && (
                         <p className="text-xs text-muted-foreground">{lead.tempoNaEtapa} dias na etapa</p>
                       )}
-                      {lead.proximaAtividade && (
-                        <p className="text-xs text-muted-foreground">{lead.proximaAtividade}</p>
+                      {lead.etapa && (
+                        <p className="text-xs text-muted-foreground">{lead.etapa}</p>
                       )}
                     </div>
                   </div>

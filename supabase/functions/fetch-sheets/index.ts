@@ -24,15 +24,15 @@ interface SheetRow {
   sla_proposta: string;
   ultima_atualizacao: string;
   dados_projeto: string;
-  origem_lead: string;
-  data_primeiro_contato: string;
-  data_ultimo_contato: string;
-  numero_followups: string;
-  proxima_atividade: string;
-  probabilidade: string;
-  motivo_perda: string;
+  sol_qualificado: string;
+  sol_score: string;
+  temperatura: string;
+  data_qualificacao_sol: string;
+  nota_completa: string;
   tempo_na_etapa: string;
-  desconto: string;
+  sol_sdr: string;
+  tempo_sol_sdr: string;
+  etiquetas: string;
 }
 
 function normalizePrivateKey(key: string): string {
@@ -127,15 +127,15 @@ function parseRows(rows: string[][]): SheetRow[] {
       sla_proposta: row[13] || '',
       ultima_atualizacao: row[14] || '',
       dados_projeto: row[15] || '',
-      origem_lead: row[16] || '',
-      data_primeiro_contato: row[17] || '',
-      data_ultimo_contato: row[18] || '',
-      numero_followups: row[19] || '0',
-      proxima_atividade: row[20] || '',
-      probabilidade: row[21] || '50',
-      motivo_perda: row[22] || '',
-      tempo_na_etapa: row[23] || '0',
-      desconto: row[24] || '0',
+      sol_qualificado: row[16] || '',
+      sol_score: row[17] || '',
+      temperatura: row[18] || '',
+      data_qualificacao_sol: row[19] || '',
+      nota_completa: row[20] || '',
+      tempo_na_etapa: row[21] || '0',
+      sol_sdr: row[22] || '',
+      tempo_sol_sdr: row[23] || '0',
+      etiquetas: row[24] || '',
     };
   }).filter((p: SheetRow) => p.projeto_id);
 }
