@@ -1,4 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   kpis, roiData, funnelData, weeklyLeads, insights,
   leadsTable, origemLeads, solPerformance, atividadeRecente,
@@ -62,6 +70,27 @@ export default function Conferencia() {
     return () => clearInterval(id);
   }, []);
 
+  /* filters */
+  const [periodo, setPeriodo] = useState("30d");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [etapa, setEtapa] = useState("todas");
+  const [temperatura, setTemperatura] = useState("todas");
+  const [responsavel, setResponsavel] = useState("todos");
+
+  const responsaveis = [...new Set(leadsTable.map((l) => l.responsavel))];
+  const etapas = [...new Set(funnelData.map((f) => f.etapa))];
+
+  const hasFilters = periodo !== "30d" || etapa !== "todas" || temperatura !== "todas" || responsavel !== "todos" || dateFrom || dateTo;
+  const clearFilters = () => {
+    setPeriodo("30d");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setEtapa("todas");
+    setTemperatura("todas");
+    setResponsavel("todos");
+  };
+
   const [funnelVisible, setFunnelVisible] = useState(false);
   const funnelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -97,8 +126,94 @@ export default function Conferencia() {
           </div>
         </header>
 
+        {/* ══════ FILTROS ══════ */}
+        <section className="mt-4 flex flex-wrap items-center gap-2">
+          <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
+            <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">7 dias</SelectItem>
+              <SelectItem value="30d">30 dias</SelectItem>
+              <SelectItem value="90d">90 dias</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {periodo === "custom" && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={ptBR} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, "dd/MM/yy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={ptBR} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
+
+          <div className="h-4 w-px bg-border/50 mx-1" />
+
+          <Select value={etapa} onValueChange={setEtapa}>
+            <SelectTrigger className="w-[150px] h-8 text-xs">
+              <SelectValue placeholder="Etapa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as etapas</SelectItem>
+              {etapas.map((e) => (
+                <SelectItem key={e} value={e}>{e}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={temperatura} onValueChange={setTemperatura}>
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectValue placeholder="Temperatura" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas</SelectItem>
+              <SelectItem value="QUENTE">Quente</SelectItem>
+              <SelectItem value="MORNO">Morno</SelectItem>
+              <SelectItem value="FRIO">Frio</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={responsavel} onValueChange={setResponsavel}>
+            <SelectTrigger className="w-[160px] h-8 text-xs">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {responsaveis.map((r) => (
+                <SelectItem key={r} value={r}>{r}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {hasFilters && (
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1" onClick={clearFilters}>
+              <X className="h-3 w-3" /> Limpar
+            </Button>
+          )}
+        </section>
+
         {/* ══════ SEÇÃO 1 — KPIs ══════ */}
-        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
+        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4">
           {kpis.map((k, i) => {
             const { value: animVal, ref } = useAnimatedNumber(k.value, 1400, k.isDecimal);
             return (
