@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import type { Proposal } from "@/data/dataAdapter";
 import { SLAMetrics } from "@/components/leads/SLAMetrics";
+import { RobotInsights } from "@/components/leads/RobotInsights";
 import { Input } from "@/components/ui/input";
 
 /* ───────── animated counter ───────── */
@@ -567,6 +568,9 @@ export default function Leads() {
 
         {/* ══════ SLA DE ATENDIMENTO ══════ */}
         <SLAMetrics proposals={filtered} makeRecords={makeRecords || []} />
+
+        {/* ══════ ROBÔS & FOLLOW-UP ══════ */}
+        <RobotInsights proposals={filtered} makeRecords={makeRecords || []} getMakeData={getMakeData} />
 
         {/* ══════ ROI Summary ══════ */}
         <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
