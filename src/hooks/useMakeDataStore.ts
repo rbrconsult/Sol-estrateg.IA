@@ -46,14 +46,23 @@ function parseRecords(raw: any[]): MakeRecord[] {
     const hasFollowup = !!d.followup_count || !!d.ultima_mensagem;
     const robo = d.robo || d.bot || d.tipo_robo || (hasFollowup ? 'fup_frio' : 'sol');
 
-    // Determine status from available data
+    // Determine status from available data with heuristics
     let statusResposta = String(d.status_resposta || d.status || d.response_status || '').toLowerCase();
-    if (!statusResposta || statusResposta === 'undefined') {
-      if (d.followup_count && d.followup_count > 0) {
-        statusResposta = 'aguardando';
-      } else {
-        statusResposta = 'aguardando';
-      }
+
+    // Heuristic: detect "respondeu" from multiple signals
+    const hasDataResposta = !!(d.data_resposta || d.response_date) && String(d.data_resposta || d.response_date || '').trim() !== '';
+    const hasRepliedFlag = !!(d.respondeu || d.replied || d.response);
+    const historico = d.historico || d.history;
+    const hasReceivedMessage = Array.isArray(historico) && historico.some((h: any) => {
+      const tipo = String(h.tipo || h.type || '').toLowerCase();
+      return tipo === 'recebida' || tipo === 'received' || tipo === 'inbound';
+    });
+    const statusContainsReply = statusResposta.includes('respond') || statusResposta.includes('replied') || statusResposta === 'respondeu';
+
+    if (statusContainsReply || hasDataResposta || hasRepliedFlag || hasReceivedMessage) {
+      statusResposta = 'respondeu';
+    } else if (!statusResposta || statusResposta === 'undefined') {
+      statusResposta = 'aguardando';
     }
 
     return {
