@@ -137,7 +137,7 @@ function parseRows(rows: string[][]): SheetRow[] {
       tempo_sol_sdr: row[23] || '0',
       etiquetas: row[24] || '',
     };
-  }).filter((p: SheetRow) => p.projeto_id);
+  }).filter((p: SheetRow) => p.projeto_id || p.nome_cliente);
 }
 
 serve(async (req) => {

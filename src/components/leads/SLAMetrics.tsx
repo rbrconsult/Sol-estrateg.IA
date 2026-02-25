@@ -32,11 +32,16 @@ interface Props {
 export function SLAMetrics({ proposals, makeRecords }: Props) {
   const abertos = proposals.filter(p => p.status === "Aberto");
 
-  // 1. SLA Primeiro Atendimento (criação → qualificação)
-  const comQualificacao = abertos.filter(p => p.dataCriacaoProjeto && p.dataQualificacaoSol);
+  // 1. SLA Primeiro Atendimento (criação → qualificação) with fallbacks
+  const comQualificacao = abertos.filter(p => {
+    const criacao = p.dataCriacaoProjeto || p.dataCriacaoProposta;
+    const qualif = p.dataQualificacaoSol || (p.solQualificado ? p.ultimaAtualizacao : null);
+    return criacao && qualif;
+  });
   const temposAtendimento = comQualificacao.map(p => {
-    const criacao = new Date(p.dataCriacaoProjeto);
-    const qualif = new Date(p.dataQualificacaoSol);
+    const criacao = new Date(p.dataCriacaoProjeto || p.dataCriacaoProposta);
+    const qualif = new Date(p.dataQualificacaoSol || p.ultimaAtualizacao);
+    if (isNaN(criacao.getTime()) || isNaN(qualif.getTime())) return -1;
     return Math.max(0, (qualif.getTime() - criacao.getTime()) / (1000 * 60 * 60 * 24));
   }).filter(d => d >= 0 && d < 365);
 
@@ -58,13 +63,26 @@ export function SLAMetrics({ proposals, makeRecords }: Props) {
   const totalForaSLA = etapaSLA.reduce((a, e) => a + e.foraDoSLA, 0);
   const totalAbertos = etapaSLA.reduce((a, e) => a + e.quantidade, 0);
 
-  // 3. SLA dos Robôs
+  // 3. SLA dos Robôs (with fallback: use ultima_mensagem or time since data_envio for aguardando)
   const comResposta = makeRecords.filter(r => r.data_envio && r.data_resposta);
-  const temposRobo = comResposta.map(r => {
-    return Math.max(0, (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / (1000 * 60 * 60));
+  const temposRoboExatos = comResposta.map(r => {
+    const envio = new Date(r.data_envio);
+    const resp = new Date(r.data_resposta!);
+    if (isNaN(envio.getTime()) || isNaN(resp.getTime())) return -1;
+    return Math.max(0, (resp.getTime() - envio.getTime()) / (1000 * 60 * 60));
   }).filter(h => h >= 0 && h < 720);
-  const mediaRoboHoras = temposRobo.length > 0
-    ? temposRobo.reduce((a, b) => a + b, 0) / temposRobo.length
+
+  // Fallback: for "aguardando" records, use time since data_envio as proxy
+  const aguardando = makeRecords.filter(r => r.data_envio && !r.data_resposta && r.status_resposta === "aguardando");
+  const temposAguardando = aguardando.map(r => {
+    const envio = new Date(r.data_envio);
+    if (isNaN(envio.getTime())) return -1;
+    return Math.max(0, (Date.now() - envio.getTime()) / (1000 * 60 * 60));
+  }).filter(h => h >= 0 && h < 720);
+
+  const allTemposRobo = [...temposRoboExatos, ...temposAguardando];
+  const mediaRoboHoras = allTemposRobo.length > 0
+    ? allTemposRobo.reduce((a, b) => a + b, 0) / allTemposRobo.length
     : 0;
   const responderam = makeRecords.filter(r => r.status_resposta === "respondeu").length;
   const taxaResposta = makeRecords.length > 0 ? (responderam / makeRecords.length) * 100 : 0;
