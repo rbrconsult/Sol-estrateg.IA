@@ -1,89 +1,47 @@
 
 
-# Plano: Corrigir Metricas Zeradas e Destacar Pontos Positivos
+# Correcao: KPIs de Qualificacao na Pagina Leads
 
-## Problema Raiz
+## Problema
 
-O componente `RobotInsights` depende de `status_resposta === "respondeu"` para calcular taxas de resposta, mas o parser do Make (`useMakeDataStore.ts`, linhas 50-56) **sempre** atribui `'aguardando'` quando o campo vem vazio. Como o Make.com provavelmente nao envia esse campo preenchido, **todas as taxas ficam 0%**.
+A funcao `getLeadsKPIs` em `src/data/dataAdapter.ts` conta **todos** os leads (Aberto + Ganho + Perdido) para calcular "Qualificados Sol" e "Aguardando Qualificacao". Isso distorce os numeros:
 
-Alem disso:
-- O funil mostra "Qualificados = 0" porque exige match de telefone com `phonesResponderam` (vazio)
-- O funil "Enviados" usa cor cinza (`bg-muted-foreground/60`) em vez de cor positiva
-- Os 12 leads qualificados do Google Sheets nao aparecem em nenhum destaque
-- O "76 leads contactados sem resposta" e apresentado de forma negativa
+- **118 qualificados**: inclui leads ja ganhos e perdidos que foram qualificados pela Sol
+- **114 aguardando**: inclui leads ganhos/perdidos que nunca foram qualificados, mas que ja estao encerrados e nao precisam mais de qualificacao
 
-## Correcoes Propostas
+Um lead com status "Ganho" ou "Perdido" nao deveria aparecer como "aguardando qualificacao".
 
-### 1. Melhorar deteccao de "respondeu" no parser (useMakeDataStore.ts)
+## Solucao
 
-Adicionar heuristicas para detectar resposta:
-- Se `data_resposta` existe e nao e vazio -> `respondeu`
-- Se existir campo `respondeu`, `replied`, `response` nos dados -> `respondeu`
-- Se o historico contem mensagens do tipo `recebida` -> `respondeu`
+Ajustar `getLeadsKPIs` para separar corretamente:
 
-```text
-Antes:
-  status_resposta = 'aguardando' (sempre)
+- **Qualificados Sol**: manter contagem de todos que foram qualificados (independente do status - e um historico valido)
+- **Aguardando Qualificacao**: contar apenas leads **Abertos** que ainda nao foram qualificados
 
-Depois:
-  Se data_resposta preenchido -> 'respondeu'
-  Se historico tem mensagem 'recebida' -> 'respondeu'
-  Se status contém 'respond' ou 'replied' -> 'respondeu'
-  Senão -> 'aguardando'
-```
+### Arquivo: `src/data/dataAdapter.ts`
 
-### 2. Funil usa dados do Google Sheets para "Qualificados" (RobotInsights.tsx)
-
-Em vez de exigir match com `phonesResponderam`, contar qualificados direto das proposals:
-```text
-Antes:  qualificadosComResp = proposals com solQualificado E telefone em phonesResponderam
-Depois: qualificados = proposals.filter(p => p.solQualificado).length  (= 12)
-```
-
-### 3. Corrigir cores do funil (RobotInsights.tsx)
+Alterar a funcao `getLeadsKPIs` (linha 692):
 
 ```text
 Antes:
-  Enviados   -> bg-muted-foreground/60 (cinza)
-  Responderam -> bg-primary/60
-  Qualificados -> bg-primary/80
-  Fechados   -> bg-primary
+  const naoQualificados = total - qualificados;
 
 Depois:
-  Enviados   -> bg-primary/40 (azul claro)
-  Responderam -> bg-primary/60
-  Qualificados -> bg-primary/80
-  Fechados   -> bg-primary
+  const abertos = proposals.filter(p => p.status === 'Aberto');
+  const naoQualificados = abertos.filter(p => !p.solQualificado).length;
 ```
 
-### 4. Adicionar secao "Destaques Positivos" no topo do RobotInsights
-
-Nova row antes do comparativo, mostrando conquistas:
-- **Leads Qualificados**: 12 (da planilha, `solQualificado`)
-- **Mensagens Enviadas**: 48 (total do Make)
-- **Leads Contactados**: 76 (phones unicos)
-- **Leads Quentes**: contagem de temperatura QUENTE
-
-Usar cores verdes/primarias e icones positivos (CheckCircle, TrendingUp).
-
-### 5. Reframe metricas negativas
-
-- "76 leads contactados, FUP sem resposta" -> mudar para "76 leads em acompanhamento ativo"
-- "Excesso (+5 FUPs)" com valor 0 -> mostrar como "Nenhum excesso" com cor verde
-- Esconder alertas quando count = 0
-
-## Arquivos Modificados
-
-| Arquivo | Mudanca |
-|---|---|
-| `src/hooks/useMakeDataStore.ts` | Heuristicas para detectar `respondeu` |
-| `src/components/leads/RobotInsights.tsx` | Destaques positivos, funil com dados reais, cores corrigidas, reframe negativo |
+A taxa de qualificacao tambem sera ajustada para considerar apenas leads abertos como base, dando uma visao mais realista do trabalho pendente.
 
 ## Resultado Esperado
 
-- Taxa de resposta reflete dados reais (nao mais 0%)
-- Funil mostra 12 qualificados em azul forte
-- "Enviados = 48" em cor azul (nao cinza)
-- Nova secao de destaques com os pontos positivos no topo
-- Metricas negativas reescritas de forma construtiva
+- "Qualificados Sol" continua mostrando todos os leads qualificados pela Sol (historico completo)
+- "Aguardando Qualif." mostra apenas leads **abertos** que ainda precisam ser qualificados
+- Os numeros refletem a realidade operacional: so aguarda quem esta em aberto
+
+## Arquivo modificado
+
+| Arquivo | Mudanca |
+|---|---|
+| `src/data/dataAdapter.ts` | Filtrar apenas leads abertos para "Aguardando Qualificacao" |
 
