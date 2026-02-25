@@ -485,80 +485,82 @@ export default function Leads() {
         </section>
 
         {/* ══════ Grid: Funil + Alerts ══════ */}
-        <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 space-y-4">
-            {/* Funil por Etapa */}
-            <div ref={funnelRef} className="rounded-lg border border-border/50 bg-card p-5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Funil por Etapa</h3>
-              <div className="space-y-2.5">
-                {etapaData.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
-                    <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
-                      <div
-                        className="h-full rounded bg-primary/70 flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
-                        style={{
-                          width: funnelVisible ? `${(f.quantidade / maxFunnel) * 100}%` : "0%",
-                          transitionDelay: `${i * 80}ms`,
-                        }}
-                      >
-                        <span className="text-[10px] font-semibold text-primary-foreground">{f.quantidade}</span>
-                      </div>
+        {/* ══════ Alertas & Insights (full width) ══════ */}
+        <section className="mt-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alertas & Insights</h3>
+          {alerts.length === 0 ? (
+            <div className="rounded-lg border border-border/50 bg-card p-4">
+              <p className="text-xs text-muted-foreground">Nenhum alerta no momento.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {alerts.map((ins, i) => {
+                const borderCls = ins.type === "alert" ? "border-l-destructive/60" : ins.type === "info" ? "border-l-warning/60" : "border-l-emerald-500/60";
+                const labelCls = ins.type === "alert" ? "text-destructive" : ins.type === "info" ? "text-warning" : "text-emerald-500";
+                return (
+                  <div key={i} className={`rounded-lg border border-border/50 bg-card p-4 border-l-2 ${borderCls} transition-colors hover:border-border`}>
+                    <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${labelCls}`}>
+                      {ins.type === "alert" ? "Atenção" : ins.type === "info" ? "Info" : "Positivo"}
+                    </p>
+                    <p className="text-sm font-medium text-foreground mb-1">{ins.title}</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ins.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ══════ Grid: Funil + Score ══════ */}
+        <section className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Funil por Etapa */}
+          <div ref={funnelRef} className="rounded-lg border border-border/50 bg-card p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Funil por Etapa</h3>
+            <div className="space-y-2.5">
+              {etapaData.map((f, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
+                  <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
+                    <div
+                      className="h-full rounded bg-primary/70 flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
+                      style={{
+                        width: funnelVisible ? `${(f.quantidade / maxFunnel) * 100}%` : "0%",
+                        transitionDelay: `${i * 80}ms`,
+                      }}
+                    >
+                      <span className="text-[10px] font-semibold text-primary-foreground">{f.quantidade}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Score por Origem chart */}
-            <div className="rounded-lg border border-border/50 bg-card p-5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Score Médio por Origem</h3>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={scorePorOrigem.slice(0, 8)} barCategoryGap="25%">
-                  <XAxis dataKey="origem" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-15} />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 6,
-                      color: "hsl(var(--foreground))",
-                      fontSize: 12,
-                    }}
-                    cursor={{ fill: "hsl(var(--secondary) / 0.3)" }}
-                    formatter={(v: number) => v.toFixed(1)}
-                  />
-                  <Bar dataKey="scoreMedio" name="Score" radius={[4, 4, 0, 0]}>
-                    {scorePorOrigem.slice(0, 8).map((_, i) => (
-                      <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.5)"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Alerts & Insights */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alertas & Insights</h3>
-            {alerts.length === 0 && (
-              <div className="rounded-lg border border-border/50 bg-card p-4">
-                <p className="text-xs text-muted-foreground">Nenhum alerta no momento.</p>
-              </div>
-            )}
-            {alerts.map((ins, i) => {
-              const borderCls = ins.type === "alert" ? "border-l-destructive/60" : ins.type === "info" ? "border-l-warning/60" : "border-l-emerald-500/60";
-              const labelCls = ins.type === "alert" ? "text-destructive" : ins.type === "info" ? "text-warning" : "text-emerald-500";
-              return (
-                <div key={i} className={`rounded-lg border border-border/50 bg-card p-4 border-l-2 ${borderCls} transition-colors hover:border-border`}>
-                  <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${labelCls}`}>
-                    {ins.type === "alert" ? "Atenção" : ins.type === "info" ? "Info" : "Positivo"}
-                  </p>
-                  <p className="text-sm font-medium text-foreground mb-1">{ins.title}</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{ins.desc}</p>
-                </div>
-              );
-            })}
+          {/* Score por Origem chart */}
+          <div className="rounded-lg border border-border/50 bg-card p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Score Médio por Origem</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={scorePorOrigem.slice(0, 8)} barCategoryGap="25%">
+                <XAxis dataKey="origem" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-15} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 6,
+                    color: "hsl(var(--foreground))",
+                    fontSize: 12,
+                  }}
+                  cursor={{ fill: "hsl(var(--secondary) / 0.3)" }}
+                  formatter={(v: number) => v.toFixed(1)}
+                />
+                <Bar dataKey="scoreMedio" name="Score" radius={[4, 4, 0, 0]}>
+                  {scorePorOrigem.slice(0, 8).map((_, i) => (
+                    <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.5)"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </section>
 
