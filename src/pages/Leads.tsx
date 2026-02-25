@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp, Timer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
 } from "recharts";
 import type { Proposal } from "@/data/dataAdapter";
+import { SLAMetrics } from "@/components/leads/SLAMetrics";
 
 /* ───────── animated counter ───────── */
 function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
@@ -114,7 +115,7 @@ export default function Leads() {
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
 
   /* ── filters ── */
-  const [periodo, setPeriodo] = useState("30d");
+  const [periodo, setPeriodo] = useState("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [etapaFilter, setEtapaFilter] = useState("todas");
@@ -124,9 +125,9 @@ export default function Leads() {
   const etapas = useMemo(() => [...new Set(proposals.map(p => p.etapa))].filter(Boolean).sort(), [proposals]);
   const responsaveis = useMemo(() => [...new Set(proposals.map(p => p.responsavel))].filter(Boolean).sort(), [proposals]);
 
-  const hasFilters = periodo !== "30d" || etapaFilter !== "todas" || temperaturaFilter !== "todas" || responsavelFilter !== "todos" || dateFrom || dateTo;
+  const hasFilters = periodo !== "all" || etapaFilter !== "todas" || temperaturaFilter !== "todas" || responsavelFilter !== "todos" || dateFrom || dateTo;
   const clearFilters = () => {
-    setPeriodo("30d");
+    setPeriodo("all");
     setDateFrom(undefined);
     setDateTo(undefined);
     setEtapaFilter("todas");
@@ -139,7 +140,7 @@ export default function Leads() {
     let data = [...proposals];
 
     // Period
-    if (periodo !== "custom") {
+    if (periodo !== "custom" && periodo !== "all") {
       const days = periodo === "7d" ? 7 : periodo === "90d" ? 90 : 30;
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
@@ -385,6 +386,7 @@ export default function Leads() {
           <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
             <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="7d">7 dias</SelectItem>
               <SelectItem value="30d">30 dias</SelectItem>
               <SelectItem value="90d">90 dias</SelectItem>
@@ -546,6 +548,9 @@ export default function Leads() {
             </div>
           </div>
         </section>
+
+        {/* ══════ SLA DE ATENDIMENTO ══════ */}
+        <SLAMetrics proposals={filtered} makeRecords={makeRecords || []} />
 
         {/* ══════ ROI Summary ══════ */}
         <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
