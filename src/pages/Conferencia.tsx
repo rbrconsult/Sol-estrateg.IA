@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   kpis, roiData, funnelData, weeklyLeads, insights,
   leadsTable, origemLeads, solPerformance, atividadeRecente,
@@ -6,11 +6,6 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
 } from "recharts";
-
-/* ───────── font import (inline style tag) ───────── */
-const FontImport = () => (
-  <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap');`}</style>
-);
 
 /* ───────── animated counter hook ───────── */
 function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
@@ -44,51 +39,29 @@ function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
   return { value, ref };
 }
 
-/* ───────── score ring ───────── */
-function ScoreRing({ score }: { score: number }) {
-  const color = score >= 70 ? "#EF476F" : score >= 60 ? "#F5A623" : score >= 50 ? "#118AB2" : "#6B7A99";
-  const pct = (score / 100) * 100;
+/* ───────── temp indicator ───────── */
+function TempDot({ temp }: { temp: string }) {
+  const cls = temp === "QUENTE"
+    ? "bg-destructive/80"
+    : temp === "FRIO"
+      ? "bg-info/80"
+      : "bg-warning/80";
   return (
-    <div className="relative h-9 w-9 flex items-center justify-center">
-      <svg className="absolute inset-0" viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-        <circle
-          cx="18" cy="18" r="15" fill="none" stroke={color} strokeWidth="3"
-          strokeDasharray={`${pct} ${100 - pct}`} strokeDashoffset="25"
-          strokeLinecap="round" className="transition-all duration-1000"
-        />
-      </svg>
-      <span className="text-xs font-bold" style={{ fontFamily: "JetBrains Mono", color }}>{score}</span>
-    </div>
-  );
-}
-
-/* ───────── temp badge ───────── */
-function TempBadge({ temp }: { temp: string }) {
-  const map: Record<string, { bg: string; text: string; dot: string }> = {
-    QUENTE: { bg: "rgba(239,71,111,0.15)", text: "#EF476F", dot: "🔴" },
-    MORNO: { bg: "rgba(245,166,35,0.15)", text: "#F5A623", dot: "🟡" },
-    FRIO: { bg: "rgba(17,138,178,0.15)", text: "#118AB2", dot: "🔵" },
-  };
-  const s = map[temp] || map.MORNO;
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-      style={{ background: s.bg, color: s.text, fontFamily: "JetBrains Mono" }}>
-      {s.dot} {temp}
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span className={`h-2 w-2 rounded-full ${cls}`} />
+      <span className="capitalize">{temp.toLowerCase()}</span>
     </span>
   );
 }
 
 /* ═══════════════════ MAIN PAGE ═══════════════════ */
 export default function Conferencia() {
-  /* clock */
   const [time, setTime] = useState(new Date());
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  /* funnel animation */
   const [funnelVisible, setFunnelVisible] = useState(false);
   const funnelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -102,52 +75,42 @@ export default function Conferencia() {
   const maxFunnel = Math.max(...funnelData.map((f) => f.valor));
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: "#080C12", color: "#F0F4FF", fontFamily: "'JetBrains Mono', monospace" }}>
-      <FontImport />
-
-      {/* ── blobs ── */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.07] animate-pulse"
-          style={{ background: "radial-gradient(circle, #F5A623, transparent 70%)", filter: "blur(120px)" }} />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.07] animate-pulse"
-          style={{ background: "radial-gradient(circle, #06D6A0, transparent 70%)", filter: "blur(120px)", animationDelay: "3s" }} />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-[1400px] mx-auto px-6 pb-16">
 
         {/* ══════ HEADER ══════ */}
-        <header className="sticky top-0 z-50 py-4 flex items-center justify-between backdrop-blur-xl"
-          style={{ background: "rgba(8,12,18,0.85)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <h1 className="text-xl md:text-2xl font-extrabold tracking-tight" style={{ fontFamily: "Syne, sans-serif" }}>
-            🌞 SOL SDR — <span style={{ color: "#F5A623" }}>Painel Estratégico</span>
-          </h1>
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full"
-              style={{ background: "rgba(6,214,160,0.15)", color: "#06D6A0" }}>
-              <span className="h-2 w-2 rounded-full bg-[#06D6A0] animate-pulse" /> AO VIVO
+        <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">
+              SOL Insights
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Painel Gerencial · Evolve Energia Solar</p>
+          </div>
+          <div className="flex items-center gap-5">
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+              Tempo real
             </span>
-            <span className="text-sm font-medium" style={{ color: "#6B7A99" }}>
+            <span className="text-xs text-muted-foreground font-mono tabular-nums">
               {time.toLocaleTimeString("pt-BR")}
             </span>
           </div>
         </header>
 
         {/* ══════ SEÇÃO 1 — KPIs ══════ */}
-        <section className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
+        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
           {kpis.map((k, i) => {
             const { value: animVal, ref } = useAnimatedNumber(k.value, 1400, k.isDecimal);
             return (
               <div key={i} ref={ref}
-                className="rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/10"
-                style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-                <div className="h-1 w-full rounded-full mb-3" style={{ background: k.color }} />
-                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7A99" }}>{k.label}</p>
-                <p className="text-3xl font-extrabold" style={{ color: k.color, fontFamily: "Syne" }}>
+                className="rounded-lg border border-border/50 bg-card p-4 transition-all duration-200 hover:border-border">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{k.label}</p>
+                <p className="text-2xl font-bold text-foreground tabular-nums">
                   {animVal}{k.suffix || ""}
                 </p>
                 {k.trend && (
-                  <span className="text-xs font-semibold mt-1 inline-block" style={{ color: "#06D6A0" }}>
-                    ↑ {k.trend}%
+                  <span className="text-[11px] font-medium text-success mt-1 inline-block">
+                    +{k.trend}%
                   </span>
                 )}
               </div>
@@ -155,53 +118,40 @@ export default function Conferencia() {
           })}
         </section>
 
-        {/* ══════ SEÇÃO 2 — ROI Destaque ══════ */}
-        <section className="mt-8 rounded-xl border relative overflow-hidden p-6 md:p-8"
-          style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.08), rgba(6,214,160,0.08))", borderColor: "rgba(255,255,255,0.06)" }}>
-          <span className="absolute -right-8 -top-8 text-[140px] font-extrabold opacity-[0.04] select-none pointer-events-none"
-            style={{ fontFamily: "Syne", color: "#F5A623" }}>ROI</span>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-            <div>
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7A99" }}>Custo por Lead Qualificado</p>
-              <p className="text-4xl font-extrabold" style={{ fontFamily: "Syne", color: "#06D6A0" }}>R$ 6</p>
-              <p className="text-sm mt-1" style={{ color: "#6B7A99" }}>vs <span style={{ color: "#EF476F" }}>R$ 420</span> SDR humano</p>
+        {/* ══════ SEÇÃO 2 — ROI Resumo ══════ */}
+        <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            { label: "Custo por Lead Qualificado", value: "R$ 6", sub: "vs R$ 420 SDR humano", highlight: true },
+            { label: "Faturamento Potencial", value: "R$ 1.8M", sub: "284 leads × ticket médio R$ 28k" },
+            { label: "Economia Mensal", value: "R$ 11.4k", sub: "Escala sem aumentar time" },
+          ].map((item, i) => (
+            <div key={i} className="rounded-lg border border-border/50 bg-card p-5">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{item.label}</p>
+              <p className="text-3xl font-bold text-foreground">{item.value}</p>
+              <p className="text-xs text-muted-foreground mt-1.5">{item.sub}</p>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7A99" }}>Faturamento Potencial</p>
-              <p className="text-4xl font-extrabold" style={{ fontFamily: "Syne", color: "#F5A623" }}>R$ 1.8M</p>
-              <p className="text-sm mt-1" style={{ color: "#6B7A99" }}>284 leads × ticket R$ 28k</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7A99" }}>Economia Mensal</p>
-              <p className="text-4xl font-extrabold" style={{ fontFamily: "Syne", color: "#06D6A0" }}>R$ 11.4k</p>
-              <p className="text-sm mt-1" style={{ color: "#6B7A99" }}>Escala sem aumentar time</p>
-            </div>
-          </div>
+          ))}
         </section>
 
-        {/* ══════ SEÇÃO 3 — Grid 2/3 (Funil + Insights) ══════ */}
-        <section className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Funil + Weekly chart */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Funil horizontal */}
-            <div ref={funnelRef} className="rounded-xl border p-6" style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-              <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>
-                Funil de Leads
-              </h3>
-              <div className="space-y-3">
+        {/* ══════ SEÇÃO 3 — Grid (Funil + Insights) ══════ */}
+        <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Funil + Barras semanais */}
+          <div className="lg:col-span-2 space-y-4">
+            <div ref={funnelRef} className="rounded-lg border border-border/50 bg-card p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Funil de Leads</h3>
+              <div className="space-y-2.5">
                 {funnelData.map((f, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className="w-40 text-xs truncate" style={{ color: "#6B7A99" }}>{f.etapa}</span>
-                    <div className="flex-1 h-7 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+                    <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
+                    <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
                       <div
-                        className="h-full rounded-full flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
+                        className="h-full rounded bg-primary/70 flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
                         style={{
                           width: funnelVisible ? `${(f.valor / maxFunnel) * 100}%` : "0%",
-                          background: f.color,
-                          transitionDelay: `${i * 100}ms`,
+                          transitionDelay: `${i * 80}ms`,
                         }}
                       >
-                        <span className="text-xs font-bold text-white drop-shadow">{f.valor}</span>
+                        <span className="text-[10px] font-semibold text-primary-foreground">{f.valor}</span>
                       </div>
                     </div>
                   </div>
@@ -209,22 +159,25 @@ export default function Conferencia() {
               </div>
             </div>
 
-            {/* Weekly chart */}
-            <div className="rounded-xl border p-6" style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-              <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>
-                Leads por Semana
-              </h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={weeklyLeads} barCategoryGap="20%">
-                  <XAxis dataKey="semana" tick={{ fill: "#6B7A99", fontSize: 12 }} axisLine={false} tickLine={false} />
+            <div className="rounded-lg border border-border/50 bg-card p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Leads por Semana</h3>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={weeklyLeads} barCategoryGap="25%">
+                  <XAxis dataKey="semana" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis hide />
                   <Tooltip
-                    contentStyle={{ background: "#0D1420", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#F0F4FF" }}
-                    cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 6,
+                      color: "hsl(var(--foreground))",
+                      fontSize: 12,
+                    }}
+                    cursor={{ fill: "hsl(var(--secondary) / 0.3)" }}
                   />
-                  <Bar dataKey="leads" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="leads" radius={[4, 4, 0, 0]}>
                     {weeklyLeads.map((_, i) => (
-                      <Cell key={i} fill={i === weeklyLeads.length - 1 ? "#06D6A0" : "rgba(245,166,35,0.5)"} />
+                      <Cell key={i} fill={i === weeklyLeads.length - 1 ? "hsl(var(--success))" : "hsl(var(--primary) / 0.5)"} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -233,62 +186,54 @@ export default function Conferencia() {
           </div>
 
           {/* Insights */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>
-              Insights
-            </h3>
-            {insights.map((ins, i) => (
-              <div key={i}
-                className="rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/10"
-                style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)", borderLeft: `3px solid ${ins.borderColor}` }}>
-                <div className="flex items-start gap-2">
-                  <span className="text-sm">{ins.icon}</span>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider mb-0.5"
-                      style={{ color: ins.borderColor }}>
-                      {ins.type === "alert" ? "ALERT" : ins.type === "info" ? "INFO" : "OK"}
-                    </p>
-                    <p className="text-sm font-semibold mb-1" style={{ color: "#F0F4FF" }}>{ins.title}</p>
-                    <p className="text-xs leading-relaxed" style={{ color: "#6B7A99" }}>{ins.description}</p>
-                  </div>
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alertas & Insights</h3>
+            {insights.map((ins, i) => {
+              const borderCls = ins.type === "alert" ? "border-l-destructive/60" : ins.type === "info" ? "border-l-warning/60" : "border-l-success/60";
+              const labelCls = ins.type === "alert" ? "text-destructive" : ins.type === "info" ? "text-warning" : "text-success";
+              return (
+                <div key={i}
+                  className={`rounded-lg border border-border/50 bg-card p-4 border-l-2 ${borderCls} transition-colors hover:border-border`}>
+                  <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${labelCls}`}>
+                    {ins.type === "alert" ? "Atenção" : ins.type === "info" ? "Info" : "Positivo"}
+                  </p>
+                  <p className="text-sm font-medium text-foreground mb-1">{ins.title}</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{ins.description}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
         {/* ══════ SEÇÃO 4 — Tabela ══════ */}
-        <section className="mt-8 rounded-xl border overflow-hidden" style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-          <div className="p-6 pb-2">
-            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>
-              Leads Qualificados
-            </h3>
+        <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/40">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leads Qualificados</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <tr className="border-b border-border/40">
                   {["Cliente", "Cidade", "Valor Conta", "Score", "Temperatura", "Etapa", "Responsável", "Data"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6B7A99" }}>{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {leadsTable.map((l, i) => (
-                  <tr key={i} className="transition-colors hover:bg-white/[0.02]"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <td className="px-4 py-3 font-medium" style={{ color: "#F0F4FF" }}>{l.nome}</td>
-                    <td className="px-4 py-3" style={{ color: "#6B7A99" }}>{l.cidade}</td>
-                    <td className="px-4 py-3" style={{ color: "#6B7A99" }}>{l.valorConta}</td>
-                    <td className="px-4 py-3"><ScoreRing score={l.score} /></td>
-                    <td className="px-4 py-3"><TempBadge temp={l.temperatura} /></td>
+                  <tr key={i} className="border-b border-border/20 transition-colors hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-medium text-foreground">{l.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{l.cidade}</td>
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{l.valorConta}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "#F0F4FF" }}>
-                        {l.etapa}
-                      </span>
+                      <span className="text-xs font-semibold text-foreground tabular-nums">{l.score}</span>
                     </td>
-                    <td className="px-4 py-3" style={{ color: "#6B7A99" }}>{l.responsavel}</td>
-                    <td className="px-4 py-3" style={{ color: "#6B7A99" }}>{l.data}</td>
+                    <td className="px-4 py-3"><TempDot temp={l.temperatura} /></td>
+                    <td className="px-4 py-3">
+                      <span className="text-[11px] text-muted-foreground">{l.etapa}</span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{l.responsavel}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs tabular-nums">{l.data}</td>
                   </tr>
                 ))}
               </tbody>
@@ -297,66 +242,70 @@ export default function Conferencia() {
         </section>
 
         {/* ══════ SEÇÃO 5 — Bottom Grid ══════ */}
-        <section className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Origem */}
-          <div className="rounded-xl border p-6" style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>Origem dos Leads</h3>
+          <div className="rounded-lg border border-border/50 bg-card p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Origem dos Leads</h3>
             <div className="space-y-3">
               {origemLeads.map((o, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="w-24 text-xs" style={{ color: "#6B7A99" }}>{o.origem}</span>
-                  <div className="flex-1 h-5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${o.pct * 3}%`, background: o.color }} />
+                  <span className="w-24 text-[11px] text-muted-foreground">{o.origem}</span>
+                  <div className="flex-1 h-4 rounded bg-secondary/50 overflow-hidden">
+                    <div className="h-full rounded bg-primary/60" style={{ width: `${o.pct * 3}%` }} />
                   </div>
-                  <span className="text-xs font-bold w-8 text-right" style={{ color: "#F0F4FF" }}>{o.valor}</span>
-                  <span className="text-xs w-10 text-right" style={{ color: "#6B7A99" }}>{o.pct}%</span>
+                  <span className="text-xs font-semibold text-foreground w-8 text-right tabular-nums">{o.valor}</span>
+                  <span className="text-[11px] text-muted-foreground w-10 text-right tabular-nums">{o.pct}%</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Performance Sol */}
-          <div className="rounded-xl border p-6" style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>Performance Sol</h3>
+          <div className="rounded-lg border border-border/50 bg-card p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Performance Sol</h3>
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
-                { label: "Score Médio", val: solPerformance.scoreMedio, color: "#F5A623" },
-                { label: "Taxa Qualif.", val: `${solPerformance.taxaQualificacao}%`, color: "#06D6A0" },
-                { label: "Resp. Médio", val: `${solPerformance.respostMedia}s`, color: "#118AB2" },
-                { label: "Agendados", val: solPerformance.agendados, color: "#F5A623" },
+                { label: "Score Médio", val: solPerformance.scoreMedio },
+                { label: "Taxa Qualif.", val: `${solPerformance.taxaQualificacao}%` },
+                { label: "Resp. Médio", val: `${solPerformance.respostMedia}s` },
+                { label: "Agendados", val: solPerformance.agendados },
               ].map((m, i) => (
-                <div key={i} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                  <p className="text-xs mb-0.5" style={{ color: "#6B7A99" }}>{m.label}</p>
-                  <p className="text-xl font-extrabold" style={{ fontFamily: "Syne", color: m.color }}>{m.val}</p>
+                <div key={i} className="rounded-md bg-secondary/40 p-3">
+                  <p className="text-[10px] text-muted-foreground mb-0.5">{m.label}</p>
+                  <p className="text-lg font-bold text-foreground tabular-nums">{m.val}</p>
                 </div>
               ))}
             </div>
             <div className="space-y-2">
-              {solPerformance.temperaturas.map((t, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-16 text-xs" style={{ color: "#6B7A99" }}>{t.label}</span>
-                  <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${t.pct}%`, background: t.color }} />
+              {solPerformance.temperaturas.map((t, i) => {
+                const cls = t.label === "QUENTE" ? "bg-destructive/60" : t.label === "FRIO" ? "bg-info/60" : "bg-warning/60";
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-16 text-[11px] text-muted-foreground capitalize">{t.label.toLowerCase()}</span>
+                    <div className="flex-1 h-3 rounded bg-secondary/50 overflow-hidden">
+                      <div className={`h-full rounded ${cls}`} style={{ width: `${t.pct}%` }} />
+                    </div>
+                    <span className="text-[11px] font-medium text-muted-foreground w-12 text-right tabular-nums">{t.pct}%</span>
                   </div>
-                  <span className="text-xs font-bold w-12 text-right" style={{ color: t.color }}>{t.pct}%</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Atividade Recente */}
-          <div className="rounded-xl border p-6" style={{ background: "#0D1420", borderColor: "rgba(255,255,255,0.06)" }}>
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ fontFamily: "Syne", color: "#F0F4FF" }}>Atividade Recente</h3>
+          <div className="rounded-lg border border-border/50 bg-card p-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Atividade Recente</h3>
             <div className="space-y-4">
               {atividadeRecente.map((a, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <span className="text-lg">{a.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "#F0F4FF" }}>{a.nome}</p>
-                    <p className="text-xs" style={{ color: "#6B7A99" }}>{a.detalhe}</p>
+                  <div className="h-7 w-7 rounded-md bg-secondary/60 flex items-center justify-center text-sm shrink-0">
+                    {a.icon}
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                    style={{ background: `${a.badgeColor}20`, color: a.badgeColor }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{a.nome}</p>
+                    <p className="text-[11px] text-muted-foreground">{a.detalhe}</p>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded whitespace-nowrap">
                     {a.badge}
                   </span>
                 </div>
@@ -366,9 +315,9 @@ export default function Conferencia() {
         </section>
 
         {/* ══════ RODAPÉ ══════ */}
-        <footer className="mt-16 mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] font-bold" style={{ color: "rgba(107,122,153,0.4)" }}>
-            RBR CONSULT × EVOLVE ENERGIA SOLAR
+        <footer className="mt-12 mb-6 text-center">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40 font-medium">
+            RBR Consult × Evolve Energia Solar
           </p>
         </footer>
       </div>
