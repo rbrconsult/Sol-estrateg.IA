@@ -17,16 +17,20 @@ export interface Proposal {
   dataCriacaoProposta: string;
   slaProposta: number;
   ultimaAtualizacao: string;
-  // Novos campos (aguardando dados no Google Sheets)
+  // Campos da Sol (colunas Q-Y)
+  solQualificado: boolean;
+  solScore: number;
+  temperatura: 'QUENTE' | 'MORNO' | 'FRIO' | '';
+  dataQualificacaoSol: string;
+  notaCompleta: string;
+  tempoNaEtapa: number;
+  solSdr: boolean;
+  tempoSolSdr: number;
+  etiquetas: string;
+  // Campos derivados para compatibilidade
   origemLead: string;
-  dataPrimeiroContato: string;
-  dataUltimoContato: string;
-  numeroFollowUps: number;
-  proximaAtividade: string;
   probabilidade: number;
   motivoPerda: string;
-  tempoNaEtapa: number;
-  desconto: number;
 }
 
 // Etapas reais da planilha SOL Insights
@@ -103,6 +107,22 @@ export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
     const etapa = item.etapa?.trim() || 'TRAFEGO PAGO';
     const ultimaAtualizacao = parseDate(item.ultima_atualizacao) || new Date().toISOString().split('T')[0];
     
+    const solQualificado = (item.sol_qualificado || '').toLowerCase().trim() === 'sim';
+    const solScore = parseFloat(item.sol_score) || 0;
+    const tempRaw = (item.temperatura || '').toUpperCase().trim();
+    const temperatura = (['QUENTE', 'MORNO', 'FRIO'].includes(tempRaw) ? tempRaw : '') as Proposal['temperatura'];
+    const solSdr = (item.sol_sdr || '').toLowerCase().trim() === 'sim';
+    const tempoNaEtapa = parseInt(item.tempo_na_etapa) || calcularTempoNaEtapa(ultimaAtualizacao);
+    const etiquetas = (item.etiquetas || '').trim();
+    
+    // Probabilidade derivada de score + temperatura
+    let probabilidade = status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : 50;
+    if (status === 'Aberto') {
+      if (solScore > 0) probabilidade = Math.min(100, solScore * 10);
+      if (temperatura === 'QUENTE') probabilidade = Math.max(probabilidade, 70);
+      else if (temperatura === 'FRIO') probabilidade = Math.min(probabilidade, 30);
+    }
+    
     return {
       id: item.projeto_id || `PROP-${String(index).padStart(4, '0')}`,
       etapa,
@@ -120,16 +140,18 @@ export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
       dataCriacaoProposta: parseDate(item.data_criacao_proposta) || '',
       slaProposta: parseInt(item.sla_proposta) || 48,
       ultimaAtualizacao,
-      // Novos campos - usando dados da planilha se existirem, senão valores padrão
-      origemLead: (item as any).origem_lead || '',
-      dataPrimeiroContato: parseDate((item as any).data_primeiro_contato) || '',
-      dataUltimoContato: parseDate((item as any).data_ultimo_contato) || ultimaAtualizacao,
-      numeroFollowUps: parseInt((item as any).numero_followups) || 0,
-      proximaAtividade: (item as any).proxima_atividade || '',
-      probabilidade: parseInt((item as any).probabilidade) || (status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : 50),
-      motivoPerda: status === 'Perdido' ? ((item as any).motivo_perda || 'Não informado') : '',
-      tempoNaEtapa: parseInt((item as any).tempo_na_etapa) || calcularTempoNaEtapa(ultimaAtualizacao),
-      desconto: parseFloat((item as any).desconto) || 0
+      solQualificado,
+      solScore,
+      temperatura,
+      dataQualificacaoSol: parseDate(item.data_qualificacao_sol) || '',
+      notaCompleta: item.nota_completa || '',
+      tempoNaEtapa,
+      solSdr,
+      tempoSolSdr: parseInt(item.tempo_sol_sdr) || 0,
+      etiquetas,
+      origemLead: etiquetas,
+      probabilidade,
+      motivoPerda: '',
     };
   });
 }
@@ -285,14 +307,14 @@ export function getVendedorPerformance(proposals: Proposal[]) {
     const valorPerdido = perdidos.reduce((acc, p) => acc + p.valorProposta, 0);
     const valorAberto = abertos.reduce((acc, p) => acc + p.valorProposta, 0);
     const valorTotal = vendedorProposals.reduce((acc, p) => acc + p.valorProposta, 0);
-    const totalFollowUps = vendedorProposals.reduce((acc, p) => acc + p.numeroFollowUps, 0);
+    const totalFollowUps = 0;
     
-    // Calcular tempo médio de resposta (speed-to-lead)
+    // Calcular tempo médio de resposta (speed-to-lead) usando dataQualificacaoSol
     const temposResposta: number[] = [];
     for (const p of vendedorProposals) {
-      if (p.dataCriacaoProjeto && p.dataPrimeiroContato) {
+      if (p.dataCriacaoProjeto && p.dataQualificacaoSol) {
         const dataProj = new Date(p.dataCriacaoProjeto);
-        const dataContato = new Date(p.dataPrimeiroContato);
+        const dataContato = new Date(p.dataQualificacaoSol);
         if (!isNaN(dataProj.getTime()) && !isNaN(dataContato.getTime())) {
           const diff = Math.max(0, Math.ceil((dataContato.getTime() - dataProj.getTime()) / (1000 * 60 * 60 * 24)));
           temposResposta.push(diff);
@@ -454,30 +476,25 @@ export function getAtividadesData(proposals: Proposal[]) {
   const hoje = new Date();
   const abertos = proposals.filter(p => p.status === 'Aberto');
   
-  // Leads sem contato há mais de 3 dias
+  // Leads sem atualização há mais de 3 dias
   const leadsSemContato = abertos.filter(p => {
-    if (!p.dataUltimoContato) return true;
-    const dataContato = new Date(p.dataUltimoContato);
+    const dataContato = new Date(p.ultimaAtualizacao);
     const diffDias = Math.floor((hoje.getTime() - dataContato.getTime()) / (1000 * 60 * 60 * 24));
     return diffDias > 3;
   });
   
-  // Follow-ups atrasados (com próxima atividade no passado)
-  const followUpsAtrasados = abertos.filter(p => {
-    if (!p.proximaAtividade) return false;
-    const dataAtividade = new Date(p.proximaAtividade);
-    return dataAtividade < hoje;
-  });
+  // Leads com SLA alto (tempo na etapa > 7 dias)
+  const followUpsAtrasados = abertos.filter(p => p.tempoNaEtapa > 7);
   
-  // Negócios sem próxima atividade
-  const semProximaAtividade = abertos.filter(p => !p.proximaAtividade);
+  // Negócios parados
+  const semProximaAtividade = abertos.filter(p => p.tempoNaEtapa > 14);
   
-  // Speed-to-Lead (tempo entre criação do projeto e primeiro contato)
+  // Speed-to-Lead (tempo entre criação do projeto e qualificação Sol)
   const temposSpeedToLead: number[] = [];
   for (const p of proposals) {
-    if (p.dataCriacaoProjeto && p.dataPrimeiroContato) {
+    if (p.dataCriacaoProjeto && p.dataQualificacaoSol) {
       const dataProj = new Date(p.dataCriacaoProjeto);
-      const dataContato = new Date(p.dataPrimeiroContato);
+      const dataContato = new Date(p.dataQualificacaoSol);
       if (!isNaN(dataProj.getTime()) && !isNaN(dataContato.getTime())) {
         const diff = Math.max(0, Math.ceil((dataContato.getTime() - dataProj.getTime()) / (1000 * 60 * 60 * 24)));
         temposSpeedToLead.push(diff);
@@ -488,12 +505,8 @@ export function getAtividadesData(proposals: Proposal[]) {
     ? Math.round(temposSpeedToLead.reduce((a, b) => a + b, 0) / temposSpeedToLead.length) 
     : 0;
   
-  // Atividades do dia (próximas atividades para hoje)
-  const atividadesDoDia = abertos.filter(p => {
-    if (!p.proximaAtividade) return false;
-    const dataAtividade = new Date(p.proximaAtividade);
-    return dataAtividade.toDateString() === hoje.toDateString();
-  });
+  // Atividades do dia - leads com SLA crítico
+  const atividadesDoDia = abertos.filter(p => p.tempoNaEtapa > 5 && p.tempoNaEtapa <= 10);
   
   return {
     atividadesDoDia,
@@ -501,7 +514,7 @@ export function getAtividadesData(proposals: Proposal[]) {
     leadsSemContato,
     semProximaAtividade,
     speedToLead,
-    totalFollowUps: proposals.reduce((acc, p) => acc + p.numeroFollowUps, 0)
+    totalFollowUps: 0
   };
 }
 
@@ -665,4 +678,153 @@ export function getConversaoPorEtapa(proposals: Proposal[]) {
     ganhos: dados.ganhos,
     taxaConversao: dados.total > 0 ? (dados.ganhos / dados.total) * 100 : 0
   })).sort((a, b) => b.taxaConversao - a.taxaConversao);
+}
+
+// ============ FUNÇÕES DE ANÁLISE DE LEADS ============
+
+export function getLeadsKPIs(proposals: Proposal[]) {
+  const total = proposals.length;
+  const qualificados = proposals.filter(p => p.solQualificado).length;
+  const naoQualificados = total - qualificados;
+  const taxaQualificacao = total > 0 ? (qualificados / total) * 100 : 0;
+  const quentes = proposals.filter(p => p.temperatura === 'QUENTE').length;
+  const mornos = proposals.filter(p => p.temperatura === 'MORNO').length;
+  const frios = proposals.filter(p => p.temperatura === 'FRIO').length;
+  const scores = proposals.filter(p => p.solScore > 0).map(p => p.solScore);
+  const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  
+  return { total, qualificados, naoQualificados, taxaQualificacao, quentes, mornos, frios, scoreMedio };
+}
+
+export function getLeadsByEtiqueta(proposals: Proposal[]) {
+  const map = new Map<string, { quantidade: number; valor: number; qualificados: number }>();
+  for (const p of proposals) {
+    const tags = p.etiquetas ? p.etiquetas.split(',').map(t => t.trim()).filter(Boolean) : ['Sem etiqueta'];
+    for (const tag of tags) {
+      const atual = map.get(tag) || { quantidade: 0, valor: 0, qualificados: 0 };
+      map.set(tag, {
+        quantidade: atual.quantidade + 1,
+        valor: atual.valor + p.valorProposta,
+        qualificados: atual.qualificados + (p.solQualificado ? 1 : 0),
+      });
+    }
+  }
+  return Array.from(map.entries()).map(([name, d]) => ({ name, ...d })).sort((a, b) => b.quantidade - a.quantidade);
+}
+
+export function getLeadsByEtapa(proposals: Proposal[]) {
+  const map = new Map<string, number>();
+  for (const p of proposals) {
+    map.set(p.etapa, (map.get(p.etapa) || 0) + 1);
+  }
+  return Array.from(map.entries()).map(([etapa, quantidade]) => ({ etapa, quantidade })).sort((a, b) => b.quantidade - a.quantidade);
+}
+
+export function getTempoQualificacao(proposals: Proposal[]) {
+  const tempos: number[] = [];
+  for (const p of proposals) {
+    if (p.dataCriacaoProjeto && p.dataQualificacaoSol) {
+      const d1 = new Date(p.dataCriacaoProjeto);
+      const d2 = new Date(p.dataQualificacaoSol);
+      if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+        const diff = Math.max(0, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+        if (diff <= 365) tempos.push(diff);
+      }
+    }
+  }
+  const media = tempos.length > 0 ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length) : 0;
+  const mediana = tempos.length > 0 ? tempos.sort((a, b) => a - b)[Math.floor(tempos.length / 2)] : 0;
+  const min = tempos.length > 0 ? Math.min(...tempos) : 0;
+  const max = tempos.length > 0 ? Math.max(...tempos) : 0;
+  return { media, mediana, min, max, totalComDados: tempos.length };
+}
+
+export function getTemperaturaPorEtapa(proposals: Proposal[]) {
+  const map = new Map<string, { quente: number; morno: number; frio: number; sem: number }>();
+  for (const p of proposals) {
+    const atual = map.get(p.etapa) || { quente: 0, morno: 0, frio: 0, sem: 0 };
+    if (p.temperatura === 'QUENTE') atual.quente++;
+    else if (p.temperatura === 'MORNO') atual.morno++;
+    else if (p.temperatura === 'FRIO') atual.frio++;
+    else atual.sem++;
+    map.set(p.etapa, atual);
+  }
+  return Array.from(map.entries()).map(([etapa, d]) => ({ etapa, ...d }));
+}
+
+export function getSolPerformance(proposals: Proposal[]) {
+  const qualificados = proposals.filter(p => p.solQualificado);
+  const scores = qualificados.filter(p => p.solScore > 0).map(p => p.solScore);
+  const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const quentes = qualificados.filter(p => p.temperatura === 'QUENTE').length;
+  const percentQuentes = qualificados.length > 0 ? (quentes / qualificados.length) * 100 : 0;
+  
+  // Conversão Sol -> Proposta
+  const etapasAvancadas = ['PROPOSTA', 'NEGOCIAÇÃO', 'NEGOCIACAO'];
+  const solParaProposta = qualificados.filter(p => etapasAvancadas.some(e => p.etapa.toUpperCase().includes(e)));
+  const conversaoSolProposta = qualificados.length > 0 ? (solParaProposta.length / qualificados.length) * 100 : 0;
+  
+  // Conversão Sol -> Fechamento
+  const ganhos = qualificados.filter(p => p.status === 'Ganho');
+  const conversaoSolFechamento = qualificados.length > 0 ? (ganhos.length / qualificados.length) * 100 : 0;
+
+  return { totalQualificados: qualificados.length, scoreMedio, percentQuentes, conversaoSolProposta, conversaoSolFechamento, valorQualificados: qualificados.reduce((a, p) => a + p.valorProposta, 0) };
+}
+
+export function getScorePorOrigem(proposals: Proposal[]) {
+  const map = new Map<string, { scores: number[]; quantidade: number }>();
+  for (const p of proposals) {
+    const tags = p.etiquetas ? p.etiquetas.split(',').map(t => t.trim()).filter(Boolean) : ['Sem etiqueta'];
+    for (const tag of tags) {
+      const atual = map.get(tag) || { scores: [], quantidade: 0 };
+      if (p.solScore > 0) atual.scores.push(p.solScore);
+      atual.quantidade++;
+      map.set(tag, atual);
+    }
+  }
+  return Array.from(map.entries()).map(([origem, d]) => ({
+    origem,
+    scoreMedio: d.scores.length > 0 ? d.scores.reduce((a, b) => a + b, 0) / d.scores.length : 0,
+    quantidade: d.quantidade
+  })).sort((a, b) => b.scoreMedio - a.scoreMedio);
+}
+
+export function getSolSDRMetrics(proposals: Proposal[]) {
+  const passouSdr = proposals.filter(p => p.solSdr);
+  const tempos = passouSdr.filter(p => p.tempoSolSdr > 0).map(p => p.tempoSolSdr);
+  const tempoMedio = tempos.length > 0 ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length) : 0;
+  const taxaPassagem = proposals.length > 0 ? (passouSdr.length / proposals.length) * 100 : 0;
+  return { total: passouSdr.length, tempoMedio, taxaPassagem };
+}
+
+export function getLeadsQuentesAbandonados(proposals: Proposal[], thresholdDias = 7) {
+  return proposals.filter(p => 
+    p.temperatura === 'QUENTE' && 
+    p.status === 'Aberto' && 
+    p.tempoNaEtapa > thresholdDias
+  );
+}
+
+export function getROIPorOrigem(proposals: Proposal[]) {
+  const map = new Map<string, { total: number; ganhos: number; valor: number; scores: number[] }>();
+  for (const p of proposals) {
+    const tags = p.etiquetas ? p.etiquetas.split(',').map(t => t.trim()).filter(Boolean) : ['Sem etiqueta'];
+    for (const tag of tags) {
+      const atual = map.get(tag) || { total: 0, ganhos: 0, valor: 0, scores: [] };
+      atual.total++;
+      if (p.status === 'Ganho') atual.ganhos++;
+      atual.valor += p.valorProposta;
+      if (p.solScore > 0) atual.scores.push(p.solScore);
+      map.set(tag, atual);
+    }
+  }
+  return Array.from(map.entries()).map(([origem, d]) => ({
+    origem,
+    totalLeads: d.total,
+    ganhos: d.ganhos,
+    taxaConversao: d.total > 0 ? (d.ganhos / d.total) * 100 : 0,
+    valorTotal: d.valor,
+    scoreMedio: d.scores.length > 0 ? d.scores.reduce((a, b) => a + b, 0) / d.scores.length : 0,
+    ticketMedio: d.total > 0 ? d.valor / d.total : 0,
+  })).sort((a, b) => b.valorTotal - a.valorTotal);
 }

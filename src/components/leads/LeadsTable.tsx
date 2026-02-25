@@ -1,29 +1,16 @@
-import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrencyFull } from "@/lib/formatters";
-import type { Lead } from "@/data/leadsMockData";
+import { formatCurrencyAbbrev } from "@/lib/formatters";
+import type { Proposal } from "@/data/dataAdapter";
 
-const statusVariant: Record<Lead["status"], "default" | "destructive" | "secondary"> = {
-  qualificado: "default",
-  desqualificado: "destructive",
-  pendente: "secondary",
+const tempBadge: Record<string, "default" | "destructive" | "secondary"> = {
+  QUENTE: "destructive",
+  MORNO: "secondary",
+  FRIO: "default",
 };
 
-const statusLabel: Record<Lead["status"], string> = {
-  qualificado: "Qualificado",
-  desqualificado: "Desqualificado",
-  pendente: "Pendente",
-};
-
-const agendamentoLabel: Record<string, string> = {
-  whatsapp: "WhatsApp",
-  reuniao_online: "Reunião Online",
-  ligacao: "Ligação",
-};
-
-interface Props { leads: Lead[] }
+interface Props { leads: Proposal[] }
 
 export function LeadsTable({ leads }: Props) {
   return (
@@ -35,29 +22,35 @@ export function LeadsTable({ leads }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Origem</TableHead>
-              <TableHead>Cidade</TableHead>
-              <TableHead>UF</TableHead>
-              <TableHead className="text-right">Gasto Mensal</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Etapa</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Agendamento</TableHead>
+              <TableHead>Origem</TableHead>
+              <TableHead>Temperatura</TableHead>
+              <TableHead className="text-right">Score</TableHead>
+              <TableHead className="text-right">SLA (dias)</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {leads.map((l) => (
               <TableRow key={l.id}>
-                <TableCell className="whitespace-nowrap">{format(l.data_entrada, "dd/MM/yy HH:mm")}</TableCell>
-                <TableCell className="font-medium">{l.nome}</TableCell>
-                <TableCell>{l.origem}</TableCell>
-                <TableCell>{l.cidade}</TableCell>
-                <TableCell>{l.uf}</TableCell>
-                <TableCell className="text-right">{formatCurrencyFull(l.gasto_mensal)}</TableCell>
+                <TableCell className="font-medium">{l.nomeCliente}</TableCell>
+                <TableCell>{l.etapa}</TableCell>
                 <TableCell>
-                  <Badge variant={statusVariant[l.status]}>{statusLabel[l.status]}</Badge>
+                  <Badge variant={l.status === 'Ganho' ? 'default' : l.status === 'Perdido' ? 'destructive' : 'secondary'}>
+                    {l.status}
+                  </Badge>
                 </TableCell>
-                <TableCell>{l.tipo_agendamento ? agendamentoLabel[l.tipo_agendamento] : "—"}</TableCell>
+                <TableCell>{l.etiquetas || '—'}</TableCell>
+                <TableCell>
+                  {l.temperatura ? (
+                    <Badge variant={tempBadge[l.temperatura] || 'secondary'}>{l.temperatura}</Badge>
+                  ) : '—'}
+                </TableCell>
+                <TableCell className="text-right">{l.solScore > 0 ? l.solScore.toFixed(1) : '—'}</TableCell>
+                <TableCell className="text-right">{l.tempoNaEtapa}</TableCell>
+                <TableCell className="text-right">{formatCurrencyAbbrev(l.valorProposta)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
