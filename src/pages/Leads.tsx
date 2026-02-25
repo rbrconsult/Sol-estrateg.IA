@@ -730,7 +730,7 @@ export default function Leads() {
                             <div className="flex items-center gap-1.5">
                               <span className="text-[10px]">{latestMake.robo === 'sol' ? '🤖' : '❄️'}</span>
                               <span className="text-[11px] text-muted-foreground">
-                                {latestMake.data_envio ? format(new Date(latestMake.data_envio), "dd/MM HH:mm", { locale: ptBR }) : "—"}
+                                {(() => { try { const d = new Date(latestMake.data_envio); return !isNaN(d.getTime()) ? format(d, "dd/MM HH:mm", { locale: ptBR }) : "—"; } catch { return "—"; } })()}
                               </span>
                             </div>
                           ) : (
@@ -784,7 +784,7 @@ export default function Leads() {
                                           {h.tipo === 'recebida' ? 'Resposta do lead' : `Robô ${h.robo === 'sol' ? 'Sol' : 'FUP Frio'}`}
                                         </span>
                                         <span className="text-[10px] text-muted-foreground/60">
-                                          {h.data ? format(new Date(h.data), "dd/MM/yy HH:mm", { locale: ptBR }) : ""}
+                                          {(() => { try { const d = new Date(h.data); return !isNaN(d.getTime()) ? format(d, "dd/MM/yy HH:mm", { locale: ptBR }) : ""; } catch { return ""; } })()}
                                         </span>
                                       </div>
                                       <p className="text-xs text-foreground leading-relaxed truncate">{h.mensagem || "—"}</p>
