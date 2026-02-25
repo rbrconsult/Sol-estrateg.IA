@@ -28,6 +28,12 @@ import { toast } from "sonner";
 
 const menuItems = [
   { 
+    title: "SOL Insights", 
+    icon: Presentation, 
+    path: "/conferencia",
+    description: "Painel SOL SDR"
+  },
+  { 
     title: "Leads", 
     icon: Zap, 
     path: "/leads",
@@ -92,12 +98,6 @@ const menuItems = [
     icon: HelpCircle, 
     path: "/ajuda",
     description: "Central de Ajuda"
-  },
-  { 
-    title: "Conferência", 
-    icon: Presentation, 
-    path: "/conferencia",
-    description: "Painel SOL SDR"
   },
 ];
 
