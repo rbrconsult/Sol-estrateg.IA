@@ -405,7 +405,10 @@ export default function Conferencia() {
                     <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
                     <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
                       <div
-                        className="h-full rounded bg-primary/70 flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
+                        className={cn(
+                          "h-full rounded flex items-center justify-end pr-2 transition-all duration-1000 ease-out",
+                          f.etapa === "DESQUALIFICADOS" ? "bg-destructive/50" : "bg-primary/70"
+                        )}
                         style={{
                           width: funnelVisible ? `${(f.valor / maxFunnel) * 100}%` : "0%",
                           transitionDelay: `${i * 80}ms`,

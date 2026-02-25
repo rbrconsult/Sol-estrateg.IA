@@ -42,16 +42,15 @@ export const kpis = [
   { label: "ROI Estimado", value: 4.2, suffix: "×", isDecimal: true, trend: null },
 ];
 
-// ─── FUNIL DE LEADS ───
+// ─── FUNIL DE LEADS (sequência operacional) ───
 export const funnelData = [
-  { etapa: "TRÁFEGO PAGO", valor: 84 },
-  { etapa: "PROPOSTA", valor: 61 },
-  { etapa: "NEGOCIAÇÃO", valor: 19 },
-  { etapa: "CONTATO REALIZADO", valor: 18 },
+  { etapa: "TRÁFEGO PAGO", valor: 801 },
+  { etapa: "ROBÔ SOL", valor: 284 },
   { etapa: "QUALIFICAÇÃO", valor: 14 },
   { etapa: "QUALIFICADO", valor: 10 },
-  { etapa: "PROSPECÇÃO", valor: 6 },
-  { etapa: "FOLLOW UP", valor: 1 },
+  { etapa: "FUP FRIO", valor: 6 },
+  { etapa: "FUP FIO", valor: 1 },
+  { etapa: "DESQUALIFICADOS", valor: 801 - 284 },
 ];
 
 // ─── LEADS POR SEMANA ───
@@ -91,7 +90,7 @@ export const insights = [
   {
     type: "ok" as const,
     title: "100% dos dados no CRM",
-    description: "284 leads com perfil BANT completo. Decisões estratégicas baseadas em dados, não suposições.",
+    description: "284 leads qualificados com 100% dos dados inseridos no CRM. Decisões baseadas em dados, não suposições.",
   },
 ];
 
