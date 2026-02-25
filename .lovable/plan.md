@@ -1,107 +1,120 @@
 
 
-# Plano: Pagina de Conferencia SOL SDR (Dados Mockados)
+# Integração Make.com Data Store + Planilha Google Sheets
 
-## Visao Geral
+## Objetivo
+Cruzar dados da planilha (leads, qualificação Sol) com o Data Store do Make.com (mensagens dos robôs Sol e FUP Frio), usando o **telefone do cliente** como chave de cruzamento. Exibir tudo no Dashboard de Leads com visão executiva.
 
-Criar uma pagina standalone `/conferencia` com design premium e dados mockados, seguindo o briefing pixel-perfect da apresentacao SOL SDR x Evolve Energia Solar. Pagina independente da `/leads` existente, com paleta propria, fontes Syne + JetBrains Mono, e animacoes de entrada.
+## Dados a Integrar
+- Ultimas mensagens enviadas pelos robôs (Sol e FUP Frio)
+- Status do follow-up (contatado, respondeu, ignorou)
+- SLA/tempo de resposta do lead
+- Historico completo de interacoes
 
 ---
 
-## Estrutura da Pagina
+## Arquitetura
 
 ```text
-+------------------------------------------------------------------+
-|  HEADER FIXO                                                      |
-|  [emoji sol] SOL SDR - Painel Estrategico   [AO VIVO dot] [relogio]|
-+------------------------------------------------------------------+
-|  SECAO 1: KPI Row (5 cards com barra colorida no topo)            |
-|  [Leads 801] [Qualificados 284] [Quentes 47] [Propostas 61] [ROI]|
-+------------------------------------------------------------------+
-|  SECAO 2: ROI Card Destaque (gradient laranja/verde, watermark)   |
-|  Custo/Lead R$6 | Faturamento R$1.8M | Economia R$11.4k          |
-+------------------------------------------------------------------+
-|  SECAO 3: Grid 2/3                                                |
-|  +-- Funil (barras horizontais animadas) --+-- Insights (5 cards)-+|
-|  | TRAFEGO PAGO 84  laranja               | ALERT: 2 Quentes...  ||
-|  | PROPOSTA 61 roxo                        | INFO: 10s resposta   ||
-|  | NEGOCIACAO 19 verde                     | OK: Agendamentos +52%||
-|  | ...                                     | INFO: 47% fora hora  ||
-|  +-- Leads por Semana (barras verticais) --| OK: 100% CRM         ||
-|  +------------------------------------------+---------------------+|
-+------------------------------------------------------------------+
-|  SECAO 4: Tabela de Leads (12 linhas com score rings e badges)    |
-+------------------------------------------------------------------+
-|  SECAO 5: Bottom Grid (3 colunas)                                 |
-|  [Origem Leads] [Performance Sol] [Atividade Recente]             |
-+------------------------------------------------------------------+
-|  RODAPE: RBR CONSULT x EVOLVE ENERGIA SOLAR (watermark)          |
-+------------------------------------------------------------------+
++-----------------+       +---------------------+       +------------------+
+|  Google Sheets  |       |  Edge Function      |       |  Make Data Store |
+|  (Planilha)     |       |  fetch-make-data    |       |  (API REST)      |
++-----------------+       +---------------------+       +------------------+
+        |                         |                             |
+        |   telefone_cliente      |   GET /datastores/{id}      |
+        +------------------------>|   via Make API              |
+                                  +---------------------------->|
+                                  |<----------------------------+
+                                  |   mensagens, status, SLA    |
+                                  |                             |
+                                  v                             
+                      Cruzamento por telefone
+                      no frontend (React)
 ```
+
+---
+
+## Etapas de Implementacao
+
+### 1. Configurar Secrets
+- Armazenar `MAKE_API_KEY` e `MAKE_DATASTORE_ID` como secrets seguros no backend
+- O usuario precisara fornecer ambos os valores
+
+### 2. Criar Edge Function `fetch-make-data`
+- Nova funcao backend que:
+  - Autentica o usuario (JWT)
+  - Chama a API do Make.com: `GET https://eu2.make.com/api/v2/data-stores/{id}/data`
+  - Retorna os registros do Data Store
+- Headers: `Authorization: Token {MAKE_API_KEY}`
+- Configurar `verify_jwt = false` no config.toml (validacao manual)
+
+### 3. Criar Hook `useMakeDataStore`
+- Novo React Query hook que chama a edge function
+- Cache de 5 minutos (mesmo padrao do Google Sheets)
+- Interface tipada para os dados do Data Store
+
+### 4. Cruzamento de Dados no Frontend
+- Normalizar telefones (remover formatacao) para matching confiavel
+- Criar um `Map<telefone, MakeRecord>` para lookup O(1)
+- Merge dos dados no `useMemo` da pagina Leads
+
+### 5. Novas Secoes no Dashboard de Leads
+
+**a) Coluna "Ultimo Contato" na tabela de leads**
+- Data e hora da ultima mensagem do robo
+- Icone indicando qual robo (Sol ou FUP Frio)
+
+**b) Coluna "Status FUP" na tabela**
+- Badge visual: Respondeu (verde), Ignorou (vermelho), Aguardando (amarelo), Sem contato (cinza)
+
+**c) Secao "Atividade dos Robos" (novo card)**
+- Mensagens enviadas hoje (Sol vs FUP Frio)
+- Taxa de resposta
+- Tempo medio de resposta dos leads
+- Leads sem resposta ha mais de X dias
+
+**d) Alertas inteligentes adicionais**
+- "X leads ignoraram FUP Frio ha mais de 3 dias"
+- "Sol enviou X mensagens hoje com Y% de resposta"
+- "X leads quentes sem follow-up ativo"
+
+**e) Timeline de interacoes (expansivel)**
+- Ao clicar em um lead na tabela, expandir historico completo
+- Mostrar todas as mensagens enviadas e recebidas em ordem cronologica
 
 ---
 
 ## Detalhes Tecnicos
 
-### Arquivos a Criar
+### Edge Function (`supabase/functions/fetch-make-data/index.ts`)
+- Endpoint: `GET /functions/v1/fetch-make-data`
+- Autenticacao: Bearer token do usuario
+- API Make: `https://eu2.make.com/api/v2/data-stores/{MAKE_DATASTORE_ID}/data`
+- Paginacao: suporte a limit/offset se necessario
 
-1. **`src/pages/Conferencia.tsx`** -- Pagina principal standalone com todas as secoes
-   - Header fixo com relogio em tempo real e badge "AO VIVO" piscando
-   - Secao 1: 5 KPI cards com contadores animados (useEffect + requestAnimationFrame)
-   - Secao 2: ROI card destaque com gradient e watermark "ROI" em fonte gigante
-   - Secao 3: Grid 2/3 com funil horizontal animado + insights cards + barras semanais
-   - Secao 4: Tabela com 12 leads, score rings coloridos e badges de temperatura
-   - Secao 5: Bottom grid com origem, performance Sol e timeline de atividade
-   - Blobs animados laranja/verde no fundo com blur 120px
-   - Rodape watermark
+### Interface dos dados Make
+```text
+MakeRecord {
+  telefone: string
+  robo: "sol" | "fup_frio"
+  ultima_mensagem: string
+  data_envio: string
+  status_resposta: "respondeu" | "ignorou" | "aguardando"
+  data_resposta?: string
+  historico: Array<{ tipo, mensagem, data }>
+}
+```
 
-2. **`src/data/conferenciaMockData.ts`** -- Todos os dados mockados conforme briefing
-   - KPIs fixos (801, 284, 47, 61, 4.2x)
-   - ROI data (R$6 vs R$420, R$1.8M, R$11.4k)
-   - Funil com 8 etapas e valores exatos
-   - 12 leads da tabela com todos os campos
-   - Origem dos leads (Site 70, Facebook 52, etc.)
-   - Performance Sol (Score 61, Taxa 35%, etc.)
-   - Timeline de atividade recente (5 itens)
-   - Insights (5 cards com tipo, titulo, descricao)
-
-### Arquivos a Alterar
-
-1. **`src/App.tsx`** -- Adicionar rota `/conferencia` (publica, sem ProtectedRoute, sem MainLayout -- pagina independente)
-
-### Fontes e Estilos
-
-- Importar Google Fonts: Syne (700/800) e JetBrains Mono (400/500) via `@import` no CSS da pagina ou inline
-- Paleta custom aplicada via classes Tailwind inline (nao altera o tema global):
-  - `bg-[#080C12]` (fundo principal)
-  - `bg-[#0D1420]` (cards)
-  - `border-white/[0.06]` (bordas)
-  - `text-[#F5A623]` (sol/laranja)
-  - `text-[#06D6A0]` (verde)
-  - `text-[#EF476F]` (quente)
-  - `text-[#118AB2]` (frio)
-  - `text-[#F0F4FF]` (texto principal)
-  - `text-[#6B7A99]` (muted)
-
-### Animacoes
-
-- Contadores de 0 ao valor usando Intersection Observer + requestAnimationFrame
-- Barras do funil expandem da esquerda com CSS transition (width 0% -> 100%)
-- Badge "AO VIVO" com dot verde pulsando (CSS animation pulse)
-- Hover nos cards: `hover:-translate-y-0.5 hover:border-white/10 transition-all`
-- Blobs de fundo com animacao CSS lenta de posicao
-
-### Bibliotecas
-
-- `recharts` (ja instalado) para barras semanais
-- Tailwind para todo o layout e estilo
-- React state para relogio em tempo real
+### Arquivos a criar/modificar
+1. `supabase/functions/fetch-make-data/index.ts` — Nova edge function
+2. `src/hooks/useMakeDataStore.ts` — Novo hook React Query
+3. `src/pages/Leads.tsx` — Integrar dados cruzados na UI
+4. `supabase/config.toml` — Adicionar configuracao da nova function
 
 ---
 
-## Sequencia de Implementacao
-
-1. Criar dados mockados (`conferenciaMockData.ts`)
-2. Criar pagina completa (`Conferencia.tsx`) como componente unico com todas as secoes inline
-3. Registrar rota publica `/conferencia` no App.tsx (sem auth, sem sidebar)
+## Pre-requisitos do Usuario
+1. **API Token do Make.com** — Profile > API no painel do Make
+2. **ID do Data Store** — Visivel na URL ao abrir o Data Store no Make
+3. Informar a **estrutura exata dos campos** do Data Store (nomes das colunas) para mapear corretamente
 
