@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp, Timer } from "lucide-react";
+import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp, Timer, Search } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ import {
 } from "recharts";
 import type { Proposal } from "@/data/dataAdapter";
 import { SLAMetrics } from "@/components/leads/SLAMetrics";
+import { Input } from "@/components/ui/input";
 
 /* ───────── animated counter ───────── */
 function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
@@ -95,8 +97,15 @@ function KPICard({ label, value, suffix, isDecimal }: { label: string; value: nu
 
 /* ═══════════════════ MAIN ═══════════════════ */
 export default function Leads() {
+  const queryClient = useQueryClient();
   const { data: sheetsData, isLoading, error, refetch } = useGoogleSheetsData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
+    queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
+  };
 
   const proposals = useMemo(() => {
     if (!sheetsData?.data) return [];
@@ -309,7 +318,14 @@ export default function Leads() {
   }, [makeRecords]);
 
   /* ── top leads for table ── */
-  const tableLeads = filtered.slice(0, 15);
+  const tableLeads = useMemo(() => {
+    let leads = filtered;
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      leads = leads.filter(l => l.nomeCliente.toLowerCase().includes(term));
+    }
+    return leads.slice(0, 30);
+  }, [filtered, searchTerm]);
 
   /* ── loading / error ── */
   if (isLoading) {
@@ -375,7 +391,7 @@ export default function Leads() {
             <span className="text-xs text-muted-foreground font-mono tabular-nums">
               {time.toLocaleTimeString("pt-BR")}
             </span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => refetch()} title="Atualizar dados">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh} title="Atualizar dados">
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           </div>
@@ -676,8 +692,17 @@ export default function Leads() {
 
         {/* ══════ Tabela ══════ */}
         <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-border/40">
+          <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between gap-4">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leads Detalhados</h3>
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
