@@ -115,9 +115,7 @@ export const origemLeads = [
   { origem: "SITE", valor: 70, pct: 33 },
   { origem: "FACEBOOK", valor: 52, pct: 24 },
   { origem: "GOOGLE", valor: 12, pct: 6 },
-  { origem: "ORGÂNICO", valor: 11, pct: 5 },
-  { origem: "INDICAÇÃO", valor: 6, pct: 3 },
-  { origem: "PROSPECÇÃO", valor: 3, pct: 1 },
+  { origem: "ORGÂNICO", valor: 20, pct: 9 },
 ];
 
 // ─── PERFORMANCE DA SOL ───
