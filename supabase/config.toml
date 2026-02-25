@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.fetch-sheets]
 verify_jwt = false
+
+[functions.fetch-make-data]
+verify_jwt = false
