@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, AlertTriangle, Zap, TrendingUp, Clock, DollarSign, Users, Target, Shield, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  kpis, roiData, funnelData, weeklyLeads, insights,
+  kpis, roiData, funnelData, weeklyLeads, insights, problemData, solucaoData, antesDepois,
   leadsTable, origemLeads, solPerformance, atividadeRecente,
 } from "@/data/conferenciaMockData";
 import {
@@ -59,6 +59,22 @@ function TempDot({ temp }: { temp: string }) {
       <span className={`h-2 w-2 rounded-full ${cls}`} />
       <span className="capitalize">{temp.toLowerCase()}</span>
     </span>
+  );
+}
+
+/* ───────── section divider ───────── */
+function SectionHeader({ number, title, subtitle, icon: Icon }: { number: string; title: string; subtitle: string; icon: any }) {
+  return (
+    <div className="flex items-center gap-4 mt-10 mb-5">
+      <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-semibold">{number}</p>
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+    </div>
   );
 }
 
@@ -113,9 +129,10 @@ export default function Conferencia() {
             <h1 className="text-lg font-bold tracking-tight text-foreground">
               SOL Insights
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Painel Gerencial · Evolve Energia Solar</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Painel Estratégico · Evolve Energia Solar</p>
           </div>
           <div className="flex items-center gap-5">
+            <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Powered by RBR Consult</span>
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               Tempo real
@@ -212,8 +229,106 @@ export default function Conferencia() {
           )}
         </section>
 
-        {/* ══════ SEÇÃO 1 — KPIs ══════ */}
-        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4">
+        {/* ══════ SEÇÃO 1: O PROBLEMA ══════ */}
+        <SectionHeader
+          number="01 · O PROBLEMA"
+          title="A Lacuna de Experiência do Cliente"
+          subtitle="Quem responde primeiro, vende. Quem qualifica melhor, escala."
+          icon={AlertTriangle}
+        />
+
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <XCircle className="h-4 w-4 text-destructive" />
+              <p className="text-[11px] text-destructive font-semibold uppercase tracking-wider">Sem Resposta</p>
+            </div>
+            <p className="text-4xl font-bold text-foreground tabular-nums">{problemData.semResposta}%</p>
+            <p className="text-xs text-muted-foreground mt-1.5">das empresas <strong>nunca</strong> respondem seus leads</p>
+          </div>
+          <div className="rounded-lg border border-warning/20 bg-warning/5 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="h-4 w-4 text-warning" />
+              <p className="text-[11px] text-warning font-semibold uppercase tracking-wider">Tempo de Espera</p>
+            </div>
+            <p className="text-4xl font-bold text-foreground tabular-nums">{problemData.tempoMedioResposta}h</p>
+            <p className="text-xs text-muted-foreground mt-1.5">média de resposta do mercado</p>
+          </div>
+          <div className="rounded-lg border border-success/20 bg-success/5 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="h-4 w-4 text-success" />
+              <p className="text-[11px] text-success font-semibold uppercase tracking-wider">Quem Responde Primeiro</p>
+            </div>
+            <p className="text-4xl font-bold text-foreground tabular-nums">{problemData.compraPrimeiro}%</p>
+            <p className="text-xs text-muted-foreground mt-1.5">fecham com quem <strong>atende primeiro</strong></p>
+          </div>
+        </section>
+
+        <div className="mt-3 rounded-lg border border-border/50 bg-card p-4 flex items-center gap-3">
+          <DollarSign className="h-5 w-5 text-muted-foreground shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Custo da ineficiência:</strong> SDRs humanos gastam de {problemData.custoTriagemHumana.min} a {problemData.custoTriagemHumana.max} horas por lead em triagem manual, 
+            custando de R$ {problemData.custoLeadHumano.min} a R$ {problemData.custoLeadHumano.max} por lead qualificado — muitas vezes focando em "curiosos" em vez de compradores reais.
+          </p>
+        </div>
+
+        {/* ══════ SEÇÃO 2: A SOLUÇÃO SOL ══════ */}
+        <SectionHeader
+          number="02 · A SOLUÇÃO"
+          title="SOL — IA SDR Exclusiva para a Evolve"
+          subtitle="Velocidade extrema. Qualificação BANT 24/7. Foco no fechamento."
+          icon={Zap}
+        />
+
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-5">
+            <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-2">Velocidade Extrema</p>
+            <p className="text-4xl font-bold text-foreground tabular-nums">{solucaoData.tempoResposta}s</p>
+            <p className="text-xs text-muted-foreground mt-1.5">de resposta → <strong>+{solucaoData.aumentoConversao}%</strong> de conversão</p>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-5">
+            <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-2">Qualificação BANT</p>
+            <p className="text-4xl font-bold text-foreground">{solucaoData.velocidadeQualif}</p>
+            <p className="text-xs text-muted-foreground mt-1.5">mais rápido que humano · <strong>{solucaoData.disponibilidade}</strong></p>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-5">
+            <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-2">Custo por Lead Qualificado</p>
+            <p className="text-4xl font-bold text-foreground">R$ {solucaoData.custoLeadSol.min}-{solucaoData.custoLeadSol.max}</p>
+            <p className="text-xs text-muted-foreground mt-1.5">vs R$ {problemData.custoLeadHumano.min}-{problemData.custoLeadHumano.max} com SDR humano</p>
+          </div>
+        </section>
+
+        {/* Fluxo visual */}
+        <div className="mt-4 rounded-lg border border-border/50 bg-card p-5">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-4 font-medium">Fluxo de Atendimento</p>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {[
+              { label: "Lead Inbound", sub: "Site · Ads · Redes" },
+              { label: "SOL IA", sub: "10s · BANT · 24/7" },
+              { label: "CRM Atualizado", sub: "100% dados" },
+              { label: "Consultor Fecha", sub: "Lead pronto" },
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="rounded-lg border border-border/50 bg-secondary/30 px-4 py-3 text-center min-w-[130px]">
+                  <p className="text-sm font-semibold text-foreground">{step.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{step.sub}</p>
+                </div>
+                {i < 3 && <ArrowRight className="h-4 w-4 text-primary shrink-0" />}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ══════ SEÇÃO 3: O IMPACTO & ROI ══════ */}
+        <SectionHeader
+          number="03 · O IMPACTO"
+          title="Performance Comercial → Previsibilidade Financeira"
+          subtitle="Dados reais da operação Evolve com a Sol."
+          icon={TrendingUp}
+        />
+
+        {/* KPIs Reais */}
+        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {kpis.map((k, i) => {
             const { value: animVal, ref } = useAnimatedNumber(k.value, 1400, k.isDecimal);
             return (
@@ -233,12 +348,12 @@ export default function Conferencia() {
           })}
         </section>
 
-        {/* ══════ SEÇÃO 2 — ROI Resumo ══════ */}
-        <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* ROI Resumo */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { label: "Custo por Lead Qualificado", value: "R$ 6", sub: "vs R$ 420 SDR humano", highlight: true },
-            { label: "Faturamento Potencial", value: "R$ 1.8M", sub: "284 leads × ticket médio R$ 28k" },
-            { label: "Economia Mensal", value: "R$ 11.4k", sub: "Escala sem aumentar time" },
+            { label: "Custo por Lead Qualificado", value: `R$ ${roiData.custoLeadSol}`, sub: `vs R$ ${roiData.custoSDRHumano} SDR humano`, highlight: true },
+            { label: "Faturamento Potencial", value: "R$ 1.8M", sub: `${kpis[1].value} leads × ticket médio R$ 28k` },
+            { label: "Economia Mensal", value: `R$ ${(roiData.economiaMensal / 1000).toFixed(1)}k`, sub: "Escala sem aumentar time" },
           ].map((item, i) => (
             <div key={i} className="rounded-lg border border-border/50 bg-card p-5">
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{item.label}</p>
@@ -248,7 +363,37 @@ export default function Conferencia() {
           ))}
         </section>
 
-        {/* ══════ SEÇÃO 3 — Grid (Funil + Insights) ══════ */}
+        {/* ══════ COMPARATIVO ANTES × DEPOIS ══════ */}
+        <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/40">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Antes × Depois da Sol</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/40">
+                  {["Métrica", "Antes (SDR Humano)", "Depois (Sol IA)", "Impacto"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {antesDepois.map((row, i) => (
+                  <tr key={i} className="border-b border-border/20 transition-colors hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-medium text-foreground">{row.metrica}</td>
+                    <td className="px-4 py-3 text-destructive/80 font-mono text-xs">{row.antes}</td>
+                    <td className="px-4 py-3 text-success font-mono text-xs font-semibold">{row.depois}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">{row.impacto}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* ══════ SEÇÃO 4 — Grid (Funil + Insights) ══════ */}
         <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Funil + Barras semanais */}
           <div className="lg:col-span-2 space-y-4">
@@ -320,10 +465,10 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ SEÇÃO 4 — Tabela ══════ */}
+        {/* ══════ SEÇÃO 5 — Tabela de Leads Qualificados ══════ */}
         <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
           <div className="px-5 py-4 border-b border-border/40">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leads Qualificados</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leads Qualificados pela Sol</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -356,7 +501,7 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ SEÇÃO 5 — Bottom Grid ══════ */}
+        {/* ══════ SEÇÃO 6 — Bottom Grid ══════ */}
         <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Origem */}
           <div className="rounded-lg border border-border/50 bg-card p-5">
@@ -431,8 +576,11 @@ export default function Conferencia() {
 
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-12 mb-6 text-center">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40 font-medium">
-            RBR Consult × Evolve Energia Solar
+          <p className="text-xs text-muted-foreground/60 font-medium">
+            Desenvolvido por <strong className="text-foreground/70">RBR Consult</strong> para Evolve Energia Solar
+          </p>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/30 font-medium mt-1">
+            Inteligência Comercial · IA · Automação
           </p>
         </footer>
       </div>
