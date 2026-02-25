@@ -79,14 +79,21 @@ function parseDate(dateStr: string): string | null {
     /(\d{2})-(\d{2})-(\d{4})/,   // DD-MM-YYYY
   ];
   
-  for (const format of formats) {
-    const match = trimmed.match(format);
+  for (const fmt of formats) {
+    const match = trimmed.match(fmt);
     if (match) {
-      if (format === formats[0] || format === formats[2]) {
+      if (fmt === formats[0] || fmt === formats[2]) {
         return `${match[3]}-${match[2]}-${match[1]}`;
       }
-      return trimmed;
+      // YYYY-MM-DD: return only the date part (strip time if present)
+      return `${match[1]}-${match[2]}-${match[3]}`;
     }
+  }
+  
+  // Try parsing as Date object (handles ISO strings, timestamps, etc.)
+  const parsed = new Date(trimmed);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
   }
   
   return null;
