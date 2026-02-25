@@ -27,9 +27,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -41,6 +40,7 @@ Deno.serve(async (req) => {
     const makeDataStoreId = Deno.env.get("MAKE_DATASTORE_ID");
 
     if (!makeApiKey || !makeDataStoreId) {
+      console.error("Missing MAKE_API_KEY or MAKE_DATASTORE_ID");
       return new Response(
         JSON.stringify({ error: "Make.com credentials not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
     while (hasMore) {
       const url = `https://eu2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
       
+      console.log(`Fetching Make Data Store: offset=${offset}`);
+      
       const makeRes = await fetch(url, {
         headers: {
           Authorization: `Token ${makeApiKey}`,
@@ -68,20 +70,24 @@ Deno.serve(async (req) => {
         console.error("Make API error:", makeRes.status, errorText);
         return new Response(
           JSON.stringify({ error: `Make API error: ${makeRes.status}`, details: errorText }),
-          { status: makeRes.statusCode || 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: makeRes.status || 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       const makeData = await makeRes.json();
+      console.log("Make API response keys:", Object.keys(makeData));
+      
       const records = makeData?.records || makeData?.data || [];
       
       if (Array.isArray(records)) {
         allRecords.push(...records);
       }
 
-      hasMore = records.length === limit;
+      hasMore = Array.isArray(records) && records.length === limit;
       offset += limit;
     }
+
+    console.log(`Total records fetched: ${allRecords.length}`);
 
     return new Response(
       JSON.stringify({ data: allRecords, count: allRecords.length, lastUpdate: new Date().toISOString() }),
