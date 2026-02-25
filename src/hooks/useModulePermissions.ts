@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export const MODULE_DEFINITIONS = [
+  { key: 'conferencia', label: 'SOL Insights', description: 'Painel SOL SDR', path: '/conferencia' },
   { key: 'leads', label: 'Leads', description: 'Captação & Robô', path: '/leads' },
   { key: 'dashboard', label: 'Dashboard', description: 'Painel Executivo', path: '/' },
   { key: 'pipeline', label: 'Pipeline', description: 'Kanban Visual', path: '/pipeline' },
@@ -14,7 +15,6 @@ export const MODULE_DEFINITIONS = [
   { key: 'chamados', label: 'Chamados', description: 'Suporte & SLA', path: '/chamados' },
   { key: 'monitoramento', label: 'Monitoramento', description: 'Status do Sistema', path: '/monitoramento' },
   { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
-  { key: 'conferencia', label: 'Conferência', description: 'Painel SOL SDR', path: '/conferencia' },
 ] as const;
 
 export type ModuleKey = typeof MODULE_DEFINITIONS[number]['key'];
