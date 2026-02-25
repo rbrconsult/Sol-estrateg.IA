@@ -165,6 +165,53 @@ export default function Leads() {
   const valorTotal = useMemo(() => filtered.reduce((a, p) => a + p.valorProposta, 0), [filtered]);
   const ticketMedio = useMemo(() => filtered.length > 0 ? valorTotal / filtered.length : 0, [valorTotal, filtered]);
 
+  /* ── Sol daily activity (last 7 days) ── */
+  const solDailyActivity = useMemo(() => {
+    const today = new Date();
+    const days: { date: string; label: string; qualificados: number; scores: number; quentes: number; mornos: number; frios: number; valorPipeline: number }[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const label = i === 0 ? "Hoje" : i === 1 ? "Ontem" : format(d, "dd/MM", { locale: ptBR });
+
+      const qualificadosNoDia = proposals.filter(p => {
+        if (!p.dataQualificacaoSol) return false;
+        return p.dataQualificacaoSol.startsWith(dateStr);
+      });
+
+      const atualizadosNoDia = proposals.filter(p => {
+        if (!p.ultimaAtualizacao) return false;
+        return p.ultimaAtualizacao.startsWith(dateStr);
+      });
+
+      const leadsAtivos = [...new Set([...qualificadosNoDia, ...atualizadosNoDia])];
+
+      days.push({
+        date: dateStr,
+        label,
+        qualificados: qualificadosNoDia.length,
+        scores: qualificadosNoDia.filter(p => p.solScore > 0).length,
+        quentes: qualificadosNoDia.filter(p => p.temperatura === "QUENTE").length,
+        mornos: qualificadosNoDia.filter(p => p.temperatura === "MORNO").length,
+        frios: qualificadosNoDia.filter(p => p.temperatura === "FRIO").length,
+        valorPipeline: leadsAtivos.reduce((a, p) => a + p.valorProposta, 0),
+      });
+    }
+    return days;
+  }, [proposals]);
+
+  const solHoje = solDailyActivity[0];
+  const solSemana = useMemo(() => ({
+    qualificados: solDailyActivity.reduce((a, d) => a + d.qualificados, 0),
+    scores: solDailyActivity.reduce((a, d) => a + d.scores, 0),
+    quentes: solDailyActivity.reduce((a, d) => a + d.quentes, 0),
+    valor: solDailyActivity.reduce((a, d) => a + d.valorPipeline, 0),
+  }), [solDailyActivity]);
+
+  const maxDailyQual = useMemo(() => Math.max(...solDailyActivity.map(d => d.qualificados), 1), [solDailyActivity]);
+
   /* ── funnel animation ── */
   const [funnelVisible, setFunnelVisible] = useState(false);
   const funnelRef = useRef<HTMLDivElement>(null);
@@ -218,6 +265,17 @@ export default function Leads() {
   }
   if (solPerf.conversaoSolFechamento > 0) {
     alerts.push({ type: "success", title: `Conversão Sol → Fechamento: ${solPerf.conversaoSolFechamento.toFixed(1)}%`, desc: `De ${solPerf.totalQualificados} qualificados pela Sol.` });
+  }
+  // Leads não qualificados parados
+  const naoQualStale = filtered.filter(p => !p.solQualificado && p.tempoNaEtapa > 5);
+  if (naoQualStale.length > 0) {
+    alerts.push({ type: "alert", title: `${naoQualStale.length} leads sem qualificação há +5 dias`, desc: "Leads aguardando análise da Sol há mais de 5 dias." });
+  }
+  // Sol today activity
+  if (solHoje.qualificados > 0) {
+    alerts.push({ type: "success", title: `Sol qualificou ${solHoje.qualificados} leads hoje`, desc: `${solHoje.quentes} quentes · ${solHoje.mornos} mornos · ${solHoje.frios} frios` });
+  } else {
+    alerts.push({ type: "info", title: "Nenhuma qualificação hoje", desc: "A Sol ainda não processou leads hoje." });
   }
 
   /* ── top leads for table ── */
@@ -319,12 +377,96 @@ export default function Leads() {
         </section>
 
         {/* ══════ KPIs ══════ */}
-        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4">
+        <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 mt-4">
           <KPICard label="Total Leads" value={kpis.total} />
           <KPICard label="Qualificados Sol" value={kpis.qualificados} />
+          <KPICard label="Aguardando Qualif." value={kpis.naoQualificados} />
           <KPICard label="Taxa Qualificação" value={kpis.taxaQualificacao} suffix="%" isDecimal />
           <KPICard label="Score Médio" value={kpis.scoreMedio} isDecimal />
           <KPICard label="Pipeline" value={Math.round(valorTotal / 1000)} suffix="K" />
+        </section>
+
+        {/* ══════ SOL HOJE — ATIVIDADE DIÁRIA ══════ */}
+        <section className="mt-6 rounded-xl border border-primary/20 bg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <span className="text-lg">🤖</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground tracking-tight">Sol Hoje</h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Atividade diária da inteligência artificial</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground">Última 7 dias</p>
+              <p className="text-sm font-bold text-foreground tabular-nums">{solSemana.qualificados} qualificações</p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Today's highlight */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+              {[
+                { label: "Qualificados Hoje", value: solHoje.qualificados, highlight: true },
+                { label: "Scores Atribuídos", value: solHoje.scores },
+                { label: "Leads Quentes", value: solHoje.quentes },
+                { label: "Leads Mornos", value: solHoje.mornos },
+                { label: "Leads Frios", value: solHoje.frios },
+              ].map((m, i) => (
+                <div key={i} className={cn(
+                  "rounded-lg p-3 text-center transition-all",
+                  m.highlight ? "bg-primary/10 border border-primary/20" : "bg-secondary/40"
+                )}>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{m.label}</p>
+                  <p className={cn("text-2xl font-bold tabular-nums", m.highlight ? "text-primary" : "text-foreground")}>{m.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 7-day timeline */}
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium">Movimento dos últimos 7 dias</p>
+              <div className="flex items-end gap-2 h-24">
+                {[...solDailyActivity].reverse().map((day, i) => {
+                  const heightPct = maxDailyQual > 0 ? (day.qualificados / maxDailyQual) * 100 : 0;
+                  const isToday = i === solDailyActivity.length - 1;
+                  return (
+                    <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] font-bold text-foreground tabular-nums">{day.qualificados > 0 ? day.qualificados : ""}</span>
+                      <div className="w-full rounded-t-sm overflow-hidden bg-secondary/30" style={{ height: "64px" }}>
+                        <div
+                          className={cn(
+                            "w-full rounded-t-sm transition-all duration-700 ease-out",
+                            isToday ? "bg-primary" : "bg-primary/40"
+                          )}
+                          style={{
+                            height: `${Math.max(heightPct, 4)}%`,
+                            marginTop: `${100 - Math.max(heightPct, 4)}%`,
+                          }}
+                        />
+                      </div>
+                      <span className={cn("text-[9px] tabular-nums", isToday ? "text-foreground font-bold" : "text-muted-foreground")}>{day.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Weekly summary */}
+            <div className="mt-5 pt-4 border-t border-border/30 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] text-muted-foreground">
+                  Semana: <strong className="text-foreground">{solSemana.qualificados}</strong> qualificações ·{" "}
+                  <strong className="text-foreground">{solSemana.quentes}</strong> quentes ·{" "}
+                  <strong className="text-foreground">{solSemana.scores}</strong> scores
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                Pipeline movimentado: <strong className="text-foreground">{formatCurrencyAbbrev(solSemana.valor)}</strong>
+              </span>
+            </div>
+          </div>
         </section>
 
         {/* ══════ ROI Summary ══════ */}
@@ -429,7 +571,7 @@ export default function Leads() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {["Cliente", "Etapa", "Status", "Origem", "Temperatura", "Score", "SLA (dias)", "Valor"].map(h => (
+                  {["Cliente", "Etapa", "Qualificado", "Status", "Temperatura", "Score", "SLA (dias)", "Valor"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -441,13 +583,22 @@ export default function Leads() {
                     <td className="px-4 py-3 text-muted-foreground text-xs">{l.etapa}</td>
                     <td className="px-4 py-3">
                       <span className={cn(
+                        "text-[10px] font-semibold px-2 py-0.5 rounded",
+                        l.solQualificado
+                          ? "bg-emerald-500/10 text-emerald-500"
+                          : "bg-secondary text-muted-foreground"
+                      )}>
+                        {l.solQualificado ? "Sim" : "Pendente"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn(
                         "text-[11px] font-medium px-2 py-0.5 rounded",
                         l.status === "Ganho" ? "bg-emerald-500/10 text-emerald-500" :
                         l.status === "Perdido" ? "bg-destructive/10 text-destructive" :
                         "bg-secondary text-muted-foreground"
                       )}>{l.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{l.etiquetas || "—"}</td>
                     <td className="px-4 py-3">{l.temperatura ? <TempDot temp={l.temperatura} /> : "—"}</td>
                     <td className="px-4 py-3 text-xs font-semibold text-foreground tabular-nums">{l.solScore > 0 ? l.solScore.toFixed(1) : "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground text-xs tabular-nums">{l.tempoNaEtapa}</td>
