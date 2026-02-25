@@ -16,7 +16,8 @@ import {
   Headset,
   HelpCircle,
   RotateCcw,
-  Zap
+  Zap,
+  Presentation
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,12 @@ const menuItems = [
     path: "/ajuda",
     description: "Central de Ajuda"
   },
+  { 
+    title: "Conferência", 
+    icon: Presentation, 
+    path: "/conferencia",
+    description: "Painel SOL SDR"
+  },
 ];
 
 interface SidebarProps {
@@ -117,6 +124,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
     '/chamados': 'chamados',
     '/monitoramento': 'monitoramento',
     '/ajuda': 'ajuda',
+    '/conferencia': 'conferencia',
   };
 
   const visibleMenuItems = menuItems.filter(item => {
