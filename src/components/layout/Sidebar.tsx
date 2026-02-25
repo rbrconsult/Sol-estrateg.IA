@@ -33,12 +33,12 @@ const menuItems = [
     path: "/conferencia",
     description: "Painel SOL SDR"
   },
-  { 
-    title: "Leads", 
-    icon: Zap, 
-    path: "/leads",
-    description: "Captação & Robô"
-  },
+  // { 
+  //   title: "Leads", 
+  //   icon: Zap, 
+  //   path: "/leads",
+  //   description: "Captação & Robô"
+  // },
   { 
     title: "Dashboard", 
     icon: LayoutDashboard, 
