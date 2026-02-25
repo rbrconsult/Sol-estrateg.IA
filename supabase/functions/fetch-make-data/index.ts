@@ -57,10 +57,14 @@ Deno.serve(async (req) => {
       const url = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}&cols[]=*`;
       
       console.log(`Fetching Make Data Store: offset=${offset}`);
+      const trimmedKey = makeApiKey.trim();
+      console.log(`API Key length: ${trimmedKey.length}, first 8 chars: ${trimmedKey.substring(0, 8)}, DS ID: ${makeDataStoreId}`);
+      
+      const url = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId.trim()}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
       
       const makeRes = await fetch(url, {
         headers: {
-          Authorization: `Token ${makeApiKey}`,
+          Authorization: `Token ${trimmedKey}`,
           "Content-Type": "application/json",
         },
       });
