@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CalendarIcon, X } from "lucide-react";
+import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -300,6 +300,9 @@ export default function Leads() {
             <span className="text-xs text-muted-foreground font-mono tabular-nums">
               {time.toLocaleTimeString("pt-BR")}
             </span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => refetch()} title="Atualizar dados">
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            </Button>
           </div>
         </header>
 
