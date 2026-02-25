@@ -692,7 +692,8 @@ export function getConversaoPorEtapa(proposals: Proposal[]) {
 export function getLeadsKPIs(proposals: Proposal[]) {
   const total = proposals.length;
   const qualificados = proposals.filter(p => p.solQualificado).length;
-  const naoQualificados = total - qualificados;
+  const abertos = proposals.filter(p => p.status === 'Aberto');
+  const naoQualificados = abertos.filter(p => !p.solQualificado).length;
   const taxaQualificacao = total > 0 ? (qualificados / total) * 100 : 0;
   const quentes = proposals.filter(p => p.temperatura === 'QUENTE').length;
   const mornos = proposals.filter(p => p.temperatura === 'MORNO').length;
