@@ -50,12 +50,12 @@ function KPI({ label, target, suffix = "", detail, tooltip, highlight }: {
   const { value, ref } = useAnimatedNumber(target, 1200, isDecimal);
   return (
     <div ref={ref} className={cn(
-      "rounded-lg border bg-card p-3 text-center transition-all group relative",
+      "rounded-lg border bg-card p-4 flex flex-col items-center justify-center transition-all group relative min-h-[88px]",
       highlight
         ? "border-success/50 bg-success/5 hover:border-success/70"
         : "border-border/50 hover:border-primary/40"
     )}>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-2 text-center leading-tight">
         {label}
         {tooltip && (
           <span className="ml-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-primary/70 normal-case tracking-normal">
@@ -64,13 +64,13 @@ function KPI({ label, target, suffix = "", detail, tooltip, highlight }: {
         )}
       </p>
       <p className={cn(
-        "text-2xl font-extrabold tabular-nums leading-none",
+        "text-3xl font-extrabold tabular-nums leading-none",
         highlight ? "text-success" : "text-foreground"
       )}>
         {value}{suffix}
       </p>
       {detail && (
-        <p className="text-[10px] text-muted-foreground/70 mt-1 tabular-nums">{detail}</p>
+        <p className="text-[11px] text-muted-foreground/60 mt-1.5 tabular-nums text-center">{detail}</p>
       )}
     </div>
   );
