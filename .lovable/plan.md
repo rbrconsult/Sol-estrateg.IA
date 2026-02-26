@@ -1,32 +1,28 @@
 
+# Duplicar SOL Insights com Backup
 
-# Consolidar Origens de Leads: Indicacao + Prospecao + Organico
+## Objetivo
+Criar uma copia de seguranca da pagina SOL Insights atual antes de fazer mudancas, garantindo que se algo der errado, o backup esteja disponivel.
 
-## O que muda
+## Arquivos a criar
 
-Unificar as tres origens menores (Indicacao, Prospecao e Organico) em uma unica categoria chamada **"ORGANICO"** (ou outro nome, se preferir), somando seus valores.
+| Arquivo | Descricao |
+|---|---|
+| `src/pages/ConferenciaBackup.tsx` | Copia exata do `Conferencia.tsx` atual, renomeado internamente para `ConferenciaBackup` |
 
-## Calculo
-
-| Origem atual | Valor | Pct |
-|---|---|---|
-| ORGANICO | 11 | 5% |
-| INDICACAO | 6 | 3% |
-| PROSPECAO | 3 | 1% |
-| **ORGANICO (consolidado)** | **20** | **9%** |
-
-## Resultado final
-
-```text
-SITE       → 70  (33%)
-FACEBOOK   → 52  (24%)
-GOOGLE     → 12  (6%)
-ORGANICO   → 20  (9%)   ← soma de Organico + Indicacao + Prospecao
-```
-
-## Arquivo modificado
+## Arquivos a modificar
 
 | Arquivo | Mudanca |
 |---|---|
-| `src/data/conferenciaMockData.ts` | Substituir as 3 linhas (ORGANICO, INDICACAO, PROSPECAO) por uma unica linha consolidada com valores somados |
+| `src/App.tsx` | Adicionar rota `/conferencia-backup` apontando para `ConferenciaBackup` (protegida, com MainLayout, sem ModuleGuard para ficar oculta do menu) |
+| `src/components/layout/Sidebar.tsx` | Nenhuma mudanca -- a pagina backup nao aparece no menu, fica acessivel apenas por URL direto |
 
+## Resultado
+
+- **`/conferencia`** -- SOL Insights principal, pronta para receber novas metricas
+- **`/conferencia-backup`** -- Copia identica do estado atual, oculta do menu, acessivel apenas via URL direto
+- A pagina principal continua funcionando normalmente e pode ser editada livremente
+- Se precisar restaurar, basta acessar `/conferencia-backup` para comparar ou copiar o codigo de volta
+
+## Proximo passo
+Apos aprovacao, voce podera me passar as novas metricas e topicos para atualizar a pagina principal `/conferencia`.
