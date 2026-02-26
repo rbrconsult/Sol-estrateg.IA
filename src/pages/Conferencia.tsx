@@ -146,6 +146,8 @@ export default function Conferencia() {
 
   /* ── multiplier logic ── */
   const multiplier = useMemo(() => {
+    if (periodo === "hoje") return 0.03;
+    if (periodo === "3d") return 0.1;
     if (periodo === "7d") return 0.25;
     if (periodo === "30d") return 1;
     if (periodo === "90d") return 2.8;
@@ -249,6 +251,8 @@ export default function Conferencia() {
           <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
             <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="hoje">Hoje</SelectItem>
+              <SelectItem value="3d">3 dias</SelectItem>
               <SelectItem value="7d">7 dias</SelectItem>
               <SelectItem value="30d">30 dias</SelectItem>
               <SelectItem value="90d">90 dias</SelectItem>
