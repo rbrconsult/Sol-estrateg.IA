@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.fetch-make-data]
 verify_jwt = false
+
+[functions.fetch-make-errors]
+verify_jwt = false
+
+[functions.make-action]
+verify_jwt = false
+
+[functions.send-whatsapp-alert]
+verify_jwt = false

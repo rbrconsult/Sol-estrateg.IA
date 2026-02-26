@@ -17,7 +17,8 @@ import {
   HelpCircle,
   RotateCcw,
   Zap,
-  Presentation
+  Presentation,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,13 @@ const menuItems = [
     description: "Status do Sistema"
   },
   { 
-    title: "Ajuda", 
+    title: "Erros Make", 
+    icon: AlertTriangle, 
+    path: "/make-errors",
+    description: "Monitor Automações"
+  },
+  { 
+    title: "Ajuda",
     icon: HelpCircle, 
     path: "/ajuda",
     description: "Central de Ajuda"
@@ -123,6 +130,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
     '/origens': 'origens',
     '/chamados': 'chamados',
     '/monitoramento': 'monitoramento',
+    '/make-errors': 'make-errors',
     '/ajuda': 'ajuda',
     '/conferencia': 'conferencia',
   };

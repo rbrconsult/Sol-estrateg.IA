@@ -62,6 +62,75 @@ export type Database = {
         }
         Relationships: []
       }
+      make_errors: {
+        Row: {
+          attempts: number | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          error_type: string | null
+          execution_duration_seconds: number | null
+          execution_id: string
+          execution_status: string
+          failed_module_index: number | null
+          flow_category: string | null
+          id: string
+          module_app: string | null
+          module_name: string | null
+          occurred_at: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          scenario_id: number | null
+          scenario_name: string | null
+          status: string
+          total_modules: number | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          error_type?: string | null
+          execution_duration_seconds?: number | null
+          execution_id: string
+          execution_status?: string
+          failed_module_index?: number | null
+          flow_category?: string | null
+          id?: string
+          module_app?: string | null
+          module_name?: string | null
+          occurred_at?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          scenario_id?: number | null
+          scenario_name?: string | null
+          status?: string
+          total_modules?: number | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          error_type?: string | null
+          execution_duration_seconds?: number | null
+          execution_id?: string
+          execution_status?: string
+          failed_module_index?: number | null
+          flow_category?: string | null
+          id?: string
+          module_app?: string | null
+          module_name?: string | null
+          occurred_at?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          scenario_id?: number | null
+          scenario_name?: string | null
+          status?: string
+          total_modules?: number | null
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
