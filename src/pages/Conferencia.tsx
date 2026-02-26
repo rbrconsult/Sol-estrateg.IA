@@ -293,7 +293,7 @@ export default function Conferencia() {
             <span className="text-[10px] text-muted-foreground">
               — {filteredFup.reativados} leads resgatados voltam para
             </span>
-            <span className="text-[10px] font-semibold text-foreground">SDR</span>
+            <span className="text-[10px] font-semibold text-foreground">Closer</span>
             <ArrowRight className="h-3 w-3 text-success/60" />
             <span className="text-[10px] font-semibold text-foreground">Proposta</span>
             <ArrowRight className="h-3 w-3 text-success/60" />

@@ -14,12 +14,12 @@ export const kpiCards = [
   { label: "Resgatados FUP", value: 31, suffix: "", detail: "R$ 186k", tooltip: "Leads recuperados via FUP Frio" },
 ];
 
-// ─── PIPELINE REAL: SOL → Qualificação → SDR → Fechamento ───
+// ─── PIPELINE REAL: SOL → Qualificação → Closer → Fechamento ───
 export const pipelineStages = [
   { etapa: "Robô SOL", valor: 342, icon: "🤖", desc: "Leads recebidos e abordados pela IA" },
   { etapa: "Qualificação", valor: 198, icon: "🎯", desc: "Em processo de qualificação BANT" },
   { etapa: "Qualificado", valor: 94, icon: "✅", desc: "MQL aprovados pela SOL" },
-  { etapa: "SDR", valor: 61, icon: "📞", desc: "Transferidos para SDR humano" },
+  { etapa: "Closer", valor: 61, icon: "📞", desc: "Transferidos para Closer humano" },
   { etapa: "Proposta", valor: 38, icon: "📋", desc: "Agendamento / proposta enviada" },
   { etapa: "Fechado", valor: 11, icon: "🏆", desc: "Contratos assinados" },
 ];
