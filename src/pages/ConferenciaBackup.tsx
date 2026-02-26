@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   kpis, roiData, funnelData, weeklyLeads, insights, problemData, solucaoData, antesDepois,
   leadsTable, origemLeads, solPerformance, atividadeRecente,
-} from "@/data/conferenciaMockData";
+} from "@/data/conferenciaMockDataBackup";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
 } from "recharts";
@@ -405,10 +405,7 @@ export default function ConferenciaBackup() {
                     <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
                     <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
                       <div
-                        className={cn(
-                          "h-full rounded flex items-center justify-end pr-2 transition-all duration-1000 ease-out",
-                          f.etapa === "DESQUALIFICADOS" ? "bg-destructive/50" : "bg-primary/70"
-                        )}
+                        className="h-full rounded bg-primary/70 flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
                         style={{
                           width: funnelVisible ? `${(f.valor / maxFunnel) * 100}%` : "0%",
                           transitionDelay: `${i * 80}ms`,
