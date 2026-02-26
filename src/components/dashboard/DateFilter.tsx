@@ -17,7 +17,7 @@ export type DateRange = {
   to: Date | undefined;
 };
 
-export type DateFilterPreset = "all" | "7days" | "30days" | "lastMonth" | "custom";
+export type DateFilterPreset = "all" | "today" | "3days" | "7days" | "30days" | "lastMonth" | "custom";
 
 interface DateFilterProps {
   dateRange: DateRange;
