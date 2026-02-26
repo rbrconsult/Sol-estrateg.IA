@@ -185,14 +185,14 @@ export default function Conferencia() {
     valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
   }), [multiplier]);
 
-  const filteredSolHoje = useMemo(() => solHojeMock.map(d => ({
-    ...d,
-    qualificados: scale(d.qualificados),
-    scores: scale(d.scores),
-    quentes: scale(d.quentes),
-    mornos: scale(d.mornos),
-    frios: scale(d.frios),
-  })), [multiplier]);
+  const filteredSolHoje = useMemo(() => solHojeMock.map(d => {
+    const quentes = scale(d.quentes);
+    const mornos = scale(d.mornos);
+    const frios = scale(d.frios);
+    const qualificados = quentes + mornos + frios;
+    const scores = scale(d.scores);
+    return { ...d, qualificados, scores, quentes, mornos, frios };
+  }), [multiplier]);
 
   const filteredTemperatura = useMemo(() => temperaturaPorEtapaMock.map(t => ({
     ...t,
