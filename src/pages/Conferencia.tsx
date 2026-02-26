@@ -286,6 +286,33 @@ export default function Conferencia() {
             })}
           </div>
 
+          {/* ── MICRO FUNIL DA JORNADA ── */}
+          <div className="mt-4 pt-3 border-t border-border/30">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Funil da Jornada — % acumulada</p>
+            <div className="flex items-end gap-1">
+              {filteredPipeline.map((s, i) => {
+                const pctJornada = filteredPipeline[0].valor > 0
+                  ? (s.valor / filteredPipeline[0].valor * 100)
+                  : 0;
+                const colors = [
+                  "bg-primary",
+                  "bg-primary/80",
+                  "bg-primary/60",
+                  "bg-primary/40",
+                  "bg-accent-foreground/50",
+                  "bg-success",
+                ];
+                return (
+                  <div key={i} className="flex flex-col items-center" style={{ width: `${pctJornada}%`, minWidth: 40 }}>
+                    <div className={cn("h-3 w-full rounded-sm transition-all duration-700", colors[i] || "bg-primary/30")} />
+                    <p className="text-[10px] font-bold tabular-nums mt-1 text-foreground">{pctJornada.toFixed(1)}%</p>
+                    <p className="text-[9px] text-muted-foreground/70 leading-tight text-center">{s.etapa}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* FUP Frio rescue loop indicator */}
           <div className="mt-3 pt-3 border-t border-dashed border-success/30 flex items-center gap-2">
             <RotateCcw className="h-3.5 w-3.5 text-success" />
