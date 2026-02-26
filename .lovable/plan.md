@@ -1,51 +1,32 @@
 
+# Mini Funil de % da Jornada Completa no Pipeline Real
 
-# Fazer os filtros de data funcionarem com dados mock
+## O que muda
 
-## Problema
-Os filtros de periodo (7d, 30d, 90d, personalizado) existem visualmente mas nao alteram nenhum dado — todos os valores sao importados estaticamente e renderizados diretamente.
+Adicionar um **micro funil horizontal** dentro da seção "Pipeline Real — Fluxo do Lead", mostrando a % acumulada de toda a jornada (de ponta a ponta). Ele ficará entre o pipeline visual atual e a linha de repescagem FUP Frio — um espaço vago natural.
 
-## Solucao
-Criar uma logica de "simulacao de filtro" que aplica multiplicadores proporcionais aos dados mock conforme o periodo selecionado. Isso da a sensacao real de filtragem sem precisar de dados reais.
+## Layout
 
-## Como vai funcionar
+O micro funil será uma barra horizontal segmentada mostrando a taxa de sobrevivência em cada etapa em relação ao total inicial (Robô SOL = 100%):
 
-| Periodo | Multiplicador | Logica |
-|---|---|---|
-| 7 dias | ~0.25x | Aproximadamente 1/4 do mes |
-| 30 dias (padrao) | 1.0x | Dados base, sem alteracao |
-| 90 dias | ~2.8x | Aproximadamente 3 meses acumulados |
-| Personalizado | Proporcional | Calcula com base na diferenca de dias entre inicio e fim |
+```text
+|████████████████████████████████████| 100%  → |███████████████████| 57.9%  → |██████████| 27.5%  → |██████| 17.8%  → |████| 11.1%  → |██| 3.2%
+  Robô SOL                              Qualificação                Qualificado          Closer           Proposta        Fechado
+```
 
-Os multiplicadores serao aplicados a:
-- KPI cards (valores e detalhes recalculados)
-- Funil (valores proporcionais)
-- FUP Frio (entraram, reativados)
-- Mensagens (enviadas, recebidas)
-- Heatmap (intensidades)
-- Taxa por tentativa (mantem % — sao taxas, nao volumes)
-- Origem dos leads (mantem % de share e conversao — sao taxas)
-
-## Detalhes tecnicos
+## Detalhes da implementacao
 
 ### Arquivo: `src/pages/Conferencia.tsx`
 
-1. Criar funcao `getMultiplier(periodo, dateFrom, dateTo)` que retorna o fator de escala baseado no periodo selecionado
+1. **Calcular percentuais acumulados** — para cada etapa do `filteredPipeline`, calcular `(valor / filteredPipeline[0].valor * 100)` para obter a % relativa ao total de leads recebidos.
 
-2. Criar `useMemo` que gera dados filtrados aplicando o multiplicador:
-   - Valores absolutos (leads, MQL, SQL, agendamentos, fechados, mensagens) sao multiplicados e arredondados
-   - Percentuais e taxas (conversao, share, SLA) permanecem iguais
-   - Details dos KPIs sao recalculados com os novos valores
+2. **Inserir micro funil** entre a `div` do pipeline horizontal (linha ~287) e a linha do FUP Frio (linha ~289):
+   - Uma `div` com label "FUNIL DA JORNADA" em texto pequeno
+   - Uma barra horizontal segmentada onde cada segmento tem largura proporcional à % acumulada
+   - Abaixo de cada segmento: o nome da etapa e a % (ex: "57.9%")
+   - Cores degradando de `primary` (100%) para tons mais claros até `success` no Fechado
 
-3. Todos os componentes que hoje leem diretamente dos imports passam a ler dos dados filtrados via `useMemo`
+3. **Estilo**: bordas arredondadas, altura compacta (`h-3`), fundo `bg-secondary/30`, segmentos com gradiente de cor. Labels em `text-[10px]` para manter consistência com o resto do dashboard.
 
-4. O componente KPI recebe os novos valores filtrados (o `target` muda, e o hook de animacao re-anima ao mudar)
-
-5. Fix no hook `useAnimatedNumber`: adicionar `target` como dependencia para re-animar quando o filtro muda (hoje so anima uma vez por interseccao)
-
-### Resultado visual
-- Ao trocar de 30d para 7d, os numeros diminuem com animacao
-- Ao trocar para 90d, os numeros aumentam
-- Filtro personalizado calcula proporcional aos dias selecionados
-- Taxas e percentuais permanecem estaveis (comportamento realista)
-
+### Dados necessarios
+Nenhum dado novo — tudo calculado a partir do `filteredPipeline` existente, dividindo cada `valor` pelo valor da primeira etapa.
