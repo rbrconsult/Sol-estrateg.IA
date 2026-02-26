@@ -50,10 +50,10 @@ export const origemLeads = [
 
 // ─── ROW 3: MOTIVOS DE DESQUALIFICAÇÃO ───
 export const desqualMotivos = [
-  { motivo: "Sem condição", pct: 34, fill: "hsl(var(--destructive))" },
-  { motivo: "Imóvel inelegível", pct: 22, fill: "hsl(var(--warning))" },
+  { motivo: "Problemas de Financiamento", pct: 34, fill: "hsl(var(--destructive))" },
+  { motivo: "Consumo Desqualificado", pct: 22, fill: "hsl(var(--warning))" },
   { motivo: "Timing", pct: 19, fill: "hsl(var(--primary))" },
-  { motivo: "Sem interesse", pct: 15, fill: "hsl(var(--muted-foreground))" },
+  { motivo: "Sem interesse/Curioso", pct: 15, fill: "hsl(var(--muted-foreground))" },
   { motivo: "Outros", pct: 10, fill: "hsl(var(--accent-foreground))" },
 ];
 
