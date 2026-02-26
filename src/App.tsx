@@ -23,6 +23,7 @@ import Monitoramento from "./pages/Monitoramento";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
+import ConferenciaBackup from "./pages/ConferenciaBackup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -101,6 +102,11 @@ const App = () => (
               <Route path="/conferencia" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/conferencia-backup" element={
+                <ProtectedRoute>
+                  <MainLayout><ConferenciaBackup /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
