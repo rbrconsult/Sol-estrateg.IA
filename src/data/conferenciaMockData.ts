@@ -234,11 +234,11 @@ export const robotInsightsMock = {
 
 // ─── SCORE POR ORIGEM (mock) ───
 export const scorePorOrigemMock = [
-  { origem: "Indicação", score: 78, leads: 21 },
-  { origem: "Site", score: 72, leads: 55 },
-  { origem: "Google", score: 65, leads: 62 },
-  { origem: "Orgânico", score: 61, leads: 27 },
-  { origem: "Meta", score: 54, leads: 178 },
+  { origem: "Indicação", score: 82, leads: 1 },
+  { origem: "Site", score: 68, leads: 2 },
+  { origem: "Google", score: 59, leads: 4 },
+  { origem: "Orgânico", score: 45, leads: 1 },
+  { origem: "Meta", score: 51, leads: 10 },
 ];
 
 export const tabelaLeadsMock = [
