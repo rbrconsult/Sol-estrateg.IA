@@ -185,6 +185,27 @@ export default function Conferencia() {
     valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
   }), [multiplier]);
 
+  const filteredSolHoje = useMemo(() => solHojeMock.map(d => ({
+    ...d,
+    qualificados: scale(d.qualificados),
+    scores: scale(d.scores),
+    quentes: scale(d.quentes),
+    mornos: scale(d.mornos),
+    frios: scale(d.frios),
+  })), [multiplier]);
+
+  const filteredTemperatura = useMemo(() => temperaturaPorEtapaMock.map(t => ({
+    ...t,
+    quente: scale(t.quente),
+    morno: scale(t.morno),
+    frio: scale(t.frio),
+  })), [multiplier]);
+
+  const filteredLeads = useMemo(() => tabelaLeadsMock.map(l => ({
+    ...l,
+    valor: scale(l.valor),
+  })), [multiplier]);
+
   const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
 
@@ -257,11 +278,11 @@ export default function Conferencia() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
           <div className="grid grid-cols-5 gap-3 mb-4">
             {[
-              { label: "Qualificados", value: solHojeMock[2].qualificados, color: "text-primary" },
-              { label: "Scores", value: solHojeMock[2].scores, color: "text-foreground" },
-              { label: "Quentes", value: solHojeMock[2].quentes, color: "text-orange-500" },
-              { label: "Mornos", value: solHojeMock[2].mornos, color: "text-amber-400" },
-              { label: "Frios", value: solHojeMock[2].frios, color: "text-blue-400" },
+              { label: "Qualificados", value: filteredSolHoje[2].qualificados, color: "text-primary" },
+              { label: "Scores", value: filteredSolHoje[2].scores, color: "text-foreground" },
+              { label: "Quentes", value: filteredSolHoje[2].quentes, color: "text-orange-500" },
+              { label: "Mornos", value: filteredSolHoje[2].mornos, color: "text-amber-400" },
+              { label: "Frios", value: filteredSolHoje[2].frios, color: "text-blue-400" },
             ].map(item => (
               <div key={item.label} className="text-center">
                 <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
@@ -270,8 +291,8 @@ export default function Conferencia() {
             ))}
           </div>
           <div className="flex items-end gap-1 h-16">
-            {solHojeMock.map((d, i) => {
-              const maxQ = Math.max(...solHojeMock.map(x => x.qualificados));
+            {filteredSolHoje.map((d, i) => {
+              const maxQ = Math.max(...filteredSolHoje.map(x => x.qualificados));
               const h = (d.qualificados / maxQ) * 100;
               return (
                 <div key={d.dia} className="flex-1 flex flex-col items-center gap-0.5">
@@ -599,7 +620,7 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Temperatura por Etapa</p>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={temperaturaPorEtapaMock}>
+              <BarChart data={filteredTemperatura}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="etapa" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={45} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
@@ -631,7 +652,7 @@ export default function Conferencia() {
                 </tr>
               </thead>
               <tbody>
-                {tabelaLeadsMock.map((lead) => (
+                {filteredLeads.map((lead) => (
                   <>
                     <tr
                       key={lead.id}
