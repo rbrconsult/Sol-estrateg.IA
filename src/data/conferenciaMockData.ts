@@ -184,12 +184,12 @@ export const alertasMock = [
 
 // ─── TEMPERATURA POR ETAPA ───
 export const temperaturaPorEtapaMock = [
-  { etapa: "Robô SOL", quente: 28, morno: 214, frio: 100 },
-  { etapa: "Qualificação", quente: 22, morno: 138, frio: 38 },
-  { etapa: "Qualificado", quente: 18, morno: 62, frio: 14 },
-  { etapa: "Closer", quente: 15, morno: 38, frio: 8 },
-  { etapa: "Proposta", quente: 12, morno: 22, frio: 4 },
-  { etapa: "Fechado", quente: 8, morno: 3, frio: 0 },
+  { etapa: "Robô SOL", quente: 2, morno: 10, frio: 6 },
+  { etapa: "Qualificação", quente: 1, morno: 7, frio: 3 },
+  { etapa: "Qualificado", quente: 1, morno: 1, frio: 1 },
+  { etapa: "Closer", quente: 1, morno: 1, frio: 0 },
+  { etapa: "Proposta", quente: 1, morno: 0, frio: 0 },
+  { etapa: "Fechado", quente: 0, morno: 0, frio: 0 },
 ];
 
 // ─── TABELA DE LEADS DETALHADOS ───
