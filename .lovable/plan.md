@@ -1,32 +1,55 @@
 
-# Mini Funil de % da Jornada Completa no Pipeline Real
 
-## O que muda
+# Adicionar 4 componentes da Leads ao SOL Insights (mock data)
 
-Adicionar um **micro funil horizontal** dentro da seção "Pipeline Real — Fluxo do Lead", mostrando a % acumulada de toda a jornada (de ponta a ponta). Ele ficará entre o pipeline visual atual e a linha de repescagem FUP Frio — um espaço vago natural.
+## Componentes a adicionar
 
-## Layout
+### 1. Sol Hoje — Atividade Diaria (7 dias)
+Seção com destaque do dia (qualificados, scores, quentes, mornos, frios) e mini barras dos últimos 7 dias. Posicionamento: logo após os KPIs (ROW 1), antes do Pipeline.
 
-O micro funil será uma barra horizontal segmentada mostrando a taxa de sobrevivência em cada etapa em relação ao total inicial (Robô SOL = 100%):
+### 2. Alertas & Insights (barra lateral)
+Coluna lateral com cards coloridos (vermelho = atenção, amarelo = info, verde = positivo). Será integrada ao lado da seção de Origem dos Leads (ROW 3), transformando o layout em grid 3 colunas.
+
+### 3. Temperatura por Etapa
+Barras empilhadas (quente/morno/frio) por etapa do funil. Posicionamento: após o heatmap (ROW 5), junto com Performance Sol num grid de 2 colunas.
+
+### 4. Tabela de Leads Detalhados
+Tabela compacta com os campos: Cliente, Etapa, Temperatura (dot colorido), Score, SLA, Status FUP, Valor. Com timeline expandível mockada. Posicionamento: após Temperatura por Etapa, antes do rodapé.
+
+## Dados mock necessarios
+
+Adicionar ao `src/data/conferenciaMockData.ts`:
+
+- `solHojeMock`: array de 7 dias com qualificados, scores, quentes, mornos, frios
+- `alertasMock`: array de 5-6 alertas com type, title, desc
+- `temperaturaPorEtapaMock`: array por etapa com quente, morno, frio, sem
+- `tabelaLeadsMock`: array de ~15 leads com nome, etapa, temperatura, score, sla, status, valor, e historico de interações mockado
+
+## Layout final do SOL Insights
 
 ```text
-|████████████████████████████████████| 100%  → |███████████████████| 57.9%  → |██████████| 27.5%  → |██████| 17.8%  → |████| 11.1%  → |██| 3.2%
-  Robô SOL                              Qualificação                Qualificado          Closer           Proposta        Fechado
+ROW 1: KPIs (7 cards)
+ROW 1.5: SOL HOJE (atividade diária + 7 dias mini barras)  [NOVO]
+ROW 2: Pipeline Real + Micro Funil + FUP Frio
+ROW 3: FUP Frio ROI | Origem | Alertas & Insights  [MODIFICADO - 3 colunas]
+ROW 4: Desqualificação | Mensagens | SLA
+ROW 5: Mapa de Calor
+ROW 6: Taxa por Tentativa | Temperatura por Etapa  [MODIFICADO - 2 colunas]
+ROW 7: Tabela de Leads Detalhados  [NOVO]
+RODAPÉ
 ```
 
-## Detalhes da implementacao
+## Detalhes tecnicos
+
+### Arquivo: `src/data/conferenciaMockData.ts`
+- Adicionar 4 novos exports com dados mock consistentes com o pipeline existente (342 leads total, distribuição coerente por etapa)
 
 ### Arquivo: `src/pages/Conferencia.tsx`
+- Importar novos dados mock
+- Inserir seção Sol Hoje (copiar padrão visual da Leads: grid 5 colunas + barras verticais)
+- Modificar ROW 3 para grid de 3 colunas, adicionando coluna de Alertas
+- Adicionar Temperatura por Etapa ao lado da Taxa por Tentativa
+- Adicionar Tabela de Leads com expand/collapse para timeline (usando estado `expandedLead`)
+- Reutilizar o componente TempDot e padrões visuais da Leads (badges, cores, tipografia)
 
-1. **Calcular percentuais acumulados** — para cada etapa do `filteredPipeline`, calcular `(valor / filteredPipeline[0].valor * 100)` para obter a % relativa ao total de leads recebidos.
-
-2. **Inserir micro funil** entre a `div` do pipeline horizontal (linha ~287) e a linha do FUP Frio (linha ~289):
-   - Uma `div` com label "FUNIL DA JORNADA" em texto pequeno
-   - Uma barra horizontal segmentada onde cada segmento tem largura proporcional à % acumulada
-   - Abaixo de cada segmento: o nome da etapa e a % (ex: "57.9%")
-   - Cores degradando de `primary` (100%) para tons mais claros até `success` no Fechado
-
-3. **Estilo**: bordas arredondadas, altura compacta (`h-3`), fundo `bg-secondary/30`, segmentos com gradiente de cor. Labels em `text-[10px]` para manter consistência com o resto do dashboard.
-
-### Dados necessarios
-Nenhum dado novo — tudo calculado a partir do `filteredPipeline` existente, dividindo cada `valor` pelo valor da primeira etapa.
+Total: 2 arquivos modificados, sem novos arquivos, sem dependências adicionais.
