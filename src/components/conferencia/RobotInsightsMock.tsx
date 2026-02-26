@@ -94,14 +94,18 @@ export function RobotInsightsMock({ data }: { data: RobotData }) {
 
         {/* Alertas urgentes */}
         <div>
-          <p className="text-[9px] text-destructive uppercase tracking-wider font-semibold mb-3">⚠ Alertas Urgentes</p>
+          <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">📋 Alertas & Status</p>
           <div className="space-y-2">
             {data.alertasUrgentes.map((a, i) => {
               const icon = a.tipo === "danger"
                 ? <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                : a.tipo === "success"
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
                 : <Info className="h-3.5 w-3.5 text-warning shrink-0" />;
               const border = a.tipo === "danger"
                 ? "border-destructive/30 bg-destructive/5"
+                : a.tipo === "success"
+                ? "border-success/30 bg-success/5"
                 : "border-warning/30 bg-warning/5";
               return (
                 <div key={i} className={cn("rounded-md border p-2.5 flex items-start gap-2", border)}>
