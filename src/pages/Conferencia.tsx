@@ -146,6 +146,8 @@ export default function Conferencia() {
 
   /* ── multiplier logic ── */
   const multiplier = useMemo(() => {
+    if (periodo === "hoje") return 0.03;
+    if (periodo === "3d") return 0.1;
     if (periodo === "7d") return 0.25;
     if (periodo === "30d") return 1;
     if (periodo === "90d") return 2.8;
