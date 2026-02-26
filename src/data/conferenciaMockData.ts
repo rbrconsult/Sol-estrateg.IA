@@ -3,7 +3,7 @@
 // Demo Jan–Fev 2026 — RBR Consult
 // ══════════════════════════════════════════════════════════
 
-// ─── ROW 1: KPIs PRINCIPAIS ───
+// ─── ROW 1: KPIs PRINCIPAIS (7 cards — inclui Repescagem) ───
 export const kpiCards = [
   { label: "Leads Recebidos", value: 342, suffix: "", detail: "100%" },
   { label: "Taxa Resposta", value: 58, suffix: "%", detail: "198/342" },
@@ -11,17 +11,31 @@ export const kpiCards = [
   { label: "SQL", value: 61, suffix: "", detail: "64.9%", tooltip: "Sales Qualified Leads" },
   { label: "Agendamentos", value: 38, suffix: "", detail: "62.3%" },
   { label: "Fechados", value: 11, suffix: "", detail: "28.9%" },
+  { label: "Resgatados FUP", value: 31, suffix: "", detail: "R$ 186k", tooltip: "Leads recuperados via FUP Frio" },
 ];
 
-// ─── ROW 2: FUNIL ───
-export const funnelData = [
-  { etapa: "Leads", valor: 342 },
-  { etapa: "Respondidos", valor: 198 },
-  { etapa: "MQL", valor: 94 },
-  { etapa: "SQL", valor: 61 },
-  { etapa: "Agendados", valor: 38 },
-  { etapa: "Fechados", valor: 11 },
+// ─── PIPELINE REAL: SOL → Qualificação → SDR → Fechamento ───
+export const pipelineStages = [
+  { etapa: "Robô SOL", valor: 342, icon: "🤖", desc: "Leads recebidos e abordados pela IA" },
+  { etapa: "Qualificação", valor: 198, icon: "🎯", desc: "Em processo de qualificação BANT" },
+  { etapa: "Qualificado", valor: 94, icon: "✅", desc: "MQL aprovados pela SOL" },
+  { etapa: "SDR", valor: 61, icon: "📞", desc: "Transferidos para SDR humano" },
+  { etapa: "Proposta", valor: 38, icon: "📋", desc: "Agendamento / proposta enviada" },
+  { etapa: "Fechado", valor: 11, icon: "🏆", desc: "Contratos assinados" },
 ];
+
+// ─── FUP FRIO — REPESCAGEM (dados expandidos com ROI) ───
+export const fupFrio = {
+  entraram: 124,
+  reativados: 31,
+  pctReativados: 25,
+  diasAteReativar: 8.4,
+  valorRecuperado: "R$ 186.000",
+  ticketMedio: "R$ 6.000",
+  conversaoPosResgate: 35.5,
+  receitaTotal: "R$ 643.000",
+  pctReceitaViaFup: 28.9,
+};
 
 // ─── ROW 2: ORIGEM DOS LEADS ───
 export const origemLeads = [
@@ -32,13 +46,7 @@ export const origemLeads = [
   { origem: "Indicação", share: 6, conversao: 67 },
 ];
 
-// ─── ROW 3: FUP FRIO ───
-export const fupFrio = {
-  entraram: 124,
-  reativados: 31,
-  pctReativados: 25,
-  diasAteReativar: 8.4,
-};
+// (fupFrio movido para cima junto com pipeline)
 
 // ─── ROW 3: MOTIVOS DE DESQUALIFICAÇÃO ───
 export const desqualMotivos = [
