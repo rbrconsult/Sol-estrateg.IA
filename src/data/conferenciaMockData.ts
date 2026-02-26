@@ -195,16 +195,16 @@ export const temperaturaPorEtapaMock = [
 // ─── TABELA DE LEADS DETALHADOS ───
 // ─── SLA METRICS (mock) ───
 export const slaMock = {
-  primeiroAtendimento: { media: 2.1, pctDentro24h: 87, total: 342 },
+  primeiroAtendimento: { media: 0.8, pctDentro24h: 94, total: 18 },
   porEtapa: [
-    { etapa: "Robô SOL", slaDias: 1, mediaDias: 0.3, status: "ok" as const },
-    { etapa: "Qualificação", slaDias: 3, mediaDias: 2.1, status: "ok" as const },
-    { etapa: "Qualificado", slaDias: 5, mediaDias: 4.2, status: "warning" as const },
-    { etapa: "Closer", slaDias: 7, mediaDias: 8.5, status: "overdue" as const },
-    { etapa: "Proposta", slaDias: 10, mediaDias: 6.3, status: "ok" as const },
+    { etapa: "Robô SOL", slaDias: 1, mediaDias: 0.1, status: "ok" as const },
+    { etapa: "Qualificação", slaDias: 3, mediaDias: 1.2, status: "ok" as const },
+    { etapa: "Qualificado", slaDias: 5, mediaDias: 2.0, status: "ok" as const },
+    { etapa: "Closer", slaDias: 7, mediaDias: 1.5, status: "ok" as const },
+    { etapa: "Proposta", slaDias: 10, mediaDias: 0, status: "ok" as const },
   ],
-  robos: { tempoResposta: "10s", leadsAguardando: 18, taxaResposta: 58 },
-  geralProposta: { mediaDias: 12.4 },
+  robos: { tempoResposta: "8s", leadsAguardando: 2, taxaResposta: 61 },
+  geralProposta: { mediaDias: 3.2 },
 };
 
 // ─── ROBOT INSIGHTS (mock) ───
