@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,29 +19,24 @@ import {
 function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
   const [value, setValue] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
+  const prevTarget = useRef(target);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const start = performance.now();
-          const step = (now: number) => {
-            const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setValue(isDecimal ? +(target * eased).toFixed(1) : Math.round(target * eased));
-            if (progress < 1) requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+
+    const from = prevTarget.current !== target ? prevTarget.current : 0;
+    prevTarget.current = target;
+
+    const start = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = from + (target - from) * eased;
+      setValue(isDecimal ? +current.toFixed(1) : Math.round(current));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }, [target, duration, isDecimal]);
 
   return { value, ref };
@@ -115,7 +110,57 @@ export default function Conferencia() {
   const hasFilters = periodo !== "30d" || dateFrom || dateTo;
   const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); };
 
-  const maxFunnel = Math.max(...funnelData.map((f) => f.valor));
+  /* ── multiplier logic ── */
+  const multiplier = useMemo(() => {
+    if (periodo === "7d") return 0.25;
+    if (periodo === "30d") return 1;
+    if (periodo === "90d") return 2.8;
+    if (periodo === "custom" && dateFrom && dateTo) {
+      const days = Math.max(differenceInDays(dateTo, dateFrom), 1);
+      return days / 30;
+    }
+    return 1;
+  }, [periodo, dateFrom, dateTo]);
+
+  const scale = (v: number) => Math.round(v * multiplier);
+
+  /* ── filtered data ── */
+  const filteredKpis = useMemo(() => kpiCards.map(k => {
+    if (k.suffix === "%") return k; // rates stay the same
+    const newVal = scale(k.value);
+    // Recalculate detail based on position in funnel
+    let detail = k.detail;
+    if (k.label === "Leads Recebidos") detail = "100%";
+    else if (k.label === "Taxa Resposta") {
+      const resp = Math.round(scale(198));
+      const total = scale(342);
+      detail = `${resp}/${total}`;
+    }
+    return { ...k, value: newVal, detail };
+  }), [multiplier]);
+
+  const filteredFunnel = useMemo(() => funnelData.map(f => ({
+    ...f, valor: scale(f.valor)
+  })), [multiplier]);
+
+  const filteredFup = useMemo(() => ({
+    ...fupFrio,
+    entraram: scale(fupFrio.entraram),
+    reativados: scale(fupFrio.reativados),
+  }), [multiplier]);
+
+  const filteredMensagens = useMemo(() => ({
+    ...mensagens,
+    enviadas: scale(mensagens.enviadas),
+    recebidas: scale(mensagens.recebidas),
+  }), [multiplier]);
+
+  const filteredHeatmap = useMemo(() => ({
+    ...heatmap,
+    valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
+  }), [multiplier]);
+
+  const maxFunnel = Math.max(...filteredFunnel.map((f) => f.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
 
   return (
@@ -184,7 +229,7 @@ export default function Conferencia() {
 
         {/* ══════ ROW 1 — KPIs ══════ */}
         <section className="grid grid-cols-3 md:grid-cols-6 gap-2">
-          {kpiCards.map((k) => (
+          {filteredKpis.map((k) => (
             <KPI key={k.label} label={k.label} target={k.value} suffix={k.suffix} detail={k.detail} tooltip={(k as any).tooltip} />
           ))}
         </section>
@@ -195,10 +240,10 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Funil de Conversão</p>
             <div className="space-y-2">
-              {funnelData.map((f, i) => {
+              {filteredFunnel.map((f, i) => {
                 const pct = ((f.valor / maxFunnel) * 100).toFixed(0);
-                const convNext = i < funnelData.length - 1
-                  ? ((funnelData[i + 1].valor / f.valor) * 100).toFixed(0)
+                const convNext = i < filteredFunnel.length - 1
+                  ? ((filteredFunnel[i + 1].valor / f.valor) * 100).toFixed(0)
                   : null;
                 return (
                   <div key={f.etapa}>
@@ -249,15 +294,15 @@ export default function Conferencia() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-4">FUP Frio</p>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
-                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.entraram}</p>
+                <p className="text-2xl font-extrabold text-foreground tabular-nums">{filteredFup.entraram}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">entraram no FUP</p>
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-success tabular-nums">{fupFrio.reativados}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">reativados ({fupFrio.pctReativados}%)</p>
+                <p className="text-2xl font-extrabold text-success tabular-nums">{filteredFup.reativados}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">reativados ({filteredFup.pctReativados}%)</p>
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.diasAteReativar}</p>
+                <p className="text-2xl font-extrabold text-foreground tabular-nums">{filteredFup.diasAteReativar}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">dias até reativar</p>
               </div>
             </div>
@@ -312,11 +357,11 @@ export default function Conferencia() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Mensagens</p>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.enviadas.toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{filteredMensagens.enviadas.toLocaleString("pt-BR")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">enviadas</p>
               </div>
               <div>
-                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.recebidas.toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{filteredMensagens.recebidas.toLocaleString("pt-BR")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">recebidas</p>
               </div>
               <div>
@@ -342,23 +387,23 @@ export default function Conferencia() {
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Mapa de Calor — Respostas</p>
-            <span className="text-[10px] text-primary font-medium">Pico: {heatmap.pico}</span>
+            <span className="text-[10px] text-primary font-medium">Pico: {filteredHeatmap.pico}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
                   <th className="w-16" />
-                  {heatmap.dias.map((d) => (
+                  {filteredHeatmap.dias.map((d) => (
                     <th key={d} className="text-[10px] text-muted-foreground font-medium text-center pb-1.5 px-1">{d}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {heatmap.periodos.map((p, pi) => (
+                {filteredHeatmap.periodos.map((p, pi) => (
                   <tr key={p}>
                     <td className="text-[10px] text-muted-foreground font-medium pr-2 py-0.5">{p}</td>
-                    {heatmap.valores[pi].map((v, di) => {
+                    {filteredHeatmap.valores[pi].map((v, di) => {
                       const intensity = v / 100;
                       return (
                         <td key={di} className="p-0.5">
