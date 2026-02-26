@@ -40,11 +40,11 @@ export const fupFrio = {
 
 // ─── ROW 2: ORIGEM DOS LEADS ───
 export const origemLeads = [
-  { origem: "Meta", share: 52, conversao: 18 },
-  { origem: "Google", share: 18, conversao: 31 },
-  { origem: "Site", share: 16, conversao: 38 },
-  { origem: "Orgânico", share: 8, conversao: 29 },
-  { origem: "Indicação", share: 6, conversao: 67 },
+  { origem: "Meta", share: 56, conversao: 15 },
+  { origem: "Google", share: 22, conversao: 25 },
+  { origem: "Site", share: 11, conversao: 33 },
+  { origem: "Orgânico", share: 6, conversao: 0 },
+  { origem: "Indicação", share: 5, conversao: 100 },
 ];
 
 // (fupFrio movido para cima junto com pipeline)
