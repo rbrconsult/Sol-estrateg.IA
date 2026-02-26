@@ -162,14 +162,15 @@ export const atividadeRecente: any[] = [];
 export const antesDepois: any[] = [];
 
 // ─── SOL HOJE — Atividade Diária (7 dias) ───
+// Atividade 23/02 a 01/03 — ramp-up com 3 qualificados no dia 01/03
 export const solHojeMock = [
-  { dia: "Seg", qualificados: 14, scores: 12, quentes: 3, mornos: 8, frios: 3 },
-  { dia: "Ter", qualificados: 18, scores: 16, quentes: 5, mornos: 9, frios: 4 },
-  { dia: "Qua", qualificados: 21, scores: 19, quentes: 6, mornos: 11, frios: 4 },
-  { dia: "Qui", qualificados: 15, scores: 13, quentes: 4, mornos: 8, frios: 3 },
-  { dia: "Sex", qualificados: 12, scores: 10, quentes: 2, mornos: 7, frios: 3 },
-  { dia: "Sáb", qualificados: 8, scores: 7, quentes: 1, mornos: 5, frios: 2 },
-  { dia: "Dom", qualificados: 6, scores: 5, quentes: 1, mornos: 3, frios: 2 },
+  { dia: "23/02", qualificados: 0, scores: 0, quentes: 0, mornos: 0, frios: 0 },
+  { dia: "24/02", qualificados: 1, scores: 1, quentes: 0, mornos: 1, frios: 0 },
+  { dia: "25/02", qualificados: 2, scores: 2, quentes: 0, mornos: 1, frios: 1 },
+  { dia: "26/02", qualificados: 3, scores: 3, quentes: 1, mornos: 1, frios: 1 },
+  { dia: "27/02", qualificados: 4, scores: 3, quentes: 1, mornos: 2, frios: 1 },
+  { dia: "28/02", qualificados: 5, scores: 4, quentes: 1, mornos: 3, frios: 1 },
+  { dia: "01/03", qualificados: 3, scores: 3, quentes: 1, mornos: 1, frios: 1 },
 ];
 
 // ─── ALERTAS & INSIGHTS ───
