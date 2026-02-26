@@ -94,7 +94,13 @@ const menuItems = [
     description: "Status do Sistema"
   },
   { 
-    title: "Ajuda", 
+    title: "Erros Make", 
+    icon: AlertTriangle, 
+    path: "/make-errors",
+    description: "Monitor Automações"
+  },
+  { 
+    title: "Ajuda",
     icon: HelpCircle, 
     path: "/ajuda",
     description: "Central de Ajuda"
