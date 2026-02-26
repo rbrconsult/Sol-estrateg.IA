@@ -286,8 +286,36 @@ export default function Conferencia() {
               <X className="h-3 w-3" /> Limpar
             </Button>
           )}
-        </section>
+          </section>
 
+          {/* ══════ FILTROS OPERACIONAIS ══════ */}
+          <section className="flex flex-wrap items-center gap-2 mb-5">
+            <Select value={filterEtapa} onValueChange={setFilterEtapa}>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Etapa" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas Etapas</SelectItem>
+                {etapasUnicas.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterTemp} onValueChange={setFilterTemp}>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Temperatura" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas Temps</SelectItem>
+                <SelectItem value="QUENTE">Quente</SelectItem>
+                <SelectItem value="MORNO">Morno</SelectItem>
+                <SelectItem value="FRIO">Frio</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar lead..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 w-[180px] pl-7 text-xs"
+              />
+            </div>
+          </section>
         {/* ══════ ROW 1.5 — SOL HOJE (7 dias) ══════ */}
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
