@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, AlertTriangle, Zap, TrendingUp, Clock, DollarSign, Users, Target, Shield, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  kpis, roiData, funnelData, weeklyLeads, insights, problemData, solucaoData, antesDepois,
-  leadsTable, origemLeads, solPerformance, atividadeRecente,
+  kpiCards, funnelData, origemLeads, fupFrio, desqualMotivos,
+  mensagens, sla, heatmap, taxaPorTentativa,
 } from "@/data/conferenciaMockData";
 import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from "recharts";
 
 /* ───────── animated counter hook ───────── */
@@ -47,33 +47,44 @@ function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
   return { value, ref };
 }
 
-/* ───────── temp indicator ───────── */
-function TempDot({ temp }: { temp: string }) {
-  const cls = temp === "QUENTE"
-    ? "bg-destructive/80"
-    : temp === "FRIO"
-      ? "bg-info/80"
-      : "bg-warning/80";
+/* ───────── KPI Card ───────── */
+function KPI({ label, target, suffix = "" }: { label: string; target: number; suffix?: string }) {
+  const isDecimal = suffix === "%" || target % 1 !== 0;
+  const { value, ref } = useAnimatedNumber(target, 1200, isDecimal);
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-      <span className={`h-2 w-2 rounded-full ${cls}`} />
-      <span className="capitalize">{temp.toLowerCase()}</span>
-    </span>
+    <div ref={ref} className="rounded-lg border border-border/50 bg-card p-3 text-center transition-all hover:border-primary/40">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
+      <p className="text-2xl font-extrabold text-foreground tabular-nums leading-none">
+        {value}{suffix}
+      </p>
+    </div>
   );
 }
 
-/* ───────── section divider ───────── */
-function SectionHeader({ number, title, subtitle, icon: Icon }: { number: string; title: string; subtitle: string; icon: any }) {
+/* ───────── SLA Gauge ───────── */
+function SLAGauge({ pct }: { pct: number }) {
+  const circumference = 2 * Math.PI * 40;
+  const offset = circumference - (pct / 100) * circumference;
+  const color = pct >= 90 ? "hsl(var(--success))" : pct >= 70 ? "hsl(var(--warning))" : "hsl(var(--destructive))";
   return (
-    <div className="flex items-center gap-4 mt-10 mb-5">
-      <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/10 text-primary shrink-0">
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-semibold">{number}</p>
-        <h2 className="text-base font-bold text-foreground">{title}</h2>
-        <p className="text-xs text-muted-foreground">{subtitle}</p>
-      </div>
+    <div className="flex flex-col items-center justify-center">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(var(--border))" strokeWidth="8" />
+        <circle
+          cx="50" cy="50" r="40" fill="none"
+          stroke={color} strokeWidth="8"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform="rotate(-90 50 50)"
+          className="transition-all duration-1000"
+        />
+        <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
+          className="fill-foreground text-lg font-bold" style={{ fontSize: 18 }}>
+          {pct}%
+        </text>
+      </svg>
+      <p className="text-[10px] text-muted-foreground mt-1">abordados em ≤ 5min</p>
     </div>
   );
 }
@@ -90,49 +101,26 @@ export default function Conferencia() {
   const [periodo, setPeriodo] = useState("30d");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [etapa, setEtapa] = useState("todas");
-  const [temperatura, setTemperatura] = useState("todas");
-  const [responsavel, setResponsavel] = useState("todos");
 
-  const responsaveis = [...new Set(leadsTable.map((l) => l.responsavel))];
-  const etapas = [...new Set(funnelData.map((f) => f.etapa))];
-
-  const hasFilters = periodo !== "30d" || etapa !== "todas" || temperatura !== "todas" || responsavel !== "todos" || dateFrom || dateTo;
-  const clearFilters = () => {
-    setPeriodo("30d");
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setEtapa("todas");
-    setTemperatura("todas");
-    setResponsavel("todos");
-  };
-
-  const [funnelVisible, setFunnelVisible] = useState(false);
-  const funnelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = funnelRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setFunnelVisible(true); }, { threshold: 0.2 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const hasFilters = periodo !== "30d" || dateFrom || dateTo;
+  const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); };
 
   const maxFunnel = Math.max(...funnelData.map((f) => f.valor));
+  const maxShare = Math.max(...origemLeads.map((o) => o.share));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-[1400px] mx-auto px-6 pb-16">
+      <div className="max-w-[1400px] mx-auto px-4 pb-12">
 
         {/* ══════ HEADER ══════ */}
-        <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-foreground">
-              SOL Insights
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Painel Estratégico · Evolve Energia Solar</p>
+        <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold tracking-tight text-foreground">SOL Insights</h1>
+            <span className="rounded-md bg-warning/15 border border-warning/30 px-2 py-0.5 text-[10px] font-semibold text-warning uppercase tracking-wider">
+              DEMO — dados simulados · Jan–Fev 2026
+            </span>
           </div>
-          <div className="flex items-center gap-5">
-            <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">Powered by RBR Consult</span>
+          <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               Tempo real
@@ -144,11 +132,9 @@ export default function Conferencia() {
         </header>
 
         {/* ══════ FILTROS ══════ */}
-        <section className="mt-4 flex flex-wrap items-center gap-2">
+        <section className="mt-3 flex flex-wrap items-center gap-2 mb-5">
           <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="7d">7 dias</SelectItem>
               <SelectItem value="30d">30 dias</SelectItem>
@@ -156,7 +142,6 @@ export default function Conferencia() {
               <SelectItem value="custom">Personalizado</SelectItem>
             </SelectContent>
           </Select>
-
           {periodo === "custom" && (
             <>
               <Popover>
@@ -183,45 +168,6 @@ export default function Conferencia() {
               </Popover>
             </>
           )}
-
-          <div className="h-4 w-px bg-border/50 mx-1" />
-
-          <Select value={etapa} onValueChange={setEtapa}>
-            <SelectTrigger className="w-[150px] h-8 text-xs">
-              <SelectValue placeholder="Etapa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as etapas</SelectItem>
-              {etapas.map((e) => (
-                <SelectItem key={e} value={e}>{e}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={temperatura} onValueChange={setTemperatura}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
-              <SelectValue placeholder="Temperatura" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas</SelectItem>
-              <SelectItem value="QUENTE">Quente</SelectItem>
-              <SelectItem value="MORNO">Morno</SelectItem>
-              <SelectItem value="FRIO">Frio</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={responsavel} onValueChange={setResponsavel}>
-            <SelectTrigger className="w-[160px] h-8 text-xs">
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              {responsaveis.map((r) => (
-                <SelectItem key={r} value={r}>{r}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           {hasFilters && (
             <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1" onClick={clearFilters}>
               <X className="h-3 w-3" /> Limpar
@@ -229,361 +175,228 @@ export default function Conferencia() {
           )}
         </section>
 
-        {/* ══════ SEÇÃO 1: O PROBLEMA ══════ */}
-        <SectionHeader
-          number="01 · O PROBLEMA"
-          title="A Lacuna de Experiência do Cliente"
-          subtitle="Quem responde primeiro, vende. Quem qualifica melhor, escala."
-          icon={AlertTriangle}
-        />
-
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <XCircle className="h-4 w-4 text-destructive" />
-              <p className="text-[11px] text-destructive font-semibold uppercase tracking-wider">Sem Resposta</p>
-            </div>
-            <p className="text-4xl font-bold text-foreground tabular-nums">{problemData.semResposta}%</p>
-            <p className="text-xs text-muted-foreground mt-1.5">das empresas <strong>nunca</strong> respondem seus leads</p>
-          </div>
-          <div className="rounded-lg border border-warning/20 bg-warning/5 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-warning" />
-              <p className="text-[11px] text-warning font-semibold uppercase tracking-wider">Tempo de Espera</p>
-            </div>
-            <p className="text-4xl font-bold text-foreground tabular-nums">{problemData.tempoMedioResposta}h</p>
-            <p className="text-xs text-muted-foreground mt-1.5">média de resposta do mercado</p>
-          </div>
-          <div className="rounded-lg border border-success/20 bg-success/5 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="h-4 w-4 text-success" />
-              <p className="text-[11px] text-success font-semibold uppercase tracking-wider">Quem Responde Primeiro</p>
-            </div>
-            <p className="text-4xl font-bold text-foreground tabular-nums">{problemData.compraPrimeiro}%</p>
-            <p className="text-xs text-muted-foreground mt-1.5">fecham com quem <strong>atende primeiro</strong></p>
-          </div>
-        </section>
-
-        <div className="mt-3 rounded-lg border border-border/50 bg-card p-4 flex items-center gap-3">
-          <DollarSign className="h-5 w-5 text-muted-foreground shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Custo da ineficiência:</strong> SDRs humanos gastam de {problemData.custoTriagemHumana.min} a {problemData.custoTriagemHumana.max} horas por lead em triagem manual, 
-            custando de R$ {problemData.custoLeadHumano.min} a R$ {problemData.custoLeadHumano.max} por lead qualificado — muitas vezes focando em "curiosos" em vez de compradores reais.
-          </p>
-        </div>
-
-        {/* ══════ SEÇÃO 2: A SOLUÇÃO SOL ══════ */}
-        <SectionHeader
-          number="02 · A SOLUÇÃO"
-          title="SOL — IA SDR Exclusiva para a Evolve"
-          subtitle="Velocidade extrema. Qualificação BANT 24/7. Foco no fechamento."
-          icon={Zap}
-        />
-
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-5">
-            <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-2">Velocidade Extrema</p>
-            <p className="text-4xl font-bold text-foreground tabular-nums">{solucaoData.tempoResposta}s</p>
-            <p className="text-xs text-muted-foreground mt-1.5">de resposta → <strong>+{solucaoData.aumentoConversao}%</strong> de conversão</p>
-          </div>
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-5">
-            <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-2">Qualificação BANT</p>
-            <p className="text-4xl font-bold text-foreground">{solucaoData.velocidadeQualif}</p>
-            <p className="text-xs text-muted-foreground mt-1.5">mais rápido que humano · <strong>{solucaoData.disponibilidade}</strong></p>
-          </div>
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-5">
-            <p className="text-[11px] text-primary font-semibold uppercase tracking-wider mb-2">Custo por Lead Qualificado</p>
-            <p className="text-4xl font-bold text-foreground">R$ {solucaoData.custoLeadSol.min}-{solucaoData.custoLeadSol.max}</p>
-            <p className="text-xs text-muted-foreground mt-1.5">vs R$ {problemData.custoLeadHumano.min}-{problemData.custoLeadHumano.max} com SDR humano</p>
-          </div>
-        </section>
-
-        {/* Fluxo visual */}
-        <div className="mt-4 rounded-lg border border-border/50 bg-card p-5">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-4 font-medium">Fluxo de Atendimento</p>
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            {[
-              { label: "Lead Inbound", sub: "Site · Ads · Redes" },
-              { label: "SOL IA", sub: "10s · BANT · 24/7" },
-              { label: "CRM Atualizado", sub: "100% dados" },
-              { label: "Consultor Fecha", sub: "Lead pronto" },
-            ].map((step, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="rounded-lg border border-border/50 bg-secondary/30 px-4 py-3 text-center min-w-[130px]">
-                  <p className="text-sm font-semibold text-foreground">{step.label}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{step.sub}</p>
-                </div>
-                {i < 3 && <ArrowRight className="h-4 w-4 text-primary shrink-0" />}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ══════ SEÇÃO 3: O IMPACTO & ROI ══════ */}
-        <SectionHeader
-          number="03 · O IMPACTO"
-          title="Performance Comercial → Previsibilidade Financeira"
-          subtitle="Dados reais da operação Evolve com a Sol."
-          icon={TrendingUp}
-        />
-
-        {/* KPIs Reais */}
-        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {kpis.map((k, i) => {
-            const { value: animVal, ref } = useAnimatedNumber(k.value, 1400, k.isDecimal);
-            return (
-              <div key={i} ref={ref}
-                className="rounded-lg border border-border/50 bg-card p-4 transition-all duration-200 hover:border-border">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{k.label}</p>
-                <p className="text-2xl font-bold text-foreground tabular-nums">
-                  {animVal}{k.suffix || ""}
-                </p>
-                {k.trend && (
-                  <span className="text-[11px] font-medium text-success mt-1 inline-block">
-                    +{k.trend}%
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </section>
-
-        {/* ROI Resumo */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[
-            { label: "Custo por Lead Qualificado", value: `R$ ${roiData.custoLeadSol}`, sub: `vs R$ ${roiData.custoSDRHumano} SDR humano`, highlight: true },
-            { label: "Faturamento Potencial", value: "R$ 1.8M", sub: `${kpis[1].value} leads × ticket médio R$ 28k` },
-            { label: "Economia Mensal", value: `R$ ${(roiData.economiaMensal / 1000).toFixed(1)}k`, sub: "Escala sem aumentar time" },
-          ].map((item, i) => (
-            <div key={i} className="rounded-lg border border-border/50 bg-card p-5">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{item.label}</p>
-              <p className="text-3xl font-bold text-foreground">{item.value}</p>
-              <p className="text-xs text-muted-foreground mt-1.5">{item.sub}</p>
-            </div>
+        {/* ══════ ROW 1 — KPIs ══════ */}
+        <section className="grid grid-cols-3 md:grid-cols-6 gap-2">
+          {kpiCards.map((k) => (
+            <KPI key={k.label} label={k.label} target={k.value} suffix={k.suffix} />
           ))}
         </section>
 
-        {/* ══════ COMPARATIVO ANTES × DEPOIS ══════ */}
-        <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-border/40">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Antes × Depois da Sol</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/40">
-                  {["Métrica", "Antes (SDR Humano)", "Depois (Sol IA)", "Impacto"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {antesDepois.map((row, i) => (
-                  <tr key={i} className="border-b border-border/20 transition-colors hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium text-foreground">{row.metrica}</td>
-                    <td className="px-4 py-3 text-destructive/80 font-mono text-xs">{row.antes}</td>
-                    <td className="px-4 py-3 text-success font-mono text-xs font-semibold">{row.depois}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">{row.impacto}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* ══════ SEÇÃO 4 — Grid (Funil + Insights) ══════ */}
-        <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Funil + Barras semanais */}
-          <div className="lg:col-span-2 space-y-4">
-            <div ref={funnelRef} className="rounded-lg border border-border/50 bg-card p-5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Funil de Leads</h3>
-              <div className="space-y-2.5">
-                {funnelData.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
-                    <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded flex items-center justify-end pr-2 transition-all duration-1000 ease-out",
-                          f.etapa === "DESQUALIFICADOS" ? "bg-destructive/50" : "bg-primary/70"
-                        )}
-                        style={{
-                          width: funnelVisible ? `${(f.valor / maxFunnel) * 100}%` : "0%",
-                          transitionDelay: `${i * 80}ms`,
-                        }}
-                      >
-                        <span className="text-[10px] font-semibold text-primary-foreground">{f.valor}</span>
+        {/* ══════ ROW 2 — Funil + Origem ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Funil */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Funil de Conversão</p>
+            <div className="space-y-2">
+              {funnelData.map((f, i) => {
+                const pct = ((f.valor / maxFunnel) * 100).toFixed(0);
+                const convNext = i < funnelData.length - 1
+                  ? ((funnelData[i + 1].valor / f.valor) * 100).toFixed(0)
+                  : null;
+                return (
+                  <div key={f.etapa}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground w-20 shrink-0 truncate">{f.etapa}</span>
+                      <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden relative">
+                        <div
+                          className="h-full bg-primary/70 rounded transition-all duration-700"
+                          style={{ width: `${pct}%` }}
+                        />
+                        <span className="absolute right-1.5 top-0.5 text-[10px] font-bold text-foreground tabular-nums">{f.valor}</span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-border/50 bg-card p-5">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Leads por Semana</h3>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={weeklyLeads} barCategoryGap="25%">
-                  <XAxis dataKey="semana" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 6,
-                      color: "hsl(var(--foreground))",
-                      fontSize: 12,
-                    }}
-                    cursor={{ fill: "hsl(var(--secondary) / 0.3)" }}
-                  />
-                  <Bar dataKey="leads" radius={[4, 4, 0, 0]}>
-                    {weeklyLeads.map((_, i) => (
-                      <Cell key={i} fill={i === weeklyLeads.length - 1 ? "hsl(var(--success))" : "hsl(var(--primary) / 0.5)"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Insights */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alertas & Insights</h3>
-            {insights.map((ins, i) => {
-              const borderCls = ins.type === "alert" ? "border-l-destructive/60" : ins.type === "info" ? "border-l-warning/60" : "border-l-success/60";
-              const labelCls = ins.type === "alert" ? "text-destructive" : ins.type === "info" ? "text-warning" : "text-success";
-              return (
-                <div key={i}
-                  className={`rounded-lg border border-border/50 bg-card p-4 border-l-2 ${borderCls} transition-colors hover:border-border`}>
-                  <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${labelCls}`}>
-                    {ins.type === "alert" ? "Atenção" : ins.type === "info" ? "Info" : "Positivo"}
-                  </p>
-                  <p className="text-sm font-medium text-foreground mb-1">{ins.title}</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{ins.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ══════ SEÇÃO 5 — Tabela de Leads Qualificados ══════ */}
-        <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-border/40">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leads Qualificados pela Sol</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/40">
-                  {["Cliente", "Cidade", "Valor Conta", "Score", "Temperatura", "Etapa", "Responsável", "Data"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leadsTable.map((l, i) => (
-                  <tr key={i} className="border-b border-border/20 transition-colors hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium text-foreground">{l.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{l.cidade}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{l.valorConta}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-semibold text-foreground tabular-nums">{l.score}</span>
-                    </td>
-                    <td className="px-4 py-3"><TempDot temp={l.temperatura} /></td>
-                    <td className="px-4 py-3">
-                      <span className="text-[11px] text-muted-foreground">{l.etapa}</span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{l.responsavel}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs tabular-nums">{l.data}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* ══════ SEÇÃO 6 — Bottom Grid ══════ */}
-        <section className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Origem */}
-          <div className="rounded-lg border border-border/50 bg-card p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Origem dos Leads</h3>
-            <div className="space-y-3">
-              {origemLeads.map((o, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="w-24 text-[11px] text-muted-foreground">{o.origem}</span>
-                  <div className="flex-1 h-4 rounded bg-secondary/50 overflow-hidden">
-                    <div className="h-full rounded bg-primary/60" style={{ width: `${o.pct * 3}%` }} />
-                  </div>
-                  <span className="text-xs font-semibold text-foreground w-8 text-right tabular-nums">{o.valor}</span>
-                  <span className="text-[11px] text-muted-foreground w-10 text-right tabular-nums">{o.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Performance Sol */}
-          <div className="rounded-lg border border-border/50 bg-card p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Performance Sol</h3>
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              {[
-                { label: "Score Médio", val: solPerformance.scoreMedio },
-                { label: "Taxa Qualif.", val: `${solPerformance.taxaQualificacao}%` },
-                { label: "Resp. Médio", val: `${solPerformance.respostMedia}s` },
-                { label: "Agendados", val: solPerformance.agendados },
-              ].map((m, i) => (
-                <div key={i} className="rounded-md bg-secondary/40 p-3">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">{m.label}</p>
-                  <p className="text-lg font-bold text-foreground tabular-nums">{m.val}</p>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              {solPerformance.temperaturas.map((t, i) => {
-                const cls = t.label === "QUENTE" ? "bg-destructive/60" : t.label === "FRIO" ? "bg-info/60" : "bg-warning/60";
-                return (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="w-16 text-[11px] text-muted-foreground capitalize">{t.label.toLowerCase()}</span>
-                    <div className="flex-1 h-3 rounded bg-secondary/50 overflow-hidden">
-                      <div className={`h-full rounded ${cls}`} style={{ width: `${t.pct}%` }} />
-                    </div>
-                    <span className="text-[11px] font-medium text-muted-foreground w-12 text-right tabular-nums">{t.pct}%</span>
+                    {convNext && (
+                      <p className="text-[9px] text-muted-foreground/70 ml-20 pl-1">↓ {convNext}%</p>
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Atividade Recente */}
-          <div className="rounded-lg border border-border/50 bg-card p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Atividade Recente</h3>
-            <div className="space-y-4">
-              {atividadeRecente.map((a, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="h-7 w-7 rounded-md bg-secondary/60 flex items-center justify-center text-sm shrink-0">
-                    {a.icon}
+          {/* Origem */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Origem dos Leads</p>
+            <div className="space-y-3">
+              {origemLeads.map((o) => (
+                <div key={o.origem} className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground w-16 shrink-0 truncate">{o.origem}</span>
+                  <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
+                    <div
+                      className="h-full bg-primary/60 rounded transition-all duration-700"
+                      style={{ width: `${(o.share / maxShare) * 100}%` }}
+                    />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{a.nome}</p>
-                    <p className="text-[11px] text-muted-foreground">{a.detalhe}</p>
-                  </div>
-                  <span className="text-[10px] font-medium text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded whitespace-nowrap">
-                    {a.badge}
-                  </span>
+                  <span className="text-[10px] font-semibold text-foreground tabular-nums w-9 text-right">{o.share}%</span>
+                  <span className="text-[10px] text-success font-medium tabular-nums w-16 text-right">{o.conversao}% conv</span>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* ══════ ROW 3 — FUP Frio + Desqualificação ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* FUP Frio */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-4">FUP Frio</p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.entraram}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">entraram no FUP</p>
+              </div>
+              <div>
+                <p className="text-2xl font-extrabold text-success tabular-nums">{fupFrio.reativados}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">reativados ({fupFrio.pctReativados}%)</p>
+              </div>
+              <div>
+                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.diasAteReativar}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">dias até reativar</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Desqualificação Donut */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Motivos de Desqualificação</p>
+            <div className="flex items-center gap-3">
+              <div className="w-28 h-28 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={desqualMotivos}
+                      dataKey="pct"
+                      nameKey="motivo"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={28}
+                      outerRadius={48}
+                      strokeWidth={1}
+                      stroke="hsl(var(--background))"
+                    >
+                      {desqualMotivos.map((d, i) => (
+                        <Cell key={i} fill={d.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number) => `${value}%`}
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-1.5 flex-1">
+                {desqualMotivos.map((d) => (
+                  <div key={d.motivo} className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
+                    <span className="text-[10px] text-muted-foreground flex-1 truncate">{d.motivo}</span>
+                    <span className="text-[10px] font-semibold text-foreground tabular-nums">{d.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════ ROW 4 — Mensagens + SLA ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Mensagens */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Mensagens</p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.enviadas.toLocaleString("pt-BR")}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">enviadas</p>
+              </div>
+              <div>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.recebidas.toLocaleString("pt-BR")}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">recebidas</p>
+              </div>
+              <div>
+                <p className="text-xl font-extrabold text-primary tabular-nums">{mensagens.interacoesPorConv}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">interações/conv</p>
+              </div>
+            </div>
+          </div>
+
+          {/* SLA Gauge */}
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
+            <SLAGauge pct={sla.pctAbordados5min} />
+          </div>
+
+          {/* Tempo médio */}
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex flex-col items-center justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Tempo Médio Resposta Lead</p>
+            <p className="text-3xl font-extrabold text-foreground">{sla.tempoMedioRespostaLead}</p>
+          </div>
+        </section>
+
+        {/* ══════ ROW 5 — Mapa de Calor ══════ */}
+        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Mapa de Calor — Respostas</p>
+            <span className="text-[10px] text-primary font-medium">Pico: {heatmap.pico}</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="w-16" />
+                  {heatmap.dias.map((d) => (
+                    <th key={d} className="text-[10px] text-muted-foreground font-medium text-center pb-1.5 px-1">{d}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {heatmap.periodos.map((p, pi) => (
+                  <tr key={p}>
+                    <td className="text-[10px] text-muted-foreground font-medium pr-2 py-0.5">{p}</td>
+                    {heatmap.valores[pi].map((v, di) => {
+                      const intensity = v / 100;
+                      return (
+                        <td key={di} className="p-0.5">
+                          <div
+                            className="rounded h-8 flex items-center justify-center text-[10px] font-semibold transition-all"
+                            style={{
+                              backgroundColor: `hsl(var(--success) / ${0.1 + intensity * 0.7})`,
+                              color: intensity > 0.6 ? "hsl(var(--success-foreground, var(--background)))" : "hsl(var(--foreground))",
+                            }}
+                          >
+                            {v}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* ══════ ROW 6 — Taxa por Tentativa ══════ */}
+        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Taxa de Resposta por Tentativa</p>
+          <div className="space-y-2">
+            {taxaPorTentativa.map((t) => (
+              <div key={t.tentativa} className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground w-14 shrink-0">{t.tentativa}</span>
+                <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
+                  <div
+                    className="h-full bg-primary/60 rounded transition-all duration-700"
+                    style={{ width: `${(t.pct / 42) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-foreground tabular-nums w-8 text-right">{t.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ══════ RODAPÉ ══════ */}
-        <footer className="mt-12 mb-6 text-center">
-          <p className="text-xs text-muted-foreground/60 font-medium">
-            Desenvolvido por <strong className="text-foreground/70">RBR Consult</strong> para Evolve Energia Solar
-          </p>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/30 font-medium mt-1">
-            Inteligência Comercial · IA · Automação
+        <footer className="mt-8 text-center">
+          <p className="text-[10px] text-muted-foreground/50">
+            SOL Insights · RBR Consult · Dados simulados para demonstração
           </p>
         </footer>
       </div>
