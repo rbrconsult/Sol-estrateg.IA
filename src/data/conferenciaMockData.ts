@@ -60,9 +60,9 @@ export const desqualMotivos = [
 
 // ─── ROW 4: MENSAGENS ───
 export const mensagens = {
-  enviadas: 2847,
-  recebidas: 1203,
-  interacoesPorConv: 14.2,
+  enviadas: 142,
+  recebidas: 67,
+  interacoesPorConv: 7.9,
 };
 
 // ─── ROW 4: SLA ───
