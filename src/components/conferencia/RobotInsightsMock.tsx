@@ -15,7 +15,7 @@ interface RobotData {
     fup: { nome: string; taxaResposta: number; tempoMedioResposta: string; leadsProcessados: number };
   };
   funilMensagens: { etapa: string; valor: number }[];
-  alertasUrgentes: { tipo: "danger" | "warning"; titulo: string; desc: string }[];
+  alertasUrgentes: { tipo: "danger" | "warning" | "success"; titulo: string; desc: string }[];
 }
 
 export function RobotInsightsMock({ data }: { data: RobotData }) {

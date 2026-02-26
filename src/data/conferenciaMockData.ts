@@ -180,7 +180,7 @@ export const alertasMock = [
   { type: "warning" as const, title: "1 lead morno sem contato há +24h", desc: "Considerar follow-up" },
   { type: "success" as const, title: "SLA de 5min mantido em 94% dos leads", desc: "Excelente para período inicial" },
   { type: "info" as const, title: "Primeiros resultados de FUP Frio", desc: "1 lead resgatado — R$ 6k" },
-];
+] as { type: "danger" | "warning" | "success" | "info"; title: string; desc: string }[];
 
 // ─── TEMPERATURA POR ETAPA ───
 export const temperaturaPorEtapaMock = [
