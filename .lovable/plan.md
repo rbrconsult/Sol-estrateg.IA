@@ -1,18 +1,33 @@
 
 
-# Embed Status Page in Monitoramento
+# Conectar os 4 novos componentes ao filtro de período
 
-## What changes
-Replace the entire card/button layout in `Monitoramento.tsx` with a full-height iframe that loads `https://status.rbrsistemas.com/status/evolve` directly inside the page.
+## Problema
+Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
 
-## Implementation
+## Solução
+Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
 
-### Edit `src/pages/Monitoramento.tsx`
-- Keep the header (title + help button)
-- Remove the Card, icons, button, and all the conditional `statusUrl` logic
-- Remove the `useAuth`, `useQuery`, and `supabase` imports (no longer needed)
-- Add an `<iframe>` pointing to `https://status.rbrsistemas.com/status/evolve` that fills the remaining viewport height
-- Style: `w-full`, `border-0`, `rounded-lg`, height via `calc(100vh - 10rem)` to fill below the header
+### 1. Sol Hoje — Atividade Diária
+- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
+- Aplicar `scale()` nas barras do gráfico de 7 dias
+- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
 
-Result: the external status page renders inline, no button, no configuration needed.
+### 2. Alertas & Insights
+- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
+- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
+
+### 3. Temperatura por Etapa
+- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
+- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
+
+### 4. Tabela de Leads
+- Aplicar `scale()` ao campo `valor` de cada lead
+- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
+
+## Arquivo modificado
+- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
+
+## Resultado
+Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
 
