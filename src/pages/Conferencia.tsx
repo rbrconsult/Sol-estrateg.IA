@@ -210,10 +210,16 @@ export default function Conferencia() {
     frio: scale(t.frio),
   })), [multiplier]);
 
-  const filteredLeads = useMemo(() => tabelaLeadsMock.map(l => {
+  const filteredLeads = useMemo(() => {
     const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
-    return { ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup };
-  }), [multiplier]);
+    return tabelaLeadsMock
+      .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
+      .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
+      .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
+      .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [multiplier, filterEtapa, filterTemp, searchTerm]);
+
+  const etapasUnicas = [...new Set(tabelaLeadsMock.map(l => l.etapa))];
 
   const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
