@@ -175,12 +175,11 @@ export const solHojeMock = [
 
 // ─── ALERTAS & INSIGHTS ───
 export const alertasMock = [
-  { type: "danger" as const, title: "12 leads quentes sem contato há +48h", desc: "Risco de perda iminente" },
-  { type: "warning" as const, title: "Taxa de resposta caiu 8% vs semana anterior", desc: "Verificar qualidade dos leads Meta" },
-  { type: "success" as const, title: "FUP Frio resgatou R$ 42k esta semana", desc: "25% acima da média" },
-  { type: "warning" as const, title: "3 leads mornos parados há +5 dias em Closer", desc: "Considerar follow-up manual" },
-  { type: "success" as const, title: "Agendamentos subiram 18% vs mês anterior", desc: "Melhor mês do trimestre" },
-  { type: "danger" as const, title: "SLA de 5min violado em 6% dos leads hoje", desc: "Horário de pico: 19h–21h" },
+  { type: "success" as const, title: "SOL ativada — primeiros 18 leads abordados", desc: "Operação iniciada em 23/02" },
+  { type: "success" as const, title: "3 leads qualificados em 01/03", desc: "Taxa de qualificação acima do esperado para início" },
+  { type: "warning" as const, title: "1 lead morno sem contato há +24h", desc: "Considerar follow-up" },
+  { type: "success" as const, title: "SLA de 5min mantido em 94% dos leads", desc: "Excelente para período inicial" },
+  { type: "info" as const, title: "Primeiros resultados de FUP Frio", desc: "1 lead resgatado — R$ 6k" },
 ];
 
 // ─── TEMPERATURA POR ETAPA ───
