@@ -27,15 +27,15 @@ export const pipelineStages = [
 
 // ─── FUP FRIO — REPESCAGEM (dados expandidos com ROI) ───
 export const fupFrio = {
-  entraram: 124,
-  reativados: 31,
-  pctReativados: 25,
-  diasAteReativar: 8.4,
-  valorRecuperado: "R$ 186.000",
+  entraram: 7,
+  reativados: 1,
+  pctReativados: 14.3,
+  diasAteReativar: 2.1,
+  valorRecuperado: "R$ 6.000",
   ticketMedio: "R$ 6.000",
-  conversaoPosResgate: 35.5,
-  receitaTotal: "R$ 643.000",
-  pctReceitaViaFup: 28.9,
+  conversaoPosResgate: 0,
+  receitaTotal: "R$ 0",
+  pctReceitaViaFup: 0,
 };
 
 // ─── ROW 2: ORIGEM DOS LEADS ───
