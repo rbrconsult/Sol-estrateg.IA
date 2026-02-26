@@ -210,26 +210,25 @@ export const slaMock = {
 // ─── ROBOT INSIGHTS (mock) ───
 export const robotInsightsMock = {
   destaques: [
-    { label: "Leads Qualificados", value: 94, icon: "bot" as const, color: "text-primary" },
-    { label: "Mensagens Enviadas", value: 2847, icon: "send" as const, color: "text-foreground" },
-    { label: "Contatos Únicos", value: 342, icon: "users" as const, color: "text-primary" },
-    { label: "Leads Quentes", value: 47, icon: "flame" as const, color: "text-orange-500" },
+    { label: "Leads Qualificados", value: 3, icon: "bot" as const, color: "text-primary" },
+    { label: "Mensagens Enviadas", value: 142, icon: "send" as const, color: "text-foreground" },
+    { label: "Contatos Únicos", value: 18, icon: "users" as const, color: "text-primary" },
+    { label: "Leads Quentes", value: 2, icon: "flame" as const, color: "text-orange-500" },
   ],
   comparacao: {
-    sol: { nome: "SOL (Qualificação)", taxaResposta: 58, tempoMedioResposta: "10s", leadsProcessados: 342 },
-    fup: { nome: "FUP Frio", taxaResposta: 25, tempoMedioResposta: "8.4d", leadsProcessados: 124 },
+    sol: { nome: "SOL (Qualificação)", taxaResposta: 61, tempoMedioResposta: "8s", leadsProcessados: 18 },
+    fup: { nome: "FUP Frio", taxaResposta: 14, tempoMedioResposta: "2.1d", leadsProcessados: 7 },
   },
   funilMensagens: [
-    { etapa: "Enviadas", valor: 2847 },
-    { etapa: "Entregues", valor: 2790 },
-    { etapa: "Lidas", valor: 1985 },
-    { etapa: "Respondidas", valor: 1203 },
-    { etapa: "Qualificadas", valor: 94 },
+    { etapa: "Enviadas", valor: 142 },
+    { etapa: "Entregues", valor: 139 },
+    { etapa: "Lidas", valor: 98 },
+    { etapa: "Respondidas", valor: 67 },
+    { etapa: "Qualificadas", valor: 3 },
   ],
   alertasUrgentes: [
-    { tipo: "danger" as const, titulo: "8 leads quentes sem contato do robô há +24h", desc: "Verificar integração Make" },
-    { tipo: "warning" as const, titulo: "15 leads responderam mas não avançaram", desc: "Possível gargalo na qualificação BANT" },
-    { tipo: "danger" as const, titulo: "5 leads sem resposta há +3 dias", desc: "Considerar transferência para FUP Frio" },
+    { tipo: "warning" as const, titulo: "1 lead morno sem contato há +24h", desc: "Acompanhar qualificação" },
+    { tipo: "success" as const, titulo: "Taxa de resposta acima de 60%", desc: "Início promissor da operação" },
   ],
 };
 
