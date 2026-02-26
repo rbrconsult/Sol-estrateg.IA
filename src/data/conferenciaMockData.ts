@@ -5,12 +5,12 @@
 
 // ─── ROW 1: KPIs PRINCIPAIS ───
 export const kpiCards = [
-  { label: "Leads Recebidos", value: 342, suffix: "" },
-  { label: "Taxa Resposta", value: 58, suffix: "%" },
-  { label: "MQL", value: 94, suffix: "" },
-  { label: "SQL", value: 61, suffix: "" },
-  { label: "Agendamentos", value: 38, suffix: "" },
-  { label: "Fechados", value: 11, suffix: "" },
+  { label: "Leads Recebidos", value: 342, suffix: "", detail: "100%" },
+  { label: "Taxa Resposta", value: 58, suffix: "%", detail: "198/342" },
+  { label: "MQL", value: 94, suffix: "", detail: "27.5%", tooltip: "Marketing Qualified Leads" },
+  { label: "SQL", value: 61, suffix: "", detail: "64.9%", tooltip: "Sales Qualified Leads" },
+  { label: "Agendamentos", value: 38, suffix: "", detail: "62.3%" },
+  { label: "Fechados", value: 11, suffix: "", detail: "28.9%" },
 ];
 
 // ─── ROW 2: FUNIL ───
