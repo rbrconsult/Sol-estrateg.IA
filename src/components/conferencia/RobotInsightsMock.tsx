@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Bot, Send, Users, Flame, AlertTriangle, Info } from "lucide-react";
+import { Bot, Send, Users, Flame, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 const iconMap = {
   bot: Bot,
