@@ -48,15 +48,25 @@ function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
 }
 
 /* ───────── KPI Card ───────── */
-function KPI({ label, target, suffix = "" }: { label: string; target: number; suffix?: string }) {
+function KPI({ label, target, suffix = "", detail, tooltip }: { label: string; target: number; suffix?: string; detail?: string; tooltip?: string }) {
   const isDecimal = suffix === "%" || target % 1 !== 0;
   const { value, ref } = useAnimatedNumber(target, 1200, isDecimal);
   return (
-    <div ref={ref} className="rounded-lg border border-border/50 bg-card p-3 text-center transition-all hover:border-primary/40">
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
+    <div ref={ref} className="rounded-lg border border-border/50 bg-card p-3 text-center transition-all hover:border-primary/40 group relative">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">
+        {label}
+        {tooltip && (
+          <span className="ml-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-primary/70 normal-case tracking-normal">
+            ({tooltip})
+          </span>
+        )}
+      </p>
       <p className="text-2xl font-extrabold text-foreground tabular-nums leading-none">
         {value}{suffix}
       </p>
+      {detail && (
+        <p className="text-[10px] text-muted-foreground/70 mt-1 tabular-nums">{detail}</p>
+      )}
     </div>
   );
 }
@@ -116,9 +126,6 @@ export default function Conferencia() {
         <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight text-foreground">SOL Insights</h1>
-            <span className="rounded-md bg-warning/15 border border-warning/30 px-2 py-0.5 text-[10px] font-semibold text-warning uppercase tracking-wider">
-              DEMO — dados simulados · Jan–Fev 2026
-            </span>
           </div>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -178,7 +185,7 @@ export default function Conferencia() {
         {/* ══════ ROW 1 — KPIs ══════ */}
         <section className="grid grid-cols-3 md:grid-cols-6 gap-2">
           {kpiCards.map((k) => (
-            <KPI key={k.label} label={k.label} target={k.value} suffix={k.suffix} />
+            <KPI key={k.label} label={k.label} target={k.value} suffix={k.suffix} detail={k.detail} tooltip={(k as any).tooltip} />
           ))}
         </section>
 
@@ -396,7 +403,7 @@ export default function Conferencia() {
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-8 text-center">
           <p className="text-[10px] text-muted-foreground/50">
-            SOL Insights · RBR Consult · Dados simulados para demonstração
+            SOL Insights · RBR Consult
           </p>
         </footer>
       </div>
