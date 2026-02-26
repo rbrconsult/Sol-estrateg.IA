@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -10,11 +8,19 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Always respond 200 to avoid Evolution API retries / cascading redelivery
+  const ok200 = (body: Record<string, unknown>) =>
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const payload = await req.json();
-    console.log("Webhook proxy received payload:", JSON.stringify(payload).slice(0, 1000));
+    console.log("📩 Proxy received:", JSON.stringify(payload).slice(0, 800));
 
-    const targetUrl = "https://xffzjdulkdgyicsllznp.supabase.co/functions/v1/whatsapp-webhook";
+    const targetUrl =
+      "https://xffzjdulkdgyicsllznp.supabase.co/functions/v1/whatsapp-webhook";
 
     try {
       const res = await fetch(targetUrl, {
@@ -23,30 +29,20 @@ Deno.serve(async (req) => {
         body: JSON.stringify(payload),
       });
       const body = await res.text();
-      const label = targetUrl.split("/").pop();
 
       if (res.ok) {
-        console.log(`✅ ${label}: ${res.status}`);
+        console.log(`✅ whatsapp-webhook: ${res.status}`);
       } else {
-        console.warn(`⚠️ ${label}: ${res.status} — ${body.slice(0, 200)}`);
+        console.warn(`⚠️ whatsapp-webhook: ${res.status} — ${body.slice(0, 200)}`);
       }
 
-      return new Response(
-        JSON.stringify({ ok: res.ok, status: res.status, body }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return ok200({ ok: res.ok, status: res.status });
     } catch (fetchErr) {
-      console.error(`❌ whatsapp-webhook: NETWORK ERROR`, fetchErr);
-      return new Response(
-        JSON.stringify({ ok: false, error: String(fetchErr) }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error("❌ whatsapp-webhook: NETWORK ERROR", fetchErr);
+      return ok200({ ok: false, error: "network_error", detail: String(fetchErr) });
     }
   } catch (err) {
-    console.error("Proxy error:", err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("❌ Proxy parse error:", err);
+    return ok200({ ok: false, error: "parse_error", detail: String(err) });
   }
 });
