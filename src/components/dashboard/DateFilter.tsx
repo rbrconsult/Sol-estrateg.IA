@@ -85,6 +85,8 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
 
   const getButtonLabel = () => {
     if (preset === "all") return "Período";
+    if (preset === "today") return "Hoje";
+    if (preset === "3days") return "3 dias";
     if (preset === "7days") return "7 dias";
     if (preset === "30days") return "30 dias";
     if (preset === "lastMonth") return "Mês anterior";
