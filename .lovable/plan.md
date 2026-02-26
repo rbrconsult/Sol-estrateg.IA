@@ -1,55 +1,33 @@
 
 
-# Adicionar 4 componentes da Leads ao SOL Insights (mock data)
+# Conectar os 4 novos componentes ao filtro de período
 
-## Componentes a adicionar
+## Problema
+Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
 
-### 1. Sol Hoje — Atividade Diaria (7 dias)
-Seção com destaque do dia (qualificados, scores, quentes, mornos, frios) e mini barras dos últimos 7 dias. Posicionamento: logo após os KPIs (ROW 1), antes do Pipeline.
+## Solução
+Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
 
-### 2. Alertas & Insights (barra lateral)
-Coluna lateral com cards coloridos (vermelho = atenção, amarelo = info, verde = positivo). Será integrada ao lado da seção de Origem dos Leads (ROW 3), transformando o layout em grid 3 colunas.
+### 1. Sol Hoje — Atividade Diária
+- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
+- Aplicar `scale()` nas barras do gráfico de 7 dias
+- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
+
+### 2. Alertas & Insights
+- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
+- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
 
 ### 3. Temperatura por Etapa
-Barras empilhadas (quente/morno/frio) por etapa do funil. Posicionamento: após o heatmap (ROW 5), junto com Performance Sol num grid de 2 colunas.
+- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
+- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
 
-### 4. Tabela de Leads Detalhados
-Tabela compacta com os campos: Cliente, Etapa, Temperatura (dot colorido), Score, SLA, Status FUP, Valor. Com timeline expandível mockada. Posicionamento: após Temperatura por Etapa, antes do rodapé.
+### 4. Tabela de Leads
+- Aplicar `scale()` ao campo `valor` de cada lead
+- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
 
-## Dados mock necessarios
+## Arquivo modificado
+- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
 
-Adicionar ao `src/data/conferenciaMockData.ts`:
+## Resultado
+Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
 
-- `solHojeMock`: array de 7 dias com qualificados, scores, quentes, mornos, frios
-- `alertasMock`: array de 5-6 alertas com type, title, desc
-- `temperaturaPorEtapaMock`: array por etapa com quente, morno, frio, sem
-- `tabelaLeadsMock`: array de ~15 leads com nome, etapa, temperatura, score, sla, status, valor, e historico de interações mockado
-
-## Layout final do SOL Insights
-
-```text
-ROW 1: KPIs (7 cards)
-ROW 1.5: SOL HOJE (atividade diária + 7 dias mini barras)  [NOVO]
-ROW 2: Pipeline Real + Micro Funil + FUP Frio
-ROW 3: FUP Frio ROI | Origem | Alertas & Insights  [MODIFICADO - 3 colunas]
-ROW 4: Desqualificação | Mensagens | SLA
-ROW 5: Mapa de Calor
-ROW 6: Taxa por Tentativa | Temperatura por Etapa  [MODIFICADO - 2 colunas]
-ROW 7: Tabela de Leads Detalhados  [NOVO]
-RODAPÉ
-```
-
-## Detalhes tecnicos
-
-### Arquivo: `src/data/conferenciaMockData.ts`
-- Adicionar 4 novos exports com dados mock consistentes com o pipeline existente (342 leads total, distribuição coerente por etapa)
-
-### Arquivo: `src/pages/Conferencia.tsx`
-- Importar novos dados mock
-- Inserir seção Sol Hoje (copiar padrão visual da Leads: grid 5 colunas + barras verticais)
-- Modificar ROW 3 para grid de 3 colunas, adicionando coluna de Alertas
-- Adicionar Temperatura por Etapa ao lado da Taxa por Tentativa
-- Adicionar Tabela de Leads com expand/collapse para timeline (usando estado `expandedLead`)
-- Reutilizar o componente TempDot e padrões visuais da Leads (badges, cores, tipografia)
-
-Total: 2 arquivos modificados, sem novos arquivos, sem dependências adicionais.
