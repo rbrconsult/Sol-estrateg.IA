@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,11 @@ import {
   kpiCards, pipelineStages, origemLeads, fupFrio, desqualMotivos,
   mensagens, sla, heatmap, taxaPorTentativa,
   solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
+  slaMock, robotInsightsMock, scorePorOrigemMock,
 } from "@/data/conferenciaMockData";
+import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
+import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
+import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
