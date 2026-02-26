@@ -249,6 +249,8 @@ export default function Conferencia() {
           <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
             <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="hoje">Hoje</SelectItem>
+              <SelectItem value="3d">3 dias</SelectItem>
               <SelectItem value="7d">7 dias</SelectItem>
               <SelectItem value="30d">30 dias</SelectItem>
               <SelectItem value="90d">90 dias</SelectItem>
