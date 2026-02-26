@@ -4,14 +4,15 @@
 // ══════════════════════════════════════════════════════════
 
 // ─── ROW 1: KPIs PRINCIPAIS (7 cards — inclui Repescagem) ───
+// Dados calibrados para apresentação 01/03 — início de operação
 export const kpiCards = [
-  { label: "Leads Recebidos", value: 342, suffix: "", detail: "100%" },
-  { label: "Taxa Resposta", value: 58, suffix: "%", detail: "198/342" },
-  { label: "MQL", value: 94, suffix: "", detail: "27.5%", tooltip: "Marketing Qualified Leads" },
-  { label: "SQL", value: 61, suffix: "", detail: "64.9%", tooltip: "Sales Qualified Leads" },
-  { label: "Agendamentos", value: 38, suffix: "", detail: "62.3%" },
-  { label: "Fechados", value: 11, suffix: "", detail: "28.9%" },
-  { label: "Resgatados FUP", value: 31, suffix: "", detail: "R$ 186k", tooltip: "Leads recuperados via FUP Frio" },
+  { label: "Leads Recebidos", value: 18, suffix: "", detail: "100%" },
+  { label: "Taxa Resposta", value: 61, suffix: "%", detail: "11/18" },
+  { label: "MQL", value: 3, suffix: "", detail: "16.7%", tooltip: "Marketing Qualified Leads" },
+  { label: "SQL", value: 2, suffix: "", detail: "66.7%", tooltip: "Sales Qualified Leads" },
+  { label: "Agendamentos", value: 1, suffix: "", detail: "50%" },
+  { label: "Fechados", value: 0, suffix: "", detail: "—" },
+  { label: "Resgatados FUP", value: 1, suffix: "", detail: "R$ 6k", tooltip: "Leads recuperados via FUP Frio" },
 ];
 
 // ─── PIPELINE REAL: SOL → Qualificação → Closer → Fechamento ───
