@@ -45,6 +45,12 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
       case "all":
         newRange = { from: undefined, to: undefined };
         break;
+      case "today":
+        newRange = { from: today, to: today };
+        break;
+      case "3days":
+        newRange = { from: subDays(today, 3), to: today };
+        break;
       case "7days":
         newRange = { from: subDays(today, 7), to: today };
         break;
