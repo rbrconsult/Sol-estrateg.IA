@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, ArrowRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  kpiCards, funnelData, origemLeads, fupFrio, desqualMotivos,
+  kpiCards, pipelineStages, origemLeads, fupFrio, desqualMotivos,
   mensagens, sla, heatmap, taxaPorTentativa,
 } from "@/data/conferenciaMockData";
 import {
@@ -43,11 +43,18 @@ function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
 }
 
 /* ───────── KPI Card ───────── */
-function KPI({ label, target, suffix = "", detail, tooltip }: { label: string; target: number; suffix?: string; detail?: string; tooltip?: string }) {
+function KPI({ label, target, suffix = "", detail, tooltip, highlight }: {
+  label: string; target: number; suffix?: string; detail?: string; tooltip?: string; highlight?: boolean;
+}) {
   const isDecimal = suffix === "%" || target % 1 !== 0;
   const { value, ref } = useAnimatedNumber(target, 1200, isDecimal);
   return (
-    <div ref={ref} className="rounded-lg border border-border/50 bg-card p-3 text-center transition-all hover:border-primary/40 group relative">
+    <div ref={ref} className={cn(
+      "rounded-lg border bg-card p-3 text-center transition-all group relative",
+      highlight
+        ? "border-success/50 bg-success/5 hover:border-success/70"
+        : "border-border/50 hover:border-primary/40"
+    )}>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">
         {label}
         {tooltip && (
@@ -56,7 +63,10 @@ function KPI({ label, target, suffix = "", detail, tooltip }: { label: string; t
           </span>
         )}
       </p>
-      <p className="text-2xl font-extrabold text-foreground tabular-nums leading-none">
+      <p className={cn(
+        "text-2xl font-extrabold tabular-nums leading-none",
+        highlight ? "text-success" : "text-foreground"
+      )}>
         {value}{suffix}
       </p>
       {detail && (
@@ -126,27 +136,27 @@ export default function Conferencia() {
 
   /* ── filtered data ── */
   const filteredKpis = useMemo(() => kpiCards.map(k => {
-    if (k.suffix === "%") return k; // rates stay the same
+    if (k.suffix === "%") return k;
     const newVal = scale(k.value);
-    // Recalculate detail based on position in funnel
     let detail = k.detail;
     if (k.label === "Leads Recebidos") detail = "100%";
     else if (k.label === "Taxa Resposta") {
-      const resp = Math.round(scale(198));
-      const total = scale(342);
-      detail = `${resp}/${total}`;
+      detail = `${scale(198)}/${scale(342)}`;
+    } else if (k.label === "Resgatados FUP") {
+      detail = `R$ ${Math.round(186 * multiplier)}k`;
     }
     return { ...k, value: newVal, detail };
   }), [multiplier]);
 
-  const filteredFunnel = useMemo(() => funnelData.map(f => ({
-    ...f, valor: scale(f.valor)
+  const filteredPipeline = useMemo(() => pipelineStages.map(s => ({
+    ...s, valor: scale(s.valor)
   })), [multiplier]);
 
   const filteredFup = useMemo(() => ({
     ...fupFrio,
     entraram: scale(fupFrio.entraram),
     reativados: scale(fupFrio.reativados),
+    valorRecuperado: `R$ ${Math.round(186 * multiplier)}.000`,
   }), [multiplier]);
 
   const filteredMensagens = useMemo(() => ({
@@ -160,7 +170,7 @@ export default function Conferencia() {
     valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
   }), [multiplier]);
 
-  const maxFunnel = Math.max(...filteredFunnel.map((f) => f.valor));
+  const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
 
   return (
@@ -227,42 +237,102 @@ export default function Conferencia() {
           )}
         </section>
 
-        {/* ══════ ROW 1 — KPIs ══════ */}
-        <section className="grid grid-cols-3 md:grid-cols-6 gap-2">
+        {/* ══════ ROW 1 — KPIs (7 cards, último é repescagem destacado) ══════ */}
+        <section className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
           {filteredKpis.map((k) => (
-            <KPI key={k.label} label={k.label} target={k.value} suffix={k.suffix} detail={k.detail} tooltip={(k as any).tooltip} />
+            <KPI
+              key={k.label}
+              label={k.label}
+              target={k.value}
+              suffix={k.suffix}
+              detail={k.detail}
+              tooltip={(k as any).tooltip}
+              highlight={k.label === "Resgatados FUP"}
+            />
           ))}
         </section>
 
-        {/* ══════ ROW 2 — Funil + Origem ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Funil */}
-          <div className="rounded-lg border border-border/50 bg-card p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Funil de Conversão</p>
-            <div className="space-y-2">
-              {filteredFunnel.map((f, i) => {
-                const pct = ((f.valor / maxFunnel) * 100).toFixed(0);
-                const convNext = i < filteredFunnel.length - 1
-                  ? ((filteredFunnel[i + 1].valor / f.valor) * 100).toFixed(0)
-                  : null;
-                return (
-                  <div key={f.etapa}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground w-20 shrink-0 truncate">{f.etapa}</span>
-                      <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden relative">
-                        <div
-                          className="h-full bg-primary/70 rounded transition-all duration-700"
-                          style={{ width: `${pct}%` }}
-                        />
-                        <span className="absolute right-1.5 top-0.5 text-[10px] font-bold text-foreground tabular-nums">{f.valor}</span>
-                      </div>
+        {/* ══════ ROW 2 — Pipeline Visual ══════ */}
+        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-4">Pipeline Real — Fluxo do Lead</p>
+
+          {/* Pipeline horizontal */}
+          <div className="flex items-stretch gap-0 overflow-x-auto pb-2">
+            {filteredPipeline.map((s, i) => {
+              const pct = ((s.valor / maxPipeline) * 100);
+              return (
+                <div key={s.etapa} className="flex items-center min-w-0">
+                  <div className="flex flex-col items-center text-center min-w-[80px] md:min-w-[100px]">
+                    <span className="text-lg mb-1">{s.icon}</span>
+                    <p className="text-2xl font-extrabold text-foreground tabular-nums leading-none">{s.valor}</p>
+                    <p className="text-[10px] font-semibold text-foreground mt-1">{s.etapa}</p>
+                    <div className="w-full mt-2 h-1.5 bg-secondary/50 rounded overflow-hidden">
+                      <div
+                        className="h-full bg-primary/70 rounded transition-all duration-700"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
-                    {convNext && (
-                      <p className="text-[9px] text-muted-foreground/70 ml-20 pl-1">↓ {convNext}%</p>
+                    {i < filteredPipeline.length - 1 && (
+                      <p className="text-[9px] text-muted-foreground/70 mt-1 tabular-nums">
+                        ↓ {((filteredPipeline[i + 1].valor / s.valor) * 100).toFixed(0)}%
+                      </p>
                     )}
                   </div>
-                );
-              })}
+                  {i < filteredPipeline.length - 1 && (
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/40 mx-1 shrink-0" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FUP Frio rescue loop indicator */}
+          <div className="mt-3 pt-3 border-t border-dashed border-success/30 flex items-center gap-2">
+            <RotateCcw className="h-3.5 w-3.5 text-success" />
+            <span className="text-[10px] text-success font-semibold uppercase tracking-wider">Repescagem FUP Frio</span>
+            <span className="text-[10px] text-muted-foreground">
+              — {filteredFup.reativados} leads resgatados voltam para
+            </span>
+            <span className="text-[10px] font-semibold text-foreground">SDR</span>
+            <ArrowRight className="h-3 w-3 text-success/60" />
+            <span className="text-[10px] font-semibold text-foreground">Proposta</span>
+            <ArrowRight className="h-3 w-3 text-success/60" />
+            <span className="text-[10px] font-semibold text-foreground">Fechamento</span>
+          </div>
+        </section>
+
+        {/* ══════ ROW 3 — FUP Frio ROI + Origem ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* FUP Frio — Repescagem com ROI */}
+          <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <RotateCcw className="h-4 w-4 text-success" />
+              <p className="text-[10px] text-success uppercase tracking-wider font-bold">FUP Frio — Dinheiro na Mesa</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center">
+                <p className="text-3xl font-extrabold text-success tabular-nums">{filteredFup.reativados}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">leads resgatados</p>
+                <p className="text-[10px] text-success/70 tabular-nums">de {filteredFup.entraram} que esfriaram</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-extrabold text-success tabular-nums">{filteredFup.valorRecuperado}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">valor recuperado</p>
+                <p className="text-[10px] text-success/70 tabular-nums">ticket médio {fupFrio.ticketMedio}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.conversaoPosResgate}%</p>
+                <p className="text-[10px] text-muted-foreground mt-1">conversão pós-resgate</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.diasAteReativar}d</p>
+                <p className="text-[10px] text-muted-foreground mt-1">tempo médio reativação</p>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-success/20 text-center">
+              <p className="text-[10px] text-muted-foreground">
+                <span className="font-bold text-success">{fupFrio.pctReceitaViaFup}%</span> da receita total veio da repescagem
+              </p>
             </div>
           </div>
 
@@ -287,27 +357,8 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ ROW 3 — FUP Frio + Desqualificação ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* FUP Frio */}
-          <div className="rounded-lg border border-border/50 bg-card p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-4">FUP Frio</p>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p className="text-2xl font-extrabold text-foreground tabular-nums">{filteredFup.entraram}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">entraram no FUP</p>
-              </div>
-              <div>
-                <p className="text-2xl font-extrabold text-success tabular-nums">{filteredFup.reativados}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">reativados ({filteredFup.pctReativados}%)</p>
-              </div>
-              <div>
-                <p className="text-2xl font-extrabold text-foreground tabular-nums">{filteredFup.diasAteReativar}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">dias até reativar</p>
-              </div>
-            </div>
-          </div>
-
+        {/* ══════ ROW 4 — Desqualificação + Mensagens ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Desqualificação Donut */}
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Motivos de Desqualificação</p>
@@ -348,10 +399,7 @@ export default function Conferencia() {
               </div>
             </div>
           </div>
-        </section>
 
-        {/* ══════ ROW 4 — Mensagens + SLA ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Mensagens */}
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Mensagens</p>
@@ -371,15 +419,14 @@ export default function Conferencia() {
             </div>
           </div>
 
-          {/* SLA Gauge */}
-          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
+          {/* SLA + Tempo */}
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-around">
             <SLAGauge pct={sla.pctAbordados5min} />
-          </div>
-
-          {/* Tempo médio */}
-          <div className="rounded-lg border border-border/50 bg-card p-4 flex flex-col items-center justify-center">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Tempo Médio Resposta Lead</p>
-            <p className="text-3xl font-extrabold text-foreground">{sla.tempoMedioRespostaLead}</p>
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Tempo Médio</p>
+              <p className="text-2xl font-extrabold text-foreground">{sla.tempoMedioRespostaLead}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">resposta do lead</p>
+            </div>
           </div>
         </section>
 
