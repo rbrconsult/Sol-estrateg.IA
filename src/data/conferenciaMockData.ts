@@ -17,12 +17,12 @@ export const kpiCards = [
 
 // ─── PIPELINE REAL: SOL → Qualificação → Closer → Fechamento ───
 export const pipelineStages = [
-  { etapa: "Robô SOL", valor: 342, icon: "🤖", desc: "Leads recebidos e abordados pela IA" },
-  { etapa: "Qualificação", valor: 198, icon: "🎯", desc: "Em processo de qualificação BANT" },
-  { etapa: "Qualificado", valor: 94, icon: "✅", desc: "MQL aprovados pela SOL" },
-  { etapa: "Closer", valor: 61, icon: "📞", desc: "Transferidos para Closer humano" },
-  { etapa: "Proposta", valor: 38, icon: "📋", desc: "Agendamento / proposta enviada" },
-  { etapa: "Fechado", valor: 11, icon: "🏆", desc: "Contratos assinados" },
+  { etapa: "Robô SOL", valor: 18, icon: "🤖", desc: "Leads recebidos e abordados pela IA" },
+  { etapa: "Qualificação", valor: 11, icon: "🎯", desc: "Em processo de qualificação BANT" },
+  { etapa: "Qualificado", valor: 3, icon: "✅", desc: "MQL aprovados pela SOL" },
+  { etapa: "Closer", valor: 2, icon: "📞", desc: "Transferidos para Closer humano" },
+  { etapa: "Proposta", valor: 1, icon: "📋", desc: "Agendamento / proposta enviada" },
+  { etapa: "Fechado", valor: 0, icon: "🏆", desc: "Contratos assinados" },
 ];
 
 // ─── FUP FRIO — REPESCAGEM (dados expandidos com ROI) ───
