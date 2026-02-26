@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,11 @@ import {
   kpiCards, pipelineStages, origemLeads, fupFrio, desqualMotivos,
   mensagens, sla, heatmap, taxaPorTentativa,
   solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
+  slaMock, robotInsightsMock, scorePorOrigemMock,
 } from "@/data/conferenciaMockData";
+import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
+import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
+import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -131,9 +136,13 @@ export default function Conferencia() {
   const [periodo, setPeriodo] = useState("30d");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [filterEtapa, setFilterEtapa] = useState("todas");
+  const [filterTemp, setFilterTemp] = useState("todas");
+  const [filterResp, setFilterResp] = useState("todos");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const hasFilters = periodo !== "30d" || dateFrom || dateTo;
-  const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); };
+  const hasFilters = periodo !== "30d" || dateFrom || dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || searchTerm;
+  const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); setFilterEtapa("todas"); setFilterTemp("todas"); setFilterResp("todos"); setSearchTerm(""); };
 
   /* ── multiplier logic ── */
   const multiplier = useMemo(() => {
@@ -201,10 +210,16 @@ export default function Conferencia() {
     frio: scale(t.frio),
   })), [multiplier]);
 
-  const filteredLeads = useMemo(() => tabelaLeadsMock.map(l => {
+  const filteredLeads = useMemo(() => {
     const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
-    return { ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup };
-  }), [multiplier]);
+    return tabelaLeadsMock
+      .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
+      .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
+      .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
+      .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [multiplier, filterEtapa, filterTemp, searchTerm]);
+
+  const etapasUnicas = [...new Set(tabelaLeadsMock.map(l => l.etapa))];
 
   const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
@@ -271,8 +286,36 @@ export default function Conferencia() {
               <X className="h-3 w-3" /> Limpar
             </Button>
           )}
-        </section>
+          </section>
 
+          {/* ══════ FILTROS OPERACIONAIS ══════ */}
+          <section className="flex flex-wrap items-center gap-2 mb-5">
+            <Select value={filterEtapa} onValueChange={setFilterEtapa}>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Etapa" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas Etapas</SelectItem>
+                {etapasUnicas.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterTemp} onValueChange={setFilterTemp}>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Temperatura" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas Temps</SelectItem>
+                <SelectItem value="QUENTE">Quente</SelectItem>
+                <SelectItem value="MORNO">Morno</SelectItem>
+                <SelectItem value="FRIO">Frio</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar lead..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 w-[180px] pl-7 text-xs"
+              />
+            </div>
+          </section>
         {/* ══════ ROW 1.5 — SOL HOJE (7 dias) ══════ */}
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
@@ -711,6 +754,29 @@ export default function Conferencia() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+
+        {/* ══════ ROW 8 — SLA Metrics ══════ */}
+        <SLAMetricsMock data={slaMock} />
+
+        {/* ══════ ROW 9 — Robot Insights ══════ */}
+        <RobotInsightsMock data={robotInsightsMock} />
+
+        {/* ══════ ROW 10 — Score por Origem ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <ScorePorOrigem data={scorePorOrigemMock} />
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Resumo Operacional</p>
+              <p className="text-3xl font-extrabold text-foreground tabular-nums">{filteredLeads.length}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">leads filtrados</p>
+              <div className="flex gap-3 mt-3 justify-center">
+                <span className="text-[10px] text-orange-500 font-semibold">{filteredLeads.filter(l => l.temperatura === "QUENTE").length} quentes</span>
+                <span className="text-[10px] text-amber-400 font-semibold">{filteredLeads.filter(l => l.temperatura === "MORNO").length} mornos</span>
+                <span className="text-[10px] text-blue-400 font-semibold">{filteredLeads.filter(l => l.temperatura === "FRIO").length} frios</span>
+              </div>
+            </div>
           </div>
         </section>
 

@@ -192,6 +192,55 @@ export const temperaturaPorEtapaMock = [
 ];
 
 // ─── TABELA DE LEADS DETALHADOS ───
+// ─── SLA METRICS (mock) ───
+export const slaMock = {
+  primeiroAtendimento: { media: 2.1, pctDentro24h: 87, total: 342 },
+  porEtapa: [
+    { etapa: "Robô SOL", slaDias: 1, mediaDias: 0.3, status: "ok" as const },
+    { etapa: "Qualificação", slaDias: 3, mediaDias: 2.1, status: "ok" as const },
+    { etapa: "Qualificado", slaDias: 5, mediaDias: 4.2, status: "warning" as const },
+    { etapa: "Closer", slaDias: 7, mediaDias: 8.5, status: "overdue" as const },
+    { etapa: "Proposta", slaDias: 10, mediaDias: 6.3, status: "ok" as const },
+  ],
+  robos: { tempoResposta: "10s", leadsAguardando: 18, taxaResposta: 58 },
+  geralProposta: { mediaDias: 12.4 },
+};
+
+// ─── ROBOT INSIGHTS (mock) ───
+export const robotInsightsMock = {
+  destaques: [
+    { label: "Leads Qualificados", value: 94, icon: "bot" as const, color: "text-primary" },
+    { label: "Mensagens Enviadas", value: 2847, icon: "send" as const, color: "text-foreground" },
+    { label: "Contatos Únicos", value: 342, icon: "users" as const, color: "text-primary" },
+    { label: "Leads Quentes", value: 47, icon: "flame" as const, color: "text-orange-500" },
+  ],
+  comparacao: {
+    sol: { nome: "SOL (Qualificação)", taxaResposta: 58, tempoMedioResposta: "10s", leadsProcessados: 342 },
+    fup: { nome: "FUP Frio", taxaResposta: 25, tempoMedioResposta: "8.4d", leadsProcessados: 124 },
+  },
+  funilMensagens: [
+    { etapa: "Enviadas", valor: 2847 },
+    { etapa: "Entregues", valor: 2790 },
+    { etapa: "Lidas", valor: 1985 },
+    { etapa: "Respondidas", valor: 1203 },
+    { etapa: "Qualificadas", valor: 94 },
+  ],
+  alertasUrgentes: [
+    { tipo: "danger" as const, titulo: "8 leads quentes sem contato do robô há +24h", desc: "Verificar integração Make" },
+    { tipo: "warning" as const, titulo: "15 leads responderam mas não avançaram", desc: "Possível gargalo na qualificação BANT" },
+    { tipo: "danger" as const, titulo: "5 leads sem resposta há +3 dias", desc: "Considerar transferência para FUP Frio" },
+  ],
+};
+
+// ─── SCORE POR ORIGEM (mock) ───
+export const scorePorOrigemMock = [
+  { origem: "Indicação", score: 78, leads: 21 },
+  { origem: "Site", score: 72, leads: 55 },
+  { origem: "Google", score: 65, leads: 62 },
+  { origem: "Orgânico", score: 61, leads: 27 },
+  { origem: "Meta", score: 54, leads: 178 },
+];
+
 export const tabelaLeadsMock = [
   { id: 1, nome: "João Silva", etapa: "Closer", temperatura: "QUENTE" as const, score: 87, sla: 1.2, statusFup: "Ativo", valor: 45000, historico: [
     { data: "25/02 14:30", tipo: "SOL", msg: "Lead qualificado via BANT — orçamento confirmado R$ 45k" },
