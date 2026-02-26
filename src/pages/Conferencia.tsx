@@ -136,9 +136,13 @@ export default function Conferencia() {
   const [periodo, setPeriodo] = useState("30d");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [filterEtapa, setFilterEtapa] = useState("todas");
+  const [filterTemp, setFilterTemp] = useState("todas");
+  const [filterResp, setFilterResp] = useState("todos");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const hasFilters = periodo !== "30d" || dateFrom || dateTo;
-  const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); };
+  const hasFilters = periodo !== "30d" || dateFrom || dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || searchTerm;
+  const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); setFilterEtapa("todas"); setFilterTemp("todas"); setFilterResp("todos"); setSearchTerm(""); };
 
   /* ── multiplier logic ── */
   const multiplier = useMemo(() => {
