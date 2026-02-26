@@ -242,64 +242,50 @@ export const scorePorOrigemMock = [
 ];
 
 export const tabelaLeadsMock = [
-  { id: 1, nome: "João Silva", etapa: "Closer", temperatura: "QUENTE" as const, score: 87, sla: 1.2, statusFup: "Ativo", valor: 45000, historico: [
-    { data: "25/02 14:30", tipo: "SOL", msg: "Lead qualificado via BANT — orçamento confirmado R$ 45k" },
-    { data: "25/02 14:32", tipo: "SOL", msg: "Agendamento transferido para Closer" },
-    { data: "26/02 09:15", tipo: "Closer", msg: "Ligação realizada — proposta em elaboração" },
+  { id: 1, nome: "Carlos Mendes", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 85, sla: 0.5, statusFup: "Ativo", valor: 42000, historico: [
+    { data: "26/02 10:00", tipo: "SOL", msg: "Primeiro contato — interesse imediato" },
+    { data: "27/02 09:30", tipo: "SOL", msg: "BANT completo — orçamento R$ 42k confirmado" },
+    { data: "01/03 08:00", tipo: "SOL", msg: "Qualificado — transferido para Closer" },
   ]},
-  { id: 2, nome: "Maria Santos", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 92, sla: 0.5, statusFup: "Ativo", valor: 68000, historico: [
-    { data: "26/02 10:00", tipo: "SOL", msg: "Qualificação BANT completa — interesse alto" },
-    { data: "26/02 10:05", tipo: "SOL", msg: "Score 92 atribuído — lead prioritário" },
+  { id: 2, nome: "Ana Beatriz Costa", etapa: "Qualificado", temperatura: "MORNO" as const, score: 72, sla: 0.8, statusFup: "Ativo", valor: 28000, historico: [
+    { data: "25/02 14:00", tipo: "SOL", msg: "Primeiro contato via Meta" },
+    { data: "27/02 11:00", tipo: "SOL", msg: "Resposta positiva — iniciando BANT" },
+    { data: "28/02 16:00", tipo: "SOL", msg: "Qualificação parcial — budget pendente" },
+    { data: "01/03 09:15", tipo: "SOL", msg: "Qualificada — budget confirmado R$ 28k" },
   ]},
-  { id: 3, nome: "Carlos Oliveira", etapa: "Proposta", temperatura: "MORNO" as const, score: 71, sla: 3.1, statusFup: "Aguardando", valor: 32000, historico: [
-    { data: "23/02 16:00", tipo: "SOL", msg: "Lead qualificado — budget parcialmente confirmado" },
-    { data: "24/02 11:30", tipo: "Closer", msg: "Proposta enviada por email" },
-    { data: "26/02 08:00", tipo: "FUP", msg: "Follow-up agendado para hoje" },
+  { id: 3, nome: "Roberto Almeida", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 88, sla: 0.3, statusFup: "Ativo", valor: 55000, historico: [
+    { data: "28/02 08:00", tipo: "SOL", msg: "Lead via Indicação — alta urgência" },
+    { data: "28/02 08:05", tipo: "SOL", msg: "BANT completo em 1ª interação" },
+    { data: "01/03 07:45", tipo: "SOL", msg: "Qualificado — decisor confirmado" },
   ]},
-  { id: 4, nome: "Ana Pereira", etapa: "Qualificação", temperatura: "MORNO" as const, score: 58, sla: 1.8, statusFup: "Ativo", valor: 22000, historico: [
-    { data: "25/02 20:30", tipo: "SOL", msg: "Primeiro contato — interesse demonstrado" },
-    { data: "26/02 09:00", tipo: "SOL", msg: "Tentativa 2 de qualificação BANT" },
+  { id: 4, nome: "Juliana Ferreira", etapa: "Qualificação", temperatura: "MORNO" as const, score: 54, sla: 1.2, statusFup: "Ativo", valor: 0, historico: [
+    { data: "26/02 20:00", tipo: "SOL", msg: "Contato inicial fora do horário" },
+    { data: "27/02 09:00", tipo: "SOL", msg: "Resposta recebida — interesse médio" },
+    { data: "28/02 10:00", tipo: "SOL", msg: "2ª interação BANT — em andamento" },
   ]},
-  { id: 5, nome: "Pedro Costa", etapa: "Fechado", temperatura: "QUENTE" as const, score: 95, sla: 0.3, statusFup: "Concluído", valor: 85000, historico: [
-    { data: "20/02 09:00", tipo: "SOL", msg: "Lead qualificado rapidamente — urgência alta" },
-    { data: "21/02 14:00", tipo: "Closer", msg: "Reunião realizada — proposta aceita" },
-    { data: "22/02 10:00", tipo: "Closer", msg: "Contrato assinado" },
+  { id: 5, nome: "Fernando Lima", etapa: "Qualificação", temperatura: "FRIO" as const, score: 31, sla: 2.5, statusFup: "FUP Frio", valor: 0, historico: [
+    { data: "24/02 15:00", tipo: "SOL", msg: "Contato inicial — sem resposta" },
+    { data: "25/02 15:00", tipo: "SOL", msg: "2ª tentativa — sem resposta" },
+    { data: "27/02 10:00", tipo: "FUP", msg: "Transferido para FUP Frio" },
   ]},
-  { id: 6, nome: "Fernanda Lima", etapa: "Closer", temperatura: "MORNO" as const, score: 65, sla: 2.5, statusFup: "Ativo", valor: 38000, historico: [
-    { data: "24/02 11:00", tipo: "SOL", msg: "Qualificação concluída — timing incerto" },
+  { id: 6, nome: "Mariana Santos", etapa: "Closer", temperatura: "QUENTE" as const, score: 79, sla: 0.6, statusFup: "Ativo", valor: 35000, historico: [
+    { data: "27/02 11:00", tipo: "SOL", msg: "Lead qualificado rapidamente" },
+    { data: "28/02 14:00", tipo: "Closer", msg: "Ligação agendada para 01/03" },
   ]},
-  { id: 7, nome: "Ricardo Souza", etapa: "Robô SOL", temperatura: "FRIO" as const, score: 22, sla: 0.1, statusFup: "Novo", valor: 0, historico: [
-    { data: "26/02 13:45", tipo: "SOL", msg: "Primeiro contato enviado — aguardando resposta" },
+  { id: 7, nome: "Lucas Rodrigues", etapa: "Robô SOL", temperatura: "MORNO" as const, score: 42, sla: 0.1, statusFup: "Novo", valor: 0, historico: [
+    { data: "01/03 10:30", tipo: "SOL", msg: "Primeiro contato enviado — aguardando resposta" },
   ]},
-  { id: 8, nome: "Luciana Ferreira", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 88, sla: 0.8, statusFup: "Ativo", valor: 55000, historico: [
-    { data: "25/02 18:00", tipo: "SOL", msg: "BANT completo — decisor identificado" },
-    { data: "26/02 08:30", tipo: "SOL", msg: "Transferência para Closer em andamento" },
+  { id: 8, nome: "Patrícia Gomes", etapa: "Robô SOL", temperatura: "FRIO" as const, score: 18, sla: 0.1, statusFup: "Novo", valor: 0, historico: [
+    { data: "01/03 11:00", tipo: "SOL", msg: "Contato inicial — lead Meta" },
   ]},
-  { id: 9, nome: "Marcos Almeida", etapa: "Qualificação", temperatura: "FRIO" as const, score: 31, sla: 4.2, statusFup: "FUP Frio", valor: 15000, historico: [
-    { data: "22/02 10:00", tipo: "SOL", msg: "Contato inicial — sem resposta" },
-    { data: "23/02 10:00", tipo: "SOL", msg: "2ª tentativa — sem resposta" },
-    { data: "25/02 10:00", tipo: "FUP", msg: "Transferido para FUP Frio" },
+  { id: 9, nome: "Ricardo Souza", etapa: "Qualificação", temperatura: "MORNO" as const, score: 48, sla: 1.8, statusFup: "Ativo", valor: 0, historico: [
+    { data: "25/02 09:00", tipo: "SOL", msg: "Primeiro contato" },
+    { data: "26/02 14:00", tipo: "SOL", msg: "Respondeu com dúvidas" },
+    { data: "28/02 09:00", tipo: "SOL", msg: "Em qualificação BANT" },
   ]},
-  { id: 10, nome: "Juliana Rocha", etapa: "Proposta", temperatura: "QUENTE" as const, score: 84, sla: 1.5, statusFup: "Ativo", valor: 72000, historico: [
-    { data: "24/02 09:00", tipo: "SOL", msg: "Lead qualificado — orçamento alto" },
-    { data: "25/02 15:00", tipo: "Closer", msg: "Proposta personalizada enviada" },
-  ]},
-  { id: 11, nome: "Bruno Mendes", etapa: "Closer", temperatura: "MORNO" as const, score: 62, sla: 3.0, statusFup: "Aguardando", valor: 28000, historico: [
-    { data: "23/02 14:00", tipo: "SOL", msg: "Qualificação parcial — budget não confirmado" },
-  ]},
-  { id: 12, nome: "Camila Dias", etapa: "Robô SOL", temperatura: "MORNO" as const, score: 45, sla: 0.2, statusFup: "Novo", valor: 0, historico: [
-    { data: "26/02 12:00", tipo: "SOL", msg: "Contato inicial — respondeu com interesse" },
-  ]},
-  { id: 13, nome: "Rafael Nunes", etapa: "Qualificado", temperatura: "MORNO" as const, score: 69, sla: 1.1, statusFup: "Ativo", valor: 41000, historico: [
-    { data: "25/02 11:00", tipo: "SOL", msg: "BANT parcialmente completo" },
-  ]},
-  { id: 14, nome: "Patrícia Gomes", etapa: "Qualificação", temperatura: "FRIO" as const, score: 28, sla: 5.0, statusFup: "FUP Frio", valor: 12000, historico: [
-    { data: "21/02 16:00", tipo: "SOL", msg: "Sem resposta após 3 tentativas" },
-    { data: "24/02 10:00", tipo: "FUP", msg: "Entrou em FUP Frio" },
-  ]},
-  { id: 15, nome: "Thiago Barbosa", etapa: "Fechado", temperatura: "QUENTE" as const, score: 91, sla: 0.4, statusFup: "Concluído", valor: 93000, historico: [
-    { data: "19/02 08:00", tipo: "SOL", msg: "Lead qualificado — necessidade urgente" },
-    { data: "20/02 10:00", tipo: "Closer", msg: "Proposta aceita imediatamente" },
-    { data: "20/02 16:00", tipo: "Closer", msg: "Contrato assinado — R$ 93k" },
+  { id: 10, nome: "Camila Oliveira", etapa: "Proposta", temperatura: "QUENTE" as const, score: 91, sla: 0.4, statusFup: "Ativo", valor: 48000, historico: [
+    { data: "25/02 08:00", tipo: "SOL", msg: "Lead qualificado — projeto urgente" },
+    { data: "26/02 10:00", tipo: "Closer", msg: "Reunião realizada" },
+    { data: "28/02 15:00", tipo: "Closer", msg: "Proposta enviada — R$ 48k" },
   ]},
 ];
