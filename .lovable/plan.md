@@ -1,28 +1,38 @@
 
-# Duplicar SOL Insights com Backup
 
-## Objetivo
-Criar uma copia de seguranca da pagina SOL Insights atual antes de fazer mudancas, garantindo que se algo der errado, o backup esteja disponivel.
+# Recriar ConferenciaBackup com dados originais
 
-## Arquivos a criar
+## Problema
+O `ConferenciaBackup.tsx` atual importa dados do mesmo arquivo `conferenciaMockData.ts` que ja foi modificado (funil reordenado, BANT removido, origens consolidadas). Portanto, nao funciona como backup real.
 
-| Arquivo | Descricao |
+## Solucao
+Criar um arquivo de dados separado `src/data/conferenciaMockDataBackup.ts` com os valores originais e atualizar o `ConferenciaBackup.tsx` para importar dele.
+
+## Diferencas entre original e atual
+
+| Item | Valor atual (modificado) | Valor original (backup) |
+|---|---|---|
+| Insight BANT | "...100% dos dados inseridos no CRM..." | "...100% dos dados inseridos no CRM automaticamente via BANT..." |
+| Origens | 4 entradas (ORGANICO consolidado = 20) | 6 entradas separadas: SITE(70), FACEBOOK(52), GOOGLE(12), ORGANICO(11), INDICACAO(6), PROSPECAO(3) |
+| Funil | Sequencia atual com DESQUALIFICADOS auto-calculado | Sequencia original sem DESQUALIFICADOS |
+| Subtitulo Solucao | Sem "BANT" | Com "Qualificacao BANT 24/7" |
+
+## Arquivos
+
+| Arquivo | Acao |
 |---|---|
-| `src/pages/ConferenciaBackup.tsx` | Copia exata do `Conferencia.tsx` atual, renomeado internamente para `ConferenciaBackup` |
+| `src/data/conferenciaMockDataBackup.ts` | Criar -- copia dos dados originais com funil, origens e textos BANT restaurados |
+| `src/pages/ConferenciaBackup.tsx` | Alterar import para usar `conferenciaMockDataBackup` e remover estilo condicional de DESQUALIFICADOS no funil |
 
-## Arquivos a modificar
+## Detalhes tecnicos
 
-| Arquivo | Mudanca |
-|---|---|
-| `src/App.tsx` | Adicionar rota `/conferencia-backup` apontando para `ConferenciaBackup` (protegida, com MainLayout, sem ModuleGuard para ficar oculta do menu) |
-| `src/components/layout/Sidebar.tsx` | Nenhuma mudanca -- a pagina backup nao aparece no menu, fica acessivel apenas por URL direto |
+**conferenciaMockDataBackup.ts** tera:
+- `origemLeads` com 6 entradas separadas (SITE, FACEBOOK, GOOGLE, ORGANICO, INDICACAO, PROSPECAO)
+- `funnelData` sem a linha DESQUALIFICADOS
+- `insights` com mencao BANT restaurada
+- Demais dados identicos
 
-## Resultado
+**ConferenciaBackup.tsx**:
+- Trocar `from "@/data/conferenciaMockData"` por `from "@/data/conferenciaMockDataBackup"`
+- Remover logica condicional de cor vermelha para DESQUALIFICADOS no funil (ja que essa etapa nao existira)
 
-- **`/conferencia`** -- SOL Insights principal, pronta para receber novas metricas
-- **`/conferencia-backup`** -- Copia identica do estado atual, oculta do menu, acessivel apenas via URL direto
-- A pagina principal continua funcionando normalmente e pode ser editada livremente
-- Se precisar restaurar, basta acessar `/conferencia-backup` para comparar ou copiar o codigo de volta
-
-## Proximo passo
-Apos aprovacao, voce podera me passar as novas metricas e topicos para atualizar a pagina principal `/conferencia`.
