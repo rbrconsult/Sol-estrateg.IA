@@ -201,10 +201,10 @@ export default function Conferencia() {
     frio: scale(t.frio),
   })), [multiplier]);
 
-  const filteredLeads = useMemo(() => tabelaLeadsMock.map(l => ({
-    ...l,
-    valor: scale(l.valor),
-  })), [multiplier]);
+  const filteredLeads = useMemo(() => tabelaLeadsMock.map(l => {
+    const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
+    return { ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup };
+  }), [multiplier]);
 
   const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
@@ -668,7 +668,20 @@ export default function Conferencia() {
                       <td className="py-2 px-2 text-right tabular-nums font-semibold">{lead.score}</td>
                       <td className="py-2 px-2 text-right tabular-nums text-muted-foreground">{lead.sla}</td>
                       <td className="py-2 px-2">
-                        <Badge variant={lead.statusFup === "Concluído" ? "default" : lead.statusFup === "FUP Frio" ? "destructive" : "secondary"} className="text-[9px] px-1.5 py-0">
+                        <Badge
+                          variant={
+                            lead.statusFup === "Concluído" ? "default" :
+                            lead.statusFup === "Novo" ? "outline" :
+                            "secondary"
+                          }
+                          className={cn(
+                            "text-[9px] px-1.5 py-0",
+                            lead.statusFup === "FUP Frio" && "bg-blue-500/15 text-blue-500 border-blue-500/30",
+                            lead.statusFup === "Qualificação" && "bg-primary/15 text-primary border-primary/30",
+                            lead.statusFup === "Aguardando" && "bg-warning/15 text-warning border-warning/30",
+                            lead.statusFup === "Concluído" && "bg-success/15 text-success border-success/30",
+                          )}
+                        >
                           {lead.statusFup}
                         </Badge>
                       </td>
