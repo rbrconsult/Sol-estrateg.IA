@@ -24,6 +24,8 @@ interface HeaderProps {
 
 const getDateLabel = (preset: DateFilterPreset, dateRange: DateRange): string | null => {
   if (preset === "all") return null;
+  if (preset === "today") return "Hoje";
+  if (preset === "3days") return "Últimos 3 dias";
   if (preset === "7days") return "Últimos 7 dias";
   if (preset === "30days") return "Últimos 30 dias";
   if (preset === "lastMonth") return "Mês anterior";

@@ -101,6 +101,8 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
 
   const presets: { value: DateFilterPreset; label: string }[] = [
     { value: "all", label: "Todos" },
+    { value: "today", label: "Hoje" },
+    { value: "3days", label: "3 dias" },
     { value: "7days", label: "7 dias" },
     { value: "30days", label: "30 dias" },
     { value: "lastMonth", label: "Mês anterior" },
