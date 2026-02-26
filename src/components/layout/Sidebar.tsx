@@ -130,6 +130,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
     '/origens': 'origens',
     '/chamados': 'chamados',
     '/monitoramento': 'monitoramento',
+    '/make-errors': 'make-errors',
     '/ajuda': 'ajuda',
     '/conferencia': 'conferencia',
   };

@@ -91,6 +91,11 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="monitoramento"><Monitoramento /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/make-errors" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="make-errors"><MakeErrors /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/ajuda" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
