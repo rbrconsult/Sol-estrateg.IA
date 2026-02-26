@@ -17,7 +17,7 @@ export type DateRange = {
   to: Date | undefined;
 };
 
-export type DateFilterPreset = "all" | "7days" | "30days" | "lastMonth" | "custom";
+export type DateFilterPreset = "all" | "today" | "3days" | "7days" | "30days" | "lastMonth" | "custom";
 
 interface DateFilterProps {
   dateRange: DateRange;
@@ -44,6 +44,12 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
     switch (newPreset) {
       case "all":
         newRange = { from: undefined, to: undefined };
+        break;
+      case "today":
+        newRange = { from: today, to: today };
+        break;
+      case "3days":
+        newRange = { from: subDays(today, 3), to: today };
         break;
       case "7days":
         newRange = { from: subDays(today, 7), to: today };
@@ -79,6 +85,8 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
 
   const getButtonLabel = () => {
     if (preset === "all") return "Período";
+    if (preset === "today") return "Hoje";
+    if (preset === "3days") return "3 dias";
     if (preset === "7days") return "7 dias";
     if (preset === "30days") return "30 dias";
     if (preset === "lastMonth") return "Mês anterior";
@@ -93,6 +101,8 @@ export function DateFilter({ dateRange, preset, onDateRangeChange }: DateFilterP
 
   const presets: { value: DateFilterPreset; label: string }[] = [
     { value: "all", label: "Todos" },
+    { value: "today", label: "Hoje" },
+    { value: "3days", label: "3 dias" },
     { value: "7days", label: "7 dias" },
     { value: "30days", label: "30 dias" },
     { value: "lastMonth", label: "Mês anterior" },
