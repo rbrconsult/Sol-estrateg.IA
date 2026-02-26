@@ -167,9 +167,9 @@ export default function Conferencia() {
     let detail = k.detail;
     if (k.label === "Leads Recebidos") detail = "100%";
     else if (k.label === "Taxa Resposta") {
-      detail = `${scale(198)}/${scale(342)}`;
+      detail = `${scale(11)}/${scale(18)}`;
     } else if (k.label === "Resgatados FUP") {
-      detail = `R$ ${Math.round(186 * multiplier)}k`;
+      detail = `R$ ${Math.round(6 * multiplier)}k`;
     }
     return { ...k, value: newVal, detail };
   }), [multiplier]);

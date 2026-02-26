@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Bot, Send, Users, Flame, AlertTriangle, Info } from "lucide-react";
+import { Bot, Send, Users, Flame, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 const iconMap = {
   bot: Bot,
@@ -15,7 +15,7 @@ interface RobotData {
     fup: { nome: string; taxaResposta: number; tempoMedioResposta: string; leadsProcessados: number };
   };
   funilMensagens: { etapa: string; valor: number }[];
-  alertasUrgentes: { tipo: "danger" | "warning"; titulo: string; desc: string }[];
+  alertasUrgentes: { tipo: "danger" | "warning" | "success"; titulo: string; desc: string }[];
 }
 
 export function RobotInsightsMock({ data }: { data: RobotData }) {
@@ -94,14 +94,18 @@ export function RobotInsightsMock({ data }: { data: RobotData }) {
 
         {/* Alertas urgentes */}
         <div>
-          <p className="text-[9px] text-destructive uppercase tracking-wider font-semibold mb-3">⚠ Alertas Urgentes</p>
+          <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">📋 Alertas & Status</p>
           <div className="space-y-2">
             {data.alertasUrgentes.map((a, i) => {
               const icon = a.tipo === "danger"
                 ? <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                : a.tipo === "success"
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
                 : <Info className="h-3.5 w-3.5 text-warning shrink-0" />;
               const border = a.tipo === "danger"
                 ? "border-destructive/30 bg-destructive/5"
+                : a.tipo === "success"
+                ? "border-success/30 bg-success/5"
                 : "border-warning/30 bg-warning/5";
               return (
                 <div key={i} className={cn("rounded-md border p-2.5 flex items-start gap-2", border)}>
