@@ -20,6 +20,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
+import MakeErrors from "./pages/MakeErrors";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import LeadsBackup from "./pages/LeadsBackup";
