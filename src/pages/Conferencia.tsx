@@ -1,18 +1,21 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw } from "lucide-react";
+import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   kpiCards, pipelineStages, origemLeads, fupFrio, desqualMotivos,
   mensagens, sla, heatmap, taxaPorTentativa,
+  solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
 } from "@/data/conferenciaMockData";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from "recharts";
 
 /* ───────── animated counter hook ───────── */
@@ -104,8 +107,20 @@ function SLAGauge({ pct }: { pct: number }) {
   );
 }
 
+/* ───────── TempDot ───────── */
+function TempDot({ t }: { t: string }) {
+  const color = t === "QUENTE" ? "bg-orange-500" : t === "FRIO" ? "bg-blue-400" : "bg-amber-400";
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={cn("h-2 w-2 rounded-full", color)} />
+      <span className="text-[10px]">{t}</span>
+    </span>
+  );
+}
+
 /* ═══════════════════ MAIN PAGE ═══════════════════ */
 export default function Conferencia() {
+  const [expandedLead, setExpandedLead] = useState<number | null>(null);
   const [time, setTime] = useState(new Date());
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 1000);
@@ -237,6 +252,42 @@ export default function Conferencia() {
           )}
         </section>
 
+        {/* ══════ ROW 1.5 — SOL HOJE (7 dias) ══════ */}
+        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
+          <div className="grid grid-cols-5 gap-3 mb-4">
+            {[
+              { label: "Qualificados", value: solHojeMock[2].qualificados, color: "text-primary" },
+              { label: "Scores", value: solHojeMock[2].scores, color: "text-foreground" },
+              { label: "Quentes", value: solHojeMock[2].quentes, color: "text-orange-500" },
+              { label: "Mornos", value: solHojeMock[2].mornos, color: "text-amber-400" },
+              { label: "Frios", value: solHojeMock[2].frios, color: "text-blue-400" },
+            ].map(item => (
+              <div key={item.label} className="text-center">
+                <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{item.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-end gap-1 h-16">
+            {solHojeMock.map((d, i) => {
+              const maxQ = Math.max(...solHojeMock.map(x => x.qualificados));
+              const h = (d.qualificados / maxQ) * 100;
+              return (
+                <div key={d.dia} className="flex-1 flex flex-col items-center gap-0.5">
+                  <div className="w-full flex flex-col justify-end" style={{ height: 48 }}>
+                    <div
+                      className={cn("w-full rounded-t transition-all duration-500", i === 2 ? "bg-primary" : "bg-primary/40")}
+                      style={{ height: `${h}%` }}
+                    />
+                  </div>
+                  <span className="text-[9px] text-muted-foreground">{d.dia}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ══════ ROW 1 — KPIs (7 cards, último é repescagem destacado) ══════ */}
         <section className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
           {filteredKpis.map((k) => (
@@ -328,8 +379,8 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ ROW 3 — FUP Frio ROI + Origem ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* ══════ ROW 3 — FUP Frio ROI + Origem + Alertas ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* FUP Frio — Repescagem com ROI */}
           <div className="rounded-lg border border-success/30 bg-success/5 p-4">
             <div className="flex items-center gap-2 mb-4">
@@ -380,6 +431,30 @@ export default function Conferencia() {
                   <span className="text-[10px] text-success font-medium tabular-nums w-16 text-right">{o.conversao}% conv</span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Alertas & Insights */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Alertas & Insights</p>
+            <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+              {alertasMock.map((a, i) => {
+                const icon = a.type === "danger" ? <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" /> :
+                             a.type === "warning" ? <Info className="h-3.5 w-3.5 text-warning shrink-0" /> :
+                             <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />;
+                const border = a.type === "danger" ? "border-destructive/30 bg-destructive/5" :
+                               a.type === "warning" ? "border-warning/30 bg-warning/5" :
+                               "border-success/30 bg-success/5";
+                return (
+                  <div key={i} className={cn("rounded-md border p-2.5 flex items-start gap-2", border)}>
+                    {icon}
+                    <div>
+                      <p className="text-[11px] font-semibold text-foreground leading-tight">{a.title}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{a.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -500,22 +575,108 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ ROW 6 — Taxa por Tentativa ══════ */}
-        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Taxa de Resposta por Tentativa</p>
-          <div className="space-y-2">
-            {taxaPorTentativa.map((t) => (
-              <div key={t.tentativa} className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground w-14 shrink-0">{t.tentativa}</span>
-                <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
-                  <div
-                    className="h-full bg-primary/60 rounded transition-all duration-700"
-                    style={{ width: `${(t.pct / 42) * 100}%` }}
-                  />
+        {/* ══════ ROW 6 — Taxa por Tentativa + Temperatura por Etapa ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Taxa de Resposta por Tentativa</p>
+            <div className="space-y-2">
+              {taxaPorTentativa.map((t) => (
+                <div key={t.tentativa} className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground w-14 shrink-0">{t.tentativa}</span>
+                  <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
+                    <div
+                      className="h-full bg-primary/60 rounded transition-all duration-700"
+                      style={{ width: `${(t.pct / 42) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold text-foreground tabular-nums w-8 text-right">{t.pct}%</span>
                 </div>
-                <span className="text-[10px] font-bold text-foreground tabular-nums w-8 text-right">{t.pct}%</span>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* Temperatura por Etapa */}
+          <div className="rounded-lg border border-border/50 bg-card p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Temperatura por Etapa</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={temperaturaPorEtapaMock}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="etapa" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={45} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Bar dataKey="quente" name="Quente" fill="#f97316" stackId="a" />
+                <Bar dataKey="morno" name="Morno" fill="#fbbf24" stackId="a" />
+                <Bar dataKey="frio" name="Frio" fill="#60a5fa" stackId="a" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* ══════ ROW 7 — Tabela de Leads Detalhados ══════ */}
+        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Tabela de Leads Detalhados</p>
+          <div className="overflow-auto max-h-[500px]">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border/50">
+                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Cliente</th>
+                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Etapa</th>
+                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Temp</th>
+                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">Score</th>
+                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">SLA (dias)</th>
+                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">FUP</th>
+                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">Valor</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {tabelaLeadsMock.map((lead) => (
+                  <>
+                    <tr
+                      key={lead.id}
+                      className={cn(
+                        "border-b border-border/30 hover:bg-muted/30 cursor-pointer transition-colors",
+                        expandedLead === lead.id && "bg-muted/20"
+                      )}
+                      onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
+                    >
+                      <td className="py-2 px-2 font-medium text-foreground">{lead.nome}</td>
+                      <td className="py-2 px-2 text-muted-foreground">{lead.etapa}</td>
+                      <td className="py-2 px-2"><TempDot t={lead.temperatura} /></td>
+                      <td className="py-2 px-2 text-right tabular-nums font-semibold">{lead.score}</td>
+                      <td className="py-2 px-2 text-right tabular-nums text-muted-foreground">{lead.sla}</td>
+                      <td className="py-2 px-2">
+                        <Badge variant={lead.statusFup === "Concluído" ? "default" : lead.statusFup === "FUP Frio" ? "destructive" : "secondary"} className="text-[9px] px-1.5 py-0">
+                          {lead.statusFup}
+                        </Badge>
+                      </td>
+                      <td className="py-2 px-2 text-right tabular-nums text-foreground">
+                        {lead.valor > 0 ? `R$ ${(lead.valor / 1000).toFixed(0)}k` : "—"}
+                      </td>
+                      <td className="py-2 px-1">
+                        {expandedLead === lead.id ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
+                      </td>
+                    </tr>
+                    {expandedLead === lead.id && (
+                      <tr key={`${lead.id}-detail`}>
+                        <td colSpan={8} className="px-4 py-2 bg-muted/10">
+                          <div className="space-y-1.5 pl-4 border-l-2 border-primary/30">
+                            {lead.historico.map((h, hi) => (
+                              <div key={hi} className="flex items-start gap-2">
+                                <Badge variant="secondary" className="text-[8px] px-1 py-0 shrink-0">{h.tipo}</Badge>
+                                <span className="text-[10px] text-muted-foreground shrink-0">{h.data}</span>
+                                <span className="text-[10px] text-foreground">{h.msg}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
