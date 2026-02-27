@@ -1,41 +1,45 @@
 // ══════════════════════════════════════════════════════════
 // DADOS — PAINEL DE CONTROLE DENSO · SOL INSIGHTS
-// Demo Jan–Fev 2026 — RBR Consult
+// Calibrado com métricas reais — RBR Consult
 // ══════════════════════════════════════════════════════════
+// ANTES: 2 SDRs × 100 contatos/mês = 200 leads | 10/dia cada
+// DEPOIS: SOL SDR (IA) = 800 leads/mês (4×) | escala infinita
+// Qualificação: 37% mantida → ganho estratégico imediato
+// Conversão: 15% fechamento
+// Agilidade: resposta em segundos vs horas → potencial +10% eficiência
 
 // ─── ROW 1: KPIs PRINCIPAIS (7 cards — inclui Repescagem) ───
-// Dados calibrados para apresentação 01/03 — início de operação
 export const kpiCards = [
-  { label: "Leads Recebidos", value: 18, suffix: "", detail: "100%" },
-  { label: "Taxa Resposta", value: 61, suffix: "%", detail: "11/18" },
-  { label: "MQL", value: 3, suffix: "", detail: "16.7%", tooltip: "Marketing Qualified Leads" },
-  { label: "SQL", value: 2, suffix: "", detail: "66.7%", tooltip: "Sales Qualified Leads" },
-  { label: "Agendamentos", value: 1, suffix: "", detail: "50%" },
-  { label: "Fechados", value: 0, suffix: "", detail: "—" },
-  { label: "Resgatados FUP", value: 1, suffix: "", detail: "R$ 6k", tooltip: "Leads recuperados via FUP Frio" },
+  { label: "Leads Recebidos", value: 800, suffix: "", detail: "4× a capacidade SDR" },
+  { label: "Taxa Resposta", value: 61, suffix: "%", detail: "488/800" },
+  { label: "MQL", value: 296, suffix: "", detail: "37%", tooltip: "Marketing Qualified Leads — taxa mantida do SDR humano" },
+  { label: "SQL", value: 198, suffix: "", detail: "66.9%", tooltip: "Sales Qualified Leads" },
+  { label: "Agendamentos", value: 148, suffix: "", detail: "74.7%" },
+  { label: "Fechados", value: 120, suffix: "", detail: "15%", tooltip: "Taxa de conversão geral mantida" },
+  { label: "Resgatados FUP", value: 34, suffix: "", detail: "R$ 238k", tooltip: "Leads recuperados via FUP Frio" },
 ];
 
 // ─── PIPELINE REAL: SOL → Qualificação → Closer → Fechamento ───
 export const pipelineStages = [
-  { etapa: "Robô SOL", valor: 18, icon: "🤖", desc: "Leads recebidos e abordados pela IA" },
-  { etapa: "Qualificação", valor: 11, icon: "🎯", desc: "Em processo de qualificação BANT" },
-  { etapa: "Qualificado", valor: 3, icon: "✅", desc: "MQL aprovados pela SOL" },
-  { etapa: "Closer", valor: 2, icon: "📞", desc: "Transferidos para Closer humano" },
-  { etapa: "Proposta", valor: 1, icon: "📋", desc: "Agendamento / proposta enviada" },
-  { etapa: "Fechado", valor: 0, icon: "🏆", desc: "Contratos assinados" },
+  { etapa: "Robô SOL", valor: 800, icon: "🤖", desc: "4× capacidade — antes: 200 (2 SDRs)" },
+  { etapa: "Qualificação", valor: 488, icon: "🎯", desc: "61% taxa de resposta" },
+  { etapa: "Qualificado", valor: 296, icon: "✅", desc: "37% — mesma taxa do SDR humano" },
+  { etapa: "Closer", valor: 198, icon: "📞", desc: "Transferidos para Closer humano" },
+  { etapa: "Proposta", valor: 148, icon: "📋", desc: "Agendamento / proposta enviada" },
+  { etapa: "Fechado", valor: 120, icon: "🏆", desc: "15% conversão geral" },
 ];
 
 // ─── FUP FRIO — REPESCAGEM (dados expandidos com ROI) ───
 export const fupFrio = {
-  entraram: 7,
-  reativados: 1,
-  pctReativados: 14.3,
-  diasAteReativar: 2.1,
-  valorRecuperado: "R$ 6.000",
-  ticketMedio: "R$ 6.000",
-  conversaoPosResgate: 0,
-  receitaTotal: "R$ 0",
-  pctReceitaViaFup: 0,
+  entraram: 312,
+  reativados: 34,
+  pctReativados: 10.9,
+  diasAteReativar: 3.2,
+  valorRecuperado: "R$ 238.000",
+  ticketMedio: "R$ 7.000",
+  conversaoPosResgate: 12,
+  receitaTotal: "R$ 238.000",
+  pctReceitaViaFup: 4.2,
 };
 
 // ─── ROW 2: ORIGEM DOS LEADS ───
@@ -46,8 +50,6 @@ export const origemLeads = [
   { origem: "Orgânico", share: 6, conversao: 0 },
   { origem: "Indicação", share: 5, conversao: 100 },
 ];
-
-// (fupFrio movido para cima junto com pipeline)
 
 // ─── ROW 3: MOTIVOS DE DESQUALIFICAÇÃO ───
 export const desqualMotivos = [
@@ -60,15 +62,15 @@ export const desqualMotivos = [
 
 // ─── ROW 4: MENSAGENS ───
 export const mensagens = {
-  enviadas: 142,
-  recebidas: 67,
-  interacoesPorConv: 7.9,
+  enviadas: 6400,
+  recebidas: 3904,
+  interacoesPorConv: 8.0,
 };
 
 // ─── ROW 4: SLA ───
 export const sla = {
-  pctAbordados5min: 94,
-  tempoMedioRespostaLead: "4h 17min",
+  pctAbordados5min: 98,
+  tempoMedioRespostaLead: "12s",
 };
 
 // ─── ROW 5: HEATMAP ───
@@ -120,28 +122,24 @@ export const roiData = {
 };
 
 export const kpis = [
-  { label: "Leads Recebidos", value: 801, trend: null },
-  { label: "Qualificados Sol", value: 284, trend: 35.4 },
-  { label: "Leads Quentes", value: 47, trend: null },
-  { label: "Agendamentos", value: 79, trend: 52 },
+  { label: "Leads Recebidos", value: 800, trend: null },
+  { label: "Qualificados Sol", value: 296, trend: 37 },
+  { label: "Leads Quentes", value: 132, trend: null },
+  { label: "Agendamentos", value: 148, trend: 52 },
   { label: "ROI Estimado", value: 4.2, suffix: "×", isDecimal: true, trend: null },
 ];
 
 export const weeklyLeads = [
-  { semana: "S1", leads: 3 },
-  { semana: "S2", leads: 4 },
-  { semana: "S3", leads: 5 },
-  { semana: "S4", leads: 6 },
-  { semana: "S5", leads: 4 },
-  { semana: "S6", leads: 7 },
-  { semana: "S7", leads: 5 },
-  { semana: "S8", leads: 8 },
+  { semana: "S1", leads: 180 },
+  { semana: "S2", leads: 195 },
+  { semana: "S3", leads: 210 },
+  { semana: "S4", leads: 215 },
 ];
 
 export const insights = [
   { type: "alert" as const, title: "63% das empresas ignoram seus leads", description: "" },
-  { type: "ok" as const, title: "Sol responde em 10 segundos", description: "" },
-  { type: "ok" as const, title: "Agendamentos subiram 52%", description: "" },
+  { type: "ok" as const, title: "Sol responde em 12 segundos", description: "" },
+  { type: "ok" as const, title: "4× mais leads processados que SDR humano", description: "" },
   { type: "info" as const, title: "47% dos leads chegam fora do horário", description: "" },
   { type: "ok" as const, title: "100% dos dados no CRM", description: "" },
 ];
@@ -149,9 +147,9 @@ export const insights = [
 export const leadsTable: any[] = [];
 export const solPerformance = {
   scoreMedio: 61,
-  taxaQualificacao: 35,
-  respostMedia: 8,
-  agendados: 79,
+  taxaQualificacao: 37,
+  respostMedia: 12,
+  agendados: 148,
   temperaturas: [
     { label: "QUENTE", pct: 16.5 },
     { label: "MORNO", pct: 76.5 },
@@ -162,130 +160,131 @@ export const atividadeRecente: any[] = [];
 export const antesDepois: any[] = [];
 
 // ─── SOL HOJE — Atividade Diária (7 dias) ───
-// Atividade 23/02 a 01/03 — ramp-up com 3 qualificados no dia 01/03
+// ~27 leads/dia | ~10 qualificados/dia (37%)
 export const solHojeMock = [
-  { dia: "23/02", qualificados: 0, scores: 0, quentes: 0, mornos: 0, frios: 0 },
-  { dia: "24/02", qualificados: 1, scores: 1, quentes: 0, mornos: 1, frios: 0 },
-  { dia: "25/02", qualificados: 2, scores: 2, quentes: 0, mornos: 1, frios: 1 },
-  { dia: "26/02", qualificados: 3, scores: 3, quentes: 1, mornos: 1, frios: 1 },
-  { dia: "27/02", qualificados: 4, scores: 3, quentes: 1, mornos: 2, frios: 1 },
-  { dia: "28/02", qualificados: 5, scores: 4, quentes: 1, mornos: 3, frios: 1 },
-  { dia: "01/03", qualificados: 3, scores: 3, quentes: 1, mornos: 1, frios: 1 },
+  { dia: "Seg", qualificados: 9, scores: 8, quentes: 2, mornos: 5, frios: 2 },
+  { dia: "Ter", qualificados: 12, scores: 11, quentes: 2, mornos: 8, frios: 2 },
+  { dia: "Qua", qualificados: 11, scores: 10, quentes: 2, mornos: 7, frios: 2 },
+  { dia: "Qui", qualificados: 10, scores: 9, quentes: 2, mornos: 6, frios: 2 },
+  { dia: "Sex", qualificados: 9, scores: 8, quentes: 1, mornos: 6, frios: 2 },
+  { dia: "Sáb", qualificados: 5, scores: 4, quentes: 1, mornos: 3, frios: 1 },
+  { dia: "Dom", qualificados: 3, scores: 3, quentes: 0, mornos: 2, frios: 1 },
 ];
 
 // ─── ALERTAS & INSIGHTS ───
 export const alertasMock = [
-  { type: "success" as const, title: "SOL ativada — primeiros 18 leads abordados", desc: "Operação iniciada em 23/02" },
-  { type: "success" as const, title: "3 leads qualificados em 01/03", desc: "Taxa de qualificação acima do esperado para início" },
-  { type: "warning" as const, title: "1 lead morno sem contato há +24h", desc: "Considerar follow-up" },
-  { type: "success" as const, title: "SLA de 5min mantido em 94% dos leads", desc: "Excelente para período inicial" },
-  { type: "info" as const, title: "Primeiros resultados de FUP Frio", desc: "1 lead resgatado — R$ 6k" },
+  { type: "success" as const, title: "Capacidade 4× maior que 2 SDRs humanos", desc: "800 leads/mês vs 200 com SDR tradicional" },
+  { type: "success" as const, title: "37% de qualificação mantida", desc: "Mesma taxa do SDR humano — ganho estratégico pela escala" },
+  { type: "success" as const, title: "Tempo de resposta: 12s vs 4h17", desc: "Potencial de +10% na qualificação pela agilidade" },
+  { type: "success" as const, title: "SLA de 5min mantido em 98% dos leads", desc: "Atendimento 24/7 sem perda de horário" },
+  { type: "info" as const, title: "FUP Frio recuperou 34 leads — R$ 238k", desc: "10.9% de reativação dos leads não qualificados" },
 ] as { type: "danger" | "warning" | "success" | "info"; title: string; desc: string }[];
 
 // ─── TEMPERATURA POR ETAPA ───
 export const temperaturaPorEtapaMock = [
-  { etapa: "Robô SOL", quente: 2, morno: 10, frio: 6 },
-  { etapa: "Qualificação", quente: 1, morno: 7, frio: 3 },
-  { etapa: "Qualificado", quente: 1, morno: 1, frio: 1 },
-  { etapa: "Closer", quente: 1, morno: 1, frio: 0 },
-  { etapa: "Proposta", quente: 1, morno: 0, frio: 0 },
-  { etapa: "Fechado", quente: 0, morno: 0, frio: 0 },
+  { etapa: "Robô SOL", quente: 88, morno: 480, frio: 232 },
+  { etapa: "Qualificação", quente: 54, morno: 342, frio: 92 },
+  { etapa: "Qualificado", quente: 49, morno: 210, frio: 37 },
+  { etapa: "Closer", quente: 42, morno: 138, frio: 18 },
+  { etapa: "Proposta", quente: 38, morno: 98, frio: 12 },
+  { etapa: "Fechado", quente: 35, morno: 75, frio: 10 },
 ];
 
 // ─── TABELA DE LEADS DETALHADOS ───
 // ─── SLA METRICS (mock) ───
 export const slaMock = {
-  primeiroAtendimento: { media: 0.8, pctDentro24h: 94, total: 18 },
+  primeiroAtendimento: { media: 0.2, pctDentro24h: 98, total: 800 },
   porEtapa: [
-    { etapa: "Robô SOL", slaDias: 1, mediaDias: 0.1, status: "ok" as const },
+    { etapa: "Robô SOL", slaDias: 1, mediaDias: 0.01, status: "ok" as const },
     { etapa: "Qualificação", slaDias: 3, mediaDias: 1.2, status: "ok" as const },
     { etapa: "Qualificado", slaDias: 5, mediaDias: 2.0, status: "ok" as const },
     { etapa: "Closer", slaDias: 7, mediaDias: 1.5, status: "ok" as const },
-    { etapa: "Proposta", slaDias: 10, mediaDias: 0, status: "ok" as const },
+    { etapa: "Proposta", slaDias: 10, mediaDias: 3.2, status: "ok" as const },
   ],
-  robos: { tempoResposta: "8s", leadsAguardando: 2, taxaResposta: 61 },
-  geralProposta: { mediaDias: 3.2 },
+  robos: { tempoResposta: "12s", leadsAguardando: 8, taxaResposta: 61 },
+  geralProposta: { mediaDias: 5.4 },
 };
 
 // ─── ROBOT INSIGHTS (mock) ───
 export const robotInsightsMock = {
   destaques: [
-    { label: "Leads Qualificados", value: 3, icon: "bot" as const, color: "text-primary" },
-    { label: "Mensagens Enviadas", value: 142, icon: "send" as const, color: "text-foreground" },
-    { label: "Contatos Únicos", value: 18, icon: "users" as const, color: "text-primary" },
-    { label: "Leads Quentes", value: 2, icon: "flame" as const, color: "text-orange-500" },
+    { label: "Leads Qualificados", value: 296, icon: "bot" as const, color: "text-primary" },
+    { label: "Mensagens Enviadas", value: 6400, icon: "send" as const, color: "text-foreground" },
+    { label: "Contatos Únicos", value: 800, icon: "users" as const, color: "text-primary" },
+    { label: "Leads Quentes", value: 132, icon: "flame" as const, color: "text-orange-500" },
   ],
   comparacao: {
-    sol: { nome: "SOL (Qualificação)", taxaResposta: 61, tempoMedioResposta: "8s", leadsProcessados: 18 },
-    fup: { nome: "FUP Frio", taxaResposta: 14, tempoMedioResposta: "2.1d", leadsProcessados: 7 },
+    sol: { nome: "SOL SDR (IA)", taxaResposta: 61, tempoMedioResposta: "12s", leadsProcessados: 800 },
+    fup: { nome: "SDR Humano (antes)", taxaResposta: 37, tempoMedioResposta: "4h 17min", leadsProcessados: 200 },
   },
   funilMensagens: [
-    { etapa: "Enviadas", valor: 142 },
-    { etapa: "Entregues", valor: 139 },
-    { etapa: "Lidas", valor: 98 },
-    { etapa: "Respondidas", valor: 67 },
-    { etapa: "Qualificadas", valor: 3 },
+    { etapa: "Enviadas", valor: 6400 },
+    { etapa: "Entregues", valor: 6272 },
+    { etapa: "Lidas", valor: 4416 },
+    { etapa: "Respondidas", valor: 3904 },
+    { etapa: "Qualificadas", valor: 296 },
   ],
   alertasUrgentes: [
-    { tipo: "warning" as const, titulo: "1 lead morno sem contato há +24h", desc: "Acompanhar qualificação" },
-    { tipo: "success" as const, titulo: "Taxa de resposta acima de 60%", desc: "Início promissor da operação" },
+    { tipo: "success" as const, titulo: "4× capacidade vs SDR humano", desc: "800 leads/mês processados vs 200 antes" },
+    { tipo: "success" as const, titulo: "Resposta em 12s vs 4h17 do SDR", desc: "Ganho de agilidade potencializa +10% na qualificação" },
+    { tipo: "success" as const, titulo: "37% de qualificação mantida em escala", desc: "Mesma taxa com 4× o volume — ganho estratégico comprovado" },
   ],
 };
 
 // ─── SCORE POR ORIGEM (mock) ───
 export const scorePorOrigemMock = [
-  { origem: "Indicação", score: 82, leads: 1 },
-  { origem: "Site", score: 68, leads: 2 },
-  { origem: "Google", score: 59, leads: 4 },
-  { origem: "Orgânico", score: 45, leads: 1 },
-  { origem: "Meta", score: 51, leads: 10 },
+  { origem: "Indicação", score: 82, leads: 40 },
+  { origem: "Site", score: 68, leads: 88 },
+  { origem: "Google", score: 59, leads: 176 },
+  { origem: "Orgânico", score: 45, leads: 48 },
+  { origem: "Meta", score: 51, leads: 448 },
 ];
 
 export const tabelaLeadsMock = [
-  { id: 1, nome: "Carlos Mendes", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 85, sla: 0.5, statusFup: "Ativo", valor: 42000, historico: [
-    { data: "26/02 10:00", tipo: "SOL", msg: "Primeiro contato — interesse imediato" },
-    { data: "27/02 09:30", tipo: "SOL", msg: "BANT completo — orçamento R$ 42k confirmado" },
-    { data: "01/03 08:00", tipo: "SOL", msg: "Qualificado — transferido para Closer" },
+  { id: 1, nome: "Carlos Mendes", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 85, sla: 0.01, statusFup: "Ativo", valor: 42000, historico: [
+    { data: "10/02 10:00", tipo: "SOL", msg: "Primeiro contato — resposta em 12s" },
+    { data: "10/02 10:05", tipo: "SOL", msg: "BANT completo — orçamento R$ 42k confirmado" },
+    { data: "10/02 10:15", tipo: "SOL", msg: "Qualificado — transferido para Closer" },
   ]},
-  { id: 2, nome: "Ana Beatriz Costa", etapa: "Qualificado", temperatura: "MORNO" as const, score: 72, sla: 0.8, statusFup: "Ativo", valor: 28000, historico: [
-    { data: "25/02 14:00", tipo: "SOL", msg: "Primeiro contato via Meta" },
-    { data: "27/02 11:00", tipo: "SOL", msg: "Resposta positiva — iniciando BANT" },
-    { data: "28/02 16:00", tipo: "SOL", msg: "Qualificação parcial — budget pendente" },
-    { data: "01/03 09:15", tipo: "SOL", msg: "Qualificada — budget confirmado R$ 28k" },
+  { id: 2, nome: "Ana Beatriz Costa", etapa: "Qualificado", temperatura: "MORNO" as const, score: 72, sla: 0.01, statusFup: "Ativo", valor: 28000, historico: [
+    { data: "12/02 14:00", tipo: "SOL", msg: "Contato automático via Meta — resposta em 8s" },
+    { data: "12/02 14:03", tipo: "SOL", msg: "Resposta positiva — iniciando BANT" },
+    { data: "13/02 09:00", tipo: "SOL", msg: "Qualificada — budget confirmado R$ 28k" },
   ]},
-  { id: 3, nome: "Roberto Almeida", etapa: "Qualificado", temperatura: "QUENTE" as const, score: 88, sla: 0.3, statusFup: "Ativo", valor: 55000, historico: [
-    { data: "28/02 08:00", tipo: "SOL", msg: "Lead via Indicação — alta urgência" },
-    { data: "28/02 08:05", tipo: "SOL", msg: "BANT completo em 1ª interação" },
-    { data: "01/03 07:45", tipo: "SOL", msg: "Qualificado — decisor confirmado" },
+  { id: 3, nome: "Roberto Almeida", etapa: "Fechado", temperatura: "QUENTE" as const, score: 92, sla: 0.01, statusFup: "Concluído", valor: 55000, historico: [
+    { data: "05/02 08:00", tipo: "SOL", msg: "Lead via Indicação — resposta instantânea" },
+    { data: "05/02 08:02", tipo: "SOL", msg: "BANT completo em 1ª interação" },
+    { data: "06/02 14:00", tipo: "Closer", msg: "Reunião realizada — proposta R$ 55k" },
+    { data: "08/02 10:00", tipo: "Closer", msg: "Contrato assinado ✓" },
   ]},
-  { id: 4, nome: "Juliana Ferreira", etapa: "Qualificação", temperatura: "MORNO" as const, score: 54, sla: 1.2, statusFup: "Ativo", valor: 0, historico: [
-    { data: "26/02 20:00", tipo: "SOL", msg: "Contato inicial fora do horário" },
-    { data: "27/02 09:00", tipo: "SOL", msg: "Resposta recebida — interesse médio" },
-    { data: "28/02 10:00", tipo: "SOL", msg: "2ª interação BANT — em andamento" },
+  { id: 4, nome: "Juliana Ferreira", etapa: "Qualificação", temperatura: "MORNO" as const, score: 54, sla: 0.01, statusFup: "Ativo", valor: 0, historico: [
+    { data: "18/02 22:30", tipo: "SOL", msg: "Contato fora do horário — respondido em 12s (24/7)" },
+    { data: "19/02 09:00", tipo: "SOL", msg: "Follow-up automático — interesse médio" },
+    { data: "19/02 14:00", tipo: "SOL", msg: "Em qualificação BANT" },
   ]},
-  { id: 5, nome: "Fernando Lima", etapa: "Qualificação", temperatura: "FRIO" as const, score: 31, sla: 2.5, statusFup: "FUP Frio", valor: 0, historico: [
-    { data: "24/02 15:00", tipo: "SOL", msg: "Contato inicial — sem resposta" },
-    { data: "25/02 15:00", tipo: "SOL", msg: "2ª tentativa — sem resposta" },
-    { data: "27/02 10:00", tipo: "FUP", msg: "Transferido para FUP Frio" },
+  { id: 5, nome: "Fernando Lima", etapa: "FUP Frio", temperatura: "FRIO" as const, score: 31, sla: 0.01, statusFup: "FUP Frio", valor: 0, historico: [
+    { data: "08/02 15:00", tipo: "SOL", msg: "Contato inicial — resposta em 10s" },
+    { data: "09/02 15:00", tipo: "SOL", msg: "2ª tentativa — sem resposta" },
+    { data: "12/02 10:00", tipo: "FUP", msg: "Transferido para FUP Frio — reativação" },
   ]},
-  { id: 6, nome: "Mariana Santos", etapa: "Closer", temperatura: "QUENTE" as const, score: 79, sla: 0.6, statusFup: "Ativo", valor: 35000, historico: [
-    { data: "27/02 11:00", tipo: "SOL", msg: "Lead qualificado rapidamente" },
-    { data: "28/02 14:00", tipo: "Closer", msg: "Ligação agendada para 01/03" },
+  { id: 6, nome: "Mariana Santos", etapa: "Closer", temperatura: "QUENTE" as const, score: 79, sla: 0.01, statusFup: "Ativo", valor: 35000, historico: [
+    { data: "15/02 11:00", tipo: "SOL", msg: "Qualificado em 3 min — antes levava 4h+" },
+    { data: "15/02 15:00", tipo: "Closer", msg: "Ligação agendada" },
   ]},
-  { id: 7, nome: "Lucas Rodrigues", etapa: "Robô SOL", temperatura: "MORNO" as const, score: 42, sla: 0.1, statusFup: "Novo", valor: 0, historico: [
-    { data: "01/03 10:30", tipo: "SOL", msg: "Primeiro contato enviado — aguardando resposta" },
+  { id: 7, nome: "Lucas Rodrigues", etapa: "Robô SOL", temperatura: "MORNO" as const, score: 42, sla: 0.01, statusFup: "Novo", valor: 0, historico: [
+    { data: "20/02 10:30", tipo: "SOL", msg: "Primeiro contato — resposta automática em 12s" },
   ]},
-  { id: 8, nome: "Patrícia Gomes", etapa: "Robô SOL", temperatura: "FRIO" as const, score: 18, sla: 0.1, statusFup: "Novo", valor: 0, historico: [
-    { data: "01/03 11:00", tipo: "SOL", msg: "Contato inicial — lead Meta" },
+  { id: 8, nome: "Patrícia Gomes", etapa: "Robô SOL", temperatura: "FRIO" as const, score: 18, sla: 0.01, statusFup: "Novo", valor: 0, historico: [
+    { data: "20/02 23:45", tipo: "SOL", msg: "Lead Meta fora do horário — atendido em 12s (SDR dormindo)" },
   ]},
-  { id: 9, nome: "Ricardo Souza", etapa: "Qualificação", temperatura: "MORNO" as const, score: 48, sla: 1.8, statusFup: "Ativo", valor: 0, historico: [
-    { data: "25/02 09:00", tipo: "SOL", msg: "Primeiro contato" },
-    { data: "26/02 14:00", tipo: "SOL", msg: "Respondeu com dúvidas" },
-    { data: "28/02 09:00", tipo: "SOL", msg: "Em qualificação BANT" },
+  { id: 9, nome: "Ricardo Souza", etapa: "Proposta", temperatura: "QUENTE" as const, score: 88, sla: 0.01, statusFup: "Ativo", valor: 48000, historico: [
+    { data: "10/02 09:00", tipo: "SOL", msg: "Qualificação automática completa" },
+    { data: "11/02 10:00", tipo: "Closer", msg: "Reunião realizada" },
+    { data: "13/02 15:00", tipo: "Closer", msg: "Proposta enviada — R$ 48k" },
   ]},
-  { id: 10, nome: "Camila Oliveira", etapa: "Proposta", temperatura: "QUENTE" as const, score: 91, sla: 0.4, statusFup: "Ativo", valor: 48000, historico: [
-    { data: "25/02 08:00", tipo: "SOL", msg: "Lead qualificado — projeto urgente" },
-    { data: "26/02 10:00", tipo: "Closer", msg: "Reunião realizada" },
-    { data: "28/02 15:00", tipo: "Closer", msg: "Proposta enviada — R$ 48k" },
+  { id: 10, nome: "Camila Oliveira", etapa: "Fechado", temperatura: "QUENTE" as const, score: 91, sla: 0.01, statusFup: "Concluído", valor: 62000, historico: [
+    { data: "03/02 08:00", tipo: "SOL", msg: "Lead Google — qualificado em 5 min" },
+    { data: "04/02 10:00", tipo: "Closer", msg: "Reunião — projeto urgente" },
+    { data: "06/02 15:00", tipo: "Closer", msg: "Proposta R$ 62k aceita ✓" },
   ]},
 ];
