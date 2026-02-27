@@ -91,39 +91,43 @@ Deno.serve(async (req) => {
 
     // 3. SOURCE 2: Error logs from each scenario
     const scenarioIds = Object.keys(scenarios).map(Number);
-    const logPromises = scenarioIds.map(async (sid) => {
-      try {
-        const logRes = await fetch(
-          `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=50&status=error`,
-          { headers: makeHeaders }
-        );
-        if (!logRes.ok) {
-          await logRes.text();
+    // Fetch ALL log statuses to capture warnings and partial errors too
+    const logStatuses = ["error", "warning"];
+    const logPromises = scenarioIds.flatMap((sid) =>
+      logStatuses.map(async (logStatus) => {
+        try {
+          const logRes = await fetch(
+            `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=50&status=${logStatus}`,
+            { headers: makeHeaders }
+          );
+          if (!logRes.ok) {
+            await logRes.text();
+            return [];
+          }
+          const logData = await logRes.json();
+          const scenarioInfo = scenarios[sid] ?? { name: `Scenario ${sid}`, modules: 0 };
+          return (logData.scenarioLogs ?? []).map((item: any) => ({
+            execution_id: String(item.id ?? `${sid}-${item.timestamp}`),
+            scenario_id: sid,
+            scenario_name: scenarioInfo.name,
+            module_name: item.lastModuleName ?? "Unknown",
+            module_app: item.lastModuleApp ?? "Unknown",
+            failed_module_index: item.lastModuleOrder ?? 0,
+            total_modules: scenarioInfo.modules,
+            error_type: item.error?.type ?? (logStatus === "warning" ? "Warning" : "RuntimeError"),
+            error_code: item.error?.code ?? null,
+            error_message: item.error?.message ?? item.warning?.message ?? "Unknown error",
+            attempts: item.attempts ?? 1,
+            execution_status: logStatus === "warning" ? "warning" : "error_continued",
+            flow_category: detectCategory(scenarioInfo.name),
+            execution_duration_seconds: item.duration ?? null,
+            occurred_at: item.createdAt ?? item.timestamp ?? new Date().toISOString(),
+          }));
+        } catch {
           return [];
         }
-        const logData = await logRes.json();
-        const scenarioInfo = scenarios[sid] ?? { name: `Scenario ${sid}`, modules: 0 };
-        return (logData.scenarioLogs ?? []).map((item: any) => ({
-          execution_id: String(item.id ?? `${sid}-${item.timestamp}`),
-          scenario_id: sid,
-          scenario_name: scenarioInfo.name,
-          module_name: item.lastModuleName ?? "Unknown",
-          module_app: item.lastModuleApp ?? "Unknown",
-          failed_module_index: item.lastModuleOrder ?? 0,
-          total_modules: scenarioInfo.modules,
-          error_type: item.error?.type ?? "RuntimeError",
-          error_code: item.error?.code ?? null,
-          error_message: item.error?.message ?? "Unknown error",
-          attempts: item.attempts ?? 1,
-          execution_status: "error_continued",
-          flow_category: detectCategory(scenarioInfo.name),
-          execution_duration_seconds: item.duration ?? null,
-          occurred_at: item.createdAt ?? item.timestamp ?? new Date().toISOString(),
-        }));
-      } catch {
-        return [];
-      }
-    });
+      })
+    );
 
     const logResults = await Promise.all(logPromises);
     for (const logs of logResults) {
