@@ -160,15 +160,16 @@ export const atividadeRecente: any[] = [];
 export const antesDepois: any[] = [];
 
 // ─── SOL HOJE — Atividade Diária (7 dias) ───
-// ~27 leads/dia | ~10 qualificados/dia (37%)
+// Soma = 296 qualificados (= MQL base), distribuídos por dia
+// Quentes 16.5% = 49 | Mornos 76.5% = 226 | Frios 7% = 21
 export const solHojeMock = [
-  { dia: "Seg", qualificados: 9, scores: 8, quentes: 2, mornos: 5, frios: 2 },
-  { dia: "Ter", qualificados: 12, scores: 11, quentes: 2, mornos: 8, frios: 2 },
-  { dia: "Qua", qualificados: 11, scores: 10, quentes: 2, mornos: 7, frios: 2 },
-  { dia: "Qui", qualificados: 10, scores: 9, quentes: 2, mornos: 6, frios: 2 },
-  { dia: "Sex", qualificados: 9, scores: 8, quentes: 1, mornos: 6, frios: 2 },
-  { dia: "Sáb", qualificados: 5, scores: 4, quentes: 1, mornos: 3, frios: 1 },
-  { dia: "Dom", qualificados: 3, scores: 3, quentes: 0, mornos: 2, frios: 1 },
+  { dia: "Seg", qualificados: 48, scores: 44, quentes: 8, mornos: 37, frios: 3 },
+  { dia: "Ter", qualificados: 52, scores: 48, quentes: 9, mornos: 40, frios: 3 },
+  { dia: "Qua", qualificados: 50, scores: 46, quentes: 8, mornos: 38, frios: 4 },
+  { dia: "Qui", qualificados: 46, scores: 42, quentes: 8, mornos: 35, frios: 3 },
+  { dia: "Sex", qualificados: 44, scores: 40, quentes: 7, mornos: 34, frios: 3 },
+  { dia: "Sáb", qualificados: 32, scores: 28, quentes: 5, mornos: 24, frios: 3 },
+  { dia: "Dom", qualificados: 24, scores: 22, quentes: 4, mornos: 18, frios: 2 },
 ];
 
 // ─── ALERTAS & INSIGHTS ───
