@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Activity, RefreshCw } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Activity, RefreshCw, Star, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HelpButton } from "@/components/HelpButton";
 import { useMakeHeartbeat } from "@/hooks/useMakeHeartbeat";
@@ -8,6 +8,9 @@ import { HeartbeatGrid } from "@/components/heartbeat/HeartbeatGrid";
 
 export default function Monitoramento() {
   const { heartbeatQuery, healthData, syncMutation } = useMakeHeartbeat();
+
+  const principal = useMemo(() => healthData.filter((s) => s.category === "principal"), [healthData]);
+  const backoffice = useMemo(() => healthData.filter((s) => s.category === "backoffice"), [healthData]);
 
   // Auto-sync on mount
   useEffect(() => {
@@ -49,11 +52,23 @@ export default function Monitoramento() {
       {/* Summary KPIs */}
       <HeartbeatSummary scenarios={healthData} isLoading={heartbeatQuery.isLoading} />
 
-      {/* Scenario Grid with Timelines */}
+      {/* Principal Scenarios */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Status por Cenário (24h)</h2>
-        <HeartbeatGrid scenarios={healthData} isLoading={heartbeatQuery.isLoading} />
+        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Star className="h-5 w-5 text-amber-500" /> Fluxos Principais (24h)
+        </h2>
+        <HeartbeatGrid scenarios={principal} isLoading={heartbeatQuery.isLoading} />
       </div>
+
+      {/* Back Office Scenarios */}
+      {backoffice.length > 0 && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <Settings2 className="h-5 w-5 text-muted-foreground" /> Back Office (24h)
+          </h2>
+          <HeartbeatGrid scenarios={backoffice} isLoading={heartbeatQuery.isLoading} />
+        </div>
+      )}
     </div>
   );
 }

@@ -16,19 +16,35 @@ export interface HeartbeatEntry {
   created_at: string;
 }
 
+export type ScenarioCategory = "principal" | "backoffice";
+
 export interface ScenarioHealth {
   scenario_id: number;
   scenario_name: string;
+  category: ScenarioCategory;
   total: number;
   success: number;
   errors: number;
   warnings: number;
-  uptime: number; // percentage
+  uptime: number;
   lastSuccess: string | null;
   lastError: string | null;
   avgDuration: number | null;
-  /** Timeline buckets for the last 24h (48 x 30min) */
   timeline: { time: string; status: "success" | "error" | "warning" | "empty" }[];
+}
+
+const PRINCIPAL_KEYWORDS = [
+  "autenticação", "autenticacao", "auth",
+  "fup frio", "fup_frio", "followup frio",
+  "robô sol", "robo sol", "rob sol", "sol ",
+  "captura lead site", "captura site", "lead site",
+  "captura lead meta", "captura meta", "lead meta", "facebook", "meta ads",
+];
+
+function detectCategory(name: string): ScenarioCategory {
+  const n = name.toLowerCase();
+  if (PRINCIPAL_KEYWORDS.some((kw) => n.includes(kw))) return "principal";
+  return "backoffice";
 }
 
 function buildTimeline(entries: HeartbeatEntry[]): ScenarioHealth["timeline"] {
@@ -85,6 +101,7 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
     result.push({
       scenario_id: scenarioId,
       scenario_name: sorted[0].scenario_name,
+      category: detectCategory(sorted[0].scenario_name),
       total,
       success,
       errors,
