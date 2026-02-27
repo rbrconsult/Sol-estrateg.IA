@@ -22,10 +22,7 @@ import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
 import MakeErrors from "./pages/MakeErrors";
 import Ajuda from "./pages/Ajuda";
-import Leads from "./pages/Leads";
-import LeadsBackup from "./pages/LeadsBackup";
 import Conferencia from "./pages/Conferencia";
-import ConferenciaBackup from "./pages/ConferenciaBackup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
