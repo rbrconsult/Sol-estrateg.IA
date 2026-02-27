@@ -325,19 +325,19 @@ export default function Conferencia() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
           <div className="grid grid-cols-5 gap-3 mb-4">
             {(() => {
-              const totals = filteredSolHoje.reduce((acc, d) => ({
-                qualificados: acc.qualificados + d.qualificados,
-                scores: acc.scores + d.scores,
-                quentes: acc.quentes + d.quentes,
-                mornos: acc.mornos + d.mornos,
-                frios: acc.frios + d.frios,
-              }), { qualificados: 0, scores: 0, quentes: 0, mornos: 0, frios: 0 });
+              // Use KPI values directly to avoid rounding drift
+              const mqlCard = filteredKpis.find(k => k.label === "MQL");
+              const mqlVal = mqlCard?.value ?? 0;
+              const quentes = Math.round(mqlVal * 0.165);
+              const mornos = Math.round(mqlVal * 0.765);
+              const frios = mqlVal - quentes - mornos;
+              const scores = Math.round(mqlVal * 0.9);
               return [
-                { label: "Qualificados", value: totals.qualificados, color: "text-primary" },
-                { label: "Scores", value: totals.scores, color: "text-foreground" },
-                { label: "Quentes", value: totals.quentes, color: "text-orange-500" },
-                { label: "Mornos", value: totals.mornos, color: "text-amber-400" },
-                { label: "Frios", value: totals.frios, color: "text-blue-400" },
+                { label: "Qualificados", value: mqlVal, color: "text-primary" },
+                { label: "Scores", value: scores, color: "text-foreground" },
+                { label: "Quentes", value: quentes, color: "text-orange-500" },
+                { label: "Mornos", value: mornos, color: "text-amber-400" },
+                { label: "Frios", value: frios, color: "text-blue-400" },
               ].map(item => (
                 <div key={item.label} className="text-center">
                   <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
