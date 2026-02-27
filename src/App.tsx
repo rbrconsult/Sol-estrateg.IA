@@ -43,6 +43,11 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={
                 <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="dashboard"><Index /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
@@ -106,11 +111,7 @@ const App = () => (
                   <MainLayout><Leads /></MainLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/conferencia" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
+              {/* /conferencia now served at / */}
               <Route path="/conferencia-backup" element={
                 <ProtectedRoute>
                   <MainLayout><ConferenciaBackup /></MainLayout>

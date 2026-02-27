@@ -31,7 +31,7 @@ const menuItems = [
   { 
     title: "SOL Insights", 
     icon: Presentation, 
-    path: "/conferencia",
+    path: "/",
     description: "Painel SOL SDR"
   },
   // { 
@@ -43,7 +43,7 @@ const menuItems = [
   { 
     title: "Dashboard", 
     icon: LayoutDashboard, 
-    path: "/",
+    path: "/dashboard",
     description: "Painel Executivo"
   },
   { 
@@ -121,7 +121,8 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
   // Map paths to module keys for filtering
   const pathToModule: Record<string, string> = {
     '/leads': 'leads',
-    '/': 'dashboard',
+    '/': 'conferencia',
+    '/dashboard': 'dashboard',
     '/pipeline': 'pipeline',
     '/forecast': 'forecast',
     '/atividades': 'atividades',
@@ -132,7 +133,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
     '/monitoramento': 'monitoramento',
     '/make-errors': 'make-errors',
     '/ajuda': 'ajuda',
-    '/conferencia': 'conferencia',
+    
   };
 
   const visibleMenuItems = menuItems.filter(item => {
