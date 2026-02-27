@@ -23,7 +23,7 @@ interface Step {
 const steps: Step[] = [
   {
     icon: Sun,
-    title: "Bem-vindo ao Sol EstrategIA! ☀️",
+    title: "Bem-vindo ao Sol Estrateg.IA! ☀️",
     description:
       "Sua plataforma integrada de BI, CRM e Suporte. Vamos fazer um tour rápido para você conhecer os principais recursos.",
   },
