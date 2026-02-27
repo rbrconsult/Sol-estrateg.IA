@@ -31,9 +31,9 @@ export const helpCategories: HelpCategory[] = [
     icon: Rocket,
     sections: [
       {
-        title: "O que é o SOL Insights?",
+        title: "O que é o Sol EstrategIA?",
         content:
-          "SOL Insights é uma plataforma integrada de Business Intelligence, CRM e Suporte, projetada para empresas do setor solar. Ela centraliza dados de propostas comerciais, pipeline de vendas, performance de vendedores e chamados de suporte em um único painel.",
+          "Sol EstrategIA é uma plataforma integrada de Business Intelligence, CRM e Suporte, projetada para empresas do setor solar. Ela centraliza dados de propostas comerciais, pipeline de vendas, performance de vendedores e chamados de suporte em um único painel.",
       },
       {
         title: "Para que serve?",
