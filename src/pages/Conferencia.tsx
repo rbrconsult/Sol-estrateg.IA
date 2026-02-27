@@ -801,7 +801,7 @@ export default function Conferencia() {
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-8 text-center">
           <p className="text-[10px] text-muted-foreground/50">
-            Sol EstrategIA · RBR Consult
+            Sol Estrateg.IA · RBR Consult
           </p>
         </footer>
       </div>

@@ -104,7 +104,7 @@ export default function Auth() {
             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <span className="text-2xl font-bold text-primary">S</span>
             </div>
-            <span className="text-2xl font-bold">Sol EstrategIA</span>
+            <span className="text-2xl font-bold">Sol Estrateg.IA</span>
           </div>
           <CardTitle className="text-xl">Acesso ao Dashboard</CardTitle>
           <CardDescription>
