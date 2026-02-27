@@ -16,12 +16,9 @@ export interface HeartbeatEntry {
   created_at: string;
 }
 
-export type ScenarioCategory = "principal" | "backoffice";
-
 export interface ScenarioHealth {
   scenario_id: number;
   scenario_name: string;
-  category: ScenarioCategory;
   total: number;
   success: number;
   errors: number;
@@ -33,19 +30,20 @@ export interface ScenarioHealth {
   timeline: { time: string; status: "success" | "error" | "warning" | "empty" }[];
 }
 
-const PRINCIPAL_KEYWORDS = [
-  "autenticação", "autenticacao", "auth",
-  "fup frio", "fup_frio", "followup frio",
-  "robô sol", "robo sol", "rob sol", "sol ",
-  "captura lead site", "captura site", "lead site",
-  "captura lead meta", "captura meta", "lead meta", "facebook", "meta ads",
-];
-
-function detectCategory(name: string): ScenarioCategory {
-  const n = name.toLowerCase();
-  if (PRINCIPAL_KEYWORDS.some((kw) => n.includes(kw))) return "principal";
-  return "backoffice";
-}
+/** Scenario IDs considered "principal" — all others are hidden */
+const PRINCIPAL_SCENARIO_IDS = new Set([
+  3616676, // Autenticação GrapQL
+  3415205, // Auth SolarMarket
+  4015856, // Robo FUP FRIO
+  3716678, // Robo SDR | Sol
+  3416132, // Captura Leads Meta Ads
+  3724157, // Captura Leads Meta Ads + IA
+  3672582, // Captura Leads Meta Ads | Campanha Sazonal
+  3576316, // Captura Leads Landing Page
+  3567830, // Captura Leads Loja Olímpia
+  3403261, // Captura Leads Site GERAL
+  3724150, // Captura Leads Site GERAL + IA
+]);
 
 function buildTimeline(entries: HeartbeatEntry[]): ScenarioHealth["timeline"] {
   const now = new Date();
