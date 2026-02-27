@@ -31,9 +31,9 @@ export const helpCategories: HelpCategory[] = [
     icon: Rocket,
     sections: [
       {
-        title: "O que é o Sol EstrategIA?",
+        title: "O que é o Sol Estrateg.IA?",
         content:
-          "Sol EstrategIA é uma plataforma integrada de Business Intelligence, CRM e Suporte, projetada para empresas do setor solar. Ela centraliza dados de propostas comerciais, pipeline de vendas, performance de vendedores e chamados de suporte em um único painel.",
+          "Sol Estrateg.IA é uma plataforma integrada de Business Intelligence, CRM e Suporte, projetada para empresas do setor solar. Ela centraliza dados de propostas comerciais, pipeline de vendas, performance de vendedores e chamados de suporte em um único painel.",
       },
       {
         title: "Para que serve?",
