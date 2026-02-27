@@ -55,7 +55,7 @@ const steps: Step[] = [
     icon: CheckCircle2,
     title: "Tudo pronto! 🚀",
     description:
-      "Agora você está pronto para explorar o SOL Insights. Configure sua planilha Google Sheets no Admin e comece a acompanhar seus dados.",
+      "Agora você está pronto para explorar o Sol EstrategIA. Configure sua planilha Google Sheets no Admin e comece a acompanhar seus dados.",
   },
 ];
 

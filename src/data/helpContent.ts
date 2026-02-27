@@ -60,7 +60,7 @@ export const helpCategories: HelpCategory[] = [
       {
         title: "O que é?",
         content:
-          "O módulo de BI Estratégico é o painel principal do SOL Insights. Exibe KPIs consolidados, funis de vendas (por valor e potência), ciclo de vida das propostas, ranking de vendedores e tendências mensais.",
+          "O módulo de BI Estratégico é o painel principal do Sol EstrategIA. Exibe KPIs consolidados, funis de vendas (por valor e potência), ciclo de vida das propostas, ranking de vendedores e tendências mensais.",
       },
       {
         title: "Para que serve?",
