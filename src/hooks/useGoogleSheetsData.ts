@@ -60,7 +60,7 @@ async function fetchSheetsData(organizationId: string | null): Promise<SheetsRes
 }
 
 export function useGoogleSheetsData() {
-  const { organizationId } = useAuth();
+  const { organizationId, user } = useAuth();
 
   return useQuery({
     queryKey: ['google-sheets-data', organizationId],
@@ -68,6 +68,6 @@ export function useGoogleSheetsData() {
     staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 10,
     retry: 2,
-    enabled: !!organizationId,
+    enabled: !!organizationId && !!user,
   });
 }

@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     const logPromises = scenarioIds.map(async (sid) => {
       try {
         const logRes = await fetch(
-          `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=100`,
+          `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=50`,
           { headers: makeHeaders }
         );
         if (!logRes.ok) {
