@@ -31,7 +31,7 @@ const menuItems = [
   { 
     title: "SOL Insights", 
     icon: Presentation, 
-    path: "/conferencia",
+    path: "/",
     description: "Painel SOL SDR"
   },
   // { 
