@@ -111,10 +111,11 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
     });
   }
 
-  // Sort by uptime asc (worst first), filter out inactive scenarios (no executions in last 48h)
+  // Only keep principal scenarios with recent activity (48h)
   const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
   return result
     .filter((s) => {
+      if (!PRINCIPAL_SCENARIO_IDS.has(s.scenario_id)) return false;
       const lastExec = s.lastSuccess || s.lastError;
       return lastExec && new Date(lastExec).getTime() >= cutoff48h;
     })
