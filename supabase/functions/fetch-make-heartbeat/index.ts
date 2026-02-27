@@ -8,6 +8,17 @@ const corsHeaders = {
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
 
+/** Run promises in batches of `size` to avoid rate limiting */
+async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < fns.length; i += size) {
+    const batch = fns.slice(i, i + size);
+    const batchResults = await Promise.all(batch.map((fn) => fn()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -45,49 +56,56 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${scenarios.length} scenarios`);
 
-    // 2. Fetch recent logs for each scenario (all statuses)
-    const logStatuses = ["success", "error", "warning"];
+    // 2. Fetch logs sequentially in batches of 3 to avoid rate limiting
     const records: any[] = [];
 
-    const logPromises = scenarios.flatMap((scenario) =>
-      logStatuses.map(async (logStatus) => {
-        try {
-          const logRes = await fetch(
-            `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=50&status=${logStatus}`,
-            { headers: makeHeaders }
-          );
-          if (!logRes.ok) {
-            await logRes.text();
-            return [];
-          }
-          const logData = await logRes.json();
-          return (logData.scenarioLogs ?? []).map((item: any) => ({
+    const fetchFns = scenarios.map((scenario) => async () => {
+      try {
+        const res = await fetch(
+          `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=100`,
+          { headers: makeHeaders }
+        );
+        if (!res.ok) {
+          const errText = await res.text();
+          console.log(`Scenario ${scenario.id} failed [${res.status}]: ${errText.substring(0, 100)}`);
+          return [] as any[];
+        }
+        const data = await res.json();
+        const logs = data.scenarioLogs ?? [];
+        console.log(`Scenario ${scenario.id} (${scenario.name}): ${logs.length} logs`);
+
+        return logs.map((item: any) => {
+          let status = "success";
+          if (item.status === 2) status = "error";
+          else if (item.status === 3) status = "warning";
+
+          return {
             scenario_id: scenario.id,
             scenario_name: scenario.name,
-            execution_id: String(item.id ?? `${scenario.id}-${item.timestamp}-${logStatus}`),
-            status: logStatus,
-            duration_seconds: item.duration ?? null,
+            execution_id: String(item.id),
+            status,
+            duration_seconds: item.duration ? Math.round(item.duration / 1000) : null,
             ops_count: item.operations ?? null,
             transfer_bytes: item.transfer ?? null,
-            error_message: item.error?.message ?? item.warning?.message ?? null,
-            started_at: item.createdAt ?? item.timestamp ?? new Date().toISOString(),
-          }));
-        } catch {
-          return [];
-        }
-      })
-    );
+            error_message: null,
+            started_at: item.timestamp,
+          };
+        });
+      } catch (err) {
+        console.error(`Scenario ${scenario.id} error:`, err);
+        return [] as any[];
+      }
+    });
 
-    const results = await Promise.all(logPromises);
-    for (const logs of results) {
+    const allResults = await batchedPromises(fetchFns, 3);
+    for (const logs of allResults) {
       records.push(...logs);
     }
 
-    console.log(`Fetched ${records.length} execution logs`);
+    console.log(`Total records: ${records.length}`);
 
     // 3. Upsert into make_heartbeat
     let upserted = 0;
-    // Batch upsert in chunks of 50
     for (let i = 0; i < records.length; i += 50) {
       const batch = records.slice(i, i + 50);
       const { error } = await supabase
