@@ -165,11 +165,11 @@ export default function Conferencia() {
     if (k.suffix === "%") return k;
     const newVal = scale(k.value);
     let detail = k.detail;
-    if (k.label === "Leads Recebidos") detail = "100%";
+    if (k.label === "Leads Recebidos") detail = "4× a capacidade SDR";
     else if (k.label === "Taxa Resposta") {
-      detail = `${scale(11)}/${scale(18)}`;
+      detail = `${scale(488)}/${scale(800)}`;
     } else if (k.label === "Resgatados FUP") {
-      detail = `R$ ${Math.round(6 * multiplier)}k`;
+      detail = `R$ ${Math.round(238 * multiplier)}k`;
     }
     return { ...k, value: newVal, detail };
   }), [multiplier]);
@@ -182,7 +182,7 @@ export default function Conferencia() {
     ...fupFrio,
     entraram: scale(fupFrio.entraram),
     reativados: scale(fupFrio.reativados),
-    valorRecuperado: `R$ ${Math.round(186 * multiplier)}.000`,
+    valorRecuperado: `R$ ${Math.round(238 * multiplier)}.000`,
   }), [multiplier]);
 
   const filteredMensagens = useMemo(() => ({
