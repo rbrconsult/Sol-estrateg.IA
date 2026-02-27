@@ -114,8 +114,14 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
     });
   }
 
-  // Sort by uptime asc (worst first)
-  return result.sort((a, b) => a.uptime - b.uptime);
+  // Sort by uptime asc (worst first), filter out inactive scenarios (no executions in last 48h)
+  const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
+  return result
+    .filter((s) => {
+      const lastExec = s.lastSuccess || s.lastError;
+      return lastExec && new Date(lastExec).getTime() >= cutoff48h;
+    })
+    .sort((a, b) => a.uptime - b.uptime);
 }
 
 export function useMakeHeartbeat() {
