@@ -182,7 +182,7 @@ export default function Conferencia() {
     ...fupFrio,
     entraram: scale(fupFrio.entraram),
     reativados: scale(fupFrio.reativados),
-    valorRecuperado: `R$ ${Math.round(186 * multiplier)}.000`,
+    valorRecuperado: `R$ ${Math.round(238 * multiplier)}.000`,
   }), [multiplier]);
 
   const filteredMensagens = useMemo(() => ({
