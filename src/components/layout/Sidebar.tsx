@@ -121,7 +121,8 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
   // Map paths to module keys for filtering
   const pathToModule: Record<string, string> = {
     '/leads': 'leads',
-    '/': 'dashboard',
+    '/': 'conferencia',
+    '/dashboard': 'dashboard',
     '/pipeline': 'pipeline',
     '/forecast': 'forecast',
     '/atividades': 'atividades',
