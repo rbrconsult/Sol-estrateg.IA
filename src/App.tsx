@@ -23,9 +23,7 @@ import Monitoramento from "./pages/Monitoramento";
 import MakeErrors from "./pages/MakeErrors";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
-import LeadsBackup from "./pages/LeadsBackup";
 import Conferencia from "./pages/Conferencia";
-import ConferenciaBackup from "./pages/ConferenciaBackup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -112,16 +110,6 @@ const App = () => (
                 </ProtectedRoute>
               } />
               {/* /conferencia now served at / */}
-              <Route path="/conferencia-backup" element={
-                <ProtectedRoute>
-                  <MainLayout><ConferenciaBackup /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/leads-backup" element={
-                <ProtectedRoute>
-                  <MainLayout><LeadsBackup /></MainLayout>
-                </ProtectedRoute>
-              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
