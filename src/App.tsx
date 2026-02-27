@@ -109,16 +109,6 @@ const App = () => (
                 </ProtectedRoute>
               } />
               {/* /conferencia now served at / */}
-              <Route path="/conferencia-backup" element={
-                <ProtectedRoute>
-                  <MainLayout><ConferenciaBackup /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/leads-backup" element={
-                <ProtectedRoute>
-                  <MainLayout><LeadsBackup /></MainLayout>
-                </ProtectedRoute>
-              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
