@@ -162,7 +162,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <h1 className="text-lg font-black tracking-tight text-foreground">SOL Insights</h1>
+                <h1 className="text-lg font-black tracking-tight text-foreground">Sol EstrategIA</h1>
                 <p className="text-xs text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
             )}
