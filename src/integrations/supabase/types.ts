@@ -131,6 +131,48 @@ export type Database = {
         }
         Relationships: []
       }
+      make_heartbeat: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          error_message: string | null
+          execution_id: string
+          id: string
+          ops_count: number | null
+          scenario_id: number
+          scenario_name: string
+          started_at: string
+          status: string
+          transfer_bytes: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          execution_id: string
+          id?: string
+          ops_count?: number | null
+          scenario_id: number
+          scenario_name: string
+          started_at: string
+          status?: string
+          transfer_bytes?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          execution_id?: string
+          id?: string
+          ops_count?: number | null
+          scenario_id?: number
+          scenario_name?: string
+          started_at?: string
+          status?: string
+          transfer_bytes?: number | null
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
