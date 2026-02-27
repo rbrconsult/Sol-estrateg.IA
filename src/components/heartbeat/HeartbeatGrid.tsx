@@ -27,7 +27,7 @@ function timelineBlockColor(status: string) {
     case "success": return "bg-emerald-500";
     case "error": return "bg-destructive";
     case "warning": return "bg-amber-500";
-    default: return "bg-muted";
+    default: return "bg-blue-400"; // idle — no trigger but flux is active
   }
 }
 
