@@ -113,13 +113,18 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
 
   // Only keep principal scenarios with recent activity (48h)
   const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
-  return result
-    .filter((s) => {
-      if (!PRINCIPAL_SCENARIO_IDS.has(s.scenario_id)) return false;
-      const lastExec = s.lastSuccess || s.lastError;
-      return lastExec && new Date(lastExec).getTime() >= cutoff48h;
-    })
-    .sort((a, b) => a.uptime - b.uptime);
+  const active = result.filter((s) => {
+    if (!PRINCIPAL_SCENARIO_IDS.has(s.scenario_id)) return false;
+    const lastExec = s.lastSuccess || s.lastError;
+    return lastExec && new Date(lastExec).getTime() >= cutoff48h;
+  });
+
+  // Sort by defined order
+  return active.sort((a, b) => {
+    const ai = PRINCIPAL_SCENARIO_ORDER.indexOf(a.scenario_id);
+    const bi = PRINCIPAL_SCENARIO_ORDER.indexOf(b.scenario_id);
+    return ai - bi;
+  });
 }
 
 export function useMakeHeartbeat() {
