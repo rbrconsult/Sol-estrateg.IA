@@ -22,6 +22,7 @@ import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
 import MakeErrors from "./pages/MakeErrors";
 import Ajuda from "./pages/Ajuda";
+import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
 import NotFound from "./pages/NotFound";
 
