@@ -323,18 +323,23 @@ export default function Conferencia() {
         {/* ══════ ROW 1.5 — SOL HOJE (7 dias) ══════ */}
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
-          <div className="grid grid-cols-5 gap-3 mb-4">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
             {(() => {
-              // Use KPI values directly to avoid rounding drift
               const mqlCard = filteredKpis.find(k => k.label === "MQL");
+              const leadsCard = filteredKpis.find(k => k.label === "Leads Recebidos");
+              const fupCard = filteredKpis.find(k => k.label === "Resgatados FUP");
               const mqlVal = mqlCard?.value ?? 0;
+              const leadsVal = leadsCard?.value ?? 0;
+              const fupVal = fupCard?.value ?? 0;
+              const abandono = leadsVal - Math.round(leadsVal * 0.61); // sem retorno → FUP Frio
+              const qualifFup = Math.round(fupVal * 0.35); // qualificados após 1-8 tentativas
               const quentes = Math.round(mqlVal * 0.165);
               const mornos = Math.round(mqlVal * 0.765);
               const frios = mqlVal - quentes - mornos;
-              const scores = Math.round(mqlVal * 0.9);
               return [
                 { label: "Qualificados", value: mqlVal, color: "text-primary" },
-                { label: "Scores", value: scores, color: "text-foreground" },
+                { label: "Abandono", value: abandono, color: "text-destructive" },
+                { label: "Qualif. FUP", value: qualifFup, color: "text-success" },
                 { label: "Quentes", value: quentes, color: "text-orange-500" },
                 { label: "Mornos", value: mornos, color: "text-amber-400" },
                 { label: "Frios", value: frios, color: "text-blue-400" },
