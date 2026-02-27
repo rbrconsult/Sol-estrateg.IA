@@ -32,7 +32,7 @@ function timelineBlockColor(status: string) {
 }
 
 function timelineBlockTooltip(status: string, time: string) {
-  const label = status === "success" ? "OK" : status === "error" ? "Erro" : status === "warning" ? "Aviso" : "Sem execução";
+  const label = status === "success" ? "OK" : status === "error" ? "Erro" : status === "warning" ? "Aviso" : "Idle (sem disparo)";
   const t = new Date(time);
   return `${label} — ${t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
