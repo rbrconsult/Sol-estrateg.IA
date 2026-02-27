@@ -43,51 +43,90 @@ Deno.serve(async (req) => {
       (s: any) => ({ id: s.id, name: s.name })
     );
 
-    console.log(`Found ${scenarios.length} scenarios`);
+    console.log(`Found ${scenarios.length} scenarios:`, scenarios.map(s => `${s.id}:${s.name}`));
 
-    // 2. Fetch recent logs for each scenario (all statuses)
-    const logStatuses = ["success", "error", "warning"];
+    // 2. Fetch recent logs for each scenario (all statuses in one call without status filter)
     const records: any[] = [];
+    const debugInfo: any[] = [];
 
-    const logPromises = scenarios.flatMap((scenario) =>
-      logStatuses.map(async (logStatus) => {
+    const logPromises = scenarios.map(async (scenario) => {
+      const results: any[] = [];
+      
+      // Try fetching ALL logs without status filter first
+      try {
+        const logUrl = `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=100&pg[sortDir]=desc&pg[sortBy]=timestamp`;
+        console.log(`Fetching logs for scenario ${scenario.id}: ${logUrl}`);
+        
+        const logRes = await fetch(logUrl, { headers: makeHeaders });
+        const rawText = await logRes.text();
+        
+        if (!logRes.ok) {
+          console.error(`Scenario ${scenario.id} logs failed [${logRes.status}]: ${rawText.substring(0, 200)}`);
+          debugInfo.push({ scenario_id: scenario.id, name: scenario.name, status: logRes.status, error: rawText.substring(0, 200) });
+          return [];
+        }
+        
+        let logData: any;
         try {
-          const logRes = await fetch(
-            `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=50&status=${logStatus}`,
-            { headers: makeHeaders }
-          );
-          if (!logRes.ok) {
-            await logRes.text();
-            return [];
+          logData = JSON.parse(rawText);
+        } catch {
+          console.error(`Scenario ${scenario.id}: invalid JSON response`);
+          debugInfo.push({ scenario_id: scenario.id, name: scenario.name, error: "invalid JSON", raw: rawText.substring(0, 200) });
+          return [];
+        }
+        
+        const logs = logData.scenarioLogs ?? logData.logs ?? logData.data ?? [];
+        console.log(`Scenario ${scenario.id} (${scenario.name}): ${logs.length} logs found, keys: ${Object.keys(logData)}`);
+        
+        if (logs.length === 0) {
+          debugInfo.push({ scenario_id: scenario.id, name: scenario.name, logsCount: 0, responseKeys: Object.keys(logData), sample: JSON.stringify(logData).substring(0, 300) });
+        }
+        
+        for (const item of logs) {
+          // Determine status from the log entry
+          let status = "success";
+          if (item.status === "error" || item.status === 2) status = "error";
+          else if (item.status === "warning" || item.status === 3) status = "warning";
+          else if (item.status === "success" || item.status === 1) status = "success";
+          else if (typeof item.status === "number") {
+            // Make uses numeric statuses: 1=success, 2=error, 3=warning
+            if (item.status === 2) status = "error";
+            else if (item.status === 3) status = "warning";
+            else status = "success";
           }
-          const logData = await logRes.json();
-          return (logData.scenarioLogs ?? []).map((item: any) => ({
+          
+          results.push({
             scenario_id: scenario.id,
             scenario_name: scenario.name,
-            execution_id: String(item.id ?? `${scenario.id}-${item.timestamp}-${logStatus}`),
-            status: logStatus,
+            execution_id: String(item.id ?? item.executionId ?? `${scenario.id}-${item.timestamp}`),
+            status,
             duration_seconds: item.duration ?? null,
             ops_count: item.operations ?? null,
             transfer_bytes: item.transfer ?? null,
             error_message: item.error?.message ?? item.warning?.message ?? null,
             started_at: item.createdAt ?? item.timestamp ?? new Date().toISOString(),
-          }));
-        } catch {
-          return [];
+          });
         }
-      })
-    );
+      } catch (err) {
+        console.error(`Scenario ${scenario.id} fetch error:`, err);
+        debugInfo.push({ scenario_id: scenario.id, name: scenario.name, error: String(err) });
+      }
+      
+      return results;
+    });
 
     const results = await Promise.all(logPromises);
     for (const logs of results) {
       records.push(...logs);
     }
 
-    console.log(`Fetched ${records.length} execution logs`);
+    console.log(`Total fetched: ${records.length} execution logs`);
+    if (debugInfo.length > 0) {
+      console.log(`Debug info for empty scenarios:`, JSON.stringify(debugInfo));
+    }
 
     // 3. Upsert into make_heartbeat
     let upserted = 0;
-    // Batch upsert in chunks of 50
     for (let i = 0; i < records.length; i += 50) {
       const batch = records.slice(i, i + 50);
       const { error } = await supabase
@@ -111,6 +150,7 @@ Deno.serve(async (req) => {
         errors,
         warnings,
         total: upserted,
+        debugInfo: debugInfo.length > 0 ? debugInfo : undefined,
         syncedAt: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
