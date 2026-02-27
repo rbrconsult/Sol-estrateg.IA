@@ -233,7 +233,7 @@ export default function Conferencia() {
         {/* ══════ HEADER ══════ */}
         <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight text-foreground">Sol EstrategIA</h1>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">Sol Estrateg.IA</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -801,7 +801,7 @@ export default function Conferencia() {
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-8 text-center">
           <p className="text-[10px] text-muted-foreground/50">
-            Sol EstrategIA · RBR Consult
+            Sol Estrateg.IA · RBR Consult
           </p>
         </footer>
       </div>

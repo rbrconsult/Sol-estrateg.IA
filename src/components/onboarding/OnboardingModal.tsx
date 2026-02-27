@@ -23,7 +23,7 @@ interface Step {
 const steps: Step[] = [
   {
     icon: Sun,
-    title: "Bem-vindo ao Sol EstrategIA! ☀️",
+    title: "Bem-vindo ao Sol Estrateg.IA! ☀️",
     description:
       "Sua plataforma integrada de BI, CRM e Suporte. Vamos fazer um tour rápido para você conhecer os principais recursos.",
   },
@@ -55,7 +55,7 @@ const steps: Step[] = [
     icon: CheckCircle2,
     title: "Tudo pronto! 🚀",
     description:
-      "Agora você está pronto para explorar o Sol EstrategIA. Configure sua planilha Google Sheets no Admin e comece a acompanhar seus dados.",
+      "Agora você está pronto para explorar o Sol Estrateg.IA. Configure sua planilha Google Sheets no Admin e comece a acompanhar seus dados.",
   },
 ];
 

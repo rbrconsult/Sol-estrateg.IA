@@ -215,7 +215,7 @@ const Index = () => {
         </section>
 
         <footer className="mt-12 border-t border-border pt-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 Sol EstrategIA - BI, CRM e Inteligência Comercial. Todos os direitos reservados.</p>
+          <p>© 2024 Sol Estrateg.IA - BI, CRM e Inteligência Comercial. Todos os direitos reservados.</p>
         </footer>
       </div>
     </div>
