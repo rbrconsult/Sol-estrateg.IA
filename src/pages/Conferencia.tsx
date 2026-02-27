@@ -324,18 +324,27 @@ export default function Conferencia() {
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
           <div className="grid grid-cols-5 gap-3 mb-4">
-            {[
-              { label: "Qualificados", value: filteredSolHoje[2].qualificados, color: "text-primary" },
-              { label: "Scores", value: filteredSolHoje[2].scores, color: "text-foreground" },
-              { label: "Quentes", value: filteredSolHoje[2].quentes, color: "text-orange-500" },
-              { label: "Mornos", value: filteredSolHoje[2].mornos, color: "text-amber-400" },
-              { label: "Frios", value: filteredSolHoje[2].frios, color: "text-blue-400" },
-            ].map(item => (
-              <div key={item.label} className="text-center">
-                <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{item.label}</p>
-              </div>
-            ))}
+            {(() => {
+              const totals = filteredSolHoje.reduce((acc, d) => ({
+                qualificados: acc.qualificados + d.qualificados,
+                scores: acc.scores + d.scores,
+                quentes: acc.quentes + d.quentes,
+                mornos: acc.mornos + d.mornos,
+                frios: acc.frios + d.frios,
+              }), { qualificados: 0, scores: 0, quentes: 0, mornos: 0, frios: 0 });
+              return [
+                { label: "Qualificados", value: totals.qualificados, color: "text-primary" },
+                { label: "Scores", value: totals.scores, color: "text-foreground" },
+                { label: "Quentes", value: totals.quentes, color: "text-orange-500" },
+                { label: "Mornos", value: totals.mornos, color: "text-amber-400" },
+                { label: "Frios", value: totals.frios, color: "text-blue-400" },
+              ].map(item => (
+                <div key={item.label} className="text-center">
+                  <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.label}</p>
+                </div>
+              ));
+            })()}
           </div>
           <div className="flex items-end gap-1 h-16">
             {filteredSolHoje.map((d, i) => {
