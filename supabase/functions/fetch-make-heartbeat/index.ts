@@ -8,6 +8,17 @@ const corsHeaders = {
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
 
+/** Run promises in batches of `size` to avoid rate limiting */
+async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < fns.length; i += size) {
+    const batch = fns.slice(i, i + size);
+    const batchResults = await Promise.all(batch.map((fn) => fn()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -45,21 +56,25 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${scenarios.length} scenarios`);
 
-    // 2. Fetch logs for each scenario (no status filter - fetch ALL)
+    // 2. Fetch logs sequentially in batches of 3 to avoid rate limiting
     const records: any[] = [];
 
-    const fetchPromises = scenarios.map(async (scenario) => {
+    const fetchFns = scenarios.map((scenario) => async () => {
       try {
         const res = await fetch(
           `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=100`,
           { headers: makeHeaders }
         );
-        if (!res.ok) { await res.text(); return []; }
+        if (!res.ok) {
+          const errText = await res.text();
+          console.log(`Scenario ${scenario.id} failed [${res.status}]: ${errText.substring(0, 100)}`);
+          return [] as any[];
+        }
         const data = await res.json();
         const logs = data.scenarioLogs ?? [];
+        console.log(`Scenario ${scenario.id} (${scenario.name}): ${logs.length} logs`);
 
         return logs.map((item: any) => {
-          // Make uses numeric statuses: 1=success, 2=error, 3=warning
           let status = "success";
           if (item.status === 2) status = "error";
           else if (item.status === 3) status = "warning";
@@ -76,12 +91,13 @@ Deno.serve(async (req) => {
             started_at: item.timestamp,
           };
         });
-      } catch {
-        return [];
+      } catch (err) {
+        console.error(`Scenario ${scenario.id} error:`, err);
+        return [] as any[];
       }
     });
 
-    const allResults = await Promise.all(fetchPromises);
+    const allResults = await batchedPromises(fetchFns, 3);
     for (const logs of allResults) {
       records.push(...logs);
     }
