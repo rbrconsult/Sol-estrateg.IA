@@ -27,12 +27,12 @@ function timelineBlockColor(status: string) {
     case "success": return "bg-emerald-500";
     case "error": return "bg-destructive";
     case "warning": return "bg-amber-500";
-    default: return "bg-muted";
+    default: return "bg-blue-400"; // idle — no trigger but flux is active
   }
 }
 
 function timelineBlockTooltip(status: string, time: string) {
-  const label = status === "success" ? "OK" : status === "error" ? "Erro" : status === "warning" ? "Aviso" : "Sem execução";
+  const label = status === "success" ? "OK" : status === "error" ? "Erro" : status === "warning" ? "Aviso" : "Idle (sem disparo)";
   const t = new Date(time);
   return `${label} — ${t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
