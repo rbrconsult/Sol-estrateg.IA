@@ -58,7 +58,7 @@ export default function Vendedores() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Performance dos Vendedores</h1>
+          <h1 className="text-3xl font-bold text-foreground">Vendedores</h1>
           <p className="text-muted-foreground">Análise detalhada por vendedor</p>
         </div>
         <HelpButton moduleId="vendedores" label="Ajuda de Vendedores" />

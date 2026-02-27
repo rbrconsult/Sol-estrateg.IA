@@ -30,7 +30,7 @@ export default function MakeErrors() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <AlertTriangle className="h-6 w-6 text-amber-500" />
-            Monitor de Automações
+            Erros Make
           </h1>
           <p className="text-sm text-muted-foreground">
             Evolve Energia Solar — Gerenciamento de erros Make.com

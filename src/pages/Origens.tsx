@@ -60,7 +60,7 @@ export default function Origens() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Origem dos Leads</h1>
+          <h1 className="text-3xl font-bold text-foreground">Origens</h1>
           <p className="text-muted-foreground">Análise de canais de aquisição</p>
         </div>
         <HelpButton moduleId="origens" label="Ajuda de Origens" />

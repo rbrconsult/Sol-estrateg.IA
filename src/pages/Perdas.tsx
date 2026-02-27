@@ -40,7 +40,7 @@ export default function Perdas() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Análise de Perdas</h1>
+          <h1 className="text-3xl font-bold text-foreground">Perdas</h1>
           <p className="text-muted-foreground">Entenda os motivos das perdas e otimize o processo comercial</p>
         </div>
         <HelpButton moduleId="perdas" label="Ajuda de Perdas" />
