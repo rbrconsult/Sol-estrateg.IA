@@ -164,6 +164,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         stopped,
         errorContinued,
+        warnings,
         total: upserted,
         syncedAt: new Date().toISOString(),
       }),
