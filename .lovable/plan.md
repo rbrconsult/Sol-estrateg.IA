@@ -1,33 +1,31 @@
 
+# Renomear "SOL Insights" para "Sol EstrategIA"
 
-# Conectar os 4 novos componentes ao filtro de período
+Substituir todas as ocorrencias de "SOL Insights" / "Sol Insights" pelo novo nome "Sol EstrategIA" em 10 arquivos do projeto.
 
-## Problema
-Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
+---
 
-## Solução
-Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
+## Arquivos e alteracoes
 
-### 1. Sol Hoje — Atividade Diária
-- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
-- Aplicar `scale()` nas barras do gráfico de 7 dias
-- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
+| Arquivo | O que muda |
+|---|---|
+| `src/components/layout/Sidebar.tsx` | Titulo do menu, header da sidebar |
+| `src/pages/Auth.tsx` | Logo na tela de login |
+| `src/pages/Conferencia.tsx` | Header e footer da pagina principal |
+| `src/pages/Index.tsx` | Footer do dashboard |
+| `src/pages/Ajuda.tsx` | Subtitulo da pagina de ajuda |
+| `src/components/onboarding/OnboardingModal.tsx` | Textos de boas-vindas e conclusao do tour |
+| `src/hooks/useModulePermissions.ts` | Label do modulo "conferencia" |
+| `src/data/helpContent.ts` | Textos da central de ajuda |
+| `src/data/dataAdapter.ts` | Comentario de codigo |
+| `src/data/conferenciaMockData.ts` | Comentario de cabecalho |
 
-### 2. Alertas & Insights
-- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
-- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
+---
 
-### 3. Temperatura por Etapa
-- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
-- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
+## Detalhes tecnicos
 
-### 4. Tabela de Leads
-- Aplicar `scale()` ao campo `valor` de cada lead
-- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
-
-## Arquivo modificado
-- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
-
-## Resultado
-Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
-
+- Busca e substituicao direta de texto em cada arquivo
+- Manter a grafia exata "Sol EstrategIA" (S maiusculo, IA maiusculo no final)
+- Onde aparece "SOL INSIGHTS" em caixa alta (comentarios), usar "SOL ESTRATEGIA"
+- Nenhuma mudanca de logica, rotas ou estrutura -- apenas renomeacao textual
+- Dominio customizado permanece `sol-insights.rbrconsult.com.br` (mudanca de dominio e separada)
