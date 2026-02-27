@@ -43,7 +43,7 @@ const menuItems = [
   { 
     title: "Dashboard", 
     icon: LayoutDashboard, 
-    path: "/",
+    path: "/dashboard",
     description: "Painel Executivo"
   },
   { 
