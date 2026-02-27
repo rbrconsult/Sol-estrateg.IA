@@ -101,6 +101,7 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
     result.push({
       scenario_id: scenarioId,
       scenario_name: sorted[0].scenario_name,
+      category: detectCategory(sorted[0].scenario_name),
       total,
       success,
       errors,
