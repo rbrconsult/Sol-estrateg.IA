@@ -28,7 +28,11 @@ export function SLAMetricsMock({ data }: { data: SLAData }) {
         {/* Primeiro Atendimento */}
         <div className="rounded-lg border border-border/30 p-3 text-center">
           <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-2">1º Atendimento</p>
-          <p className="text-2xl font-extrabold text-foreground tabular-nums">{data.primeiroAtendimento.media}h</p>
+          <p className="text-2xl font-extrabold text-foreground tabular-nums">
+            {data.primeiroAtendimento.media < 1
+              ? `${Math.round(data.primeiroAtendimento.media * 60)}min`
+              : `${data.primeiroAtendimento.media}h`}
+          </p>
           <p className="text-[10px] text-muted-foreground mt-1">tempo médio</p>
           <div className="mt-2 flex items-center justify-center gap-1">
             <span className={cn("text-sm font-bold tabular-nums", data.primeiroAtendimento.pctDentro24h >= 80 ? "text-success" : "text-warning")}>
