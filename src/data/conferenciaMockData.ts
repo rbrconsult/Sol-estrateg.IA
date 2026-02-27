@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════
-// DADOS — PAINEL DE CONTROLE DENSO · SOL INSIGHTS
+// DADOS — PAINEL DE CONTROLE DENSO · SOL ESTRATEGIA
 // Calibrado com métricas reais — RBR Consult
 // ══════════════════════════════════════════════════════════
 // ANTES: 2 SDRs × 100 contatos/mês = 200 leads | 10/dia cada

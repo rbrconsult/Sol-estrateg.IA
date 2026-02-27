@@ -42,7 +42,7 @@ export default function Ajuda() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Ajuda</h1>
         <p className="text-muted-foreground">
-          Documentação e guias de uso da plataforma SOL Insights
+          Documentação e guias de uso da plataforma Sol EstrategIA
         </p>
       </div>
 
