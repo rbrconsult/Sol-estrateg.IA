@@ -40,7 +40,7 @@ export default function Ajuda() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Central de Ajuda</h1>
+        <h1 className="text-3xl font-bold text-foreground">Ajuda</h1>
         <p className="text-muted-foreground">
           Documentação e guias de uso da plataforma SOL Insights
         </p>

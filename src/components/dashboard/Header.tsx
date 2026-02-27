@@ -56,7 +56,7 @@ export function Header({
     <div className="mb-6">
       {/* Title */}
       <div className="mb-4">
-        <h1 className="text-3xl font-bold text-foreground">BI Estratégico</h1>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground">
           Inteligência Comercial • Atualizado em {lastUpdate}
         </p>
