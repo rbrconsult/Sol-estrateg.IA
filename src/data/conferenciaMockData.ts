@@ -198,9 +198,9 @@ export const slaMock = {
   porEtapa: [
     { etapa: "Robô SOL", slaDias: 1, mediaDias: 0.01, status: "ok" as const },
     { etapa: "Qualificação", slaDias: 3, mediaDias: 1.2, status: "ok" as const },
-    { etapa: "Qualificado", slaDias: 5, mediaDias: 2.0, status: "ok" as const },
-    { etapa: "Closer", slaDias: 7, mediaDias: 1.5, status: "ok" as const },
-    { etapa: "Proposta", slaDias: 10, mediaDias: 3.2, status: "ok" as const },
+    { etapa: "Qualificado", slaDias: 5, mediaDias: 2.4, status: "ok" as const },
+    { etapa: "Closer", slaDias: 7, mediaDias: 4.1, status: "ok" as const },
+    { etapa: "Proposta", slaDias: 10, mediaDias: 6.8, status: "ok" as const },
   ],
   robos: { tempoResposta: "12s", leadsAguardando: 8, taxaResposta: 61 },
   geralProposta: { mediaDias: 5.4 },
