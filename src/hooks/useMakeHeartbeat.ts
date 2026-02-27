@@ -30,20 +30,20 @@ export interface ScenarioHealth {
   timeline: { time: string; status: "success" | "error" | "warning" | "empty" }[];
 }
 
-/** Scenario IDs considered "principal" — all others are hidden */
-const PRINCIPAL_SCENARIO_IDS = new Set([
-  3616676, // Autenticação GrapQL
-  3415205, // Auth SolarMarket
-  4015856, // Robo FUP FRIO
-  3716678, // Robo SDR | Sol
-  3416132, // Captura Leads Meta Ads
-  3724157, // Captura Leads Meta Ads + IA
-  3672582, // Captura Leads Meta Ads | Campanha Sazonal
-  3576316, // Captura Leads Landing Page
-  3567830, // Captura Leads Loja Olímpia
-  3403261, // Captura Leads Site GERAL
-  3724150, // Captura Leads Site GERAL + IA
-]);
+/** Scenario IDs in display order */
+const PRINCIPAL_SCENARIO_ORDER: number[] = [
+  // Robô Sol
+  3716678,
+  // Robô FUP FRIO
+  4015856,
+  // Fluxo 1 - Captura Meta Ads
+  3416132, 3724157, 3672582,
+  // Fluxo 2 - Captura Site/Landing
+  3576316, 3567830, 3403261, 3724150,
+  // Autenticações
+  3616676, 3415205,
+];
+const PRINCIPAL_SCENARIO_IDS = new Set(PRINCIPAL_SCENARIO_ORDER);
 
 function buildTimeline(entries: HeartbeatEntry[]): ScenarioHealth["timeline"] {
   const now = new Date();
@@ -113,13 +113,18 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
 
   // Only keep principal scenarios with recent activity (48h)
   const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
-  return result
-    .filter((s) => {
-      if (!PRINCIPAL_SCENARIO_IDS.has(s.scenario_id)) return false;
-      const lastExec = s.lastSuccess || s.lastError;
-      return lastExec && new Date(lastExec).getTime() >= cutoff48h;
-    })
-    .sort((a, b) => a.uptime - b.uptime);
+  const active = result.filter((s) => {
+    if (!PRINCIPAL_SCENARIO_IDS.has(s.scenario_id)) return false;
+    const lastExec = s.lastSuccess || s.lastError;
+    return lastExec && new Date(lastExec).getTime() >= cutoff48h;
+  });
+
+  // Sort by defined order
+  return active.sort((a, b) => {
+    const ai = PRINCIPAL_SCENARIO_ORDER.indexOf(a.scenario_id);
+    const bi = PRINCIPAL_SCENARIO_ORDER.indexOf(b.scenario_id);
+    return ai - bi;
+  });
 }
 
 export function useMakeHeartbeat() {
