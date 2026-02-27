@@ -29,7 +29,7 @@ import { toast } from "sonner";
 
 const menuItems = [
   { 
-    title: "Sol EstrategIA", 
+    title: "Sol Estrateg.IA", 
     icon: Presentation, 
     path: "/",
     description: "Painel SOL SDR"
