@@ -17,6 +17,58 @@ function detectCategory(name: string): string {
   return "Geral Evolve";
 }
 
+// Fetch individual log detail to get module info
+async function fetchLogDetail(
+  sid: number,
+  logId: string,
+  headers: Record<string, string>
+): Promise<{ moduleName: string; moduleIndex: number } | null> {
+  try {
+    const res = await fetch(`${MAKE_BASE}/scenarios/${sid}/logs/${logId}`, { headers });
+    if (!res.ok) {
+      await res.text();
+      return null;
+    }
+    const data = await res.json();
+    const detail = data.scenarioLog ?? data;
+    // Try to extract module info from the log detail
+    const moduleName = detail.moduleName ?? detail.imtModuleName ?? null;
+    const moduleIndex = detail.moduleIndex ?? detail.imtModuleIndex ?? detail.moduleOrder ?? null;
+    if (moduleName || moduleIndex) {
+      return { moduleName: moduleName ?? "Unknown", moduleIndex: moduleIndex ?? 0 };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Process log details in batches to avoid overloading the API
+async function enrichLogsWithModuleInfo(
+  logs: any[],
+  sid: number,
+  headers: Record<string, string>,
+  batchSize = 5
+): Promise<void> {
+  for (let i = 0; i < logs.length; i += batchSize) {
+    const batch = logs.slice(i, i + batchSize);
+    const results = await Promise.all(
+      batch.map(async (log) => {
+        if (log.module_name !== "Unknown") return null;
+        const logId = String(log._rawLogId ?? log.execution_id);
+        const detail = await fetchLogDetail(sid, logId, headers);
+        return { log, detail };
+      })
+    );
+    for (const r of results) {
+      if (r?.detail) {
+        r.log.module_name = r.detail.moduleName;
+        r.log.failed_module_index = r.detail.moduleIndex;
+      }
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -89,7 +141,7 @@ Deno.serve(async (req) => {
       await incompleteRes.text();
     }
 
-    // 3. SOURCE 2: Logs from each scenario (no status filter - fetch ALL, then filter errors/warnings)
+    // 3. SOURCE 2: Logs from each scenario (fetch ALL, then filter errors/warnings)
     const scenarioIds = Object.keys(scenarios).map(Number);
     const logPromises = scenarioIds.map(async (sid) => {
       try {
@@ -105,11 +157,12 @@ Deno.serve(async (req) => {
         const scenarioInfo = scenarios[sid] ?? { name: `Scenario ${sid}`, modules: 0 };
         
         // Filter only errors (status=2) and warnings (status=3)
-        return (logData.scenarioLogs ?? [])
+        const errorLogs = (logData.scenarioLogs ?? [])
           .filter((item: any) => item.status === 2 || item.status === 3)
           .map((item: any) => {
             const isWarning = item.status === 3;
             return {
+              _rawLogId: item.id,
               execution_id: String(item.id ?? `${sid}-${item.timestamp}`),
               scenario_id: sid,
               scenario_name: scenarioInfo.name,
@@ -127,6 +180,11 @@ Deno.serve(async (req) => {
               occurred_at: item.timestamp ?? new Date().toISOString(),
             };
           });
+
+        // Enrich with module details (batched, max 5 parallel)
+        await enrichLogsWithModuleInfo(errorLogs, sid, makeHeaders, 5);
+
+        return errorLogs;
       } catch {
         return [];
       }
@@ -140,6 +198,9 @@ Deno.serve(async (req) => {
     // 4. Upsert to Supabase (never overwrite status/resolution_notes)
     let upserted = 0;
     for (const record of records) {
+      // Remove internal field before saving
+      delete record._rawLogId;
+
       const { data: existing } = await supabase
         .from("make_errors")
         .select("id, status, resolution_notes")
