@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, RefreshCw, BarChart3, List, Settings } from "lucide-react";
+import { AlertTriangle, RefreshCw, BarChart3, List, Settings, CheckCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMakeErrors } from "@/hooks/useMakeErrors";
 import { ErrorDashboard } from "@/components/make-errors/ErrorDashboard";
 import { ErrorList } from "@/components/make-errors/ErrorList";
@@ -9,7 +10,8 @@ import { ErrorDetail } from "@/components/make-errors/ErrorDetail";
 import { MakeError } from "@/hooks/useMakeErrors";
 
 export default function MakeErrors() {
-  const { errorsQuery, syncMutation } = useMakeErrors();
+  const { errorsQuery, syncMutation, resolveAllMutation } = useMakeErrors();
+  const [showResolveAll, setShowResolveAll] = useState(false);
   const [selectedError, setSelectedError] = useState<MakeError | null>(null);
 
   // Auto-sync on mount
@@ -19,6 +21,7 @@ export default function MakeErrors() {
   }, []);
 
   const errors = errorsQuery.data ?? [];
+  const pendingCount = errors.filter((e) => e.status !== "resolved").length;
   const pendingStopped = errors.filter(
     (e) => e.status === "pending" && e.execution_status === "stopped"
   ).length;
@@ -51,8 +54,41 @@ export default function MakeErrors() {
             <RefreshCw className={`h-4 w-4 mr-1 ${syncMutation.isPending ? "animate-spin" : ""}`} />
             Sincronizar Agora
           </Button>
+          {pendingCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowResolveAll(true)}
+              className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
+            >
+              <CheckCheck className="h-4 w-4 mr-1" />
+              Resolver Todos ({pendingCount})
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Resolve All Dialog */}
+      <Dialog open={showResolveAll} onOpenChange={setShowResolveAll}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resolver todos os erros?</DialogTitle>
+            <DialogDescription>
+              Isso marcará {pendingCount} erro(s) pendentes/em análise como resolvidos. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResolveAll(false)}>Cancelar</Button>
+            <Button
+              onClick={() => { resolveAllMutation.mutate(); setShowResolveAll(false); }}
+              disabled={resolveAllMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {resolveAllMutation.isPending ? "Resolvendo..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList>
