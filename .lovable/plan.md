@@ -1,33 +1,47 @@
 
 
-# Conectar os 4 novos componentes ao filtro de período
+# Detalhar Modulo e Run ID nos Erros Make
 
-## Problema
-Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
+## Situacao Atual
 
-## Solução
-Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
+- **Execucoes incompletas (stopped)**: ja capturam `module_name`, `module_app` e `failed_module_index` da API do Make
+- **Logs de erro/warning**: o modulo fica como "Unknown" porque a API de logs nao retorna detalhes do modulo diretamente
+- **Run ID (execution_id)**: ja esta salvo no banco mas **nao aparece** no painel de detalhes
 
-### 1. Sol Hoje — Atividade Diária
-- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
-- Aplicar `scale()` nas barras do gráfico de 7 dias
-- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
+## O Que Sera Feito
 
-### 2. Alertas & Insights
-- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
-- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
+### 1. Mostrar Execution ID e Scenario ID no painel de detalhes
+Adicionar ao `ErrorDetail.tsx` uma secao de identificacao com:
+- **Execution ID** (run ID) - com botao de copiar
+- **Scenario ID** - para referencia rapida no Make.com
 
-### 3. Temperatura por Etapa
-- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
-- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
+### 2. Melhorar captura de dados do modulo na Edge Function
+Na `fetch-make-errors/index.ts`, para os logs de cenario (SOURCE 2), a API do Make retorna campos adicionais que podem ser extraidos:
+- Tentar buscar detalhes da execucao individual via `/scenarios/{id}/logs/{logId}` para obter o modulo que falhou
+- Alternativamente, usar os campos disponiveis no log como `imtId` (module ID) quando presentes
 
-### 4. Tabela de Leads
-- Aplicar `scale()` ao campo `valor` de cada lead
-- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
+### 3. Exibir modulo de forma mais clara no detalhe
+No `ErrorDetail.tsx`, melhorar a secao de diagnostico:
+- Mostrar numero do modulo de forma destacada: "Modulo #3 de 8"
+- Quando module_name for "Unknown", exibir mensagem explicativa
 
-## Arquivo modificado
-- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
+---
 
-## Resultado
-Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
+## Detalhes Tecnicos
+
+### ErrorDetail.tsx - Nova secao de identificacao
+Adicionar logo apos o titulo "Diagnostico do Fluxo":
+- Execution ID com icone de copiar (clipboard)
+- Scenario ID
+- Link conceitual para referencia
+
+### fetch-make-errors/index.ts - Enriquecer logs
+Para SOURCE 2 (scenario logs), a API retorna campos como `imtId` e detalhes adicionais. Vamos:
+- Buscar o endpoint `/scenarios/{sid}/logs/{logId}` para cada erro/warning para obter `moduleName` e `moduleIndex`
+- Limitar a 5 chamadas paralelas por cenario para nao sobrecarregar a API
+- Fallback para "Unknown" se o detalhe nao estiver disponivel
+
+### Arquivos modificados
+1. `src/components/make-errors/ErrorDetail.tsx` - adicionar execution_id, scenario_id e melhorar exibicao do modulo
+2. `supabase/functions/fetch-make-errors/index.ts` - enriquecer dados de modulo dos logs
 
