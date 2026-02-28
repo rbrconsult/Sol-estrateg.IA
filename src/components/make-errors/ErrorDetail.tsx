@@ -7,10 +7,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { MakeError, useMakeErrors } from "@/hooks/useMakeErrors";
 import { toast } from "sonner";
+import { Copy, Hash } from "lucide-react";
 
 interface Props {
   error: MakeError | null;
   onClose: () => void;
+}
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    toast.success(`${label} copiado!`);
+  };
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded truncate max-w-[200px]">{value}</code>
+        <button onClick={handleCopy} className="text-muted-foreground hover:text-foreground transition-colors">
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function ErrorDetail({ error, onClose }: Props) {
@@ -36,6 +55,7 @@ export function ErrorDetail({ error, onClose }: Props) {
   };
 
   const isStopped = error.execution_status === "stopped";
+  const moduleIsUnknown = !error.module_name || error.module_name === "Unknown";
 
   return (
     <Sheet open={!!error} onOpenChange={(open) => !open && onClose()}>
@@ -45,6 +65,19 @@ export function ErrorDetail({ error, onClose }: Props) {
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
+          {/* IDs Section */}
+          <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/10">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+              <Hash className="h-4 w-4" /> Identificação
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <CopyField label="Execution ID (Run ID)" value={error.execution_id} />
+              {error.scenario_id && (
+                <CopyField label="Scenario ID" value={String(error.scenario_id)} />
+              )}
+            </div>
+          </div>
+
           {/* Flow Diagnosis */}
           <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/20">
             <div>
@@ -67,18 +100,22 @@ export function ErrorDetail({ error, onClose }: Props) {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Módulo {error.failed_module_index ?? "?"} de {error.total_modules ?? "?"}
+                Módulo {error.failed_module_index ? `#${error.failed_module_index}` : "?"} de {error.total_modules ?? "?"}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">App do módulo</p>
-                <p className="font-medium">{error.module_app ?? "—"}</p>
+                <p className="font-medium">{error.module_app && error.module_app !== "Unknown" ? error.module_app : "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Módulo com falha</p>
-                <p className="font-medium">{error.module_name ?? "—"}</p>
+                {moduleIsUnknown ? (
+                  <p className="text-sm text-muted-foreground italic">Não identificado pela API</p>
+                ) : (
+                  <p className="font-medium">{error.module_name}</p>
+                )}
               </div>
             </div>
 
@@ -87,6 +124,10 @@ export function ErrorDetail({ error, onClose }: Props) {
               {isStopped ? (
                 <Badge className="bg-destructive text-destructive-foreground">
                   🔴 FLUXO PARADO — aguardando ação
+                </Badge>
+              ) : error.execution_status === "warning" ? (
+                <Badge className="bg-amber-400 text-black">
+                  🟡 WARNING — falha parcial
                 </Badge>
               ) : (
                 <Badge className="bg-amber-500 text-white">
