@@ -26,6 +26,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const menuItems = [
   { 
@@ -34,12 +35,6 @@ const menuItems = [
     path: "/",
     description: "Painel SOL SDR"
   },
-  // { 
-  //   title: "Leads", 
-  //   icon: Zap, 
-  //   path: "/leads",
-  //   description: "Captação & Robô"
-  // },
   { 
     title: "Dashboard", 
     icon: LayoutDashboard, 
@@ -110,15 +105,19 @@ const menuItems = [
 
 interface SidebarProps {
   onResetOnboarding?: () => void;
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ onResetOnboarding }: SidebarProps) {
+export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
+  const isMobile = useIsMobile();
 
-  // Map paths to module keys for filtering
+  // On mobile inside sheet, always expanded
+  const isCollapsed = isMobile ? false : collapsed;
+
   const pathToModule: Record<string, string> = {
     '/leads': 'leads',
     '/': 'conferencia',
@@ -133,23 +132,29 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
     '/monitoramento': 'monitoramento',
     '/make-errors': 'make-errors',
     '/ajuda': 'ajuda',
-    
   };
 
   const visibleMenuItems = menuItems.filter(item => {
     const moduleKey = pathToModule[item.path];
     return moduleKey ? hasAccess(moduleKey) : true;
   });
+
   const handleSignOut = async () => {
     await signOut();
     toast.success('Logout realizado com sucesso!');
   };
 
+  const handleNavClick = () => {
+    onNavigate?.();
+  };
+
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-0 z-50 h-screen bg-card border-r border-border/50 transition-all duration-300 flex flex-col",
-        collapsed ? "w-16" : "w-64"
+        "h-screen bg-card border-r border-border/50 flex flex-col",
+        isMobile 
+          ? "w-full" 
+          : cn("fixed left-0 top-0 z-50 transition-all duration-300", isCollapsed ? "w-16" : "w-64")
       )}
     >
       {/* Header */}
@@ -160,21 +165,23 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
               <span className="text-lg font-black text-primary-foreground tracking-tighter">S</span>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="overflow-hidden">
                 <h1 className="text-lg font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
                 <p className="text-xs text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8 shrink-0 hover:bg-primary/10"
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(!collapsed)}
+              className="h-8 w-8 shrink-0 hover:bg-primary/10"
+            >
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -186,6 +193,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
             <Link
               key={item.path}
               to={item.path}
+              onClick={handleNavClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                 isActive 
@@ -194,7 +202,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
               )}
             >
               <item.icon className={cn("h-5 w-5 shrink-0", isActive && "animate-pulse")} />
-              {!collapsed && (
+              {!isCollapsed && (
                 <div className="overflow-hidden">
                   <span className="font-medium text-sm">{item.title}</span>
                   <p className={cn(
@@ -212,27 +220,25 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-2 border-t border-border/50 space-y-2">
-        {/* Admin Link */}
         {userRole === 'super_admin' && (
           <Link
             to="/admin"
+            onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-warning hover:bg-warning/10",
               location.pathname === '/admin' && "bg-warning/10"
             )}
           >
             <Shield className="h-5 w-5 shrink-0" />
-            {!collapsed && <span className="text-sm font-medium">Admin</span>}
+            {!isCollapsed && <span className="text-sm font-medium">Admin</span>}
           </Link>
         )}
 
-        {/* Theme Toggle */}
-        <div className={cn("flex items-center", collapsed ? "justify-center" : "px-3")}>
+        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-3")}>
           <ThemeToggle />
         </div>
 
-        {/* User Info */}
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="px-3 py-2">
             <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             {userRole === 'super_admin' && (
@@ -241,8 +247,7 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
           </div>
         )}
 
-        {/* Refazer Onboarding */}
-        {!collapsed && onResetOnboarding && (
+        {!isCollapsed && onResetOnboarding && (
           <Button
             variant="ghost"
             size="sm"
@@ -254,20 +259,18 @@ export function Sidebar({ onResetOnboarding }: SidebarProps) {
           </Button>
         )}
 
-        {/* Logout */}
         <Button
           variant="ghost"
-          size={collapsed ? "icon" : "default"}
+          size={isCollapsed ? "icon" : "default"}
           onClick={handleSignOut}
           className={cn(
             "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-            collapsed && "px-0"
+            isCollapsed && "px-0"
           )}
         >
           <LogOut className="h-5 w-5" />
-          {!collapsed && <span className="ml-2">Sair</span>}
+          {!isCollapsed && <span className="ml-2">Sair</span>}
         </Button>
-
       </div>
     </aside>
   );
