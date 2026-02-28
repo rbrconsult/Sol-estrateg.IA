@@ -56,18 +56,18 @@ export default function Origens() {
   }));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Origens</h1>
-          <p className="text-muted-foreground">Análise de canais de aquisição</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Origens</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">Análise de canais de aquisição</p>
         </div>
         <HelpButton moduleId="origens" label="Ajuda de Origens" />
       </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">

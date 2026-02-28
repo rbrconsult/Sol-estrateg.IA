@@ -54,12 +54,12 @@ export default function Vendedores() {
   }));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Vendedores</h1>
-          <p className="text-muted-foreground">Análise detalhada por vendedor</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Vendedores</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">Análise detalhada por vendedor</p>
         </div>
         <HelpButton moduleId="vendedores" label="Ajuda de Vendedores" />
       </div>

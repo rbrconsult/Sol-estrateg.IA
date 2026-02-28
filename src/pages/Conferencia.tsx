@@ -228,7 +228,7 @@ export default function Conferencia() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-[1400px] mx-auto px-4 pb-12">
+      <div className="max-w-[1400px] mx-auto px-3 md:px-4 pb-12">
 
         {/* ══════ HEADER ══════ */}
         <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
