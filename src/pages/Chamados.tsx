@@ -70,13 +70,13 @@ export default function Chamados() {
   const overdueSLA = openTickets.filter((t) => getSLAStatus(t.sla_deadline, t.created_at, t.sla_paused_at) === "overdue").length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Headset className="h-6 w-6 text-primary" /> Chamados
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Headset className="h-5 w-5 md:h-6 md:w-6 text-primary" /> Chamados
           </h1>
-          <p className="text-sm text-muted-foreground">Abra e acompanhe seus chamados de suporte</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Abra e acompanhe seus chamados de suporte</p>
         </div>
         <div className="flex items-center gap-2">
           <HelpButton moduleId="chamados" label="Ajuda de Chamados" />
@@ -84,7 +84,7 @@ export default function Chamados() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         <KPICard icon={Headset} label="Abertos" value={openTickets.length} color="bg-blue-500/20 text-blue-400" />
         <KPICard icon={PauseCircle} label="Aguardando Usuário" value={aguardandoUsuario} color="bg-purple-500/20 text-purple-400" />
         <KPICard icon={CheckCircle} label="Dentro do SLA" value={withinSLA} color="bg-emerald-500/20 text-emerald-400" />

@@ -15,19 +15,19 @@ export default function Monitoramento() {
   }, []);
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Activity className="h-6 w-6 text-primary" /> Monitoramento
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Activity className="h-5 w-5 md:h-6 md:w-6 text-primary" /> Monitoramento
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             Heartbeat em tempo real dos cenários Make.com
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {syncMutation.data?.syncedAt && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
               Última sync: {new Date(syncMutation.data.syncedAt).toLocaleTimeString("pt-BR")}
             </span>
           )}

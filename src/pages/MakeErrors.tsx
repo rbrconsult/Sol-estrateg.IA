@@ -27,21 +27,21 @@ export default function MakeErrors() {
   ).length;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-amber-500" />
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 md:h-6 md:w-6 text-amber-500" />
             Erros Make
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Evolve Energia Solar — Gerenciamento de erros Make.com
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Gerenciamento de erros Make.com
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {syncMutation.data?.syncedAt && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
               Última sync: {new Date(syncMutation.data.syncedAt).toLocaleTimeString("pt-BR")}
             </span>
           )}
@@ -52,7 +52,7 @@ export default function MakeErrors() {
             disabled={syncMutation.isPending}
           >
             <RefreshCw className={`h-4 w-4 mr-1 ${syncMutation.isPending ? "animate-spin" : ""}`} />
-            Sincronizar Agora
+            <span className="hidden sm:inline">Sincronizar</span>
           </Button>
           {pendingCount > 0 && (
             <Button
@@ -62,7 +62,7 @@ export default function MakeErrors() {
               className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
             >
               <CheckCheck className="h-4 w-4 mr-1" />
-              Resolver Todos ({pendingCount})
+              Resolver ({pendingCount})
             </Button>
           )}
         </div>
