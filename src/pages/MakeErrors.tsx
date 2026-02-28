@@ -21,6 +21,7 @@ export default function MakeErrors() {
   }, []);
 
   const errors = errorsQuery.data ?? [];
+  const pendingCount = errors.filter((e) => e.status !== "resolved").length;
   const pendingStopped = errors.filter(
     (e) => e.status === "pending" && e.execution_status === "stopped"
   ).length;
