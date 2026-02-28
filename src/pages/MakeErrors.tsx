@@ -54,8 +54,41 @@ export default function MakeErrors() {
             <RefreshCw className={`h-4 w-4 mr-1 ${syncMutation.isPending ? "animate-spin" : ""}`} />
             Sincronizar Agora
           </Button>
+          {pendingCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowResolveAll(true)}
+              className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
+            >
+              <CheckCheck className="h-4 w-4 mr-1" />
+              Resolver Todos ({pendingCount})
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Resolve All Dialog */}
+      <Dialog open={showResolveAll} onOpenChange={setShowResolveAll}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resolver todos os erros?</DialogTitle>
+            <DialogDescription>
+              Isso marcará {pendingCount} erro(s) pendentes/em análise como resolvidos. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResolveAll(false)}>Cancelar</Button>
+            <Button
+              onClick={() => { resolveAllMutation.mutate(); setShowResolveAll(false); }}
+              disabled={resolveAllMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {resolveAllMutation.isPending ? "Resolvendo..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList>
