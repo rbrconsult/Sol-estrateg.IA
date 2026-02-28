@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { ScenarioHealth } from "@/hooks/useMakeHeartbeat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CheckCircle2, XCircle, AlertTriangle, Clock, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { HeartbeatErrorSheet } from "./HeartbeatErrorSheet";
 
 interface Props {
   scenarios: ScenarioHealth[];
@@ -27,7 +29,7 @@ function timelineBlockColor(status: string) {
     case "success": return "bg-emerald-500";
     case "error": return "bg-destructive";
     case "warning": return "bg-amber-500";
-    default: return "bg-blue-400"; // idle — no trigger but flux is active
+    default: return "bg-blue-400";
   }
 }
 
@@ -38,6 +40,8 @@ function timelineBlockTooltip(status: string, time: string) {
 }
 
 export function HeartbeatGrid({ scenarios, isLoading }: Props) {
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioHealth | null>(null);
+
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -63,75 +67,87 @@ export function HeartbeatGrid({ scenarios, isLoading }: Props) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {scenarios.map((s) => (
-        <Card key={s.scenario_id} className={`border ${statusBg(s.uptime)} transition-colors`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center justify-between">
-              <span className="truncate mr-2">{s.scenario_name}</span>
-              <span className={`text-lg font-bold ${statusColor(s.uptime)}`}>
-                {s.uptime.toFixed(1)}%
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* KPI row */}
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                <span>{s.success}</span>
+    <>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {scenarios.map((s) => (
+          <Card
+            key={s.scenario_id}
+            className={`border ${statusBg(s.uptime)} transition-colors cursor-pointer hover:ring-2 hover:ring-primary/30`}
+            onClick={() => setSelectedScenario(s)}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center justify-between">
+                <span className="truncate mr-2">{s.scenario_name}</span>
+                <span className={`text-lg font-bold ${statusColor(s.uptime)}`}>
+                  {s.uptime.toFixed(1)}%
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* KPI row */}
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>{s.success}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <XCircle className="h-3.5 w-3.5 text-destructive" />
+                  <span>{s.errors}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                  <span>{s.warnings}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <XCircle className="h-3.5 w-3.5 text-destructive" />
-                <span>{s.errors}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                <span>{s.warnings}</span>
-              </div>
-            </div>
 
-            {/* Timeline bar */}
-            <TooltipProvider delayDuration={100}>
-              <div className="flex gap-[1px] h-6 rounded overflow-hidden">
-                {s.timeline.map((b, i) => (
-                  <Tooltip key={i}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={`flex-1 ${timelineBlockColor(b.status)} hover:opacity-80 transition-opacity cursor-default min-w-[2px]`}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      {timelineBlockTooltip(b.status, b.time)}
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>24h atrás</span>
-                <span>agora</span>
-              </div>
-            </TooltipProvider>
+              {/* Timeline bar */}
+              <TooltipProvider delayDuration={100}>
+                <div className="flex gap-[1px] h-6 rounded overflow-hidden">
+                  {s.timeline.map((b, i) => (
+                    <Tooltip key={i}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`flex-1 ${timelineBlockColor(b.status)} hover:opacity-80 transition-opacity cursor-default min-w-[2px]`}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {timelineBlockTooltip(b.status, b.time)}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>24h atrás</span>
+                  <span>agora</span>
+                </div>
+              </TooltipProvider>
 
-            {/* Last events */}
-            <div className="flex justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/50">
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {s.lastSuccess ? (
-                  <span>
-                    OK {formatDistanceToNow(new Date(s.lastSuccess), { addSuffix: true, locale: ptBR })}
-                  </span>
-                ) : (
-                  <span>Sem sucesso</span>
+              {/* Last events */}
+              <div className="flex justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {s.lastSuccess ? (
+                    <span>
+                      OK {formatDistanceToNow(new Date(s.lastSuccess), { addSuffix: true, locale: ptBR })}
+                    </span>
+                  ) : (
+                    <span>Sem sucesso</span>
+                  )}
+                </div>
+                {s.avgDuration != null && (
+                  <span>⌀ {s.avgDuration.toFixed(0)}s</span>
                 )}
               </div>
-              {s.avgDuration != null && (
-                <span>⌀ {s.avgDuration.toFixed(0)}s</span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <HeartbeatErrorSheet
+        scenario={selectedScenario}
+        onClose={() => setSelectedScenario(null)}
+      />
+    </>
   );
 }
