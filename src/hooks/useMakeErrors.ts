@@ -90,5 +90,28 @@ export function useMakeErrors() {
     },
   });
 
-  return { errorsQuery, syncMutation, actionMutation, updateStatusMutation };
+  const resolveAllMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("make_errors")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .eq("status", "pending");
+      if (error) throw error;
+      // Also resolve "reviewing"
+      const { error: error2 } = await supabase
+        .from("make_errors")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .eq("status", "reviewing");
+      if (error2) throw error2;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["make-errors"] });
+      toast.success("Todos os erros foram marcados como resolvidos");
+    },
+    onError: (err: Error) => {
+      toast.error(`Erro ao resolver: ${err.message}`);
+    },
+  });
+
+  return { errorsQuery, syncMutation, actionMutation, updateStatusMutation, resolveAllMutation };
 }

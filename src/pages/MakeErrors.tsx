@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, RefreshCw, BarChart3, List, Settings } from "lucide-react";
+import { AlertTriangle, RefreshCw, BarChart3, List, Settings, CheckCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMakeErrors } from "@/hooks/useMakeErrors";
 import { ErrorDashboard } from "@/components/make-errors/ErrorDashboard";
 import { ErrorList } from "@/components/make-errors/ErrorList";
@@ -9,7 +10,8 @@ import { ErrorDetail } from "@/components/make-errors/ErrorDetail";
 import { MakeError } from "@/hooks/useMakeErrors";
 
 export default function MakeErrors() {
-  const { errorsQuery, syncMutation } = useMakeErrors();
+  const { errorsQuery, syncMutation, resolveAllMutation } = useMakeErrors();
+  const [showResolveAll, setShowResolveAll] = useState(false);
   const [selectedError, setSelectedError] = useState<MakeError | null>(null);
 
   // Auto-sync on mount
