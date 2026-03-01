@@ -7,7 +7,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { helpCategories, HelpCategory } from "@/data/helpContent";
-import { MessageSimulation } from "@/components/ajuda/MessageSimulation";
 
 export default function Ajuda() {
   const location = useLocation();
