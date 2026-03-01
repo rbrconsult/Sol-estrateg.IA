@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOl.estrateg.IA - Evolve Energia Solar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;background:#0d1117;min-height:100vh;display:flex;overflow:hidden;color:#fff}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-3px);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes liveDot{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes progressFill{from{width:0}to{width:100%}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-width:240px;background:#161b22;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;height:100vh}
+.sidebar-header{padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sidebar-logo{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.sidebar-logo .sun{font-size:18px}
+.sidebar-logo .brand{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#f7b731,#fd9644);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar-sub{color:rgba(255,255,255,.25);font-size:10px;letter-spacing:.3px}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+.sidebar-scroll::-webkit-scrollbar{width:3px}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+.group-label{font-size:8.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.2);padding:12px 16px 6px}
+.flow-card{padding:10px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .2s}
+.flow-card:hover{background:rgba(255,255,255,.03)}
+.flow-card.active{background:rgba(37,211,102,.06);border-left-color:#25d366}
+.flow-card .fc-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);letter-spacing:-.1px}
+.flow-card.active .fc-name{color:#25d366}
+.flow-card .fc-sub{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px}
+.flow-card .fc-badge{display:inline-block;margin-top:4px;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:3px}
+.fc-badge.conversa{background:rgba(37,211,102,.12);color:#25d366}
+.fc-badge.notif{background:rgba(255,149,0,.12);color:#ff9500}
+.fc-badge.alerta{background:rgba(255,59,48,.12);color:#ff3b30}
+.live-ind{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .3s}
+.flow-card.playing .live-ind{opacity:1}
+.live-ind .dot{width:5px;height:5px;border-radius:50%;background:#25d366;animation:liveDot 1.2s infinite}
+.live-ind .lt{font-size:8px;font-weight:700;color:#25d366;letter-spacing:.5px;text-transform:uppercase}
+.flow-card{position:relative}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;background:#0d1117}
+.main-top{padding:14px 24px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.main-top-left{display:flex;align-items:center;gap:12px}
+.app-title{font-size:15px;font-weight:800;letter-spacing:-.2px}
+.app-title .sol{background:linear-gradient(135deg,#f7b731,#fd9644);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.app-title .rest{color:rgba(255,255,255,.4);font-weight:400}
+.flow-label{font-size:12px;color:rgba(255,255,255,.5);padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.btn-play{padding:8px 20px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:10px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;font-family:inherit;transition:all .25s;box-shadow:0 4px 15px rgba(37,211,102,.25);flex-shrink:0}
+.btn-play:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,211,102,.35)}
+.btn-play.playing{background:linear-gradient(135deg,#ff3b30,#ff6b6b);box-shadow:0 4px 15px rgba(255,59,48,.25)}
+.btn-pause{background:linear-gradient(135deg,#ff9500,#f5a623);box-shadow:0 4px 15px rgba(255,149,0,.25)}
+.btn-pause:hover{box-shadow:0 6px 20px rgba(255,149,0,.35)}
+.btn-pause.resuming{background:linear-gradient(135deg,#25d366,#128c7e);box-shadow:0 4px 15px rgba(37,211,102,.25)}
+.btn-restart{background:linear-gradient(135deg,#00a884,#128c7e);box-shadow:0 4px 15px rgba(0,168,132,.25)}
+.btn-restart:hover{box-shadow:0 6px 20px rgba(0,168,132,.35)}
+
+/* CONTENT */
+.content{flex:1;display:flex;gap:16px;overflow:hidden;padding:12px 16px}
+
+/* IPHONE */
+.phone-wrap{flex-shrink:0;display:flex;align-items:flex-start}
+.iphone{width:340px;background:#000;border-radius:44px;overflow:hidden;box-shadow:0 0 0 2.5px #3a3a3a,0 0 0 5px #1a1a1a,0 25px 80px rgba(0,0,0,.5);position:relative}
+.dynamic-island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:120px;height:35px;background:#000;border-radius:18px;z-index:100}
+.status-bar{background:#121b22;padding:14px 26px 0;display:flex;justify-content:space-between;align-items:center;height:52px;z-index:50;position:relative}
+.status-time{font-size:15px;font-weight:700;color:#fff}
+.status-icons{display:flex;align-items:center;gap:5px}
+.status-icons svg{fill:#fff}
+.wa-nav{background:#121b22;padding:4px 12px 8px;display:flex;align-items:center;gap:8px;border-bottom:.5px solid rgba(255,255,255,.06)}
+.wa-back svg{fill:#00a884}
+.wa-avatar{width:32px;height:32px;border-radius:50%;background:#6b5b7b;display:flex;align-items:center;justify-content:center;color:#f0d0e8;font-size:11px;font-weight:700}
+.wa-avatar.notif{background:#5b6b4b;color:#d0f0c8}
+.wa-avatar.alerta{background:#6b4b4b;color:#f0c8c8}
+.wa-contact{flex:1;margin-left:2px}
+.wa-name{color:#e9edef;font-size:15px;font-weight:600}
+.wa-status{color:rgba(233,237,239,.5);font-size:11px}
+.wa-actions{display:flex;gap:16px}
+.wa-actions svg{fill:#00a884}
+.chat-area{height:calc(100vh - 240px);min-height:420px;overflow-y:auto;padding:6px 12px 12px;background:#0b141a;scroll-behavior:smooth}
+.chat-area::-webkit-scrollbar{width:2px}
+.chat-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;opacity:.4}
+.empty-state .ei{font-size:32px}
+.empty-state .et{color:rgba(233,237,239,.5);font-size:12px;text-align:center;line-height:1.6}
+.date-pill{display:flex;justify-content:center;margin:8px 0 4px;animation:fadeIn .3s}
+.date-pill span{background:#182229;border-radius:7px;padding:4px 12px;font-size:11px;color:rgba(233,237,239,.6);font-weight:500}
+.enc-notice{display:flex;justify-content:center;margin:2px 0 8px;animation:fadeIn .3s}
+.enc-notice span{background:rgba(25,54,67,.7);border-radius:7px;padding:6px 14px;font-size:10.5px;color:#f7dfa4;text-align:center;line-height:1.4;max-width:88%}
+.msg-row{display:flex;margin:2px 0;animation:fadeIn .3s}
+.msg-row.bot{justify-content:flex-start}
+.msg-row.user{justify-content:flex-end}
+.msg-row.system{justify-content:center;margin:5px 0}
+.bubble{max-width:82%;padding:5px 8px 3px}
+.bubble.bot{background:#1f2c34;border-radius:0 16px 16px 16px}
+.bubble.user{background:#005c4b;border-radius:16px 0 16px 16px}
+.bubble .text{font-size:13.5px;color:#e9edef;line-height:1.35;white-space:pre-wrap;word-break:break-word}
+.bubble .meta{display:flex;justify-content:flex-end;align-items:center;gap:3px;margin-top:1px}
+.bubble .time{font-size:10px;color:rgba(233,237,239,.4)}
+.sys-badge{background:rgba(25,54,67,.7);border-radius:7px;padding:4px 12px;font-size:10.5px;color:#f7dfa4;max-width:92%;text-align:center}
+.typing{display:flex;align-items:center;gap:4px;background:#1f2c34;border-radius:0 16px 16px 16px;padding:10px 14px;width:fit-content;margin:3px 0}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:#5a6b75;animation:typingBounce 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.15s}
+.typing-dot:nth-child(3){animation-delay:.3s}
+.input-bar{background:#121b22;padding:5px 8px 26px;display:flex;align-items:flex-end;gap:6px}
+.input-field{flex:1;background:#1f2c34;border:none;border-radius:18px;padding:7px 12px;font-size:14px;color:rgba(233,237,239,.35)}
+.input-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* SYSTEM SCREEN */
+.sys-screen{flex:1;display:flex;flex-direction:column;background:#0f1318;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;min-width:240px}
+.sys-header{background:#13181f;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sys-brand{display:flex;align-items:center;gap:8px}
+.sys-brand .icon{font-size:16px}
+.sys-brand .name{font-size:13px;font-weight:700}
+.sys-brand .name .s{background:linear-gradient(135deg,#f7b731,#fd9644);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sys-brand .name .d{color:rgba(255,255,255,.3);font-weight:400}
+.sys-tabs{display:flex;gap:2px}
+.sys-tab{padding:4px 10px;font-size:9px;font-weight:600;border-radius:6px;color:rgba(255,255,255,.3);letter-spacing:.3px}
+.sys-tab.active{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
+.sys-body{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.05) transparent}
+.sys-body::-webkit-scrollbar{width:3px}
+.sys-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.05);border-radius:3px}
+.sys-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;opacity:.3}
+.sys-empty .se-icon{font-size:28px}
+.sys-empty .se-text{font-size:11px;text-align:center;line-height:1.5;color:rgba(255,255,255,.5)}
+
+/* System event cards */
+.sys-event{animation:slideRight .4s ease;margin-bottom:10px}
+.se-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:10px;overflow:hidden}
+.se-header{padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.se-icon{font-size:14px}
+.se-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.7);flex:1}
+.se-time{font-size:9px;color:rgba(255,255,255,.2);font-weight:500}
+.se-tag{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
+.se-tag.green{background:rgba(37,211,102,.12);color:#25d366}
+.se-tag.orange{background:rgba(255,149,0,.12);color:#ff9500}
+.se-tag.red{background:rgba(255,59,48,.12);color:#ff3b30}
+.se-tag.blue{background:rgba(0,168,132,.12);color:#00a884}
+.se-tag.purple{background:rgba(175,130,255,.12);color:#af82ff}
+.se-body{padding:10px 12px}
+.se-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0}
+.se-label{font-size:10px;color:rgba(255,255,255,.3);font-weight:500}
+.se-value{font-size:10.5px;color:rgba(255,255,255,.65);font-weight:600;text-align:right;max-width:60%}
+.se-divider{height:1px;background:rgba(255,255,255,.04);margin:6px 0}
+.se-status-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(255,255,255,.015)}
+.se-status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.se-status-dot.green{background:#25d366}
+.se-status-dot.orange{background:#ff9500;animation:pulse 1.5s infinite}
+.se-status-dot.red{background:#ff3b30}
+.se-status-dot.blue{background:#00a884;animation:pulse 1.5s infinite}
+.se-status-text{font-size:10px;color:rgba(255,255,255,.5)}
+.se-progress{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin:8px 12px 6px}
+.se-progress-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.se-progress-fill.green{background:#25d366}
+.se-progress-fill.orange{background:#ff9500}
+
+/* CRM Mockup card */
+.crm-lead-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;overflow:hidden;margin-bottom:10px;animation:fadeInScale .4s}
+.crm-lead-header{padding:8px 12px;background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04)}
+.crm-lead-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.6)}
+.crm-project-id{font-size:9px;color:rgba(255,255,255,.25);font-weight:600;letter-spacing:.3px}
+.crm-lead-body{padding:10px 12px}
+.crm-field{display:flex;justify-content:space-between;padding:3px 0}
+.crm-field .label{font-size:9.5px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.crm-field .value{font-size:10.5px;color:rgba(255,255,255,.6);font-weight:500}
+.crm-status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-top:6px}
+.crm-status-pill.trafego{background:rgba(175,130,255,.12);color:#af82ff}
+.crm-status-pill.qualif{background:rgba(255,149,0,.12);color:#ff9500}
+.crm-status-pill.qualified{background:rgba(37,211,102,.12);color:#25d366}
+.crm-status-pill.desqualif{background:rgba(255,59,48,.12);color:#ff3b30}
+.crm-status-pill.fup{background:rgba(0,168,255,.12);color:#00a8ff}
+.crm-status-pill.invalido{background:rgba(255,59,48,.12);color:#ff3b30}
+
+@media(max-width:800px){body{flex-direction:column;overflow-y:auto}.sidebar{width:100%;min-width:100%;height:auto;max-height:30vh}.main{height:auto;min-height:70vh}.content{padding:10px;flex-direction:column;align-items:center}.iphone{width:100%;max-width:340px}.sys-screen{min-height:400px;width:100%}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo"><span class="sun">☀️</span><span class="brand">Evolve Energia Solar</span></div>
+    <div class="sidebar-sub">Simulação de Automação • Sol SDR v4.13</div>
+  </div>
+  <div class="sidebar-scroll" id="sidebarScroll"></div>
+</div>
+<div class="main">
+  <div class="main-top">
+    <div class="main-top-left">
+      <div class="app-title"><span class="sol">SOl.estrateg.IA</span></div>
+      <div class="flow-label" id="flowLabel">📥 Flow 1 - META</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn-play" id="btnPlay" onclick="doPlay()">▶ Iniciar</button>
+      <button class="btn-play btn-pause" id="btnPause" onclick="doPause()" style="display:none">⏸ Pausar</button>
+      <button class="btn-play btn-restart" id="btnRestart" onclick="doRestart()" style="display:none">🔄 Recomeçar</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="phone-wrap">
+      <div class="iphone">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+          <span class="status-time" id="statusTime">22:04</span>
+          <div class="status-icons">
+            <svg width="17" height="12" viewBox="0 0 18 12"><rect x="1" y="3.5" width="2.5" height="8.5" rx=".5" opacity=".4"/><rect x="5" y="2.5" width="2.5" height="9.5" rx=".5" opacity=".6"/><rect x="9" y="1.5" width="2.5" height="10.5" rx=".5" opacity=".8"/><rect x="13" y=".5" width="2.5" height="11.5" rx=".5"/></svg>
+            <svg width="15" height="12" viewBox="0 0 16 12"><path d="M8 3.6c1.8 0 3.4.7 4.6 1.9l1.4-1.4C12.3 2.4 10.3 1.6 8 1.6S3.7 2.4 2 4.1l1.4 1.4C4.6 4.3 6.2 3.6 8 3.6zM8 7.2c1 0 1.9.4 2.6 1l1.4-1.4c-1-1-2.4-1.6-4-1.6s-3 .6-4 1.6l1.4 1.4c.7-.6 1.6-1 2.6-1zM9.5 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" fill="#fff"/></svg>
+            <svg width="26" height="13" viewBox="0 0 28 14"><rect x="1" y="1.5" width="22" height="11" rx="2.5" stroke="white" stroke-width="1.2" fill="none"/><rect x="24" y="4.5" width="2.5" height="5" rx=".8" fill="white" opacity=".4"/><rect x="2.5" y="3" width="8" height="8" rx="1.2" fill="#25d366"/></svg>
+          </div>
+        </div>
+        <div class="wa-nav">
+          <div class="wa-back"><svg width="9" height="16" viewBox="0 0 10 18"><path d="M9 1L1 9l8 8" stroke="#00a884" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="wa-avatar" id="avatar">FC</div>
+          <div class="wa-contact">
+            <div class="wa-name" id="contactName">Fabiano Costa</div>
+            <div class="wa-status" id="contactStatus">online</div>
+          </div>
+          <div class="wa-actions">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#00a884"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#00a884"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+          </div>
+        </div>
+        <div class="chat-area" id="chatArea">
+          <div class="empty-state"><div class="ei">💬</div><div class="et">Clique em <strong>Iniciar</strong></div></div>
+        </div>
+        <div class="input-bar">
+          <div class="input-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="#00a884"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></div>
+          <div class="input-field">Mensagem</div>
+          <div class="input-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(233,237,239,.4)"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.998.998 0 00-.98-.85c-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08a6.993 6.993 0 005.91-5.78c.1-.6-.39-1.14-1-1.14z"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="sys-screen">
+      <div class="sys-header">
+        <div class="sys-brand"><span class="icon">⚡</span><div class="name"><span class="s">SOl.estrateg.IA</span><span class="d"> • Sistema</span></div></div>
+        <div class="sys-tabs">
+          <div class="sys-tab active" id="sysTab1">CRM</div>
+          <div class="sys-tab" id="sysTab2">Automação</div>
+        </div>
+      </div>
+      <div class="sys-body" id="sysBody">
+        <div class="sys-empty"><div class="se-icon">⚡</div><div class="se-text">Sistema aguardando<br>início da simulação</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const T = () => new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+setInterval(()=>{document.getElementById("statusTime").textContent=T()},30000);
+
+const FLOWS = {
+flow1:{
+  name:"Flow 1 - META",icon:"📥",subtitle:"Lead via formulário Meta Ads",
+  contact:"Fabiano Costa",avatar:"FC",avatarClass:"",badge:"conversa",badgeText:"Conversa",group:"flows",
+  sysTabs:["CRM","WhatsApp API"],
+  messages:[
+    {from:"system",text:"📥 Lead capturado via Meta Ads",delay:0},
+    {from:"system",text:"📋 Nome: Fabiano Costa • Conta: R$ 520 • Cidade: Itajobi",delay:800},
+    {from:"system",text:"💬 Disparando mensagem automática...",delay:1800},
+    {from:"bot",text:"Olá Fabiano Costa,\nvimos que tem interesse em saber mais sobre Energia Solar.\nFoi informado que você gasta R$ 520,00 de energia.\nE esta na cidade de Itajobi.\nPodemos começar ?",delay:3000},
+    {from:"system",text:"🤖 Transferido para Robô SOL",delay:5000},
+    {from:"user",text:"Sim, podemos!",delay:7000},
+    {from:"bot",text:"Olá! Eu sou a Sol, assistente comercial da Evolve Energia Solar. 😊\n\nPara começar, preciso saber qual o tipo do seu imóvel: residencial, comercial ou rural?",delay:8500},
+    {from:"user",text:"Residencial",delay:10200},
+    {from:"bot",text:"Ótimo! E o telhado, ele é de cerâmica, fibrocimento, metálico ou laje?",delay:11800},
+    {from:"user",text:"Cerâmica",delay:13500},
+    {from:"bot",text:"Você pretende adquirir novos equipamentos que aumentem seu consumo?",delay:15200},
+    {from:"user",text:"Não pretendo não",delay:17000},
+    {from:"bot",text:"Para quando você pretende instalar o sistema de energia solar?",delay:18800},
+    {from:"user",text:"Nos próximos 30 dias",delay:20500},
+    {from:"bot",text:"E sobre o pagamento, prefere à vista, cartão de crédito ou financiamento?",delay:22200},
+    {from:"user",text:"Financiamento",delay:23800},
+    {from:"bot",text:"Prefere reunião online pelo Google Meet, ligação, ou WhatsApp?",delay:25500},
+    {from:"user",text:"WhatsApp mesmo",delay:27500},
+    {from:"bot",text:"Qual dia e horário funcionam melhor pra você?",delay:29000},
+    {from:"user",text:"Amanhã às 14h",delay:30800},
+    {from:"bot",text:"Prontinho, Fabiano! 😊\n\n📅 Data: 03/03/2026\n⏰ Horário: 14:00\n📱 Tipo: WhatsApp\n\nNosso consultor entrará em contato!",delay:32500},
+    {from:"system",text:"✅ QUALIFICADO • Score: 60 • Temp: MORNO",delay:34500},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"📡",title:"Meta Ads Webhook",tag:"Recebido",tagClass:"blue",status:"Lead capturado do formulário Meta Ads",dotClass:"blue"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-29102",fields:[["Nome","Fabiano Costa"],["Telefone","(17) 99876-5432"],["Valor Conta","R$ 520,00"],["Cidade","Itajobi"],["Origem","Meta Ads"]],statusPill:"trafego",statusText:"Tráfego Pago"},
+    {delay:2000,type:"status",icon:"📤",title:"WhatsApp Business API",tag:"Enviando",tagClass:"blue",status:"Mensagem template personalizada disparada",dotClass:"blue"},
+    {delay:3200,type:"status",icon:"✅",title:"Mensagem Entregue",tag:"Sucesso",tagClass:"green",status:"Double check azul ✓✓ confirmado",dotClass:"green"},
+    {delay:5200,type:"status",icon:"🤖",title:"Transferência → Robô SOL",tag:"IA Ativa",tagClass:"purple",status:"Thread de conversa iniciada com assistente IA",dotClass:"blue"},
+    {delay:8000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:15,progressClass:"orange"},
+    {delay:13000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:40,progressClass:"orange",extraField:["Imóvel","Residencial • Cerâmica"]},
+    {delay:20000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:70,progressClass:"orange",extraField:["Prazo","Próximos 30 dias"]},
+    {delay:25000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:85,progressClass:"orange",extraField:["Pagamento","Financiamento"]},
+    {delay:32000,type:"score",icon:"🎯",title:"Score Calculado",score:60,temp:"MORNO",tempColor:"#ff9500"},
+    {delay:34000,type:"crmUpdate",statusPill:"qualified",statusText:"Qualificado",progress:100,progressClass:"green",extraField:["Agendamento","03/03 às 14:00 • WhatsApp"]},
+    {delay:35000,type:"status",icon:"📩",title:"Notificação Consultor",tag:"Enviada",tagClass:"green",status:"Alerta com dados do lead enviado ao consultor",dotClass:"green"},
+  ]
+},
+flow2:{
+  name:"Flow 2 - Site",icon:"🌐",subtitle:"Lead via formulário do site",
+  contact:"Antonio Carlos",avatar:"AC",avatarClass:"",badge:"conversa",badgeText:"Conversa",group:"flows",
+  sysTabs:["CRM","WhatsApp API"],
+  messages:[
+    {from:"system",text:"🌐 Lead capturado via formulário do site",delay:0},
+    {from:"system",text:"📋 Nome: Antonio Carlos • Conta: R$ 780 • Cidade: Olímpia",delay:800},
+    {from:"system",text:"💬 Disparando mensagem automática...",delay:1800},
+    {from:"bot",text:"Olá Antonio Carlos,\nvimos que tem interesse em saber mais sobre Energia Solar.\nFoi informado que você gasta R$ 780,00 de energia.\nE esta na cidade de Olímpia.\nPodemos começar ?",delay:3000},
+    {from:"system",text:"🤖 Transferido para Robô SOL",delay:5000},
+    {from:"user",text:"Sim!",delay:7000},
+    {from:"bot",text:"Eu sou a Sol, assistente da Evolve. 😊 O imóvel é residencial, comercial ou rural?",delay:8500},
+    {from:"user",text:"Residencial",delay:10200},
+    {from:"bot",text:"E o telhado: cerâmica, fibrocimento, metálico ou laje?",delay:11800},
+    {from:"user",text:"Cerâmica",delay:13500},
+    {from:"bot",text:"Pretende adquirir novos equipamentos como ar condicionado?",delay:15200},
+    {from:"user",text:"Sim, 2 ar condicionados de 12 mil BTUs",delay:17200},
+    {from:"bot",text:"Ótimo! Para quando pretende instalar?",delay:19000},
+    {from:"user",text:"Próximo mês",delay:20700},
+    {from:"bot",text:"Prefere à vista, cartão ou financiamento?",delay:22200},
+    {from:"user",text:"Financiamento",delay:23800},
+    {from:"bot",text:"Prefere reunião online, ligação ou WhatsApp?",delay:25500},
+    {from:"user",text:"Ligação",delay:27300},
+    {from:"bot",text:"Qual dia e horário?",delay:28800},
+    {from:"user",text:"Terça às 10h",delay:30200},
+    {from:"bot",text:"Prontinho, Antonio Carlos! 😊\n\n📅 03/03/2026 às 10:00\n📱 Tipo: Ligação\n\nNosso consultor entrará em contato! Até lá!",delay:31800},
+    {from:"system",text:"✅ QUALIFICADO • Score: 80 • Temp: QUENTE",delay:33800},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"🌐",title:"Site Webhook",tag:"Recebido",tagClass:"blue",status:"Lead capturado do formulário do site",dotClass:"blue"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-29187",fields:[["Nome","Antonio Carlos"],["Telefone","(17) 99654-3210"],["Valor Conta","R$ 780,00"],["Cidade","Olímpia"],["Origem","Site"]],statusPill:"trafego",statusText:"Tráfego Pago"},
+    {delay:2000,type:"status",icon:"📤",title:"WhatsApp Business API",tag:"Enviando",tagClass:"blue",status:"Mensagem template personalizada disparada",dotClass:"blue"},
+    {delay:3200,type:"status",icon:"✅",title:"Mensagem Entregue",tag:"Sucesso",tagClass:"green",status:"Double check azul ✓✓",dotClass:"green"},
+    {delay:5200,type:"status",icon:"🤖",title:"Transferência → Robô SOL",tag:"IA Ativa",tagClass:"purple",status:"Thread iniciada com assistente IA",dotClass:"blue"},
+    {delay:10000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:25,progressClass:"orange"},
+    {delay:17000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:50,progressClass:"orange",extraField:["Equipamentos","+2 Ar Cond. 12k BTU"]},
+    {delay:23000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:75,progressClass:"orange",extraField:["Pagamento","Financiamento"]},
+    {delay:31000,type:"score",icon:"🎯",title:"Score Calculado",score:80,temp:"QUENTE",tempColor:"#25d366"},
+    {delay:33000,type:"crmUpdate",statusPill:"qualified",statusText:"Qualificado",progress:100,progressClass:"green",extraField:["Agendamento","03/03 às 10:00 • Ligação"]},
+    {delay:34300,type:"status",icon:"📩",title:"Notificação Consultor",tag:"Enviada",tagClass:"green",status:"Dados do lead enviados ao consultor",dotClass:"green"},
+  ]
+},
+flow3:{
+  name:"Flow 3 - Landing Page",icon:"📄",subtitle:"Lead via landing page",
+  contact:"Juliana Mendes",avatar:"JM",avatarClass:"",badge:"conversa",badgeText:"Conversa",group:"flows",
+  sysTabs:["CRM","WhatsApp API"],
+  messages:[
+    {from:"system",text:"📄 Lead capturado via Landing Page",delay:0},
+    {from:"system",text:"📋 Nome: Juliana Mendes • Conta: R$ 430 • Cidade: Catanduva",delay:800},
+    {from:"system",text:"💬 Disparando mensagem automática...",delay:1800},
+    {from:"bot",text:"Olá Juliana Mendes,\nvimos que tem interesse em saber mais sobre Energia Solar.\nFoi informado que você gasta R$ 430,00 de energia.\nE esta na cidade de Catanduva.\nPodemos começar ?",delay:3000},
+    {from:"system",text:"🤖 Transferido para Robô SOL",delay:5000},
+    {from:"user",text:"Podemos sim!",delay:7000},
+    {from:"bot",text:"Eu sou a Sol! 😊 O imóvel é residencial, comercial ou rural?",delay:8500},
+    {from:"user",text:"Comercial",delay:10200},
+    {from:"bot",text:"O telhado: cerâmica, fibrocimento, metálico ou laje?",delay:11800},
+    {from:"user",text:"Metálico",delay:13500},
+    {from:"bot",text:"Pretende adquirir novos equipamentos?",delay:15200},
+    {from:"user",text:"Não",delay:16800},
+    {from:"bot",text:"Para quando pretende instalar?",delay:18500},
+    {from:"user",text:"O mais rápido possível",delay:20200},
+    {from:"bot",text:"Prefere à vista, cartão ou financiamento?",delay:21800},
+    {from:"user",text:"À vista",delay:23200},
+    {from:"bot",text:"Reunião online, ligação ou WhatsApp?",delay:25000},
+    {from:"user",text:"Reunião online",delay:26800},
+    {from:"bot",text:"Qual seu email para enviar o link da reunião?",delay:28200},
+    {from:"user",text:"juliana.mendes@email.com",delay:29800},
+    {from:"bot",text:"Qual dia e horário?",delay:31200},
+    {from:"user",text:"Amanhã às 9h",delay:32800},
+    {from:"bot",text:"Prontinho, Juliana! 😊\n\n📅 03/03/2026 às 09:00\n📱 Tipo: Reunião Online\n📧 juliana.mendes@email.com\n\nAté lá!",delay:34500},
+    {from:"system",text:"✅ QUALIFICADO • Score: 75 • Temp: QUENTE",delay:36500},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"📄",title:"Landing Page Webhook",tag:"Recebido",tagClass:"blue",status:"Lead capturado da landing page de campanha",dotClass:"blue"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-29201",fields:[["Nome","Juliana Mendes"],["Telefone","(17) 99312-7654"],["Valor Conta","R$ 430,00"],["Cidade","Catanduva"],["Origem","Landing Page"]],statusPill:"trafego",statusText:"Tráfego Pago"},
+    {delay:2000,type:"status",icon:"📤",title:"WhatsApp Business API",tag:"Enviando",tagClass:"blue",status:"Mensagem template personalizada disparada",dotClass:"blue"},
+    {delay:3200,type:"status",icon:"✅",title:"Mensagem Entregue",tag:"Sucesso",tagClass:"green",status:"Double check azul ✓✓",dotClass:"green"},
+    {delay:5200,type:"status",icon:"🤖",title:"Transferência → Robô SOL",tag:"IA Ativa",tagClass:"purple",status:"Thread iniciada",dotClass:"blue"},
+    {delay:13000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:40,progressClass:"orange",extraField:["Imóvel","Comercial • Metálico"]},
+    {delay:21000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:70,progressClass:"orange",extraField:["Pagamento","À Vista"]},
+    {delay:29000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:85,progressClass:"orange",extraField:["Email","juliana.mendes@email.com"]},
+    {delay:34000,type:"score",icon:"🎯",title:"Score Calculado",score:75,temp:"QUENTE",tempColor:"#25d366"},
+    {delay:36000,type:"crmUpdate",statusPill:"qualified",statusText:"Qualificado",progress:100,progressClass:"green",extraField:["Agendamento","03/03 às 09:00 • Reunião Online"]},
+    {delay:37000,type:"status",icon:"📧",title:"Google Meet",tag:"Pendente",tagClass:"orange",status:"Enviar link para juliana.mendes@email.com",dotClass:"orange"},
+  ]
+},
+sdr:{
+  name:"Robô SDR",icon:"🤖",subtitle:"Conversa com IA",
+  contact:"Mariana Lima",avatar:"ML",avatarClass:"",badge:"conversa",badgeText:"IA",group:"flows",
+  sysTabs:["Robô SOL","Análise IA"],
+  messages:[
+    {from:"system",text:"📥 Lead recebido • Mariana Lima • R$ 380 • Catanduva",delay:0},
+    {from:"user",text:"Preciso saber valores. Como funciona a energia solar?",delay:1500},
+    {from:"system",text:"🟢 SINAL DE INTERESSE detectado!",delay:2800},
+    {from:"bot",text:"Ótima pergunta! A energia solar capta luz do sol e converte em energia elétrica. Redução de até 95%!\n\nQual o tipo do imóvel: residencial, comercial ou rural?",delay:4000},
+    {from:"user",text:"Residencial. E tem financiamento?",delay:6500},
+    {from:"system",text:"🟢 Pergunta financiamento = INTERESSE!",delay:7500},
+    {from:"bot",text:"Sim, até 60x! O telhado é cerâmica, fibrocimento, metálico ou laje?",delay:9000},
+    {from:"user",text:"Fibrocimento",delay:10800},
+    {from:"bot",text:"Pretende adquirir novos equipamentos?",delay:12200},
+    {from:"user",text:"Não",delay:13800},
+    {from:"bot",text:"Para quando pretende instalar?",delay:15200},
+    {from:"user",text:"Pesquisando ainda, talvez nos próximos meses",delay:17000},
+    {from:"bot",text:"Pagamento: à vista, cartão ou financiamento?",delay:18800},
+    {from:"user",text:"Financiamento mesmo",delay:20200},
+    {from:"bot",text:"Reunião online, ligação ou WhatsApp?",delay:22000},
+    {from:"user",text:"Ligação",delay:23800},
+    {from:"bot",text:"Qual dia e horário?",delay:25200},
+    {from:"user",text:"Quinta às 14h",delay:26800},
+    {from:"bot",text:"Prontinho, Mariana! 😊\n\n📅 05/03/2026 às 14:00\n📱 Tipo: Ligação\n\nAté lá!",delay:28500},
+    {from:"system",text:"✅ QUALIFICADO • Score: 45 • Temp: MORNO",delay:30000},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"🤖",title:"Robô SOL Ativado",tag:"IA Online",tagClass:"purple",status:"Assistente IA processando mensagem do lead",dotClass:"blue"},
+    {delay:2900,type:"intent",icon:"🧠",title:"Análise de Intenção",intents:[{label:"INTERESSE",conf:"95%",color:"#25d366"},{label:"Pedido de informação",conf:"87%",color:"#00a884"},{label:"Desqualificação",conf:"2%",color:"#ff3b30"}]},
+    {delay:4500,type:"status",icon:"💬",title:"Resposta Gerada",tag:"IA",tagClass:"purple",status:"Respondeu dúvida + retomou qualificação",dotClass:"green"},
+    {delay:7600,type:"intent",icon:"🧠",title:"Análise de Intenção",intents:[{label:"INTERESSE",conf:"98%",color:"#25d366"},{label:"Financiamento",conf:"92%",color:"#00a884"},{label:"Desqualificação",conf:"0%",color:"#ff3b30"}]},
+    {delay:10000,type:"status",icon:"📝",title:"Dados Coletados",tag:"Progresso",tagClass:"blue",status:"Imóvel: Residencial | Telhado: Fibrocimento",dotClass:"blue"},
+    {delay:17500,type:"status",icon:"📝",title:"Qualificação",tag:"70%",tagClass:"orange",status:"Prazo: Próximos meses | Pagamento: Financiamento",dotClass:"orange"},
+    {delay:28000,type:"score",icon:"🎯",title:"Score Final",score:45,temp:"MORNO",tempColor:"#ff9500"},
+    {delay:30500,type:"status",icon:"📩",title:"Notificação Consultor",tag:"Enviada",tagClass:"green",status:"Lead qualificado enviado ao consultor",dotClass:"green"},
+  ]
+},
+fup:{
+  name:"FUP FRIO",icon:"❄️",subtitle:"Lead para de responder → retorna",
+  contact:"Ana Ferreira",avatar:"AF",avatarClass:"",badge:"conversa",badgeText:"Automação + IA",group:"flows",
+  sysTabs:["Automação","CRM"],
+  messages:[
+    // FASE 1: Captura via Site (igual flow2)
+    {from:"system",text:"🌐 Lead capturado via formulário do site",delay:0},
+    {from:"system",text:"📋 Nome: Ana Ferreira • Conta: R$ 450 • Cidade: Catanduva",delay:800},
+    {from:"system",text:"💬 Disparando mensagem automática...",delay:1800},
+    {from:"bot",text:"Olá Ana Ferreira,\nvimos que tem interesse em saber mais sobre Energia Solar.\nFoi informado que você gasta R$ 450,00 de energia.\nE esta na cidade de Catanduva.\nPodemos começar ?",delay:3000},
+    {from:"system",text:"🤖 Transferido para Robô SOL",delay:5000},
+
+    // FASE 2: Cliente responde 2 perguntas e para
+    {from:"user",text:"Oi, sim!",delay:7000},
+    {from:"bot",text:"Eu sou a Sol, assistente da Evolve. 😊 O imóvel é residencial, comercial ou rural?",delay:8500},
+    {from:"user",text:"Residencial",delay:10200},
+    {from:"bot",text:"E o telhado: cerâmica, fibrocimento, metálico ou laje?",delay:11800},
+    {from:"user",text:"Cerâmica",delay:13500},
+    {from:"bot",text:"Você pretende adquirir novos equipamentos como ar condicionado, freezer ou piscina?",delay:15200},
+
+    // FASE 3: Sem resposta → FUP FRIO
+    {from:"system",text:"⏳ Sem resposta há 6 horas...",delay:18000},
+    {from:"system",text:"⏳ Sem resposta há 12 horas...",delay:20000},
+    {from:"system",text:"❄️ 24h sem resposta → Iniciando FUP FRIO",delay:22000},
+    {from:"system",text:"📅 Etapa 1 de 8 — Dia 1 • Recontato",delay:23500},
+    {from:"bot",text:"Oi Ana! Vi que a gente não terminou a conversa. 😊\nAinda posso te ajudar com a simulação de energia solar?",delay:24800},
+    {from:"system",text:"⏳ Sem resposta • Aguardando 3 dias...",delay:27000},
+    {from:"system",text:"📅 Etapa 2 de 8 — Dia 4 • Economia",delay:29000},
+    {from:"bot",text:"Ana, sabia que com energia solar você pode reduzir sua conta em até 95%? ☀️\nÉ um investimento que se paga em poucos anos!",delay:30200},
+    {from:"system",text:"⏳ Sem resposta • Aguardando 3 dias...",delay:32500},
+    {from:"system",text:"📅 Etapa 3 de 8 — Dia 7 • Oportunidade",delay:34500},
+    {from:"bot",text:"Temos financiamento em até 60x este mês! 🏷️ Posso te passar mais detalhes?",delay:35700},
+
+    // FASE 4: Cliente volta a responder!
+    {from:"user",text:"Oi! Desculpa, estava viajando. Sim, tenho interesse!",delay:38000},
+    {from:"system",text:"🟢 LEAD RESPONDEU! Saindo do FUP FRIO → Robô SOL",delay:39500},
+
+    // FASE 5: Qualificação continua de onde parou
+    {from:"bot",text:"Que bom ter você de volta, Ana! 😊\nVamos continuar de onde paramos. Você pretende adquirir novos equipamentos?",delay:41000},
+    {from:"user",text:"Não, nenhum",delay:43000},
+    {from:"bot",text:"Para quando pretende instalar o sistema de energia solar?",delay:44500},
+    {from:"user",text:"No próximo mês",delay:46200},
+    {from:"bot",text:"Prefere à vista, cartão ou financiamento?",delay:47800},
+    {from:"user",text:"Financiamento",delay:49500},
+    {from:"bot",text:"Prefere reunião online, ligação ou WhatsApp?",delay:51200},
+    {from:"user",text:"WhatsApp mesmo",delay:53000},
+    {from:"bot",text:"Qual dia e horário funcionam melhor pra você?",delay:54500},
+    {from:"user",text:"Segunda às 15h",delay:56200},
+    {from:"bot",text:"Prontinho, Ana! 😊\n\n📅 10/03/2026 às 15:00\n📱 Tipo: WhatsApp\n\nNosso consultor entrará em contato! Até lá!",delay:57800},
+    {from:"system",text:"✅ QUALIFICADO • Score: 55 • Temp: MORNO",delay:59800},
+  ],
+  sysEvents:[
+    // FASE 1: Captura
+    {delay:200,type:"status",icon:"🌐",title:"Site Webhook",tag:"Recebido",tagClass:"blue",status:"Lead capturado do formulário do site",dotClass:"blue"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-29250",fields:[["Nome","Ana Ferreira"],["Telefone","(17) 99876-1234"],["Valor Conta","R$ 450,00"],["Cidade","Catanduva"],["Origem","Site"]],statusPill:"trafego",statusText:"Tráfego Pago"},
+    {delay:2000,type:"status",icon:"📤",title:"WhatsApp Business API",tag:"Enviando",tagClass:"blue",status:"Mensagem template personalizada disparada",dotClass:"blue"},
+    {delay:3200,type:"status",icon:"✅",title:"Mensagem Entregue",tag:"Sucesso",tagClass:"green",status:"Double check azul ✓✓",dotClass:"green"},
+    {delay:5200,type:"status",icon:"🤖",title:"Transferência → Robô SOL",tag:"IA Ativa",tagClass:"purple",status:"Thread iniciada com assistente IA",dotClass:"blue"},
+
+    // FASE 2: Qualificação parcial
+    {delay:10000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:20,progressClass:"orange"},
+    {delay:13000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:30,progressClass:"orange",extraField:["Imóvel","Residencial • Cerâmica"]},
+
+    // FASE 3: Sem resposta → FUP
+    {delay:18500,type:"status",icon:"⏳",title:"Sem Resposta",tag:"6 horas",tagClass:"orange",status:"Lead não respondeu última pergunta",dotClass:"orange"},
+    {delay:22200,type:"status",icon:"❄️",title:"FUP FRIO Ativado",tag:"Automação",tagClass:"blue",status:"24h sem resposta — sequência iniciada",dotClass:"blue"},
+    {delay:22500,type:"crmUpdate",statusPill:"fup",statusText:"FUP Frio",progress:30,progressClass:"orange"},
+    {delay:23700,type:"fup",stage:1,total:8,day:1,trigger:"Recontato: retomar conversa",progress:12},
+    {delay:29200,type:"fup",stage:2,total:8,day:4,trigger:"Gatilho: Economia 95%",progress:25},
+    {delay:34700,type:"fup",stage:3,total:8,day:7,trigger:"Gatilho: Financiamento 60x",progress:37},
+
+    // FASE 4: Lead volta
+    {delay:38500,type:"status",icon:"🟢",title:"Lead Respondeu!",tag:"Retorno",tagClass:"green",status:"Saindo do FUP FRIO → Retornando ao Robô SOL",dotClass:"green"},
+    {delay:39800,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:35,progressClass:"orange"},
+    {delay:40000,type:"status",icon:"🤖",title:"Robô SOL Reativado",tag:"IA Ativa",tagClass:"purple",status:"Retomando qualificação de onde parou",dotClass:"blue"},
+
+    // FASE 5: Qualificação completa
+    {delay:44000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:55,progressClass:"orange",extraField:["Equipamentos","Nenhum"]},
+    {delay:47000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:70,progressClass:"orange",extraField:["Prazo","Próximo mês"]},
+    {delay:50000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:85,progressClass:"orange",extraField:["Pagamento","Financiamento"]},
+    {delay:57000,type:"score",icon:"🎯",title:"Score Calculado",score:55,temp:"MORNO",tempColor:"#ff9500"},
+    {delay:59000,type:"crmUpdate",statusPill:"qualified",statusText:"Qualificado",progress:100,progressClass:"green",extraField:["Agendamento","10/03 às 15:00 • WhatsApp"]},
+    {delay:60500,type:"status",icon:"📩",title:"Notificação Consultor",tag:"Enviada",tagClass:"green",status:"Dados do lead enviados ao consultor",dotClass:"green"},
+  ]
+},
+notifQualif:{
+  name:"📩 Qualificado",icon:"✅",subtitle:"Notificação → Consultor",
+  contact:"Consultor Evolve",avatar:"CE",avatarClass:"notif",badge:"notif",badgeText:"Notificação",group:"notif",
+  sysTabs:["CRM","Notificações"],
+  messages:[
+    {from:"system",text:"✅ Lead QUALIFICADO • Score: 60 • MORNO",delay:0},
+    {from:"system",text:"⚙️ Extração de metadados → Roteamento",delay:800},
+    {from:"system",text:"📤 Enviando notificação...",delay:1800},
+    {from:"bot",text:"🎯 LEAD QUALIFICADO - LIGAÇÃO\n\nNome: Fabiano Costa\nTelefone: (17) 99876-5432\nValor conta: R$ 520\nScore: 60\nTemperatura: Morno\nData: 03/03/2026\nHorário: 14:00\n\nAgendar ligação!",delay:3200},
+    {from:"system",text:"✅ Entregue ao consultor",delay:5000},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"⚙️",title:"Extração de Metadados",tag:"Parser",tagClass:"blue",status:"Extraindo campos: STATUS, SCORE, TEMPERATURA...",dotClass:"blue"},
+    {delay:1000,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-29102",fields:[["Nome","Fabiano Costa"],["Score","60"],["Temperatura","Morno"],["Agendamento","03/03 às 14:00"],["Tipo","Ligação"]],statusPill:"qualified",statusText:"Qualificado"},
+    {delay:2000,type:"status",icon:"🔀",title:"Roteamento",tag:"Ligação",tagClass:"green",status:"CODIGO_STATUS: LIGACAO → Consultor",dotClass:"green"},
+    {delay:3500,type:"status",icon:"📩",title:"WhatsApp → Consultor",tag:"Enviada",tagClass:"green",status:"Notificação entregue com sucesso",dotClass:"green"},
+  ]
+},
+notifQuente:{
+  name:"📩 Lead Quente",icon:"🔥",subtitle:"Score alto → Urgência",
+  contact:"Consultor Evolve",avatar:"CE",avatarClass:"notif",badge:"notif",badgeText:"Urgente",group:"notif",
+  sysTabs:["CRM","Notificações"],
+  messages:[
+    {from:"system",text:"🔥 Lead QUALIFICADO • Score: 80 • QUENTE",delay:0},
+    {from:"system",text:"⚙️ Score alto → Prioridade",delay:800},
+    {from:"system",text:"📤 Notificação prioritária...",delay:1800},
+    {from:"bot",text:"🎯 LEAD QUALIFICADO - REUNIÃO ONLINE\n\nNome: Antonio Carlos\nTelefone: (17) 99654-3210\nValor conta: R$ 700-1.000\nScore: 80\nTemperatura: Quente\nData: 03/03/2026\nHorário: 10:00\nEmail: antonio.carlos@email.com\n\nAgendar reunião!",delay:3200},
+    {from:"system",text:"✅ Entregue • Prioridade Alta",delay:5200},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"🔥",title:"Score Alto Detectado",tag:"Quente",tagClass:"green",status:"Score 80 ≥ 70 → Prioridade Alta",dotClass:"green"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-29187",fields:[["Nome","Antonio Carlos"],["Score","80 🔥"],["Temperatura","Quente"],["Email","antonio.carlos@email.com"],["Tipo","Reunião Online"]],statusPill:"qualified",statusText:"Qualificado (Alta)"},
+    {delay:2000,type:"status",icon:"🔀",title:"Roteamento",tag:"Reunião",tagClass:"green",status:"CODIGO_STATUS: REUNIAO_ONLINE",dotClass:"green"},
+    {delay:3500,type:"status",icon:"📩",title:"WhatsApp → Consultor",tag:"Enviada",tagClass:"green",status:"Notificação prioritária entregue",dotClass:"green"},
+    {delay:5500,type:"status",icon:"📧",title:"Google Meet",tag:"Pendente",tagClass:"orange",status:"Link a ser enviado para antonio.carlos@email.com",dotClass:"orange"},
+  ]
+},
+notifInvalido:{
+  name:"⚠️ Nº Inválido",icon:"🚫",subtitle:"Alerta → Diretor",
+  contact:"Gabriel (Diretor)",avatar:"GD",avatarClass:"alerta",badge:"alerta",badgeText:"Alerta",group:"notif",
+  sysTabs:["CRM","Alertas"],
+  messages:[
+    {from:"system",text:"🚫 Número não possui WhatsApp",delay:0},
+    {from:"system",text:"⚙️ Rota de erro → Alerta Direção",delay:800},
+    {from:"system",text:"📤 Alerta para Gabriel...",delay:1800},
+    {from:"bot",text:"⚠️ NUMERO INVALIDO WHATSAPP | SITE\n\nGabriel, novo lead sem WhatsApp.\n\n👤 Marcos Ribeiro\n📞 (17) 3321-4455\n📧 marcos.ribeiro@gmail.com\n📍 Olímpia\n\n🔗 #PRJ-28491\n📊 Status Solar: Tráfego Pago\n📌 Ação necessária: Contato Alternativo",delay:3200},
+    {from:"system",text:"✅ Alerta entregue ao Diretor",delay:5500},
+    {from:"system",text:"📊 CRM SolarMarket → Lead mantido em TRÁFEGO PAGO",delay:6800},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"🚫",title:"Verificação de Número",tag:"Falhou",tagClass:"red",status:"Número não possui WhatsApp ativo",dotClass:"red"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-28491",fields:[["Nome","Marcos Ribeiro"],["Telefone","(17) 3321-4455"],["Email","marcos.ribeiro@gmail.com"],["Cidade","Olímpia"],["Status","Tráfego Pago (mantido)"]],statusPill:"trafego",statusText:"Tráfego Pago"},
+    {delay:1500,type:"status",icon:"📋",title:"CRM SolarMarket",tag:"Mantido",tagClass:"orange",status:"Lead permanece em TRÁFEGO PAGO — aguardando contato alternativo",dotClass:"orange"},
+    {delay:2000,type:"status",icon:"🔀",title:"Roteamento de Erro",tag:"Desvio",tagClass:"red",status:"Fluxo normal bloqueado → Rota alternativa",dotClass:"red"},
+    {delay:3500,type:"status",icon:"📩",title:"Alerta → Gabriel",tag:"Enviado",tagClass:"green",status:"Alerta com dados alternativos entregue",dotClass:"green"},
+  ]
+},
+desqualif:{
+  name:"❌ Desqualificado",icon:"❌",subtitle:"Lead desqualificado na conversa",
+  contact:"Carlos Mendes",avatar:"CM",avatarClass:"",badge:"conversa",badgeText:"Conversa",group:"flows",
+  sysTabs:["CRM","Robô SOL"],
+  messages:[
+    // FASE 1: Captura via META
+    {from:"system",text:"📥 Lead capturado via Meta Ads",delay:0},
+    {from:"system",text:"📋 Nome: Carlos Mendes • Conta: R$ 320 • Cidade: Olímpia",delay:800},
+    {from:"system",text:"💬 Disparando mensagem automática...",delay:1800},
+    {from:"bot",text:"Olá Carlos Mendes,\nvimos que tem interesse em saber mais sobre Energia Solar.\nFoi informado que você gasta R$ 320,00 de energia.\nE esta na cidade de Olímpia.\nPodemos começar ?",delay:3000},
+    {from:"system",text:"🤖 Transferido para Robô SOL",delay:5000},
+
+    // FASE 2: Qualificação inicia
+    {from:"user",text:"Pode ser",delay:7000},
+    {from:"bot",text:"Eu sou a Sol, assistente da Evolve Energia Solar. 😊\nO imóvel é residencial, comercial ou rural?",delay:8500},
+    {from:"user",text:"Residencial",delay:10200},
+    {from:"bot",text:"E o telhado: cerâmica, fibrocimento, metálico ou laje?",delay:11800},
+    {from:"user",text:"Laje",delay:13500},
+    {from:"bot",text:"Você pretende adquirir novos equipamentos como ar condicionado, freezer ou piscina?",delay:15200},
+    {from:"user",text:"Não",delay:17000},
+    {from:"bot",text:"Para quando pretende instalar o sistema de energia solar?",delay:18500},
+
+    // FASE 3: Lead desqualifica
+    {from:"user",text:"Olha, na verdade já fechei com outra empresa semana passada",delay:20500},
+    {from:"system",text:"❌ DESQUALIFICAÇÃO DETECTADA • Motivo: FECHOU_CONCORRENCIA",delay:22000},
+    {from:"bot",text:"Entendo, Carlos! Fico feliz que esteja investindo em energia solar. 😊\n\nSe no futuro precisar de manutenção, ampliação do sistema ou tiver alguma dúvida, a Evolve está à disposição!\n\nDesejo sucesso com seu projeto. Um abraço! 💛",delay:23500},
+    {from:"system",text:"⚙️ Extraindo metadados → Rota Desqualificado",delay:25500},
+    {from:"system",text:"📤 Notificação enviada ao Diretor Gabriel",delay:27000},
+    {from:"system",text:"📊 CRM → Lead #PRJ-28903 → DESQUALIFICADO",delay:28500},
+  ],
+  sysEvents:[
+    // FASE 1: Captura
+    {delay:200,type:"status",icon:"📡",title:"Meta Ads Webhook",tag:"Recebido",tagClass:"blue",status:"Lead capturado do formulário Meta Ads",dotClass:"blue"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-28903",fields:[["Nome","Carlos Mendes"],["Telefone","(17) 99432-1098"],["Valor Conta","R$ 320,00"],["Cidade","Olímpia"],["Origem","Meta Ads"]],statusPill:"trafego",statusText:"Tráfego Pago"},
+    {delay:2000,type:"status",icon:"📤",title:"WhatsApp Business API",tag:"Enviando",tagClass:"blue",status:"Mensagem template personalizada disparada",dotClass:"blue"},
+    {delay:3200,type:"status",icon:"✅",title:"Mensagem Entregue",tag:"Sucesso",tagClass:"green",status:"Double check azul ✓✓",dotClass:"green"},
+    {delay:5200,type:"status",icon:"🤖",title:"Transferência → Robô SOL",tag:"IA Ativa",tagClass:"purple",status:"Thread iniciada com assistente IA",dotClass:"blue"},
+
+    // FASE 2: Qualificação parcial
+    {delay:8000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:15,progressClass:"orange"},
+    {delay:13000,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:35,progressClass:"orange",extraField:["Imóvel","Residencial • Laje"]},
+    {delay:17500,type:"crmUpdate",statusPill:"qualif",statusText:"Em Qualificação",progress:50,progressClass:"orange",extraField:["Equipamentos","Nenhum"]},
+
+    // FASE 3: Desqualificação
+    {delay:20800,type:"intent",icon:"🧠",title:"Análise de Intenção",intents:[{label:"DESINTERESSE",conf:"97%",color:"#ff3b30"},{label:"Fechou concorrência",conf:"95%",color:"#ff6b6b"},{label:"Interesse",conf:"3%",color:"#25d366"}]},
+    {delay:22200,type:"status",icon:"❌",title:"Desqualificação Confirmada",tag:"Encerrado",tagClass:"red",status:"Motivo: FECHOU_CONCORRENCIA",dotClass:"red"},
+    {delay:23000,type:"score",icon:"🎯",title:"Score Final",score:10,temp:"FRIO",tempColor:"#ff3b30"},
+    {delay:24000,type:"crmUpdate",statusPill:"desqualif",statusText:"Desqualificado",progress:100,progressClass:"red"},
+    {delay:25800,type:"status",icon:"⚙️",title:"Extração de Metadados",tag:"Parser",tagClass:"blue",status:"STATUS:DESQUALIFICADO | MOTIVO:FECHOU_CONCORRENCIA",dotClass:"blue"},
+    {delay:27200,type:"status",icon:"📩",title:"Notificação → Gabriel",tag:"Enviada",tagClass:"green",status:"Diretor notificado com motivo da desqualificação",dotClass:"green"},
+    {delay:28800,type:"status",icon:"📊",title:"CRM Atualizado",tag:"Final",tagClass:"red",status:"Lead #PRJ-28903 → DESQUALIFICADO",dotClass:"red"},
+  ]
+},
+notifDesqualif:{
+  name:"📩 Desqualificado",icon:"❌",subtitle:"Notificação → Diretor",
+  contact:"Gabriel (Diretor)",avatar:"GD",avatarClass:"notif",badge:"notif",badgeText:"Notificação",group:"notif",
+  sysTabs:["CRM","Notificações"],
+  messages:[
+    {from:"system",text:"❌ Lead DESQUALIFICADO pelo Robô SOL",delay:0},
+    {from:"system",text:"⚙️ Extração de metadados → Rota Desqualificado",delay:800},
+    {from:"system",text:"📤 Notificando Gabriel (Diretor)...",delay:1800},
+    {from:"bot",text:"🎯 LEAD DESQUALIFICADO\n\nNome: Carlos Mendes\nTelefone: (17) 99432-1098\nValor conta: R$ 320\nScore: 10\nTemperatura: Frio\nMotivo: FECHOU_CONCORRENCIA\n\n🔗 #PRJ-28903",delay:3200},
+    {from:"system",text:"✅ Notificação entregue ao Diretor",delay:5200},
+    {from:"system",text:"📊 CRM → Lead #PRJ-28903 → DESQUALIFICADO",delay:6500},
+  ],
+  sysEvents:[
+    {delay:200,type:"status",icon:"❌",title:"Desqualificação Detectada",tag:"Encerrado",tagClass:"red",status:"Motivo: FECHOU_CONCORRENCIA",dotClass:"red"},
+    {delay:900,type:"crm",title:"CRM SolarMarket",projectId:"#PRJ-28903",fields:[["Nome","Carlos Mendes"],["Telefone","(17) 99432-1098"],["Score","10"],["Temperatura","Frio"],["Motivo","Fechou com concorrência"]],statusPill:"desqualif",statusText:"Desqualificado"},
+    {delay:2000,type:"status",icon:"🔀",title:"Roteamento",tag:"Diretor",tagClass:"orange",status:"Rota desqualificado → Notificação Gabriel",dotClass:"orange"},
+    {delay:3500,type:"status",icon:"📩",title:"WhatsApp → Gabriel",tag:"Enviada",tagClass:"green",status:"Notificação com motivo entregue ao Diretor",dotClass:"green"},
+    {delay:6800,type:"status",icon:"📊",title:"CRM Atualizado",tag:"Final",tagClass:"red",status:"Lead #PRJ-28903 → DESQUALIFICADO • FECHOU_CONCORRENCIA",dotClass:"red"},
+  ]
+}
+};
+
+let activeFlow="flow1",isPlaying=false,isPaused=false,timeouts=[],loopTimeout=null;
+let playStartTime=0,pausedElapsed=0,firedMsgIndexes=new Set(),firedSysIndexes=new Set();
+
+function renderSidebar(){
+  const el=document.getElementById("sidebarScroll");el.innerHTML="";
+  [{label:"Fluxos de Conversa",keys:["flow1","flow2","flow3","fup","desqualif"]},{label:"Notificações Internas",keys:["notifQualif","notifQuente","notifInvalido","notifDesqualif"]}].forEach(g=>{
+    const lbl=document.createElement("div");lbl.className="group-label";lbl.textContent=g.label;el.appendChild(lbl);
+    g.keys.forEach(k=>{const f=FLOWS[k];const c=document.createElement("div");c.className="flow-card"+(k===activeFlow?" active":"");c.id="card-"+k;
+      c.innerHTML=`<div><span style="font-size:12px;margin-right:4px">${f.icon}</span><span class="fc-name">${f.name}</span></div><div class="fc-sub">${f.subtitle}</div><span class="fc-badge ${f.badge}">${f.badgeText}</span><div class="live-ind"><div class="dot"></div><span class="lt">Ao vivo</span></div>`;
+      c.onclick=()=>{activeFlow=k;fullStop();renderSidebar();updateAll()};el.appendChild(c);
+    });
+  });
+}
+
+function updateAll(){
+  const f=FLOWS[activeFlow];
+  document.getElementById("flowLabel").textContent=f.icon+" "+f.name;
+  document.getElementById("avatar").textContent=f.avatar;
+  document.getElementById("avatar").className="wa-avatar "+f.avatarClass;
+  document.getElementById("contactName").textContent=f.contact;
+  document.getElementById("contactStatus").textContent="online";
+  document.getElementById("sysTab1").textContent=f.sysTabs[0];
+  document.getElementById("sysTab2").textContent=f.sysTabs[1];
+  clearChat();clearSys();
+}
+
+function clearChat(){document.getElementById("chatArea").innerHTML='<div class="empty-state"><div class="ei">💬</div><div class="et">Clique <strong>Iniciar</strong></div></div>'}
+function clearSys(){document.getElementById("sysBody").innerHTML='<div class="sys-empty"><div class="se-icon">⚡</div><div class="se-text">Sistema aguardando<br>início da simulação</div></div>'}
+function scrollChat(){const c=document.getElementById("chatArea");c.scrollTop=c.scrollHeight}
+function scrollSys(){const s=document.getElementById("sysBody");s.scrollTop=s.scrollHeight}
+
+function createBubble(msg){
+  const row=document.createElement("div");row.className="msg-row "+msg.from;
+  if(msg.from==="system"){const b=document.createElement("div");b.className="sys-badge";b.textContent=msg.text;row.appendChild(b);return row}
+  const bubble=document.createElement("div");bubble.className="bubble "+msg.from;
+  const text=document.createElement("div");text.className="text";text.textContent=msg.text;bubble.appendChild(text);
+  const meta=document.createElement("div");meta.className="meta";
+  const time=document.createElement("span");time.className="time";time.textContent=T();meta.appendChild(time);
+  if(msg.from==="user"){const sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("width","16");sv.setAttribute("height","10");sv.setAttribute("viewBox","0 0 16 11");sv.innerHTML='<path d="M11.07.73l-7 7-2.77-2.77L0 6.27l4.07 4.07L12.37 2z" fill="#53bdeb"/><path d="M15.07.73l-7 7-1.27-1.27-1.3 1.3 2.57 2.57L16.37 2z" fill="#53bdeb"/>';meta.appendChild(sv)}
+  bubble.appendChild(meta);row.appendChild(bubble);return row;
+}
+
+function showTyping(){if(document.getElementById("typingEl"))return;const d=document.createElement("div");d.id="typingEl";d.className="typing";d.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';document.getElementById("chatArea").appendChild(d);scrollChat()}
+function hideTyping(){const e=document.getElementById("typingEl");if(e)e.remove()}
+
+// System event renderers
+function renderSysEvent(ev){
+  const sb=document.getElementById("sysBody");
+  if(ev.type==="status"){
+    sb.innerHTML+=`<div class="sys-event"><div class="se-card"><div class="se-header"><span class="se-icon">${ev.icon}</span><span class="se-title">${ev.title}</span><span class="se-tag ${ev.tagClass}">${ev.tag}</span></div><div class="se-status-bar"><div class="se-status-dot ${ev.dotClass}"></div><span class="se-status-text">${ev.status}</span></div></div></div>`;
+  } else if(ev.type==="crm"){
+    let fields=ev.fields.map(f=>`<div class="crm-field"><span class="label">${f[0]}</span><span class="value">${f[1]}</span></div>`).join("");
+    sb.innerHTML+=`<div class="sys-event"><div class="crm-lead-card"><div class="crm-lead-header"><span class="crm-lead-title">${ev.title}</span><span class="crm-project-id">${ev.projectId}</span></div><div class="crm-lead-body">${fields}<div class="se-divider"></div><div class="crm-status-pill ${ev.statusPill}">● ${ev.statusText}</div></div></div></div>`;
+  } else if(ev.type==="crmUpdate"){
+    // Update existing CRM card status and progress
+    const pills=sb.querySelectorAll(".crm-status-pill");
+    if(pills.length){const last=pills[pills.length-1];last.className="crm-status-pill "+ev.statusPill;last.textContent="● "+ev.statusText}
+    const bars=sb.querySelectorAll(".se-progress-fill");
+    if(bars.length){bars[bars.length-1].style.width=ev.progress+"%";bars[bars.length-1].className="se-progress-fill "+ev.progressClass}
+    else{sb.innerHTML+=`<div class="sys-event"><div class="se-card"><div class="se-header"><span class="se-icon">📊</span><span class="se-title">Progresso Qualificação</span><span class="se-tag orange">${ev.progress}%</span></div><div class="se-progress"><div class="se-progress-fill ${ev.progressClass}" style="width:${ev.progress}%"></div></div>${ev.extraField?`<div class="se-status-bar"><div class="se-status-dot orange"></div><span class="se-status-text">${ev.extraField[0]}: ${ev.extraField[1]}</span></div>`:""}</div></div>`}
+    if(ev.extraField){
+      sb.innerHTML+=`<div class="sys-event"><div class="se-card"><div class="se-status-bar"><div class="se-status-dot blue"></div><span class="se-status-text">📝 ${ev.extraField[0]}: <strong style="color:rgba(255,255,255,.7)">${ev.extraField[1]}</strong></span></div></div></div>`}
+  } else if(ev.type==="score"){
+    sb.innerHTML+=`<div class="sys-event"><div class="se-card"><div class="se-header"><span class="se-icon">${ev.icon}</span><span class="se-title">${ev.title}</span></div><div class="se-body"><div class="se-row"><span class="se-label">SCORE</span><span class="se-value" style="font-size:18px;font-weight:800;color:${ev.tempColor}">${ev.score}</span></div><div class="se-row"><span class="se-label">TEMPERATURA</span><span class="se-value" style="color:${ev.tempColor};font-weight:700">${ev.temp}</span></div></div></div></div>`;
+  } else if(ev.type==="intent"){
+    let rows=ev.intents.map(i=>`<div class="se-row"><span class="se-label" style="color:${i.color};font-weight:600">${i.label}</span><span class="se-value">${i.conf}</span></div>`).join("");
+    sb.innerHTML+=`<div class="sys-event"><div class="se-card"><div class="se-header"><span class="se-icon">${ev.icon}</span><span class="se-title">${ev.title}</span><span class="se-tag purple">IA</span></div><div class="se-body">${rows}</div></div></div>`;
+  } else if(ev.type==="fup"){
+    sb.innerHTML+=`<div class="sys-event"><div class="se-card"><div class="se-header"><span class="se-icon">📅</span><span class="se-title">Etapa ${ev.stage}/${ev.total} — Dia ${ev.day}</span><span class="se-tag blue">${ev.progress}%</span></div><div class="se-status-bar"><div class="se-status-dot blue"></div><span class="se-status-text">${ev.trigger}</span></div><div class="se-progress"><div class="se-progress-fill ${ev.progress>=100?"green":"orange"}" style="width:${ev.progress}%"></div></div></div></div>`;
+  }
+  scrollSys();
+}
+
+function showButtons(play,pause,restart){
+  document.getElementById("btnPlay").style.display=play?"inline-block":"none";
+  document.getElementById("btnPause").style.display=pause?"inline-block":"none";
+  document.getElementById("btnRestart").style.display=restart?"inline-block":"none";
+}
+
+function fullStop(){
+  timeouts.forEach(clearTimeout);timeouts=[];
+  isPlaying=false;isPaused=false;hideTyping();
+  playStartTime=0;pausedElapsed=0;firedMsgIndexes.clear();firedSysIndexes.clear();
+  showButtons(true,false,false);
+  document.querySelectorAll(".flow-card").forEach(c=>c.classList.remove("playing"));
+  document.getElementById("contactStatus").textContent="online";
+}
+
+function scheduleEvents(offsetMs){
+  const chat=document.getElementById("chatArea");
+  const f=FLOWS[activeFlow];const isNotif=activeFlow.startsWith("notif");const msgs=f.messages;
+  // WhatsApp messages
+  msgs.forEach((msg,i)=>{
+    if(firedMsgIndexes.has(i))return;
+    const d=msg.delay+500-offsetMs;
+    if(d<0){return;}// should have fired already, skip
+    if(msg.from==="bot"){const tid=setTimeout(()=>{if(!isPlaying||isPaused)return;showTyping();document.getElementById("contactStatus").textContent=isNotif?"enviando...":"digitando..."},Math.max(0,d-700));timeouts.push(tid)}
+    const id=setTimeout(()=>{
+      if(!isPlaying||isPaused)return;
+      firedMsgIndexes.add(i);hideTyping();chat.appendChild(createBubble(msg));scrollChat();
+      if(msg.from!=="bot")document.getElementById("contactStatus").textContent="online";
+      // Check if last message
+      if(i===msgs.length-1){setTimeout(()=>{if(isPlaying){isPlaying=false;isPaused=false;showButtons(false,false,true);document.querySelectorAll(".flow-card").forEach(c=>c.classList.remove("playing"));document.getElementById("contactStatus").textContent="online"}},500)}
+    },d);timeouts.push(id);
+  });
+  // System events
+  f.sysEvents.forEach((ev,i)=>{
+    if(firedSysIndexes.has(i))return;
+    const d=ev.delay+500-offsetMs;
+    if(d<0)return;
+    const id=setTimeout(()=>{if(!isPlaying||isPaused)return;firedSysIndexes.add(i);renderSysEvent(ev)},d);timeouts.push(id);
+  });
+}
+
+function doPlay(){
+  isPlaying=true;isPaused=false;
+  playStartTime=Date.now();pausedElapsed=0;
+  firedMsgIndexes.clear();firedSysIndexes.clear();
+  // Init chat
+  const chat=document.getElementById("chatArea");chat.innerHTML="";
+  const sb=document.getElementById("sysBody");sb.innerHTML="";
+  const pill=document.createElement("div");pill.className="date-pill";pill.innerHTML="<span>Today</span>";chat.appendChild(pill);
+  const enc=document.createElement("div");enc.className="enc-notice";enc.innerHTML="<span>🔒 Messages and calls are end-to-end encrypted.</span>";chat.appendChild(enc);
+  showButtons(false,true,true);
+  const card=document.getElementById("card-"+activeFlow);if(card)card.classList.add("playing");
+  scheduleEvents(0);
+}
+
+function doPause(){
+  const btn=document.getElementById("btnPause");
+  if(!isPaused){
+    // PAUSE
+    isPaused=true;
+    pausedElapsed+=(Date.now()-playStartTime);
+    timeouts.forEach(clearTimeout);timeouts=[];
+    hideTyping();
+    btn.textContent="▶ Continuar";btn.classList.add("resuming");
+    document.getElementById("contactStatus").textContent="pausado";
+  } else {
+    // RESUME
+    isPaused=false;
+    playStartTime=Date.now();
+    btn.textContent="⏸ Pausar";btn.classList.remove("resuming");
+    document.getElementById("contactStatus").textContent="online";
+    scheduleEvents(pausedElapsed);
+  }
+}
+
+function doRestart(){
+  timeouts.forEach(clearTimeout);timeouts=[];
+  hideTyping();
+  isPlaying=false;isPaused=false;
+  pausedElapsed=0;firedMsgIndexes.clear();firedSysIndexes.clear();
+  document.querySelectorAll(".flow-card").forEach(c=>c.classList.remove("playing"));
+  document.getElementById("btnPause").textContent="⏸ Pausar";
+  document.getElementById("btnPause").classList.remove("resuming");
+  doPlay();
+}
+
+renderSidebar();updateAll();document.getElementById("statusTime").textContent=T();
+</script>
+</body>
+</html>
