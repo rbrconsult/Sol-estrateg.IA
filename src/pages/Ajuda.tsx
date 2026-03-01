@@ -43,7 +43,7 @@ export default function Ajuda() {
       <div>
         <h1 className="text-xl md:text-3xl font-bold text-foreground">Ajuda</h1>
         <p className="text-sm text-muted-foreground">
-          Documentação, guias e simulação de mensagens
+          Documentação, guias e simulação de operação
         </p>
       </div>
 
