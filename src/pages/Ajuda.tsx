@@ -122,9 +122,11 @@ export default function Ajuda() {
         </TabsContent>
 
         <TabsContent value="simulation" className="mt-4">
-          <div className="max-w-2xl mx-auto">
-            <MessageSimulation />
-          </div>
+          <iframe
+            src="/simulacao-v4.html"
+            className="w-full h-[calc(100vh-12rem)] rounded-lg border border-border"
+            title="Simular Operação"
+          />
         </TabsContent>
       </Tabs>
     </div>
