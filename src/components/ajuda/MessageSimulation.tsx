@@ -120,8 +120,8 @@ export function MessageSimulation() {
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">SOL Assistente</p>
-            <p className="text-xs text-emerald-500 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+            <p className="text-xs text-primary flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block" />
               Online
             </p>
           </div>
