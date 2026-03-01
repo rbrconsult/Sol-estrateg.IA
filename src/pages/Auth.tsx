@@ -97,17 +97,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Área lateral – HTML embed (visível só em desktop) */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-muted/30 border-r border-border/50 items-center justify-center p-8">
-        {/* Placeholder – substitua pelo HTML incorporado */}
-        <div className="w-full h-full rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground text-sm">
-          Área reservada para conteúdo HTML
-        </div>
-      </div>
-
-      {/* Formulário de login */}
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
         <Card className="w-full max-w-md border-border/50 shadow-2xl">
           <CardHeader className="space-y-1 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -173,7 +163,6 @@ export default function Auth() {
             </form>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
