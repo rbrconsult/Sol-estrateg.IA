@@ -55,7 +55,7 @@ export default function Ajuda() {
           </TabsTrigger>
           <TabsTrigger value="simulation" className="gap-2">
             <MessageSquare className="h-4 w-4" />
-            Simulação de Mensagens
+            Simular Operação
           </TabsTrigger>
         </TabsList>
 
