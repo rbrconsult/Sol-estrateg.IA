@@ -1,18 +1,19 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, MessageSquare, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { helpCategories, HelpCategory } from "@/data/helpContent";
+import { MessageSimulation } from "@/components/ajuda/MessageSimulation";
 
 export default function Ajuda() {
   const location = useLocation();
   const [selectedId, setSelectedId] = useState(helpCategories[0].id);
   const [search, setSearch] = useState("");
 
-  // Handle hash navigation from HelpButton
   useEffect(() => {
     const hash = location.hash.replace("#", "");
     if (hash && helpCategories.find((c) => c.id === hash)) {
@@ -38,76 +39,95 @@ export default function Ajuda() {
     helpCategories.find((c) => c.id === selectedId) || helpCategories[0];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Ajuda</h1>
-        <p className="text-muted-foreground">
-          Documentação e guias de uso da plataforma Sol Estrateg.IA
+        <h1 className="text-xl md:text-3xl font-bold text-foreground">Ajuda</h1>
+        <p className="text-sm text-muted-foreground">
+          Documentação, guias e simulação de mensagens
         </p>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar na documentação..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      <Tabs defaultValue="docs" className="w-full">
+        <TabsList>
+          <TabsTrigger value="docs" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Documentação
+          </TabsTrigger>
+          <TabsTrigger value="simulation" className="gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Simulação de Mensagens
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-        {/* Sidebar de categorias */}
-        <ScrollArea className="h-[calc(100vh-16rem)]">
-          <nav className="space-y-1 pr-2">
-            {filteredCategories.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedId(cat.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200",
-                    selectedId === cat.id
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="text-sm font-medium">{cat.title}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </ScrollArea>
-
-        {/* Conteúdo */}
-        <ScrollArea className="h-[calc(100vh-16rem)]">
-          <div className="space-y-6 pr-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <selected.icon className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground">
-                {selected.title}
-              </h2>
-            </div>
-
-            {selected.sections.map((section, idx) => (
-              <Card key={idx}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{section.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                    {section.content}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        <TabsContent value="docs" className="mt-4 space-y-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar na documentação..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </ScrollArea>
-      </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <ScrollArea className="h-[calc(100vh-20rem)]">
+              <nav className="space-y-1 pr-2">
+                {filteredCategories.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedId(cat.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200",
+                        selectedId === cat.id
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="text-sm font-medium">{cat.title}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </ScrollArea>
+
+            <ScrollArea className="h-[calc(100vh-20rem)]">
+              <div className="space-y-6 pr-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <selected.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {selected.title}
+                  </h2>
+                </div>
+
+                {selected.sections.map((section, idx) => (
+                  <Card key={idx}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{section.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                        {section.content}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="simulation" className="mt-4">
+          <div className="max-w-2xl mx-auto">
+            <MessageSimulation />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
