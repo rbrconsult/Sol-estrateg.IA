@@ -43,7 +43,7 @@ export default function Ajuda() {
       <div>
         <h1 className="text-xl md:text-3xl font-bold text-foreground">Ajuda</h1>
         <p className="text-sm text-muted-foreground">
-          Documentação, guias e simulação de mensagens
+          Documentação, guias e simulação de operação
         </p>
       </div>
 
@@ -55,7 +55,7 @@ export default function Ajuda() {
           </TabsTrigger>
           <TabsTrigger value="simulation" className="gap-2">
             <MessageSquare className="h-4 w-4" />
-            Simulação de Mensagens
+            Simular Operação
           </TabsTrigger>
         </TabsList>
 
