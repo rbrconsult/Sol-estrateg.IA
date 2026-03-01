@@ -1,33 +1,23 @@
 
 
-# Conectar os 4 novos componentes ao filtro de período
+## Incorporar HTML em "Simular Operação"
 
-## Problema
-Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
+### Abordagem
+Substituir o componente `MessageSimulation` atual por um **iframe** que carrega o arquivo HTML completo (`simulacao-v4.html`). O iframe e a melhor opcao porque o HTML possui seus proprios estilos, scripts e layout independente que nao devem conflitar com o CSS do app.
 
-## Solução
-Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
+### Alteracoes
 
-### 1. Sol Hoje — Atividade Diária
-- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
-- Aplicar `scale()` nas barras do gráfico de 7 dias
-- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
+**1. Copiar arquivo HTML para o projeto**
+- Copiar `user-uploads://simulacao-v4.html` para `public/simulacao-v4.html` (pasta public para acesso direto via URL)
 
-### 2. Alertas & Insights
-- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
-- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
+**2. Atualizar `src/pages/Ajuda.tsx`**
+- Remover o import do `MessageSimulation`
+- Substituir o conteudo da aba "Simular Operacao" por um `iframe` apontando para `/simulacao-v4.html`
+- O iframe ocupara toda a altura disponivel (`h-[calc(100vh-12rem)]`) com `w-full`, sem bordas
 
-### 3. Temperatura por Etapa
-- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
-- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
+**3. Arquivo `src/components/ajuda/MessageSimulation.tsx`**
+- Manter no projeto (nao deletar), mas nao sera mais usado na pagina de Ajuda
 
-### 4. Tabela de Leads
-- Aplicar `scale()` ao campo `valor` de cada lead
-- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
-
-## Arquivo modificado
-- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
-
-## Resultado
-Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
+### Resultado
+A aba "Simular Operacao" exibira o simulador SOl.estrateg.IA completo, com sidebar, chat e todos os fluxos interativos, incorporado diretamente na pagina de Ajuda.
 
