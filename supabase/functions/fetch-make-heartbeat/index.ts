@@ -8,10 +8,13 @@ const corsHeaders = {
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
 
-/** Run promises in batches of `size` to avoid rate limiting */
-async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number): Promise<T[]> {
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Run promises sequentially in batches of `size` with delay between batches */
+async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number, delayMs = 1500): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < fns.length; i += size) {
+    if (i > 0) await delay(delayMs);
     const batch = fns.slice(i, i + size);
     const batchResults = await Promise.all(batch.map((fn) => fn()));
     results.push(...batchResults);
@@ -40,8 +43,23 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Helper: fetch with retry on 429
+    async function fetchWithRetry(url: string, opts: RequestInit, retries = 3): Promise<Response> {
+      for (let attempt = 0; attempt < retries; attempt++) {
+        const res = await fetch(url, opts);
+        if (res.status === 429) {
+          const wait = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+          console.log(`429 rate limited, waiting ${wait}ms before retry...`);
+          await delay(wait);
+          continue;
+        }
+        return res;
+      }
+      return fetch(url, opts); // final attempt
+    }
+
     // 1. Fetch all scenarios
-    const scenariosRes = await fetch(
+    const scenariosRes = await fetchWithRetry(
       `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
       { headers: makeHeaders }
     );
@@ -56,12 +74,12 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${scenarios.length} scenarios`);
 
-    // 2. Fetch logs sequentially in batches of 3 to avoid rate limiting
+    // 2. Fetch logs in batches of 2 with 1.5s delay between batches
     const records: any[] = [];
 
     const fetchFns = scenarios.map((scenario) => async () => {
       try {
-        const res = await fetch(
+        const res = await fetchWithRetry(
           `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=50`,
           { headers: makeHeaders }
         );
@@ -97,7 +115,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    const allResults = await batchedPromises(fetchFns, 3);
+    const allResults = await batchedPromises(fetchFns, 2);
     for (const logs of allResults) {
       records.push(...logs);
     }
