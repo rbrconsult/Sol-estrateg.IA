@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    const allResults = await batchedPromises(fetchFns, 3);
+    const allResults = await batchedPromises(fetchFns, 2);
     for (const logs of allResults) {
       records.push(...logs);
     }
