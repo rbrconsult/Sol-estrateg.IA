@@ -256,6 +256,14 @@ export default function Conferencia() {
         <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight text-foreground">Sol Estrateg.IA</h1>
+            {hasData && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-success/50 text-success">
+                Dados reais
+              </Badge>
+            )}
+            {dataLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
