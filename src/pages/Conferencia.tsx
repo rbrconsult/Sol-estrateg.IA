@@ -187,36 +187,33 @@ export default function Conferencia() {
     if (k.suffix === "%") return k;
     const newVal = scale(k.value);
     let detail = k.detail;
-    if (k.label === "Leads Recebidos") detail = "4× a capacidade SDR";
-    else if (k.label === "Taxa Resposta") {
-      detail = `${scale(488)}/${scale(800)}`;
-    } else if (k.label === "Resgatados FUP") {
+    if (k.label === "Resgatados FUP" && !hasData) {
       detail = `R$ ${Math.round(238 * multiplier)}k`;
     }
     return { ...k, value: newVal, detail };
-  }), [multiplier]);
+  }), [multiplier, kpiCards, hasData]);
 
   const filteredPipeline = useMemo(() => pipelineStages.map(s => ({
     ...s, valor: scale(s.valor)
-  })), [multiplier]);
+  })), [multiplier, pipelineStages]);
 
   const filteredFup = useMemo(() => ({
     ...fupFrio,
     entraram: scale(fupFrio.entraram),
     reativados: scale(fupFrio.reativados),
-    valorRecuperado: `R$ ${Math.round(238 * multiplier)}.000`,
-  }), [multiplier]);
+    valorRecuperado: hasData ? fupFrio.valorRecuperado : `R$ ${Math.round(238 * multiplier)}.000`,
+  }), [multiplier, fupFrio, hasData]);
 
   const filteredMensagens = useMemo(() => ({
     ...mensagens,
     enviadas: scale(mensagens.enviadas),
     recebidas: scale(mensagens.recebidas),
-  }), [multiplier]);
+  }), [multiplier, mensagens]);
 
   const filteredHeatmap = useMemo(() => ({
     ...heatmap,
     valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
-  }), [multiplier]);
+  }), [multiplier, heatmap]);
 
   const filteredSolHoje = useMemo(() => solHojeData.map(d => {
     const quentes = scale(d.quentes);
@@ -225,14 +222,14 @@ export default function Conferencia() {
     const qualificados = quentes + mornos + frios;
     const scores = scale(d.scores);
     return { ...d, qualificados, scores, quentes, mornos, frios };
-  }), [multiplier]);
+  }), [multiplier, solHojeData]);
 
   const filteredTemperatura = useMemo(() => temperaturaPorEtapa.map(t => ({
     ...t,
     quente: scale(t.quente),
     morno: scale(t.morno),
     frio: scale(t.frio),
-  })), [multiplier]);
+  })), [multiplier, temperaturaPorEtapa]);
 
   const filteredLeads = useMemo(() => {
     const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
@@ -241,7 +238,7 @@ export default function Conferencia() {
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [multiplier, filterEtapa, filterTemp, searchTerm]);
+  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
