@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search } from "lucide-react";
+import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,11 +10,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
-  kpiCards, pipelineStages, origemLeads, fupFrio, desqualMotivos,
-  mensagens, sla, heatmap, taxaPorTentativa,
+  kpiCards as mockKpiCards, pipelineStages as mockPipeline, origemLeads as mockOrigem,
+  fupFrio as mockFupFrio, desqualMotivos as mockDesqual,
+  mensagens as mockMensagens, sla as mockSla, heatmap as mockHeatmap, taxaPorTentativa as mockTaxa,
   solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
-  slaMock, robotInsightsMock, scorePorOrigemMock,
+  slaMock as mockSlaMock, robotInsightsMock as mockRobotInsights, scorePorOrigemMock as mockScoreOrigem,
 } from "@/data/conferenciaMockData";
+import { useConferenciaData } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
