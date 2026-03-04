@@ -8,10 +8,13 @@ const corsHeaders = {
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
 
-/** Run promises in batches of `size` to avoid rate limiting */
-async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number): Promise<T[]> {
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Run promises sequentially in batches of `size` with delay between batches */
+async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number, delayMs = 1500): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < fns.length; i += size) {
+    if (i > 0) await delay(delayMs);
     const batch = fns.slice(i, i + size);
     const batchResults = await Promise.all(batch.map((fn) => fn()));
     results.push(...batchResults);
