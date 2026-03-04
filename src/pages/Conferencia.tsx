@@ -243,7 +243,7 @@ export default function Conferencia() {
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [multiplier, filterEtapa, filterTemp, searchTerm]);
 
-  const etapasUnicas = [...new Set(tabelaLeadsMock.map(l => l.etapa))];
+  const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
   const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
