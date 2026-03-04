@@ -127,6 +127,26 @@ function TempDot({ t }: { t: string }) {
 
 /* ═══════════════════ MAIN PAGE ═══════════════════ */
 export default function Conferencia() {
+  const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData();
+
+  // Use real data when available, fallback to mock
+  const kpiCards = realData?.kpiCards ?? mockKpiCards;
+  const pipelineStages = realData?.pipelineStages ?? mockPipeline;
+  const origemLeads = realData?.origemLeads ?? mockOrigem;
+  const fupFrio = realData?.fupFrio ?? mockFupFrio;
+  const desqualMotivos = realData?.desqualMotivos ?? mockDesqual;
+  const mensagens = realData?.mensagens ?? mockMensagens;
+  const sla = realData?.sla ?? mockSla;
+  const heatmap = realData?.heatmap ?? mockHeatmap;
+  const taxaPorTentativa = realData?.taxaPorTentativa ?? mockTaxa;
+  const solHojeData = realData?.solHoje ?? solHojeMock;
+  const alertasData = realData?.alertas ?? alertasMock;
+  const temperaturaPorEtapa = realData?.temperaturaPorEtapa ?? temperaturaPorEtapaMock;
+  const tabelaLeads = realData?.tabelaLeads ?? tabelaLeadsMock;
+  const slaMockData = realData?.slaMock ?? mockSlaMock;
+  const robotInsightsData = realData?.robotInsights ?? mockRobotInsights;
+  const scorePorOrigemData = realData?.scorePorOrigem ?? mockScoreOrigem;
+
   const [expandedLead, setExpandedLead] = useState<number | null>(null);
   const [time, setTime] = useState(new Date());
   useEffect(() => {
