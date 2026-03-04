@@ -218,7 +218,7 @@ export default function Conferencia() {
     valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
   }), [multiplier]);
 
-  const filteredSolHoje = useMemo(() => solHojeMock.map(d => {
+  const filteredSolHoje = useMemo(() => solHojeData.map(d => {
     const quentes = scale(d.quentes);
     const mornos = scale(d.mornos);
     const frios = scale(d.frios);
