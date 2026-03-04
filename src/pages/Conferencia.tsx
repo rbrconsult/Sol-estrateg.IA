@@ -227,7 +227,7 @@ export default function Conferencia() {
     return { ...d, qualificados, scores, quentes, mornos, frios };
   }), [multiplier]);
 
-  const filteredTemperatura = useMemo(() => temperaturaPorEtapaMock.map(t => ({
+  const filteredTemperatura = useMemo(() => temperaturaPorEtapa.map(t => ({
     ...t,
     quente: scale(t.quente),
     morno: scale(t.morno),
