@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search } from "lucide-react";
+import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,11 +10,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
-  kpiCards, pipelineStages, origemLeads, fupFrio, desqualMotivos,
-  mensagens, sla, heatmap, taxaPorTentativa,
+  kpiCards as mockKpiCards, pipelineStages as mockPipeline, origemLeads as mockOrigem,
+  fupFrio as mockFupFrio, desqualMotivos as mockDesqual,
+  mensagens as mockMensagens, sla as mockSla, heatmap as mockHeatmap, taxaPorTentativa as mockTaxa,
   solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
-  slaMock, robotInsightsMock, scorePorOrigemMock,
+  slaMock as mockSlaMock, robotInsightsMock as mockRobotInsights, scorePorOrigemMock as mockScoreOrigem,
 } from "@/data/conferenciaMockData";
+import { useConferenciaData } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
@@ -125,6 +127,26 @@ function TempDot({ t }: { t: string }) {
 
 /* ═══════════════════ MAIN PAGE ═══════════════════ */
 export default function Conferencia() {
+  const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData();
+
+  // Use real data when available, fallback to mock
+  const kpiCards = realData?.kpiCards ?? mockKpiCards;
+  const pipelineStages = realData?.pipelineStages ?? mockPipeline;
+  const origemLeads = realData?.origemLeads ?? mockOrigem;
+  const fupFrio = realData?.fupFrio ?? mockFupFrio;
+  const desqualMotivos = realData?.desqualMotivos ?? mockDesqual;
+  const mensagens = realData?.mensagens ?? mockMensagens;
+  const sla = realData?.sla ?? mockSla;
+  const heatmap = realData?.heatmap ?? mockHeatmap;
+  const taxaPorTentativa = realData?.taxaPorTentativa ?? mockTaxa;
+  const solHojeData = realData?.solHoje ?? solHojeMock;
+  const alertasData = realData?.alertas ?? alertasMock;
+  const temperaturaPorEtapa = realData?.temperaturaPorEtapa ?? temperaturaPorEtapaMock;
+  const tabelaLeads = realData?.tabelaLeads ?? tabelaLeadsMock;
+  const slaMockData = realData?.slaMock ?? mockSlaMock;
+  const robotInsightsData = realData?.robotInsights ?? mockRobotInsights;
+  const scorePorOrigemData = realData?.scorePorOrigem ?? mockScoreOrigem;
+
   const [expandedLead, setExpandedLead] = useState<number | null>(null);
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -165,63 +187,60 @@ export default function Conferencia() {
     if (k.suffix === "%") return k;
     const newVal = scale(k.value);
     let detail = k.detail;
-    if (k.label === "Leads Recebidos") detail = "4× a capacidade SDR";
-    else if (k.label === "Taxa Resposta") {
-      detail = `${scale(488)}/${scale(800)}`;
-    } else if (k.label === "Resgatados FUP") {
+    if (k.label === "Resgatados FUP" && !hasData) {
       detail = `R$ ${Math.round(238 * multiplier)}k`;
     }
     return { ...k, value: newVal, detail };
-  }), [multiplier]);
+  }), [multiplier, kpiCards, hasData]);
 
   const filteredPipeline = useMemo(() => pipelineStages.map(s => ({
     ...s, valor: scale(s.valor)
-  })), [multiplier]);
+  })), [multiplier, pipelineStages]);
 
   const filteredFup = useMemo(() => ({
     ...fupFrio,
     entraram: scale(fupFrio.entraram),
     reativados: scale(fupFrio.reativados),
-    valorRecuperado: `R$ ${Math.round(238 * multiplier)}.000`,
-  }), [multiplier]);
+    valorRecuperado: hasData ? fupFrio.valorRecuperado : `R$ ${Math.round(238 * multiplier)}.000`,
+  }), [multiplier, fupFrio, hasData]);
 
   const filteredMensagens = useMemo(() => ({
     ...mensagens,
     enviadas: scale(mensagens.enviadas),
     recebidas: scale(mensagens.recebidas),
-  }), [multiplier]);
+  }), [multiplier, mensagens]);
 
   const filteredHeatmap = useMemo(() => ({
     ...heatmap,
     valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
-  }), [multiplier]);
+  }), [multiplier, heatmap]);
 
-  const filteredSolHoje = useMemo(() => solHojeMock.map(d => {
+  const filteredSolHoje = useMemo(() => solHojeData.map(d => {
     const quentes = scale(d.quentes);
     const mornos = scale(d.mornos);
     const frios = scale(d.frios);
     const qualificados = quentes + mornos + frios;
     const scores = scale(d.scores);
     return { ...d, qualificados, scores, quentes, mornos, frios };
-  }), [multiplier]);
+  }), [multiplier, solHojeData]);
 
-  const filteredTemperatura = useMemo(() => temperaturaPorEtapaMock.map(t => ({
+  const filteredTemperatura = useMemo(() => temperaturaPorEtapa.map(t => ({
     ...t,
     quente: scale(t.quente),
     morno: scale(t.morno),
     frio: scale(t.frio),
-  })), [multiplier]);
+  })), [multiplier, temperaturaPorEtapa]);
 
   const filteredLeads = useMemo(() => {
     const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
-    return tabelaLeadsMock
+    return tabelaLeads
       .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [multiplier, filterEtapa, filterTemp, searchTerm]);
+  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads]);
 
-  const etapasUnicas = [...new Set(tabelaLeadsMock.map(l => l.etapa))];
+  const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
   const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
   const maxShare = Math.max(...origemLeads.map((o) => o.share));
@@ -234,6 +253,14 @@ export default function Conferencia() {
         <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight text-foreground">Sol Estrateg.IA</h1>
+            {hasData && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-success/50 text-success">
+                Dados reais
+              </Badge>
+            )}
+            {dataLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -520,7 +547,7 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Alertas & Insights</p>
             <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-              {alertasMock.map((a, i) => {
+              {alertasData.map((a, i) => {
                 const icon = a.type === "danger" ? <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" /> :
                              a.type === "warning" ? <Info className="h-3.5 w-3.5 text-warning shrink-0" /> :
                              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />;
@@ -776,14 +803,14 @@ export default function Conferencia() {
         </section>
 
         {/* ══════ ROW 8 — SLA Metrics ══════ */}
-        <SLAMetricsMock data={slaMock} />
+        <SLAMetricsMock data={slaMockData} />
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
-        <RobotInsightsMock data={robotInsightsMock} />
+        <RobotInsightsMock data={robotInsightsData} />
 
         {/* ══════ ROW 10 — Score por Origem ══════ */}
         <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <ScorePorOrigem data={scorePorOrigemMock} />
+          <ScorePorOrigem data={scorePorOrigemData} />
           <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Resumo Operacional</p>
