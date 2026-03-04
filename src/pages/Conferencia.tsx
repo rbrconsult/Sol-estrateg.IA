@@ -542,7 +542,7 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Alertas & Insights</p>
             <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-              {alertasMock.map((a, i) => {
+              {alertasData.map((a, i) => {
                 const icon = a.type === "danger" ? <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" /> :
                              a.type === "warning" ? <Info className="h-3.5 w-3.5 text-warning shrink-0" /> :
                              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />;
