@@ -74,12 +74,12 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${scenarios.length} scenarios`);
 
-    // 2. Fetch logs sequentially in batches of 3 to avoid rate limiting
+    // 2. Fetch logs in batches of 2 with 1.5s delay between batches
     const records: any[] = [];
 
     const fetchFns = scenarios.map((scenario) => async () => {
       try {
-        const res = await fetch(
+        const res = await fetchWithRetry(
           `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=50`,
           { headers: makeHeaders }
         );
