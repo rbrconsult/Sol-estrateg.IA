@@ -798,14 +798,14 @@ export default function Conferencia() {
         </section>
 
         {/* ══════ ROW 8 — SLA Metrics ══════ */}
-        <SLAMetricsMock data={slaMock} />
+        <SLAMetricsMock data={slaMockData} />
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
-        <RobotInsightsMock data={robotInsightsMock} />
+        <RobotInsightsMock data={robotInsightsData} />
 
         {/* ══════ ROW 10 — Score por Origem ══════ */}
         <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <ScorePorOrigem data={scorePorOrigemMock} />
+          <ScorePorOrigem data={scorePorOrigemData} />
           <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Resumo Operacional</p>
