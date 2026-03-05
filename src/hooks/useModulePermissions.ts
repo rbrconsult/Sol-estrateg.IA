@@ -16,6 +16,7 @@ export const MODULE_DEFINITIONS = [
   { key: 'monitoramento', label: 'Monitoramento', description: 'Status do Sistema', path: '/monitoramento' },
   { key: 'make-errors', label: 'Erros Make', description: 'Monitor Automações', path: '/make-errors' },
   { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
+  { key: 'bi', label: 'BI', description: 'Centro de Inteligência', path: '/bi' },
 ] as const;
 
 export type ModuleKey = typeof MODULE_DEFINITIONS[number]['key'];

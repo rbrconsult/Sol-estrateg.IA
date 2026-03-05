@@ -110,7 +110,11 @@ const App = () => (
                   <MainLayout><Leads /></MainLayout>
                 </ProtectedRoute>
               } />
-              {/* /conferencia now served at / */}
+              <Route path="/bi" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

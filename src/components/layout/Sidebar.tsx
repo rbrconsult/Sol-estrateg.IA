@@ -139,6 +139,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     '/monitoramento': 'monitoramento',
     '/make-errors': 'make-errors',
     '/ajuda': 'ajuda',
+    '/bi': 'bi',
   };
 
   const visibleMenuItems = menuItems.filter(item => {
