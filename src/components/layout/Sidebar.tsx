@@ -102,6 +102,12 @@ const menuItems = [
     path: "/ajuda",
     description: "Central de Ajuda"
   },
+  { 
+    title: "BI", 
+    icon: BarChart3, 
+    path: "/bi",
+    description: "Centro de Inteligência"
+  },
 ];
 
 interface SidebarProps {
