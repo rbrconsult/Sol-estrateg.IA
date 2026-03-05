@@ -206,9 +206,11 @@ export function useConferenciaData() {
     });
 
     // ── Make-based metrics ──
-    const totalMsgsEnviadas = allMakeRecords.reduce((sum, r) => 
-      sum + r.historico.filter(h => h.tipo === 'enviada').length, 0
-    ) || allMakeRecords.length;
+    // Count actual sent messages from historico
+    const totalMsgsEnviadas = allMakeRecords.reduce((sum, r) => {
+      const enviadas = r.historico.filter(h => h.tipo === 'enviada').length;
+      return sum + Math.max(enviadas, 1); // At least 1 message per record (initial contact)
+    }, 0);
     const totalMsgsRecebidas = allMakeRecords.reduce((sum, r) => 
       sum + r.historico.filter(h => h.tipo === 'recebida').length, 0
     );
@@ -220,8 +222,8 @@ export function useConferenciaData() {
     const fupReativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
     const fupTotal = fupRecords.length;
 
-    // ── Sol SDR records ──
-    const solRecords = allMakeRecords.filter(r => r.robo === 'sol' || r.robo !== 'fup_frio');
+    // ── Sol SDR records (NOT fup_frio) ──
+    const solRecords = allMakeRecords.filter(r => r.robo === 'sol');
 
     // ── Valor total ──
     const valorTotal = proposals.reduce((s, p) => s + (p.valor_proposta || 0), 0);
@@ -521,8 +523,8 @@ export function useConferenciaData() {
     }
 
     const mensagens: Mensagens = {
-      enviadas: Math.max(totalMsgsEnviadas, allMakeRecords.length),
-      recebidas: totalMsgsRecebidas || responderam,
+      enviadas: totalMsgsEnviadas,
+      recebidas: Math.max(totalMsgsRecebidas, responderam),
       interacoesPorConv: allMakeRecords.length > 0
         ? +((totalMsgsEnviadas + totalMsgsRecebidas) / allMakeRecords.length).toFixed(1)
         : 0,

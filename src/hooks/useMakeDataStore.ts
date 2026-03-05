@@ -43,11 +43,31 @@ function parseRecords(raw: any[]): MakeRecord[] {
     const phone = normalizePhone(String(d.telefone || r.key || ''));
     
     // Determine robot type from available fields
-    const hasFollowup = !!d.followup_count || !!d.ultima_mensagem;
-    const robo = d.robo || d.bot || d.tipo_robo || (hasFollowup ? 'fup_frio' : 'sol');
+    // Better heuristic: thread_id indicates SOL engagement (OpenAI conversation)
+    // followup_count > 0 with last_followup_date indicates FUP Frio activity
+    // ultima_mensagem alone is just a datetime field, NOT an indicator of FUP
+    const hasThreadId = !!d.thread_id;
+    const fupCount = parseInt(d.followup_count) || 0;
+    const hasLastFupDate = !!d.last_followup_date;
+    const hasUltimaMsgSol = !!d.ultima_msg_sol;
+    
+    let robo = String(d.robo || d.bot || d.tipo_robo || '').toLowerCase();
+    if (!robo) {
+      // If has FUP activity (followup_count > 0) AND no SOL thread → FUP Frio
+      // If has thread_id or ultima_msg_sol → SOL processed this lead
+      // Default → SOL (primary robot)
+      if (fupCount > 0 && hasLastFupDate && !hasThreadId && !hasUltimaMsgSol) {
+        robo = 'fup_frio';
+      } else {
+        robo = 'sol';
+      }
+    }
 
     // Determine status from available data with heuristics
-    let statusResposta = String(d.status_resposta || d.status || d.response_status || '').toLowerCase();
+    let statusResposta = String(d.status_resposta || d.response_status || '').toLowerCase();
+    
+    // Don't use d.status for response detection — it's a lead status (DESQUALIFICADO, WHATSAPP, etc.)
+    const codigoStatus = String(d.codigo_status || '').toUpperCase();
 
     // Heuristic: detect "respondeu" from multiple signals
     const hasDataResposta = !!(d.data_resposta || d.response_date) && String(d.data_resposta || d.response_date || '').trim() !== '';
@@ -58,27 +78,55 @@ function parseRecords(raw: any[]): MakeRecord[] {
       return tipo === 'recebida' || tipo === 'received' || tipo === 'inbound';
     });
     const statusContainsReply = statusResposta.includes('respond') || statusResposta.includes('replied') || statusResposta === 'respondeu';
+    // Lead status like WHATSAPP or QUALIFICADO can indicate engagement
+    const leadStatus = String(d.status || '').toUpperCase();
+    const isEngaged = leadStatus === 'WHATSAPP' || leadStatus === 'QUALIFICADO';
 
-    if (statusContainsReply || hasDataResposta || hasRepliedFlag || hasReceivedMessage) {
+    if (statusContainsReply || hasDataResposta || hasRepliedFlag || hasReceivedMessage || isEngaged) {
       statusResposta = 'respondeu';
+    } else if (codigoStatus === 'NAO_RESPONDEU') {
+      statusResposta = 'ignorou';
     } else if (!statusResposta || statusResposta === 'undefined') {
       statusResposta = 'aguardando';
     }
 
+    // Build historico: if empty, synthesize from available data
+    let parsedHistorico: MakeInteraction[] = [];
+    if (Array.isArray(d.historico || d.history)) {
+      parsedHistorico = (d.historico || d.history).map((h: any) => ({
+        tipo: h.tipo || h.type || 'enviada',
+        mensagem: h.mensagem || h.message || '',
+        data: h.data || h.date || '',
+      }));
+    }
+    
+    // If no historico but we have data, synthesize entries
+    if (parsedHistorico.length === 0) {
+      const cadastroDate = d['Data e Hora | Cadastro do Lead'] || d.data_envio || d.sent_at || '';
+      if (cadastroDate) {
+        parsedHistorico.push({ tipo: 'enviada', mensagem: 'Mensagem inicial enviada', data: cadastroDate });
+      }
+      if (d.ultima_msg_sol) {
+        parsedHistorico.push({ tipo: 'enviada', mensagem: 'Follow-up SOL', data: d.ultima_msg_sol });
+      }
+      if (fupCount > 0) {
+        for (let i = 0; i < Math.min(fupCount, 3); i++) {
+          parsedHistorico.push({ tipo: 'enviada', mensagem: `FUP Frio #${i + 1}`, data: d.last_followup_date || '' });
+        }
+      }
+      if (hasDataResposta) {
+        parsedHistorico.push({ tipo: 'recebida', mensagem: 'Resposta do lead', data: d.data_resposta || d.response_date || '' });
+      }
+    }
+
     return {
       telefone: phone,
-      robo: String(robo).toLowerCase(),
+      robo,
       ultima_mensagem: String(d.ultima_mensagem || d.last_message || d.mensagem || ''),
-      data_envio: String(d.ultima_mensagem || d['Data e Hora | Cadastro do Lead'] || d.data_envio || d.sent_at || ''),
+      data_envio: String(d['Data e Hora | Cadastro do Lead'] || d.ultima_mensagem || d.data_envio || d.sent_at || ''),
       status_resposta: statusResposta as any,
       data_resposta: d.data_resposta || d.response_date || undefined,
-      historico: Array.isArray(d.historico || d.history)
-        ? (d.historico || d.history).map((h: any) => ({
-            tipo: h.tipo || h.type || 'enviada',
-            mensagem: h.mensagem || h.message || '',
-            data: h.data || h.date || '',
-          }))
-        : [],
+      historico: parsedHistorico,
     };
   });
 }

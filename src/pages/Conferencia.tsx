@@ -355,21 +355,29 @@ export default function Conferencia() {
               const mqlCard = filteredKpis.find(k => k.label === "MQL");
               const leadsCard = filteredKpis.find(k => k.label === "Leads Recebidos");
               const fupCard = filteredKpis.find(k => k.label === "Resgatados FUP");
+              const taxaResp = filteredKpis.find(k => k.label === "Taxa Resposta");
               const mqlVal = mqlCard?.value ?? 0;
               const leadsVal = leadsCard?.value ?? 0;
               const fupVal = fupCard?.value ?? 0;
-              const abandono = leadsVal - Math.round(leadsVal * 0.61); // sem retorno → FUP Frio
-              const qualifFup = Math.round(fupVal * 0.35); // qualificados após 1-8 tentativas
-              const quentes = Math.round(mqlVal * 0.165);
-              const mornos = Math.round(mqlVal * 0.765);
-              const frios = mqlVal - quentes - mornos;
+              const taxaVal = taxaResp?.value ?? 0;
+
+              // Use real temperature distribution from filteredTemperatura
+              const totalTemp = filteredTemperatura.reduce((s, t) => s + t.quente + t.morno + t.frio, 0);
+              const totalQuentes = filteredTemperatura.reduce((s, t) => s + t.quente, 0);
+              const totalMornos = filteredTemperatura.reduce((s, t) => s + t.morno, 0);
+              const totalFrios = filteredTemperatura.reduce((s, t) => s + t.frio, 0);
+
+              // Abandono = leads that didn't respond (total - responderam)
+              const abandono = Math.max(0, leadsVal - mqlVal - fupVal);
+              const qualifFup = fupVal;
+
               return [
                 { label: "Qualificados", value: mqlVal, color: "text-primary" },
                 { label: "Abandono", value: abandono, color: "text-destructive" },
                 { label: "Qualif. FUP", value: qualifFup, color: "text-success" },
-                { label: "Quentes", value: quentes, color: "text-orange-500" },
-                { label: "Mornos", value: mornos, color: "text-amber-400" },
-                { label: "Frios", value: frios, color: "text-blue-400" },
+                { label: "Quentes", value: totalQuentes, color: "text-orange-500" },
+                { label: "Mornos", value: totalMornos, color: "text-amber-400" },
+                { label: "Frios", value: totalFrios, color: "text-blue-400" },
               ].map(item => (
                 <div key={item.label} className="text-center">
                   <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
