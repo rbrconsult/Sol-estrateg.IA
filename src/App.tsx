@@ -24,6 +24,7 @@ import MakeErrors from "./pages/MakeErrors";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
+import BI from "./pages/BI";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -109,7 +110,11 @@ const App = () => (
                   <MainLayout><Leads /></MainLayout>
                 </ProtectedRoute>
               } />
-              {/* /conferencia now served at / */}
+              <Route path="/bi" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

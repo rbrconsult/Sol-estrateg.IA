@@ -18,7 +18,8 @@ import {
   RotateCcw,
   Zap,
   Presentation,
-  AlertTriangle
+  AlertTriangle,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,12 @@ const menuItems = [
     path: "/ajuda",
     description: "Central de Ajuda"
   },
+  { 
+    title: "BI", 
+    icon: BarChart3, 
+    path: "/bi",
+    description: "Centro de Inteligência"
+  },
 ];
 
 interface SidebarProps {
@@ -132,6 +139,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     '/monitoramento': 'monitoramento',
     '/make-errors': 'make-errors',
     '/ajuda': 'ajuda',
+    '/bi': 'bi',
   };
 
   const visibleMenuItems = menuItems.filter(item => {

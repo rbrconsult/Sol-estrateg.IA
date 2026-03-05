@@ -1,85 +1,33 @@
 
 
-# Plano: Pagina BI — Centro de Inteligencia (sem Telhado)
+# Conectar os 4 novos componentes ao filtro de período
 
-## Resumo
+## Problema
+Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
 
-Nova pagina `/bi` com 5 abas (Ads, Sol SDR, SolarMarket, Sults, Cruzamentos). Sem Telhado Inteligente. Sem Grupo C nos cruzamentos. Visual identico ao Sol Estrateg.IA. Zero alteracoes nas paginas existentes.
+## Solução
+Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
 
-## Estrutura
+### 1. Sol Hoje — Atividade Diária
+- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
+- Aplicar `scale()` nas barras do gráfico de 7 dias
+- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
 
-```text
-┌──────────────────────────────────────────────────────┐
-│  BI — Centro de Inteligência              [⏱ live]  │
-├──────────────────────────────────────────────────────┤
-│ [📣 Ads] [🤖 Sol SDR] [📋 SolarMarket] [🔧 Sults] [🔀 Cruzamentos] │
-├──────────────────────────────────────────────────────┤
-│  Conteudo da aba ativa (cards, graficos, tabelas)   │
-└──────────────────────────────────────────────────────┘
-```
+### 2. Alertas & Insights
+- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
+- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
 
-## Conteudo por Aba
+### 3. Temperatura por Etapa
+- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
+- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
 
-### 📣 Ads (V1-V4) — Mock + badge "Aguardando API"
-- V1: Volume & CPL por canal (bar chart)
-- V2: Qualidade por criativo (tabela com score)
-- V3: Sazonalidade (line chart)
-- V4: Geografia (tabela)
+### 4. Tabela de Leads
+- Aplicar `scale()` ao campo `valor` de cada lead
+- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
 
-### 🤖 Sol SDR (V5-V8) — Dados reais (Make Data Store)
-- V5: Funil real-time
-- V6: Motivos de desqualificacao (pie chart)
-- V7: Performance por turno (manha/tarde/noite)
-- V8: Qualidade do lead entregue ao CRM
+## Arquivo modificado
+- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
 
-### 📋 SolarMarket (V9-V11) — Dados reais (Google Sheets)
-- V9: Funil comercial completo
-- V10: Performance por vendedor (bar chart)
-- V11: Inteligencia de proposta (ticket medio, tempo, conversao)
-
-### 🔧 Sults (V12-V13) — Mock + badge "Aguardando API"
-- V12: Funil operacional pos-venda
-- V13: Eficiencia tecnica
-
-### 🔀 Cruzamentos — 3 grupos (A, B, D)
-- **Grupo A (Ads × SDR):** C1, C2, C3 — mock (depende de Ads)
-- **Grupo B (SDR × SolarMarket):** C4 aproveitamento, C5 perfil que fecha, C6 velocidade × conversao — **dados reais**
-- **Grupo D (Todos × Todos):** C10 CAC real, C11 LTV por perfil, C12 campanhas por receita, C13 benchmark franquias, C14 lead em risco — parcial (C14 dados reais)
-
-## Arquivos
-
-### Criar
-1. `src/pages/BI.tsx` — Pagina com Tabs, header estilo Conferencia
-2. `src/hooks/useBIData.ts` — Agrega useGoogleSheetsData + useMakeDataStore, calcula cruzamentos B e metricas SDR/CRM
-3. `src/components/bi/AdsTab.tsx` — V1-V4 com mock
-4. `src/components/bi/SolSDRTab.tsx` — V5-V8 dados reais
-5. `src/components/bi/SolarMarketTab.tsx` — V9-V11 dados reais
-6. `src/components/bi/SultsTab.tsx` — V12-V13 com mock
-7. `src/components/bi/CruzamentosTab.tsx` — Grupos A, B, D
-
-### Modificar
-- `src/App.tsx` — Rota `/bi` com ProtectedRoute + ModuleGuard
-- `src/components/layout/Sidebar.tsx` — Item "BI" com icone `BarChart3`
-- `src/hooks/useModulePermissions.ts` — Module key `bi`
-- `src/data/biMockData.ts` — Remover dados de Telhado (ja nao tem, confirmar)
-
-## Estilo Visual
-- `max-w-[1400px] mx-auto px-3 md:px-4`
-- Cards: `rounded-lg border bg-card border-border/50 hover:border-primary/40`
-- KPIs: `text-3xl font-extrabold tabular-nums`
-- Labels: `text-[10px] text-muted-foreground uppercase tracking-wider`
-- Recharts: palette verde/azul/amarelo do tema
-- Placeholders: badge `border-warning/50 text-warning`
-
-## Dados Reais vs Mock
-
-| Secao | Status |
-|-------|--------|
-| Sol SDR (V5-V8) | Dados reais |
-| SolarMarket (V9-V11) | Dados reais |
-| Cruzamentos B (C4-C6) | Dados reais |
-| Cruzamento D C14 | Dados reais |
-| Ads (V1-V4) | Mock |
-| Sults (V12-V13) | Mock |
-| Cruzamentos A, D parcial | Mock |
+## Resultado
+Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
 
