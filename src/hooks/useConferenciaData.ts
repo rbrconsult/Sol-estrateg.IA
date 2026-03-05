@@ -523,8 +523,8 @@ export function useConferenciaData() {
     }
 
     const mensagens: Mensagens = {
-      enviadas: Math.max(totalMsgsEnviadas, allMakeRecords.length),
-      recebidas: totalMsgsRecebidas || responderam,
+      enviadas: totalMsgsEnviadas,
+      recebidas: Math.max(totalMsgsRecebidas, responderam),
       interacoesPorConv: allMakeRecords.length > 0
         ? +((totalMsgsEnviadas + totalMsgsRecebidas) / allMakeRecords.length).toFixed(1)
         : 0,
