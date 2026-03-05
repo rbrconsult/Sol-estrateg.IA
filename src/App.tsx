@@ -24,6 +24,7 @@ import MakeErrors from "./pages/MakeErrors";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
+import BI from "./pages/BI";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
