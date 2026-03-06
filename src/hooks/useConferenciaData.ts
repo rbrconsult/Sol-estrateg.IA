@@ -387,12 +387,17 @@ export function useConferenciaData() {
     });
     const totalPerdidos = perdidos.length || 1;
 
-    // ── Tabela de Leads (dedup by projeto_id or nome_cliente) ──
-    const seenKeys = new Set<string>();
+    // ── Tabela de Leads (dedup by nome_cliente first, then projeto_id) ──
+    const seenNames = new Set<string>();
+    const seenProjects = new Set<string>();
     const uniqueProposals = proposals.filter(p => {
-      const key = (p.projeto_id || p.nome_cliente || '').trim().toLowerCase();
-      if (!key || seenKeys.has(key)) return false;
-      seenKeys.add(key);
+      const name = (p.nome_cliente || '').trim().toLowerCase();
+      if (name && seenNames.has(name)) return false;
+      const projId = (p.projeto_id || '').trim().toLowerCase();
+      if (!name && projId && seenProjects.has(projId)) return false;
+      if (!name && !projId) return false;
+      if (name) seenNames.add(name);
+      if (projId) seenProjects.add(projId);
       return true;
     });
     const tabelaLeads: TabelaLead[] = uniqueProposals.slice(0, 50).map((p, i) => {
