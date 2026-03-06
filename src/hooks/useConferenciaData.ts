@@ -447,8 +447,28 @@ export function useConferenciaData() {
     const tabelaLeads: TabelaLead[] = uniqueProposals.slice(0, 50).map((p, i) => {
       const phone = normalizePhone(p.cliente_telefone || '');
       const makeData = phone ? (makeMap.get(phone) || []) : [];
-      const temp = parseTemp(p.temperatura) || 'MORNO';
-      const score = parseScore(p.sol_score);
+      // Enrich temperature from Make if CRM doesn't have it
+      let temp = parseTemp(p.temperatura) || '';
+      if (!temp) {
+        for (const mr of makeData) {
+          if (mr.makeTemperatura) {
+            const t = parseTemp(mr.makeTemperatura);
+            if (t) { temp = t; break; }
+          }
+        }
+      }
+      if (!temp) temp = 'MORNO';
+      
+      // Enrich score from Make if CRM doesn't have it
+      let score = parseScore(p.sol_score);
+      if (score === 0) {
+        for (const mr of makeData) {
+          if (mr.makeScore) {
+            const s = parseScore(mr.makeScore);
+            if (s > 0) { score = s; break; }
+          }
+        }
+      }
       const tempoEtapa = parseFloat(p.tempo_na_etapa || '0') || 0;
 
       // Build historico from make records
@@ -480,7 +500,7 @@ export function useConferenciaData() {
       return {
         id: i + 1,
         nome: p.nome_cliente || `Lead ${i + 1}`,
-        etapa: getSolStage(p.etapa, p.status),
+        etapa: getSolStageEnriched(p.etapa, p.status, makeData),
         temperatura: temp,
         score,
         sla: Math.round(tempoEtapa * 100) / 100,
