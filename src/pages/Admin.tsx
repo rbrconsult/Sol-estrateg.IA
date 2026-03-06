@@ -704,6 +704,14 @@ export default function Admin() {
             <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
           </TabsContent>
 
+          <TabsContent value="login-analytics">
+            <LoginAnalyticsTab
+              accessLogs={accessLogs}
+              sessions={sessions}
+              onInvalidateAllSessions={invalidateAllUserSessions}
+            />
+          </TabsContent>
+
           <TabsContent value="sessions">
             <Card>
               <CardHeader>
