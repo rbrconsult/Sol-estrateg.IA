@@ -835,6 +835,11 @@ export default function Conferencia() {
           </div>
         </section>
 
+        {/* ══════ ROW 11 — Monthly Evolution ══════ */}
+        <div className="mt-6">
+          <MonthlyEvolution data={monthlyEvolution} />
+        </div>
+
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-8 text-center">
           <p className="text-[10px] text-muted-foreground/50">
