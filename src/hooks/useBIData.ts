@@ -426,8 +426,8 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ Cruzamento D C14: Lead em risco ═══
   const leadsEmRisco = useMemo(() => {
-    if (proposals.length === 0) return [];
-    return proposals
+    if (filteredProposals.length === 0) return [];
+    return filteredProposals
       .filter(p => {
         const status = (p.status || '').toLowerCase();
         if (status.includes('ganho') || status.includes('perdido')) return false;
