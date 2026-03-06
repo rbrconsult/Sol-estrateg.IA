@@ -19,6 +19,7 @@ import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Penc
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
+import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
