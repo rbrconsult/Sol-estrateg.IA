@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGoogleSheetsData, Proposal } from '@/hooks/useGoogleSheetsData';
 import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 import { adaptSheetData, getVendedorPerformance, getKPIs } from '@/data/dataAdapter';
+import type { DateRange } from '@/components/dashboard/DateFilter';
 
 // ─── Helpers ───
 function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
