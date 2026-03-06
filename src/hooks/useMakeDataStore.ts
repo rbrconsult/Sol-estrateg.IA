@@ -43,24 +43,12 @@ function parseRecords(raw: any[]): MakeRecord[] {
     const phone = normalizePhone(String(d.telefone || r.key || ''));
     
     // Determine robot type from available fields
-    // Better heuristic: thread_id indicates SOL engagement (OpenAI conversation)
-    // followup_count > 0 with last_followup_date indicates FUP Frio activity
-    // ultima_mensagem alone is just a datetime field, NOT an indicator of FUP
-    const hasThreadId = !!d.thread_id;
+    // Regra simples: followup_count >= 1 → FUP Frio, senão → SOL SDR
     const fupCount = parseInt(d.followup_count) || 0;
-    const hasLastFupDate = !!d.last_followup_date;
-    const hasUltimaMsgSol = !!d.ultima_msg_sol;
     
     let robo = String(d.robo || d.bot || d.tipo_robo || '').toLowerCase();
     if (!robo) {
-      // If has FUP activity (followup_count > 0) AND no SOL thread → FUP Frio
-      // If has thread_id or ultima_msg_sol → SOL processed this lead
-      // Default → SOL (primary robot)
-      if (fupCount > 0 && hasLastFupDate && !hasThreadId && !hasUltimaMsgSol) {
-        robo = 'fup_frio';
-      } else {
-        robo = 'sol';
-      }
+      robo = fupCount >= 1 ? 'fup_frio' : 'sol';
     }
 
     // Determine status from available data with heuristics
