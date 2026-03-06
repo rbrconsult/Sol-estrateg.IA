@@ -16,7 +16,7 @@ import {
   solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
   slaMock as mockSlaMock, robotInsightsMock as mockRobotInsights, scorePorOrigemMock as mockScoreOrigem,
 } from "@/data/conferenciaMockData";
-import { useConferenciaData } from "@/hooks/useConferenciaData";
+import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
@@ -168,71 +168,6 @@ export default function Conferencia() {
   const hasFilters = periodo !== "30d" || dateFrom || dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || searchTerm;
   const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); setFilterEtapa("todas"); setFilterTemp("todas"); setFilterResp("todos"); setSearchTerm(""); };
 
-  /* ── multiplier logic ── */
-  const multiplier = useMemo(() => {
-    if (periodo === "hoje") return 0.03;
-    if (periodo === "3d") return 0.1;
-    if (periodo === "7d") return 0.25;
-    if (periodo === "30d") return 1;
-    if (periodo === "90d") return 2.8;
-    if (periodo === "custom" && dateFrom && dateTo) {
-      const days = Math.max(differenceInDays(dateTo, dateFrom), 1);
-      return days / 30;
-    }
-    return 1;
-  }, [periodo, dateFrom, dateTo]);
-
-  const scale = (v: number) => Math.round(v * multiplier);
-
-  /* ── filtered data ── */
-  const filteredKpis = useMemo(() => kpiCards.map(k => {
-    if (k.suffix === "%") return k;
-    const newVal = scale(k.value);
-    let detail = k.detail;
-    if (k.label === "Resgatados FUP" && !hasData) {
-      detail = `R$ ${Math.round(238 * multiplier)}k`;
-    }
-    return { ...k, value: newVal, detail };
-  }), [multiplier, kpiCards, hasData]);
-
-  const filteredPipeline = useMemo(() => pipelineStages.map(s => ({
-    ...s, valor: scale(s.valor)
-  })), [multiplier, pipelineStages]);
-
-  const filteredFup = useMemo(() => ({
-    ...fupFrio,
-    entraram: scale(fupFrio.entraram),
-    reativados: scale(fupFrio.reativados),
-    valorRecuperado: hasData ? fupFrio.valorRecuperado : `R$ ${Math.round(238 * multiplier)}.000`,
-  }), [multiplier, fupFrio, hasData]);
-
-  const filteredMensagens = useMemo(() => ({
-    ...mensagens,
-    enviadas: scale(mensagens.enviadas),
-    recebidas: scale(mensagens.recebidas),
-  }), [multiplier, mensagens]);
-
-  const filteredHeatmap = useMemo(() => ({
-    ...heatmap,
-    valores: heatmap.valores.map(row => row.map(v => Math.min(100, Math.round(v * multiplier)))),
-  }), [multiplier, heatmap]);
-
-  const filteredSolHoje = useMemo(() => solHojeData.map(d => {
-    const quentes = scale(d.quentes);
-    const mornos = scale(d.mornos);
-    const frios = scale(d.frios);
-    const qualificados = quentes + mornos + frios;
-    const scores = scale(d.scores);
-    return { ...d, qualificados, scores, quentes, mornos, frios };
-  }), [multiplier, solHojeData]);
-
-  const filteredTemperatura = useMemo(() => temperaturaPorEtapa.map(t => ({
-    ...t,
-    quente: scale(t.quente),
-    morno: scale(t.morno),
-    frio: scale(t.frio),
-  })), [multiplier, temperaturaPorEtapa]);
-
   const effectiveDateRange = useMemo(() => {
     const today = new Date();
     if (periodo === "custom") return { from: dateFrom, to: dateTo };
@@ -240,32 +175,91 @@ export default function Conferencia() {
     if (periodo === "3d") return { from: subDays(today, 3), to: today };
     if (periodo === "7d") return { from: subDays(today, 7), to: today };
     if (periodo === "90d") return { from: subDays(today, 90), to: today };
-    // "30d" is the default — no date filter applied (shows all data scaled)
+    // "30d" is the default — no date filter applied (shows all data)
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [periodo, dateFrom, dateTo]);
 
-  const filteredLeads = useMemo(() => {
-    const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
+  /** Filter leads by date range */
+  const isInDateRange = (dateStr?: string) => {
     const { from: effFrom, to: effTo } = effectiveDateRange;
+    if (!effFrom && !effTo) return true;
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    if (effFrom && d < effFrom) return false;
+    if (effTo) {
+      const end = new Date(effTo);
+      end.setHours(23, 59, 59, 999);
+      if (d > end) return false;
+    }
+    return true;
+  };
+
+  /** Date-filtered leads (base for ALL metrics) */
+  const filteredLeads = useMemo(() => {
     return tabelaLeads
-      .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
-      .filter(l => {
-        if (!effFrom && !effTo) return true;
-        if (!l.dataCriacao) return false;
-        const d = new Date(l.dataCriacao);
-        if (isNaN(d.getTime())) return false;
-        if (effFrom && d < effFrom) return false;
-        if (effTo) {
-          const end = new Date(effTo);
-          end.setHours(23, 59, 59, 999);
-          if (d > end) return false;
-        }
-        return true;
-      })
+      .filter(l => isInDateRange((l as any).dataCriacao))
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads, effectiveDateRange]);
+  }, [filterEtapa, filterTemp, searchTerm, tabelaLeads, effectiveDateRange]);
+
+  /** Derive KPIs, Pipeline, Sol Hoje from filteredLeads */
+  const filteredKpis = useMemo(() => {
+    const total = filteredLeads.length;
+    const qualificados = filteredLeads.filter(l => l.etapa !== 'Robô SOL');
+    const mqlCount = qualificados.length;
+    const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
+    const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
+    const agendamentos = filteredLeads.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa));
+    // For percentage-based KPIs, use original values
+    const taxaResp = kpiCards.find(k => k.label === 'Taxa Resposta');
+    const fupReativados = kpiCards.find(k => k.label === 'Resgatados FUP');
+
+    return [
+      { label: 'Leads Recebidos', value: total, suffix: '', detail: `${total} leads no período` },
+      taxaResp || { label: 'Taxa Resposta', value: 0, suffix: '%', detail: '—' },
+      { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
+      { label: 'SQL', value: comProposta.length, suffix: '', detail: `${mqlCount > 0 ? ((comProposta.length / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
+      { label: 'Agendamentos', value: agendamentos.length, suffix: '', detail: `${comProposta.length > 0 ? ((agendamentos.length / comProposta.length) * 100).toFixed(0) : 0}%` },
+      { label: 'Fechados', value: fechados.length, suffix: '', detail: `${total > 0 ? ((fechados.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
+      fupReativados ? { ...fupReativados } : { label: 'Resgatados FUP', value: 0, suffix: '', detail: 'R$ 0' },
+    ] as KPICard[];
+  }, [filteredLeads, kpiCards]);
+
+  const filteredPipeline = useMemo(() => {
+    const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
+    const icons = ['🤖', '🎯', '✅', '📞', '📋', '🏆'];
+    return stageOrder.map((etapa, i) => {
+      const laterStages = stageOrder.slice(i);
+      const count = filteredLeads.filter(l => laterStages.includes(l.etapa)).length;
+      return { etapa, valor: count, icon: icons[i], desc: `${count} leads` };
+    });
+  }, [filteredLeads]);
+
+  const filteredFup = useMemo(() => {
+    // Keep original FUP data (not filtered by date for now)
+    return fupFrio;
+  }, [fupFrio]);
+
+  const filteredMensagens = useMemo(() => mensagens, [mensagens]);
+
+  const filteredHeatmap = useMemo(() => heatmap, [heatmap]);
+
+  const filteredSolHoje = useMemo(() => solHojeData, [solHojeData]);
+
+  const filteredTemperatura = useMemo(() => {
+    const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta'];
+    return stageOrder.map(etapa => {
+      const inStage = filteredLeads.filter(l => l.etapa === etapa);
+      return {
+        etapa,
+        quente: inStage.filter(l => l.temperatura === 'QUENTE').length,
+        morno: inStage.filter(l => l.temperatura === 'MORNO').length,
+        frio: inStage.filter(l => l.temperatura === 'FRIO').length,
+      };
+    });
+  }, [filteredLeads]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
