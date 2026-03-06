@@ -145,6 +145,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [user, validateSession, isImpersonating]);
 
+  // Inactivity timeout: 15 min for non-super_admin users
+  useEffect(() => {
+    if (!user || isImpersonating || userRole === 'super_admin') return;
+
+    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(async () => {
+        toast.error('Sessão encerrada por inatividade (15 min).');
+        const sessionToken = localStorage.getItem(SESSION_KEY);
+        if (sessionToken) {
+          await trackSession('logout', user.id, user.email || '', sessionToken);
+        }
+        localStorage.removeItem(SESSION_KEY);
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setUserRole(null);
+      }, INACTIVITY_LIMIT);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+    events.forEach(evt => window.addEventListener(evt, resetTimer, { passive: true }));
+    resetTimer(); // start initial timer
+
+    return () => {
+      clearTimeout(timeout);
+      events.forEach(evt => window.removeEventListener(evt, resetTimer));
+    };
+  }, [user, userRole, isImpersonating]);
+
   const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
