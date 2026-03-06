@@ -307,7 +307,17 @@ export function useConferenciaData() {
     }).length;
 
     // ── Scores ──
-    const scores = proposals.map(p => parseScore(p.sol_score)).filter(s => s > 0);
+    const scores = proposals.map(p => {
+      let s = parseScore(p.sol_score);
+      if (s === 0) {
+        const phone = normalizePhone(p.cliente_telefone || '');
+        const md = phone ? (makeMap.get(phone) || []) : [];
+        for (const mr of md) {
+          if (mr.makeScore) { const ms = parseScore(mr.makeScore); if (ms > 0) { s = ms; break; } }
+        }
+      }
+      return s;
+    }).filter(s => s > 0);
     const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
     // ── Score por Origem ──
