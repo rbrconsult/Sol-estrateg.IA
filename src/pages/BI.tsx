@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBIData } from "@/hooks/useBIData";
 import { AdsTab } from "@/components/bi/AdsTab";
 import { SolSDRTab } from "@/components/bi/SolSDRTab";
+import { FupFrioTab } from "@/components/bi/FupFrioTab";
 import { SolarMarketTab } from "@/components/bi/SolarMarketTab";
 import { SultsTab } from "@/components/bi/SultsTab";
 import { CruzamentosTab } from "@/components/bi/CruzamentosTab";

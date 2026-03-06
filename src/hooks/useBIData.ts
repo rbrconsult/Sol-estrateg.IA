@@ -414,6 +414,7 @@ export function useBIData() {
   return {
     solSDR,
     solarMarket,
+    fupFrio,
     cruzamentosB,
     leadsEmRisco,
     hasData,
