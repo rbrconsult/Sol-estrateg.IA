@@ -97,7 +97,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
         {/* C3: Janela de Ouro */}
         <div className="rounded-lg border bg-card border-border/50 p-4 mt-4">
-          <h3 className="text-sm font-semibold text-foreground mb-1">C3 — Janela de Ouro por Horário</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Janela de Ouro por Horário</h3>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Quando os leads mais convertem</p>
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
