@@ -122,7 +122,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
 
       {/* V8: Qualidade do Lead Entregue */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V8 — Qualidade do Lead Entregue ao CRM</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Qualidade do Lead Entregue ao CRM</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Leads que passaram pela qualificação SOL</p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">

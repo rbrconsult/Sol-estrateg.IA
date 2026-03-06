@@ -92,7 +92,7 @@ export function AdsTab() {
 
       {/* V4: Geografia */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V4 — Geografia</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Geografia</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Performance por região</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

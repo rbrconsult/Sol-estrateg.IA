@@ -104,7 +104,7 @@ export function SolarMarketTab({ data, isLoading }: Props) {
 
       {/* V10: Performance por Vendedor */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V10 — Performance por Vendedor</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Performance por Vendedor</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Ranking de vendas</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

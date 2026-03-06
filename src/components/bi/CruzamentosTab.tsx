@@ -258,7 +258,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
         {/* C14: Leads em Risco — DADOS REAIS */}
         <div className="rounded-lg border bg-card border-border/50 p-4 mt-4">
           <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-sm font-semibold text-foreground">C14 — Leads em Risco → FUP Automático</h3>
+            <h3 className="text-sm font-semibold text-foreground">Leads em Risco → FUP Automático</h3>
             {leadsEmRisco.length > 0 && <Badge variant="outline" className="border-primary/50 text-primary text-xs">Dados Reais</Badge>}
           </div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Leads parados ou frios que precisam de ação</p>
