@@ -349,7 +349,7 @@ export function useBIData(dateRange?: DateRange) {
     };
 
     return { funilComercial, vendedores, inteligenciaProposta };
-  }, [adaptedProposals, proposals]);
+  }, [filteredAdaptedProposals, filteredProposals]);
 
   // ═══ Cruzamentos Grupo B (SDR × SolarMarket) ═══
   const cruzamentosB = useMemo(() => {
