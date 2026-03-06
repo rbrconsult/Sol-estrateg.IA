@@ -177,6 +177,108 @@ export function useBIData() {
     return { funil, motivos, performanceTurno, qualidadeLead };
   }, [allMakeRecords, proposals]);
 
+  // ═══ FUP Frio ═══
+  const fupFrio = useMemo(() => {
+    const fupRecords = allMakeRecords.filter(r => r.robo === 'fup_frio');
+    const totalFup = fupRecords.length;
+    if (totalFup === 0) return null;
+
+    const responderam = fupRecords.filter(r => r.status_resposta === 'respondeu');
+    const ignoraram = fupRecords.filter(r => r.status_resposta === 'ignorou');
+    const aguardando = fupRecords.filter(r => r.status_resposta === 'aguardando');
+
+    // Cross-reference with proposals to find rescued leads
+    const fupPhones = new Set(fupRecords.map(r => r.telefone));
+    const leadsResgatados = proposals.filter(p => {
+      const phone = normalizePhone(p.cliente_telefone || '');
+      if (!fupPhones.has(phone)) return false;
+      const stage = getSolStage(p.etapa, p.status);
+      return stage === 'Qualificado' || stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
+    });
+    const leadsFechados = proposals.filter(p => {
+      const phone = normalizePhone(p.cliente_telefone || '');
+      if (!fupPhones.has(phone)) return false;
+      return (p.status || '').toLowerCase().includes('ganho');
+    });
+
+    const valorResgatado = leadsResgatados.reduce((acc, p) => acc + (p.valor_proposta || 0), 0);
+    const valorFechado = leadsFechados.reduce((acc, p) => acc + (p.valor_proposta || 0), 0);
+
+    // Funil
+    const funil = [
+      { etapa: 'Leads no FUP', valor: totalFup, icon: '🧊' },
+      { etapa: 'Responderam', valor: responderam.length, icon: '💬' },
+      { etapa: 'Resgatados (Pipeline)', valor: leadsResgatados.length, icon: '🔄' },
+      { etapa: 'Fechados', valor: leadsFechados.length, icon: '🏆' },
+    ];
+
+    // Taxa de resgate
+    const taxaResposta = totalFup > 0 ? Math.round((responderam.length / totalFup) * 100) : 0;
+    const taxaResgate = totalFup > 0 ? Math.round((leadsResgatados.length / totalFup) * 100) : 0;
+    const taxaFechamento = leadsResgatados.length > 0 ? Math.round((leadsFechados.length / leadsResgatados.length) * 100) : 0;
+
+    const resgate = {
+      taxaResposta,
+      taxaResgate,
+      taxaFechamento,
+      valorResgatado,
+      valorFechado,
+      totalResgatados: leadsResgatados.length,
+      totalFechados: leadsFechados.length,
+    };
+
+    // Tentativas × Conversão: analyze historico length as proxy for attempts
+    const tentativasMap: Record<string, { total: number; responderam: number; resgatados: number }> = {};
+    fupRecords.forEach(r => {
+      const attempts = r.historico.filter(h => h.tipo === 'enviada').length;
+      const faixa = attempts <= 1 ? '1' : attempts <= 3 ? '2-3' : attempts <= 5 ? '4-5' : '6+';
+      if (!tentativasMap[faixa]) tentativasMap[faixa] = { total: 0, responderam: 0, resgatados: 0 };
+      tentativasMap[faixa].total++;
+      if (r.status_resposta === 'respondeu') tentativasMap[faixa].responderam++;
+      const phone = r.telefone;
+      const rescued = leadsResgatados.some(p => normalizePhone(p.cliente_telefone || '') === phone);
+      if (rescued) tentativasMap[faixa].resgatados++;
+    });
+
+    const tentativasOrder = ['1', '2-3', '4-5', '6+'];
+    const tentativasConversao = tentativasOrder
+      .filter(f => tentativasMap[f])
+      .map(faixa => ({
+        faixa,
+        total: tentativasMap[faixa].total,
+        responderam: tentativasMap[faixa].responderam,
+        resgatados: tentativasMap[faixa].resgatados,
+        taxaResposta: tentativasMap[faixa].total > 0 ? Math.round((tentativasMap[faixa].responderam / tentativasMap[faixa].total) * 100) : 0,
+        taxaResgate: tentativasMap[faixa].total > 0 ? Math.round((tentativasMap[faixa].resgatados / tentativasMap[faixa].total) * 100) : 0,
+      }));
+
+    // Performance por turno
+    const turnos = { 'Manhã': { total: 0, responderam: 0 }, 'Tarde': { total: 0, responderam: 0 }, 'Noite': { total: 0, responderam: 0 } };
+    fupRecords.forEach(r => {
+      const d = safeDate(r.data_envio);
+      if (!d) return;
+      const turno = hourBucket(d);
+      turnos[turno].total++;
+      if (r.status_resposta === 'respondeu') turnos[turno].responderam++;
+    });
+    const performanceTurnoFup = Object.entries(turnos).map(([turno, v]) => ({
+      turno,
+      total: v.total,
+      responderam: v.responderam,
+      taxa: v.total > 0 ? Math.round((v.responderam / v.total) * 100) : 0,
+    }));
+
+    // Alertas
+    const alertas: { tipo: 'danger' | 'warning' | 'success' | 'info'; titulo: string; desc: string }[] = [];
+    if (taxaResposta > 20) alertas.push({ tipo: 'success', titulo: `Taxa de resposta ${taxaResposta}%`, desc: 'FUP Frio está gerando engajamento acima da média' });
+    if (aguardando.length > totalFup * 0.5) alertas.push({ tipo: 'warning', titulo: `${aguardando.length} leads sem resposta`, desc: 'Mais da metade dos leads de FUP ainda não responderam' });
+    if (valorResgatado > 0) alertas.push({ tipo: 'success', titulo: `${formatCurrencyShort(valorResgatado)} em pipeline`, desc: `${leadsResgatados.length} leads resgatados pelo FUP Frio` });
+    if (leadsFechados.length > 0) alertas.push({ tipo: 'success', titulo: `${leadsFechados.length} vendas fechadas`, desc: `${formatCurrencyShort(valorFechado)} em receita recuperada` });
+    if (ignoraram.length > totalFup * 0.7) alertas.push({ tipo: 'danger', titulo: `${ignoraram.length} leads ignorando`, desc: 'Mais de 70% dos leads de FUP não responderam — revisar abordagem' });
+
+    return { funil, resgate, tentativasConversao, performanceTurnoFup, alertas, totalFup, responderam: responderam.length, aguardando: aguardando.length, ignoraram: ignoraram.length };
+  }, [allMakeRecords, proposals]);
+
   // ═══ SolarMarket (V9-V11) ═══
   const solarMarket = useMemo(() => {
     const adapted = adaptedProposals;
@@ -312,6 +414,7 @@ export function useBIData() {
   return {
     solSDR,
     solarMarket,
+    fupFrio,
     cruzamentosB,
     leadsEmRisco,
     hasData,

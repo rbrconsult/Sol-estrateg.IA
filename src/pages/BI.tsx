@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBIData } from "@/hooks/useBIData";
 import { AdsTab } from "@/components/bi/AdsTab";
 import { SolSDRTab } from "@/components/bi/SolSDRTab";
+import { FupFrioTab } from "@/components/bi/FupFrioTab";
 import { SolarMarketTab } from "@/components/bi/SolarMarketTab";
 import { SultsTab } from "@/components/bi/SultsTab";
 import { CruzamentosTab } from "@/components/bi/CruzamentosTab";
 
 export default function BI() {
-  const { solSDR, solarMarket, cruzamentosB, leadsEmRisco, hasData, isLoading, error } = useBIData();
+  const { solSDR, solarMarket, fupFrio, cruzamentosB, leadsEmRisco, hasData, isLoading, error } = useBIData();
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function BI() {
         <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
           <TabsTrigger value="ads" className="text-xs gap-1.5">📣 Ads</TabsTrigger>
           <TabsTrigger value="sol-sdr" className="text-xs gap-1.5">🤖 Sol SDR</TabsTrigger>
+          <TabsTrigger value="fup-frio" className="text-xs gap-1.5">🧊 FUP Frio</TabsTrigger>
           <TabsTrigger value="solar-market" className="text-xs gap-1.5">📋 SolarMarket</TabsTrigger>
           <TabsTrigger value="sults" className="text-xs gap-1.5">🔧 Sults</TabsTrigger>
           <TabsTrigger value="cruzamentos" className="text-xs gap-1.5">🔀 Cruzamentos</TabsTrigger>
@@ -68,6 +70,10 @@ export default function BI() {
 
         <TabsContent value="sol-sdr" className="mt-4">
           <SolSDRTab data={solSDR} isLoading={isLoading} />
+        </TabsContent>
+
+        <TabsContent value="fup-frio" className="mt-4">
+          <FupFrioTab data={fupFrio} isLoading={isLoading} />
         </TabsContent>
 
         <TabsContent value="solar-market" className="mt-4">
