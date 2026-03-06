@@ -70,9 +70,69 @@ function parseDevice(ua: string | null): string {
   return parts.length > 0 ? parts.join(' / ') : ua.substring(0, 30);
 }
 
+interface GeoInfo {
+  city: string;
+  regionName: string;
+  country: string;
+  isp: string;
+  status: string;
+}
+
 export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAllSessions }: Props) {
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [daysFilter, setDaysFilter] = useState(7);
+  const [geoCache, setGeoCache] = useState<Record<string, GeoInfo>>({});
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  // Collect all unique IPs from analysis
+  const allUniqueIPs = useMemo(() => {
+    const ips = new Set<string>();
+    accessLogs.forEach(l => {
+      if (l.ip_address && l.ip_address !== 'unknown' && l.ip_address !== 'admin_action') {
+        ips.add(l.ip_address);
+      }
+    });
+    return [...ips];
+  }, [accessLogs]);
+
+  // Batch lookup geolocation for all IPs (ip-api.com supports batch of up to 100)
+  const lookupGeo = useCallback(async () => {
+    const uncached = allUniqueIPs.filter(ip => !geoCache[ip]);
+    if (uncached.length === 0) return;
+
+    setGeoLoading(true);
+    try {
+      // ip-api.com batch endpoint (free, no key, max 100 per request)
+      const batches: string[][] = [];
+      for (let i = 0; i < uncached.length; i += 100) {
+        batches.push(uncached.slice(i, i + 100));
+      }
+      const results: Record<string, GeoInfo> = {};
+      for (const batch of batches) {
+        const res = await fetch('http://ip-api.com/batch?fields=query,city,regionName,country,isp,status', {
+          method: 'POST',
+          body: JSON.stringify(batch),
+        });
+        if (res.ok) {
+          const data: (GeoInfo & { query: string })[] = await res.json();
+          data.forEach(item => {
+            results[item.query] = item;
+          });
+        }
+      }
+      setGeoCache(prev => ({ ...prev, ...results }));
+    } catch (e) {
+      console.error('Geo lookup failed:', e);
+    } finally {
+      setGeoLoading(false);
+    }
+  }, [allUniqueIPs, geoCache]);
+
+  useEffect(() => {
+    if (allUniqueIPs.length > 0) {
+      lookupGeo();
+    }
+  }, [allUniqueIPs.length]); // only re-run when IP count changes
 
   const analysis = useMemo(() => {
     const cutoff = subDays(new Date(), daysFilter);
