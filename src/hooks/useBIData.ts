@@ -320,7 +320,7 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ SolarMarket (V9-V11) ═══
   const solarMarket = useMemo(() => {
-    const adapted = adaptedProposals;
+    const adapted = filteredAdaptedProposals;
     if (adapted.length === 0) return null;
 
     // V9: Funil comercial
