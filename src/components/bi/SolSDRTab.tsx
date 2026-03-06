@@ -95,7 +95,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
 
         {/* V7: Performance por Turno */}
         <div className="rounded-lg border bg-card border-border/50 p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-1">V7 — Performance por Turno</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Performance por Turno</h3>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Manhã / Tarde / Noite</p>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
