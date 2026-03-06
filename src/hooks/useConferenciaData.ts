@@ -442,7 +442,13 @@ export function useConferenciaData() {
         sla: Math.round(tempoEtapa * 100) / 100,
         statusFup,
         valor: p.valor_proposta || 0,
-        dataCriacao: p.data_criacao_projeto || p.data_criacao_proposta || p.ultima_atualizacao || undefined,
+        dataCriacao: (() => {
+          // Prioriza a data da última mensagem/interação
+          const lastMsg = historico.length > 0
+            ? historico.filter(h => h.data).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0]?.data
+            : undefined;
+          return lastMsg || p.ultima_atualizacao || p.data_criacao_projeto || p.data_criacao_proposta || undefined;
+        })(),
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
