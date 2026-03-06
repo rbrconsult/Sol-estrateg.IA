@@ -259,6 +259,9 @@ export default function Conferencia() {
   const filteredSolHoje = useMemo(() => solHojeData, [solHojeData]);
 
   const filteredTemperatura = useMemo(() => {
+    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
+      return temperaturaPorEtapa;
+    }
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta'];
     return stageOrder.map(etapa => {
       const inStage = filteredLeads.filter(l => l.etapa === etapa);
@@ -269,7 +272,7 @@ export default function Conferencia() {
         frio: inStage.filter(l => l.temperatura === 'FRIO').length,
       };
     });
-  }, [filteredLeads]);
+  }, [filteredLeads, temperaturaPorEtapa, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
