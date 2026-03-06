@@ -235,6 +235,9 @@ export default function Conferencia() {
   }, [filteredLeads, kpiCards, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const filteredPipeline = useMemo(() => {
+    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
+      return pipelineStages;
+    }
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
     const icons = ['🤖', '🎯', '✅', '📞', '📋', '🏆'];
     return stageOrder.map((etapa, i) => {
@@ -242,7 +245,7 @@ export default function Conferencia() {
       const count = filteredLeads.filter(l => laterStages.includes(l.etapa)).length;
       return { etapa, valor: count, icon: icons[i], desc: `${count} leads` };
     });
-  }, [filteredLeads]);
+  }, [filteredLeads, pipelineStages, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const filteredFup = useMemo(() => {
     // Keep original FUP data (not filtered by date for now)
