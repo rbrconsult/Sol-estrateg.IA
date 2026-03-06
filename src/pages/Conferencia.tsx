@@ -786,6 +786,7 @@ export default function Conferencia() {
                       )}
                       onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
                     >
+                      <td className="py-2 px-2 text-center text-muted-foreground tabular-nums">{idx + 1}</td>
                       <td className="py-2 px-2 font-medium text-foreground">{lead.nome}</td>
                       <td className="py-2 px-2 text-muted-foreground">{lead.etapa}</td>
                       <td className="py-2 px-2"><TempDot t={lead.temperatura} /></td>
