@@ -15,10 +15,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
+import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -589,6 +590,10 @@ export default function Admin() {
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="modules">Módulos</TabsTrigger>
             <TabsTrigger value="organizations">Organizações</TabsTrigger>
+            <TabsTrigger value="login-analytics" className="flex items-center gap-1">
+              <Fingerprint className="h-3.5 w-3.5" />
+              Análise de Logins
+            </TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -697,6 +702,14 @@ export default function Admin() {
 
           <TabsContent value="organizations">
             <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
+          </TabsContent>
+
+          <TabsContent value="login-analytics">
+            <LoginAnalyticsTab
+              accessLogs={accessLogs}
+              sessions={sessions}
+              onInvalidateAllSessions={invalidateAllUserSessions}
+            />
           </TabsContent>
 
           <TabsContent value="sessions">
