@@ -422,7 +422,7 @@ export function useBIData(dateRange?: DateRange) {
     });
 
     return { aproveitamento, perfil, velocidadeConversao };
-  }, [proposals, allMakeRecords]);
+  }, [filteredProposals, allMakeRecords]);
 
   // ═══ Cruzamento D C14: Lead em risco ═══
   const leadsEmRisco = useMemo(() => {
