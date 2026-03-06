@@ -251,9 +251,9 @@ export default function Conferencia() {
       .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
       .filter(l => {
         if (!effFrom && !effTo) return true;
-        if (!l.dataCriacao) return true;
+        if (!l.dataCriacao) return false;
         const d = new Date(l.dataCriacao);
-        if (isNaN(d.getTime())) return true;
+        if (isNaN(d.getTime())) return false;
         if (effFrom && d < effFrom) return false;
         if (effTo) {
           const end = new Date(effTo);
