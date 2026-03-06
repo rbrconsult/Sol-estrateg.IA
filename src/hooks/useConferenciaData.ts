@@ -66,6 +66,17 @@ export interface RobotInsightsData {
 export interface ScoreOrigem {
   origem: string; score: number; leads: number;
 }
+export interface MonthlyEvolutionItem {
+  mes: string;
+  mesLabel: string;
+  totalLeads: number;
+  qualificados: number;
+  pctQualificacao: number;
+  msgEnviadas: number;
+  msgRecebidas: number;
+  conversao: number;
+  fechados: number;
+}
 
 // ─── Helpers ───
 function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
