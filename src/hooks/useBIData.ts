@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGoogleSheetsData, Proposal } from '@/hooks/useGoogleSheetsData';
 import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 import { adaptSheetData, getVendedorPerformance, getKPIs } from '@/data/dataAdapter';
+import type { DateRange } from '@/components/dashboard/DateFilter';
 
 // ─── Helpers ───
 function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
@@ -72,7 +73,7 @@ function getSolStage(etapa: string, status: string): string {
 }
 
 // ─── Main Hook ───
-export function useBIData() {
+export function useBIData(dateRange?: DateRange) {
   const { data: sheetsData, isLoading: sheetsLoading, error: sheetsError } = useGoogleSheetsData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
@@ -82,12 +83,50 @@ export function useBIData() {
     return adaptSheetData(sheetsData.data as any);
   }, [sheetsData]);
 
-  const makeMap = useMemo(() => {
-    if (!makeRecords) return new Map<string, MakeRecord[]>();
-    return buildMakeMap(makeRecords);
-  }, [makeRecords]);
+  // Filter by date range
+  const filteredProposals = useMemo(() => {
+    if (!dateRange?.from) return proposals;
+    const from = dateRange.from.getTime();
+    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
+    return proposals.filter(p => {
+      const d = safeDate(p.data_criacao_projeto || p.data_criacao_proposta);
+      if (!d) return true; // keep records without dates
+      const t = d.getTime();
+      return t >= from && t <= to;
+    });
+  }, [proposals, dateRange]);
 
-  const allMakeRecords = makeRecords || [];
+  const filteredMakeRecords = useMemo(() => {
+    const records = makeRecords || [];
+    if (!dateRange?.from) return records;
+    const from = dateRange.from.getTime();
+    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
+    return records.filter(r => {
+      const d = safeDate(r.data_envio);
+      if (!d) return true;
+      const t = d.getTime();
+      return t >= from && t <= to;
+    });
+  }, [makeRecords, dateRange]);
+
+  const filteredAdaptedProposals = useMemo(() => {
+    if (!dateRange?.from) return adaptedProposals;
+    const from = dateRange.from.getTime();
+    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
+    return adaptedProposals.filter(p => {
+      const d = safeDate(p.dataCriacaoProjeto || p.dataCriacaoProposta);
+      if (!d) return true;
+      const t = d.getTime();
+      return t >= from && t <= to;
+    });
+  }, [adaptedProposals, dateRange]);
+
+  const makeMap = useMemo(() => {
+    if (!filteredMakeRecords) return new Map<string, MakeRecord[]>();
+    return buildMakeMap(filteredMakeRecords);
+  }, [filteredMakeRecords]);
+
+  const allMakeRecords = filteredMakeRecords;
 
   // ═══ SOL SDR (V5-V8) ═══
   const solSDR = useMemo(() => {
@@ -97,12 +136,12 @@ export function useBIData() {
 
     // V5: Funil real-time
     const responderam = solRecords.filter(r => r.status_resposta === 'respondeu');
-    const qualificados = proposals.filter(p => isSolQualificado(p));
-    const closers = proposals.filter(p => {
+    const qualificados = filteredProposals.filter(p => isSolQualificado(p));
+    const closers = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
-    const fechados = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const fechados = filteredProposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
 
     const funil = [
       { etapa: 'Leads Recebidos', valor: solRecords.length, icon: '📥' },
@@ -113,7 +152,7 @@ export function useBIData() {
     ];
 
     // V6: Motivos de desqualificação
-    const desqualificados = proposals.filter(p => !isSolQualificado(p) && p.nota_completa);
+    const desqualificados = filteredProposals.filter(p => !isSolQualificado(p) && p.nota_completa);
     const motivosMap: Record<string, number> = {};
     desqualificados.forEach(p => {
       const nota = (p.nota_completa || '').toLowerCase();
@@ -153,7 +192,7 @@ export function useBIData() {
     }));
 
     // V8: Qualidade do lead entregue
-    const leadsEntregues = proposals.filter(p => {
+    const leadsEntregues = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage !== 'Robô SOL';
     });
@@ -175,7 +214,7 @@ export function useBIData() {
     };
 
     return { funil, motivos, performanceTurno, qualidadeLead };
-  }, [allMakeRecords, proposals]);
+  }, [allMakeRecords, filteredProposals]);
 
   // ═══ FUP Frio ═══
   const fupFrio = useMemo(() => {
@@ -189,13 +228,13 @@ export function useBIData() {
 
     // Cross-reference with proposals to find rescued leads
     const fupPhones = new Set(fupRecords.map(r => r.telefone));
-    const leadsResgatados = proposals.filter(p => {
+    const leadsResgatados = filteredProposals.filter(p => {
       const phone = normalizePhone(p.cliente_telefone || '');
       if (!fupPhones.has(phone)) return false;
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Qualificado' || stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
-    const leadsFechados = proposals.filter(p => {
+    const leadsFechados = filteredProposals.filter(p => {
       const phone = normalizePhone(p.cliente_telefone || '');
       if (!fupPhones.has(phone)) return false;
       return (p.status || '').toLowerCase().includes('ganho');
@@ -277,17 +316,17 @@ export function useBIData() {
     if (ignoraram.length > totalFup * 0.7) alertas.push({ tipo: 'danger', titulo: `${ignoraram.length} leads ignorando`, desc: 'Mais de 70% dos leads de FUP não responderam — revisar abordagem' });
 
     return { funil, resgate, tentativasConversao, performanceTurnoFup, alertas, totalFup, responderam: responderam.length, aguardando: aguardando.length, ignoraram: ignoraram.length };
-  }, [allMakeRecords, proposals]);
+  }, [allMakeRecords, filteredProposals]);
 
   // ═══ SolarMarket (V9-V11) ═══
   const solarMarket = useMemo(() => {
-    const adapted = adaptedProposals;
+    const adapted = filteredAdaptedProposals;
     if (adapted.length === 0) return null;
 
     // V9: Funil comercial
     const etapasOrder = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO'];
     const funilComercial = etapasOrder.map(etapa => {
-      const count = proposals.filter(p => (p.etapa || '').toUpperCase().trim() === etapa).length;
+      const count = filteredProposals.filter(p => (p.etapa || '').toUpperCase().trim() === etapa).length;
       return { etapa, valor: count };
     }).filter(e => e.valor > 0);
 
@@ -310,14 +349,14 @@ export function useBIData() {
     };
 
     return { funilComercial, vendedores, inteligenciaProposta };
-  }, [adaptedProposals, proposals]);
+  }, [filteredAdaptedProposals, filteredProposals]);
 
   // ═══ Cruzamentos Grupo B (SDR × SolarMarket) ═══
   const cruzamentosB = useMemo(() => {
-    if (proposals.length === 0 || allMakeRecords.length === 0) return null;
+    if (filteredProposals.length === 0 || allMakeRecords.length === 0) return null;
 
     // C4: Aproveitamento do lead qualificado
-    const qualificadosSol = proposals.filter(p => isSolQualificado(p));
+    const qualificadosSol = filteredProposals.filter(p => isSolQualificado(p));
     const qualificadosQueAvancaram = qualificadosSol.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
@@ -337,7 +376,7 @@ export function useBIData() {
     };
 
     // C5: Perfil do lead que fecha
-    const fechados = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const fechados = filteredProposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
     const perfilMap: Record<string, { count: number; valorTotal: number }> = {};
     fechados.forEach(p => {
       const origem = extractOrigem(p.etiquetas);
@@ -353,7 +392,7 @@ export function useBIData() {
     })).sort((a, b) => b.fechados - a.fechados);
 
     // C6: Velocidade × Conversão
-    const velocidade = proposals
+    const velocidade = filteredProposals
       .filter(p => p.data_criacao_projeto && p.data_criacao_proposta)
       .map(p => {
         const d1 = safeDate(p.data_criacao_projeto);
@@ -383,12 +422,12 @@ export function useBIData() {
     });
 
     return { aproveitamento, perfil, velocidadeConversao };
-  }, [proposals, allMakeRecords]);
+  }, [filteredProposals, allMakeRecords]);
 
   // ═══ Cruzamento D C14: Lead em risco ═══
   const leadsEmRisco = useMemo(() => {
-    if (proposals.length === 0) return [];
-    return proposals
+    if (filteredProposals.length === 0) return [];
+    return filteredProposals
       .filter(p => {
         const status = (p.status || '').toLowerCase();
         if (status.includes('ganho') || status.includes('perdido')) return false;
@@ -406,9 +445,9 @@ export function useBIData() {
       }))
       .sort((a, b) => b.tempoNaEtapa - a.tempoNaEtapa)
       .slice(0, 20);
-  }, [proposals]);
+  }, [filteredProposals]);
 
-  const hasData = proposals.length > 0 || allMakeRecords.length > 0;
+  const hasData = filteredProposals.length > 0 || allMakeRecords.length > 0;
   const isLoading = sheetsLoading || makeLoading;
 
   return {
