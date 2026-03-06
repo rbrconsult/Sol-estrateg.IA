@@ -20,6 +20,7 @@ import { useConferenciaData } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
+import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -146,6 +147,7 @@ export default function Conferencia() {
   const slaMockData = realData?.slaMock ?? mockSlaMock;
   const robotInsightsData = realData?.robotInsights ?? mockRobotInsights;
   const scorePorOrigemData = realData?.scorePorOrigem ?? mockScoreOrigem;
+  const monthlyEvolution = realData?.monthlyEvolution ?? [];
 
   const [expandedLead, setExpandedLead] = useState<number | null>(null);
   const [time, setTime] = useState(new Date());
@@ -832,6 +834,11 @@ export default function Conferencia() {
             </div>
           </div>
         </section>
+
+        {/* ══════ ROW 11 — Monthly Evolution ══════ */}
+        <div className="mt-6">
+          <MonthlyEvolution data={monthlyEvolution} />
+        </div>
 
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-8 text-center">
