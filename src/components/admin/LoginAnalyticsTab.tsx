@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, MapPin, Monitor, Shield, Clock, Users, ChevronDown, ChevronUp, Ban } from 'lucide-react';
+import { AlertTriangle, MapPin, Monitor, Shield, Clock, Users, ChevronDown, ChevronUp, Ban, Globe, Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format, differenceInMinutes, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
