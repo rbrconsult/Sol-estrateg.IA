@@ -445,7 +445,7 @@ export function useBIData(dateRange?: DateRange) {
       }))
       .sort((a, b) => b.tempoNaEtapa - a.tempoNaEtapa)
       .slice(0, 20);
-  }, [proposals]);
+  }, [filteredProposals]);
 
   const hasData = proposals.length > 0 || allMakeRecords.length > 0;
   const isLoading = sheetsLoading || makeLoading;
