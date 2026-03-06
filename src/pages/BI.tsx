@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Loader2, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DateFilter, DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
 import { useBIData } from "@/hooks/useBIData";
 import { AdsTab } from "@/components/bi/AdsTab";
 import { SolSDRTab } from "@/components/bi/SolSDRTab";
@@ -13,7 +14,9 @@ import { SultsTab } from "@/components/bi/SultsTab";
 import { CruzamentosTab } from "@/components/bi/CruzamentosTab";
 
 export default function BI() {
-  const { solSDR, solarMarket, fupFrio, cruzamentosB, leadsEmRisco, hasData, isLoading, error } = useBIData();
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
+  const { solSDR, solarMarket, fupFrio, cruzamentosB, leadsEmRisco, hasData, isLoading, error } = useBIData(dateRange);
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
