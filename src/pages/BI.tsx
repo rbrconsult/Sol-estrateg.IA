@@ -72,6 +72,10 @@ export default function BI() {
           <SolSDRTab data={solSDR} isLoading={isLoading} />
         </TabsContent>
 
+        <TabsContent value="fup-frio" className="mt-4">
+          <FupFrioTab data={fupFrio} isLoading={isLoading} />
+        </TabsContent>
+
         <TabsContent value="solar-market" className="mt-4">
           <SolarMarketTab data={solarMarket} isLoading={isLoading} />
         </TabsContent>
