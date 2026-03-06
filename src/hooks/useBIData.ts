@@ -214,7 +214,7 @@ export function useBIData(dateRange?: DateRange) {
     };
 
     return { funil, motivos, performanceTurno, qualidadeLead };
-  }, [allMakeRecords, proposals]);
+  }, [allMakeRecords, filteredProposals]);
 
   // ═══ FUP Frio ═══
   const fupFrio = useMemo(() => {
