@@ -97,8 +97,7 @@ function isSolQualificadoEnriched(p: Proposal, makeData: MakeRecord[]): boolean 
   if (isSolQualificado(p)) return true;
   // Check Make Data Store for qualification signals
   for (const mr of makeData) {
-    const rawStatus = (mr as any)._rawMakeStatus || '';
-    if (rawStatus === 'QUALIFICADO' || rawStatus === 'WHATSAPP') return true;
+    if (mr.makeStatus === 'QUALIFICADO' || mr.makeStatus === 'WHATSAPP') return true;
   }
   return false;
 }
