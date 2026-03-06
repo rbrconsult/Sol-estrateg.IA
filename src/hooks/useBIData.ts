@@ -190,7 +190,7 @@ export function useBIData() {
     // Cross-reference with proposals to find rescued leads
     const fupPhones = new Set(fupRecords.map(r => r.telefone));
     const leadsResgatados = proposals.filter(p => {
-      const phone = normalizePhone(p.telefone || '');
+      const phone = normalizePhone(p.cliente_telefone || '');
       if (!fupPhones.has(phone)) return false;
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Qualificado' || stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
