@@ -237,10 +237,23 @@ export default function Conferencia() {
     const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
     return tabelaLeads
       .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
+      .filter(l => {
+        if (!dateFrom && !dateTo) return true;
+        if (!l.dataCriacao) return true;
+        const d = new Date(l.dataCriacao);
+        if (isNaN(d.getTime())) return true;
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo) {
+          const end = new Date(dateTo);
+          end.setHours(23, 59, 59, 999);
+          if (d > end) return false;
+        }
+        return true;
+      })
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads]);
+  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads, dateFrom, dateTo]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 

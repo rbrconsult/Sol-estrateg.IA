@@ -430,6 +430,7 @@ export function useConferenciaData() {
         sla: Math.round(tempoEtapa * 100) / 100,
         statusFup,
         valor: p.valor_proposta || 0,
+        dataCriacao: p.data_criacao_projeto || p.data_criacao_proposta || p.ultima_atualizacao || undefined,
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
