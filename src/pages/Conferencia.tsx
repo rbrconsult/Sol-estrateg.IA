@@ -147,6 +147,7 @@ export default function Conferencia() {
   const slaMockData = realData?.slaMock ?? mockSlaMock;
   const robotInsightsData = realData?.robotInsights ?? mockRobotInsights;
   const scorePorOrigemData = realData?.scorePorOrigem ?? mockScoreOrigem;
+  const monthlyEvolution = realData?.monthlyEvolution ?? [];
 
   const [expandedLead, setExpandedLead] = useState<number | null>(null);
   const [time, setTime] = useState(new Date());
