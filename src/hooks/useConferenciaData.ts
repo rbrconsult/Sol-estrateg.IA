@@ -164,6 +164,21 @@ function getSolStage(etapa: string, status: string): string {
   return mapped || 'Robô SOL';
 }
 
+/** Enriched stage: considers Make Data Store status when CRM hasn't been updated */
+function getSolStageEnriched(etapa: string, status: string, makeData: MakeRecord[]): string {
+  const baseStage = getSolStage(etapa, status);
+  if (baseStage !== 'Robô SOL') return baseStage; // CRM already has a stage beyond Robô SOL
+  
+  // Enrich from Make Data Store
+  for (const mr of makeData) {
+    if (mr.makeStatus === 'QUALIFICADO') return 'Qualificado';
+    if (mr.makeStatus === 'WHATSAPP') return 'Qualificação';
+  }
+  // If lead responded, at least in Qualificação
+  if (makeData.some(mr => mr.status_resposta === 'respondeu')) return 'Qualificação';
+  return baseStage;
+}
+
 // ─── Main Hook ───
 export function useConferenciaData() {
   const { data: sheetsData, isLoading: sheetsLoading, error: sheetsError } = useGoogleSheetsData();
