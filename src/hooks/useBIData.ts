@@ -137,11 +137,11 @@ export function useBIData(dateRange?: DateRange) {
     // V5: Funil real-time
     const responderam = solRecords.filter(r => r.status_resposta === 'respondeu');
     const qualificados = filteredProposals.filter(p => isSolQualificado(p));
-    const closers = proposals.filter(p => {
+    const closers = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
-    const fechados = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const fechados = filteredProposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
 
     const funil = [
       { etapa: 'Leads Recebidos', valor: solRecords.length, icon: '📥' },
