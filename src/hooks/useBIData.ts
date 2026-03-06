@@ -316,7 +316,7 @@ export function useBIData(dateRange?: DateRange) {
     if (ignoraram.length > totalFup * 0.7) alertas.push({ tipo: 'danger', titulo: `${ignoraram.length} leads ignorando`, desc: 'Mais de 70% dos leads de FUP não responderam — revisar abordagem' });
 
     return { funil, resgate, tentativasConversao, performanceTurnoFup, alertas, totalFup, responderam: responderam.length, aguardando: aguardando.length, ignoraram: ignoraram.length };
-  }, [allMakeRecords, proposals]);
+  }, [allMakeRecords, filteredProposals]);
 
   // ═══ SolarMarket (V9-V11) ═══
   const solarMarket = useMemo(() => {
