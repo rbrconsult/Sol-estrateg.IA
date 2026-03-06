@@ -216,7 +216,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* C10: CAC Real */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C10 — CAC Real</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">CAC Real</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Custo de Aquisição de Cliente</p>
             <Badge variant="outline" className="border-warning/50 text-warning text-[10px] mb-3">Mock</Badge>
             <div className="grid grid-cols-2 gap-3">
