@@ -49,7 +49,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* C1: Custo real por lead qualificado */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C1 — Custo Real por Lead Qualificado</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Custo Real por Lead Qualificado</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">CPL bruto vs CPL qualificado</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -77,7 +77,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
           {/* C2: Criativos que atraem perfil errado */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C2 — Criativos com Perfil Errado</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Criativos com Perfil Errado</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Anúncios com alta rejeição</p>
             <div className="space-y-3">
               {criativoPerfilErrado.map((c, i) => (
@@ -97,7 +97,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
         {/* C3: Janela de Ouro */}
         <div className="rounded-lg border bg-card border-border/50 p-4 mt-4">
-          <h3 className="text-sm font-semibold text-foreground mb-1">C3 — Janela de Ouro por Horário</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Janela de Ouro por Horário</h3>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Quando os leads mais convertem</p>
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -129,7 +129,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
           <div className="space-y-4">
             {/* C4: Aproveitamento */}
             <div className="rounded-lg border bg-card border-border/50 p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-1">C4 — Aproveitamento do Lead Qualificado</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Aproveitamento do Lead Qualificado</h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">O que acontece após o MQL</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
@@ -153,7 +153,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
             {/* C5: Perfil do lead que fecha */}
             <div className="rounded-lg border bg-card border-border/50 p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-1">C5 — Perfil do Lead que Fecha</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Perfil do Lead que Fecha</h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Origem dos negócios ganhos</p>
               {cruzamentosB.perfil.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -185,7 +185,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
             {/* C6: Velocidade × Conversão */}
             <div className="rounded-lg border bg-card border-border/50 p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-1">C6 — Velocidade × Conversão</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Velocidade × Conversão</h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Tempo do projeto à proposta vs taxa de fechamento</p>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -216,7 +216,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* C10: CAC Real */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C10 — CAC Real</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">CAC Real</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Custo de Aquisição de Cliente</p>
             <Badge variant="outline" className="border-warning/50 text-warning text-[10px] mb-3">Mock</Badge>
             <div className="grid grid-cols-2 gap-3">
@@ -241,7 +241,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
           {/* C11: LTV por Perfil */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C11 — LTV por Perfil</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">LTV por Perfil</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Lifetime Value</p>
             <Badge variant="outline" className="border-warning/50 text-warning text-[10px] mb-3">Mock</Badge>
             <div className="space-y-2">
@@ -258,7 +258,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
         {/* C14: Leads em Risco — DADOS REAIS */}
         <div className="rounded-lg border bg-card border-border/50 p-4 mt-4">
           <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-sm font-semibold text-foreground">C14 — Leads em Risco → FUP Automático</h3>
+            <h3 className="text-sm font-semibold text-foreground">Leads em Risco → FUP Automático</h3>
             {leadsEmRisco.length > 0 && <Badge variant="outline" className="border-primary/50 text-primary text-xs">Dados Reais</Badge>}
           </div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Leads parados ou frios que precisam de ação</p>

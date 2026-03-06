@@ -36,7 +36,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
     <div className="space-y-6">
       {/* V5: Funil Real-time */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V5 — Funil Real-time SOL SDR</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Funil Real-time SOL SDR</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Pipeline do robô de qualificação</p>
         <div className="flex flex-wrap gap-2">
           {data.funil.map((stage, i) => {
@@ -62,7 +62,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* V6: Motivos de Desqualificação */}
         <div className="rounded-lg border bg-card border-border/50 p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-1">V6 — Motivos de Desqualificação</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Motivos de Desqualificação</h3>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Por que leads não avançam</p>
           {data.motivos.length > 0 ? (
             <div className="flex items-center gap-4">
@@ -95,7 +95,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
 
         {/* V7: Performance por Turno */}
         <div className="rounded-lg border bg-card border-border/50 p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-1">V7 — Performance por Turno</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Performance por Turno</h3>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Manhã / Tarde / Noite</p>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -122,7 +122,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
 
       {/* V8: Qualidade do Lead Entregue */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V8 — Qualidade do Lead Entregue ao CRM</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Qualidade do Lead Entregue ao CRM</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Leads que passaram pela qualificação SOL</p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">

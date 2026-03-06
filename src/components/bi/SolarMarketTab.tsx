@@ -45,7 +45,7 @@ export function SolarMarketTab({ data, isLoading }: Props) {
     <div className="space-y-6">
       {/* V9: Funil Comercial */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V9 — Funil Comercial Completo</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Funil Comercial Completo</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Leads por etapa do CRM</p>
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -66,7 +66,7 @@ export function SolarMarketTab({ data, isLoading }: Props) {
 
       {/* V11: Inteligência de Proposta (KPIs) */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V11 — Inteligência de Proposta</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Inteligência de Proposta</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Métricas de negócios</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
@@ -104,7 +104,7 @@ export function SolarMarketTab({ data, isLoading }: Props) {
 
       {/* V10: Performance por Vendedor */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V10 — Performance por Vendedor</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Performance por Vendedor</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Ranking de vendas</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

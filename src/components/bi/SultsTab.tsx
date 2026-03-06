@@ -15,7 +15,7 @@ export function SultsTab() {
 
       {/* V12: Funil Operacional Pós-venda */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V12 — Funil Operacional Pós-venda</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Funil Operacional Pós-venda</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Da venda à homologação</p>
         <div className="flex flex-wrap gap-2">
           {funilOperacional.map((stage, i) => {
@@ -35,7 +35,7 @@ export function SultsTab() {
 
       {/* V13: Eficiência Técnica */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V13 — Eficiência Técnica</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Eficiência Técnica</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Performance das equipes de instalação</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

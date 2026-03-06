@@ -16,7 +16,7 @@ export function AdsTab() {
 
       {/* V1: Volume & CPL por Canal */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V1 — Volume & CPL por Canal</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Volume & CPL por Canal</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Leads gerados e custo por lead</p>
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -36,7 +36,7 @@ export function AdsTab() {
 
       {/* V2: Qualidade por Criativo */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V2 — Qualidade por Criativo</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Qualidade por Criativo</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Score de performance dos anúncios</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -72,7 +72,7 @@ export function AdsTab() {
 
       {/* V3: Sazonalidade */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V3 — Sazonalidade</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Sazonalidade</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Tendência mensal de leads e CPL</p>
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -92,7 +92,7 @@ export function AdsTab() {
 
       {/* V4: Geografia */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V4 — Geografia</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Geografia</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Performance por região</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
