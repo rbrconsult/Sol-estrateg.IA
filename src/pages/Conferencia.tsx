@@ -764,6 +764,7 @@ export default function Conferencia() {
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border/50">
+                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-medium w-10">#</th>
                   <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Cliente</th>
                   <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Etapa</th>
                   <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Temp</th>
@@ -775,7 +776,7 @@ export default function Conferencia() {
                 </tr>
               </thead>
               <tbody>
-                {filteredLeads.map((lead) => (
+                {filteredLeads.map((lead, idx) => (
                   <>
                     <tr
                       key={lead.id}
@@ -785,6 +786,7 @@ export default function Conferencia() {
                       )}
                       onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
                     >
+                      <td className="py-2 px-2 text-center text-muted-foreground tabular-nums">{idx + 1}</td>
                       <td className="py-2 px-2 font-medium text-foreground">{lead.nome}</td>
                       <td className="py-2 px-2 text-muted-foreground">{lead.etapa}</td>
                       <td className="py-2 px-2"><TempDot t={lead.temperatura} /></td>
