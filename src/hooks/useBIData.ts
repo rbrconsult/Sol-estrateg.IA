@@ -356,7 +356,7 @@ export function useBIData(dateRange?: DateRange) {
     if (filteredProposals.length === 0 || allMakeRecords.length === 0) return null;
 
     // C4: Aproveitamento do lead qualificado
-    const qualificadosSol = proposals.filter(p => isSolQualificado(p));
+    const qualificadosSol = filteredProposals.filter(p => isSolQualificado(p));
     const qualificadosQueAvancaram = qualificadosSol.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
