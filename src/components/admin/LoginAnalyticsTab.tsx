@@ -436,16 +436,43 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
                       <TableCell colSpan={8} className="bg-muted/30 p-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {/* IPs */}
-                          <div>
+                           <div>
                             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                              <MapPin className="h-3 w-3" /> Endereços IP
+                              <MapPin className="h-3 w-3" /> Endereços IP & Localização
+                              {geoLoading && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
                             </h4>
                             <div className="space-y-1">
-                              {profile.uniqueIPs.map(ip => (
-                                <div key={ip} className="text-xs font-mono bg-background/50 rounded px-2 py-1">
-                                  {ip}
-                                </div>
-                              ))}
+                              {profile.uniqueIPs.map(ip => {
+                                const geo = geoCache[ip];
+                                const location = geo && geo.status === 'success'
+                                  ? `${geo.city}, ${geo.regionName} — ${geo.country}`
+                                  : null;
+                                const isp = geo?.isp;
+                                return (
+                                  <TooltipProvider key={ip}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="text-xs font-mono bg-background/50 rounded px-2 py-1.5 flex items-center gap-2">
+                                          <Globe className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                          <div className="min-w-0">
+                                            <div>{ip}</div>
+                                            {location && (
+                                              <div className="text-[10px] text-primary/80 font-sans truncate">
+                                                📍 {location}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </TooltipTrigger>
+                                      {isp && (
+                                        <TooltipContent side="right">
+                                          <p className="text-xs">ISP: {isp}</p>
+                                        </TooltipContent>
+                                      )}
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              })}
                             </div>
                           </div>
                           {/* Devices */}
