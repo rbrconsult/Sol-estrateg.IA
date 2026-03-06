@@ -16,6 +16,12 @@ export interface MakeRecord {
   status_resposta: 'respondeu' | 'ignorou' | 'aguardando' | string;
   data_resposta?: string;
   historico: MakeInteraction[];
+  /** Raw status from Make Data Store (QUALIFICADO, WHATSAPP, DESQUALIFICADO, etc.) */
+  makeStatus?: string;
+  /** Temperature from Make Data Store */
+  makeTemperatura?: string;
+  /** Score from Make Data Store */
+  makeScore?: string;
 }
 
 interface MakeResponse {
@@ -115,6 +121,9 @@ function parseRecords(raw: any[]): MakeRecord[] {
       status_resposta: statusResposta as any,
       data_resposta: d.data_resposta || d.response_date || undefined,
       historico: parsedHistorico,
+      makeStatus: String(d.status || '').toUpperCase() || undefined,
+      makeTemperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || undefined,
+      makeScore: String(d.Score || d.score || '') || undefined,
     };
   });
 }

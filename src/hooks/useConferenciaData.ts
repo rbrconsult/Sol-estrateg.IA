@@ -92,6 +92,16 @@ function isSolQualificado(p: Proposal): boolean {
   return v === 'sim' || v === 'yes' || v === 'true' || v === '1' || v === 'qualificado';
 }
 
+/** Enrich qualification using Make Data Store status */
+function isSolQualificadoEnriched(p: Proposal, makeData: MakeRecord[]): boolean {
+  if (isSolQualificado(p)) return true;
+  // Check Make Data Store for qualification signals
+  for (const mr of makeData) {
+    if (mr.makeStatus === 'QUALIFICADO' || mr.makeStatus === 'WHATSAPP') return true;
+  }
+  return false;
+}
+
 function parseScore(s: string): number {
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
@@ -154,6 +164,21 @@ function getSolStage(etapa: string, status: string): string {
   return mapped || 'Robô SOL';
 }
 
+/** Enriched stage: considers Make Data Store status when CRM hasn't been updated */
+function getSolStageEnriched(etapa: string, status: string, makeData: MakeRecord[]): string {
+  const baseStage = getSolStage(etapa, status);
+  if (baseStage !== 'Robô SOL') return baseStage; // CRM already has a stage beyond Robô SOL
+  
+  // Enrich from Make Data Store
+  for (const mr of makeData) {
+    if (mr.makeStatus === 'QUALIFICADO') return 'Qualificado';
+    if (mr.makeStatus === 'WHATSAPP') return 'Qualificação';
+  }
+  // If lead responded, at least in Qualificação
+  if (makeData.some(mr => mr.status_resposta === 'respondeu')) return 'Qualificação';
+  return baseStage;
+}
+
 // ─── Main Hook ───
 export function useConferenciaData() {
   const { data: sheetsData, isLoading: sheetsLoading, error: sheetsError } = useGoogleSheetsData();
@@ -181,14 +206,31 @@ export function useConferenciaData() {
     const total = proposals.length;
     if (total === 0) return null;
 
-    // ── MQL / Qualificados ──
-    const qualificados = proposals.filter(p => isSolQualificado(p));
+    // ── MQL / Qualificados (enriched with Make Data Store) ──
+    const qualificados = proposals.filter(p => {
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      return isSolQualificadoEnriched(p, md);
+    });
     const mqlCount = qualificados.length;
 
-    // ── Temperature distribution ──
-    const quentes = proposals.filter(p => parseTemp(p.temperatura) === 'QUENTE');
-    const mornos = proposals.filter(p => parseTemp(p.temperatura) === 'MORNO');
-    const frios = proposals.filter(p => parseTemp(p.temperatura) === 'FRIO');
+    // ── Temperature distribution (enriched) ──
+    const getEnrichedTemp = (p: Proposal): string => {
+      const crmTemp = parseTemp(p.temperatura);
+      if (crmTemp) return crmTemp;
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      for (const mr of md) {
+        if (mr.makeTemperatura) {
+          const t = parseTemp(mr.makeTemperatura);
+          if (t) return t;
+        }
+      }
+      return '';
+    };
+    const quentes = proposals.filter(p => getEnrichedTemp(p) === 'QUENTE');
+    const mornos = proposals.filter(p => getEnrichedTemp(p) === 'MORNO');
+    const frios = proposals.filter(p => getEnrichedTemp(p) === 'FRIO');
 
     // ── Status counts ──
     const ganhos = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
@@ -198,21 +240,23 @@ export function useConferenciaData() {
       return !s.includes('ganho') && !s.includes('perdido');
     });
 
-    // ── Pipeline stages ──
+    // ── Pipeline stages (enriched with Make Data Store) ──
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
     const stageCounts: Record<string, number> = {};
     stageOrder.forEach(s => stageCounts[s] = 0);
     proposals.forEach(p => {
-      const stage = getSolStage(p.etapa, p.status);
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      const stage = getSolStageEnriched(p.etapa, p.status, md);
       if (stageCounts[stage] !== undefined) stageCounts[stage]++;
     });
-    // Make pipeline cumulative (each stage includes all leads that reached it or beyond)
-    // Actually, the pipeline shows how many leads are IN or PASSED each stage
-    // Let's use cumulative from top
     const cumulativePipeline = stageOrder.map((etapa, i) => {
-      // Count leads that are in this stage or any later stage
       const laterStages = stageOrder.slice(i);
-      const count = proposals.filter(p => laterStages.includes(getSolStage(p.etapa, p.status))).length;
+      const count = proposals.filter(p => {
+        const phone = normalizePhone(p.cliente_telefone || '');
+        const md = phone ? (makeMap.get(phone) || []) : [];
+        return laterStages.includes(getSolStageEnriched(p.etapa, p.status, md));
+      }).length;
       return count;
     });
 
@@ -256,12 +300,24 @@ export function useConferenciaData() {
 
     // ── Agendamentos (closer + proposta + fechado) ──
     const agendamentos = proposals.filter(p => {
-      const stage = getSolStage(p.etapa, p.status);
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      const stage = getSolStageEnriched(p.etapa, p.status, md);
       return ['Closer', 'Proposta', 'Fechado'].includes(stage);
     }).length;
 
     // ── Scores ──
-    const scores = proposals.map(p => parseScore(p.sol_score)).filter(s => s > 0);
+    const scores = proposals.map(p => {
+      let s = parseScore(p.sol_score);
+      if (s === 0) {
+        const phone = normalizePhone(p.cliente_telefone || '');
+        const md = phone ? (makeMap.get(phone) || []) : [];
+        for (const mr of md) {
+          if (mr.makeScore) { const ms = parseScore(mr.makeScore); if (ms > 0) { s = ms; break; } }
+        }
+      }
+      return s;
+    }).filter(s => s > 0);
     const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
     // ── Score por Origem ──
@@ -278,8 +334,10 @@ export function useConferenciaData() {
     const tempByEtapa: Record<string, { quente: number; morno: number; frio: number }> = {};
     stageOrder.forEach(s => tempByEtapa[s] = { quente: 0, morno: 0, frio: 0 });
     proposals.forEach(p => {
-      const stage = getSolStage(p.etapa, p.status);
-      const temp = parseTemp(p.temperatura);
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      const stage = getSolStageEnriched(p.etapa, p.status, md);
+      const temp = getEnrichedTemp(p);
       if (tempByEtapa[stage] && temp) {
         if (temp === 'QUENTE') tempByEtapa[stage].quente++;
         else if (temp === 'MORNO') tempByEtapa[stage].morno++;
@@ -403,8 +461,28 @@ export function useConferenciaData() {
     const tabelaLeads: TabelaLead[] = uniqueProposals.slice(0, 50).map((p, i) => {
       const phone = normalizePhone(p.cliente_telefone || '');
       const makeData = phone ? (makeMap.get(phone) || []) : [];
-      const temp = parseTemp(p.temperatura) || 'MORNO';
-      const score = parseScore(p.sol_score);
+      // Enrich temperature from Make if CRM doesn't have it
+      let temp = parseTemp(p.temperatura) || '';
+      if (!temp) {
+        for (const mr of makeData) {
+          if (mr.makeTemperatura) {
+            const t = parseTemp(mr.makeTemperatura);
+            if (t) { temp = t; break; }
+          }
+        }
+      }
+      if (!temp) temp = 'MORNO';
+      
+      // Enrich score from Make if CRM doesn't have it
+      let score = parseScore(p.sol_score);
+      if (score === 0) {
+        for (const mr of makeData) {
+          if (mr.makeScore) {
+            const s = parseScore(mr.makeScore);
+            if (s > 0) { score = s; break; }
+          }
+        }
+      }
       const tempoEtapa = parseFloat(p.tempo_na_etapa || '0') || 0;
 
       // Build historico from make records
@@ -436,7 +514,7 @@ export function useConferenciaData() {
       return {
         id: i + 1,
         nome: p.nome_cliente || `Lead ${i + 1}`,
-        etapa: getSolStage(p.etapa, p.status),
+        etapa: getSolStageEnriched(p.etapa, p.status, makeData),
         temperatura: temp,
         score,
         sla: Math.round(tempoEtapa * 100) / 100,
