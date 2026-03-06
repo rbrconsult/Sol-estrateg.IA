@@ -387,8 +387,15 @@ export function useConferenciaData() {
     });
     const totalPerdidos = perdidos.length || 1;
 
-    // ── Tabela de Leads ──
-    const tabelaLeads: TabelaLead[] = proposals.slice(0, 50).map((p, i) => {
+    // ── Tabela de Leads (dedup by projeto_id or nome_cliente) ──
+    const seenKeys = new Set<string>();
+    const uniqueProposals = proposals.filter(p => {
+      const key = (p.projeto_id || p.nome_cliente || '').trim().toLowerCase();
+      if (!key || seenKeys.has(key)) return false;
+      seenKeys.add(key);
+      return true;
+    });
+    const tabelaLeads: TabelaLead[] = uniqueProposals.slice(0, 50).map((p, i) => {
       const phone = normalizePhone(p.cliente_telefone || '');
       const makeData = phone ? (makeMap.get(phone) || []) : [];
       const temp = parseTemp(p.temperatura) || 'MORNO';
