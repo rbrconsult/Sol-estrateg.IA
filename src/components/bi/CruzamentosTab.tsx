@@ -49,7 +49,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* C1: Custo real por lead qualificado */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C1 — Custo Real por Lead Qualificado</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Custo Real por Lead Qualificado</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">CPL bruto vs CPL qualificado</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
