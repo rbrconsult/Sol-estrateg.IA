@@ -590,12 +590,11 @@ export default function Admin() {
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="modules">Módulos</TabsTrigger>
             <TabsTrigger value="organizations">Organizações</TabsTrigger>
-            <TabsTrigger value="login-analytics" className="flex items-center gap-1">
+            <TabsTrigger value="seguranca" className="flex items-center gap-1">
               <Fingerprint className="h-3.5 w-3.5" />
-              Análise de Logins
+              Segurança & Logs
             </TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
-            <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
@@ -704,112 +703,54 @@ export default function Admin() {
             <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
           </TabsContent>
 
-          <TabsContent value="login-analytics">
-            <LoginAnalyticsTab
-              accessLogs={accessLogs}
-              sessions={sessions}
-              onInvalidateAllSessions={invalidateAllUserSessions}
-            />
-          </TabsContent>
+          <TabsContent value="seguranca">
+            <div className="space-y-6">
+              {/* Login Analytics */}
+              <LoginAnalyticsTab
+                accessLogs={accessLogs}
+                sessions={sessions}
+                onInvalidateAllSessions={invalidateAllUserSessions}
+              />
 
-          <TabsContent value="sessions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sessões Ativas</CardTitle>
-                <CardDescription>Sessões de usuários atualmente conectados</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>IP</TableHead>
-                      <TableHead>Navegador</TableHead>
-                      <TableHead>Última Atividade</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {activeSessions.map((session) => {
-                      const sessionUser = users.find(u => u.id === session.user_id);
-                      return (
-                        <TableRow key={session.id}>
-                          <TableCell className="font-medium">{sessionUser?.email || session.user_id}</TableCell>
-                          <TableCell>{session.ip_address || 'N/A'}</TableCell>
-                          <TableCell>{parseUserAgent(session.user_agent)}</TableCell>
-                          <TableCell>{formatDate(session.last_activity)}</TableCell>
-                          <TableCell>
-                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                              Ativa
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => invalidateSession(session.id, session.user_id)}
-                              disabled={session.user_id === user?.id}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Ban className="h-4 w-4 mr-1" />
-                              Invalidar
-                            </Button>
+              {/* Access Logs Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Logs de Acesso</CardTitle>
+                  <CardDescription>Histórico completo de acessos e ações no sistema</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Ação</TableHead>
+                        <TableHead>IP</TableHead>
+                        <TableHead>Navegador</TableHead>
+                        <TableHead>Data/Hora</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {accessLogs.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-medium">{log.email || '-'}</TableCell>
+                          <TableCell>{getActionBadge(log.action)}</TableCell>
+                          <TableCell>{log.ip_address || 'N/A'}</TableCell>
+                          <TableCell>{parseUserAgent(log.user_agent)}</TableCell>
+                          <TableCell>{formatDate(log.created_at)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {accessLogs.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            Nenhum log de acesso
                           </TableCell>
                         </TableRow>
-                      );
-                    })}
-                    {activeSessions.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                          Nenhuma sessão ativa
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="logs">
-            <Card>
-              <CardHeader>
-                <CardTitle>Logs de Acesso</CardTitle>
-                <CardDescription>Histórico de acessos e ações no sistema</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Ação</TableHead>
-                      <TableHead>IP</TableHead>
-                      <TableHead>Navegador</TableHead>
-                      <TableHead>Data/Hora</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {accessLogs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-medium">{log.email || '-'}</TableCell>
-                        <TableCell>{getActionBadge(log.action)}</TableCell>
-                        <TableCell>{log.ip_address || 'N/A'}</TableCell>
-                        <TableCell>{parseUserAgent(log.user_agent)}</TableCell>
-                        <TableCell>{formatDate(log.created_at)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {accessLogs.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          Nenhum log de acesso
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings">
