@@ -136,7 +136,7 @@ export function useBIData(dateRange?: DateRange) {
 
     // V5: Funil real-time
     const responderam = solRecords.filter(r => r.status_resposta === 'respondeu');
-    const qualificados = proposals.filter(p => isSolQualificado(p));
+    const qualificados = filteredProposals.filter(p => isSolQualificado(p));
     const closers = proposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
