@@ -13,7 +13,7 @@ import { SultsTab } from "@/components/bi/SultsTab";
 import { CruzamentosTab } from "@/components/bi/CruzamentosTab";
 
 export default function BI() {
-  const { solSDR, solarMarket, cruzamentosB, leadsEmRisco, hasData, isLoading, error } = useBIData();
+  const { solSDR, solarMarket, fupFrio, cruzamentosB, leadsEmRisco, hasData, isLoading, error } = useBIData();
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
