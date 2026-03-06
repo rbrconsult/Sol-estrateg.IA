@@ -196,7 +196,7 @@ export function useBIData() {
       return stage === 'Qualificado' || stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
     const leadsFechados = proposals.filter(p => {
-      const phone = normalizePhone(p.telefone || '');
+      const phone = normalizePhone(p.cliente_telefone || '');
       if (!fupPhones.has(phone)) return false;
       return (p.status || '').toLowerCase().includes('ganho');
     });
