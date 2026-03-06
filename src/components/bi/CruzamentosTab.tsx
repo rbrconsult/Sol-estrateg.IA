@@ -185,7 +185,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
             {/* C6: Velocidade × Conversão */}
             <div className="rounded-lg border bg-card border-border/50 p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-1">C6 — Velocidade × Conversão</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Velocidade × Conversão</h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Tempo do projeto à proposta vs taxa de fechamento</p>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
