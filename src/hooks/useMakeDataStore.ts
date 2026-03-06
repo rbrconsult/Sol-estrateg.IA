@@ -121,6 +121,9 @@ function parseRecords(raw: any[]): MakeRecord[] {
       status_resposta: statusResposta as any,
       data_resposta: d.data_resposta || d.response_date || undefined,
       historico: parsedHistorico,
+      makeStatus: String(d.status || '').toUpperCase() || undefined,
+      makeTemperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || undefined,
+      makeScore: String(d.Score || d.score || '') || undefined,
     };
   });
 }
