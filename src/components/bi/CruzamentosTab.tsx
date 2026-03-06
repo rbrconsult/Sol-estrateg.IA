@@ -153,7 +153,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
             {/* C5: Perfil do lead que fecha */}
             <div className="rounded-lg border bg-card border-border/50 p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-1">C5 — Perfil do Lead que Fecha</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Perfil do Lead que Fecha</h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Origem dos negócios ganhos</p>
               {cruzamentosB.perfil.length > 0 ? (
                 <div className="overflow-x-auto">
