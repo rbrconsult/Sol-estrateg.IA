@@ -77,7 +77,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
 
           {/* C2: Criativos que atraem perfil errado */}
           <div className="rounded-lg border bg-card border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">C2 — Criativos com Perfil Errado</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Criativos com Perfil Errado</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Anúncios com alta rejeição</p>
             <div className="space-y-3">
               {criativoPerfilErrado.map((c, i) => (
