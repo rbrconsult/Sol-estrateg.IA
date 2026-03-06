@@ -192,7 +192,7 @@ export function useBIData(dateRange?: DateRange) {
     }));
 
     // V8: Qualidade do lead entregue
-    const leadsEntregues = proposals.filter(p => {
+    const leadsEntregues = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage !== 'Robô SOL';
     });
