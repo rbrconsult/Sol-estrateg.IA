@@ -233,18 +233,30 @@ export default function Conferencia() {
     frio: scale(t.frio),
   })), [multiplier, temperaturaPorEtapa]);
 
+  const effectiveDateRange = useMemo(() => {
+    const today = new Date();
+    if (periodo === "custom") return { from: dateFrom, to: dateTo };
+    if (periodo === "hoje") return { from: today, to: today };
+    if (periodo === "3d") return { from: subDays(today, 3), to: today };
+    if (periodo === "7d") return { from: subDays(today, 7), to: today };
+    if (periodo === "90d") return { from: subDays(today, 90), to: today };
+    // "30d" is the default — no date filter applied (shows all data scaled)
+    return { from: undefined as Date | undefined, to: undefined as Date | undefined };
+  }, [periodo, dateFrom, dateTo]);
+
   const filteredLeads = useMemo(() => {
     const fupMap: Record<string, string> = { "Ativo": "Qualificação" };
+    const { from: effFrom, to: effTo } = effectiveDateRange;
     return tabelaLeads
       .map(l => ({ ...l, valor: scale(l.valor), statusFup: fupMap[l.statusFup] || l.statusFup }))
       .filter(l => {
-        if (!dateFrom && !dateTo) return true;
+        if (!effFrom && !effTo) return true;
         if (!l.dataCriacao) return true;
         const d = new Date(l.dataCriacao);
         if (isNaN(d.getTime())) return true;
-        if (dateFrom && d < dateFrom) return false;
-        if (dateTo) {
-          const end = new Date(dateTo);
+        if (effFrom && d < effFrom) return false;
+        if (effTo) {
+          const end = new Date(effTo);
           end.setHours(23, 59, 59, 999);
           if (d > end) return false;
         }
@@ -253,7 +265,7 @@ export default function Conferencia() {
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads, dateFrom, dateTo]);
+  }, [multiplier, filterEtapa, filterTemp, searchTerm, tabelaLeads, effectiveDateRange]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
