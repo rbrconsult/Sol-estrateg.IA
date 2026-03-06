@@ -37,6 +37,14 @@ export default function BI() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <DateFilter
+            dateRange={dateRange}
+            preset={datePreset}
+            onDateRangeChange={(range, preset) => {
+              setDateRange(range);
+              setDatePreset(preset);
+            }}
+          />
           {hasData && (
             <Badge variant="outline" className="border-primary/50 text-primary text-xs gap-1">
               <Radio className="h-3 w-3 animate-pulse" />

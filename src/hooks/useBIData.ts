@@ -447,7 +447,7 @@ export function useBIData(dateRange?: DateRange) {
       .slice(0, 20);
   }, [filteredProposals]);
 
-  const hasData = proposals.length > 0 || allMakeRecords.length > 0;
+  const hasData = filteredProposals.length > 0 || allMakeRecords.length > 0;
   const isLoading = sheetsLoading || makeLoading;
 
   return {
