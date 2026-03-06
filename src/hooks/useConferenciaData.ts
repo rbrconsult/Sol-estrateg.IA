@@ -206,14 +206,31 @@ export function useConferenciaData() {
     const total = proposals.length;
     if (total === 0) return null;
 
-    // ── MQL / Qualificados ──
-    const qualificados = proposals.filter(p => isSolQualificado(p));
+    // ── MQL / Qualificados (enriched with Make Data Store) ──
+    const qualificados = proposals.filter(p => {
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      return isSolQualificadoEnriched(p, md);
+    });
     const mqlCount = qualificados.length;
 
-    // ── Temperature distribution ──
-    const quentes = proposals.filter(p => parseTemp(p.temperatura) === 'QUENTE');
-    const mornos = proposals.filter(p => parseTemp(p.temperatura) === 'MORNO');
-    const frios = proposals.filter(p => parseTemp(p.temperatura) === 'FRIO');
+    // ── Temperature distribution (enriched) ──
+    const getEnrichedTemp = (p: Proposal): string => {
+      const crmTemp = parseTemp(p.temperatura);
+      if (crmTemp) return crmTemp;
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      for (const mr of md) {
+        if (mr.makeTemperatura) {
+          const t = parseTemp(mr.makeTemperatura);
+          if (t) return t;
+        }
+      }
+      return '';
+    };
+    const quentes = proposals.filter(p => getEnrichedTemp(p) === 'QUENTE');
+    const mornos = proposals.filter(p => getEnrichedTemp(p) === 'MORNO');
+    const frios = proposals.filter(p => getEnrichedTemp(p) === 'FRIO');
 
     // ── Status counts ──
     const ganhos = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
@@ -223,21 +240,23 @@ export function useConferenciaData() {
       return !s.includes('ganho') && !s.includes('perdido');
     });
 
-    // ── Pipeline stages ──
+    // ── Pipeline stages (enriched with Make Data Store) ──
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
     const stageCounts: Record<string, number> = {};
     stageOrder.forEach(s => stageCounts[s] = 0);
     proposals.forEach(p => {
-      const stage = getSolStage(p.etapa, p.status);
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      const stage = getSolStageEnriched(p.etapa, p.status, md);
       if (stageCounts[stage] !== undefined) stageCounts[stage]++;
     });
-    // Make pipeline cumulative (each stage includes all leads that reached it or beyond)
-    // Actually, the pipeline shows how many leads are IN or PASSED each stage
-    // Let's use cumulative from top
     const cumulativePipeline = stageOrder.map((etapa, i) => {
-      // Count leads that are in this stage or any later stage
       const laterStages = stageOrder.slice(i);
-      const count = proposals.filter(p => laterStages.includes(getSolStage(p.etapa, p.status))).length;
+      const count = proposals.filter(p => {
+        const phone = normalizePhone(p.cliente_telefone || '');
+        const md = phone ? (makeMap.get(phone) || []) : [];
+        return laterStages.includes(getSolStageEnriched(p.etapa, p.status, md));
+      }).length;
       return count;
     });
 
