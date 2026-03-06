@@ -36,7 +36,7 @@ export function AdsTab() {
 
       {/* V2: Qualidade por Criativo */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V2 — Qualidade por Criativo</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Qualidade por Criativo</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Score de performance dos anúncios</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
