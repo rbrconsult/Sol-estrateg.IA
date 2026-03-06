@@ -58,6 +58,7 @@ export default function BI() {
         <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
           <TabsTrigger value="ads" className="text-xs gap-1.5">📣 Ads</TabsTrigger>
           <TabsTrigger value="sol-sdr" className="text-xs gap-1.5">🤖 Sol SDR</TabsTrigger>
+          <TabsTrigger value="fup-frio" className="text-xs gap-1.5">🧊 FUP Frio</TabsTrigger>
           <TabsTrigger value="solar-market" className="text-xs gap-1.5">📋 SolarMarket</TabsTrigger>
           <TabsTrigger value="sults" className="text-xs gap-1.5">🔧 Sults</TabsTrigger>
           <TabsTrigger value="cruzamentos" className="text-xs gap-1.5">🔀 Cruzamentos</TabsTrigger>
