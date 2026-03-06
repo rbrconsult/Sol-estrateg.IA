@@ -16,7 +16,7 @@ export function AdsTab() {
 
       {/* V1: Volume & CPL por Canal */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V1 — Volume & CPL por Canal</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Volume & CPL por Canal</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Leads gerados e custo por lead</p>
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
