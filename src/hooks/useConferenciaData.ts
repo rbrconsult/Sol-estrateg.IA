@@ -640,6 +640,50 @@ export function useConferenciaData() {
       }))
       .sort((a, b) => b.score - a.score);
 
+    // ─── Monthly Evolution ───
+    const monthlyMap: Record<string, { total: number; qualificados: number; fechados: number; msgEnviadas: number; msgRecebidas: number }> = {};
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    proposals.forEach(p => {
+      const d = safeDate(p.data_criacao_projeto) || safeDate(p.data_qualificacao_sol) || safeDate(p.ultima_atualizacao);
+      if (!d) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
+      monthlyMap[key].total++;
+      if (isSolQualificado(p)) monthlyMap[key].qualificados++;
+      if ((p.status || '').toLowerCase().includes('ganho')) monthlyMap[key].fechados++;
+    });
+
+    allMakeRecords.forEach(r => {
+      const d = safeDate(r.data_envio);
+      if (!d) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
+      const enviadas = r.historico.filter(h => h.tipo === 'enviada').length;
+      const recebidas = r.historico.filter(h => h.tipo === 'recebida').length;
+      monthlyMap[key].msgEnviadas += Math.max(enviadas, 1);
+      monthlyMap[key].msgRecebidas += recebidas;
+    });
+
+    const monthlyEvolution: MonthlyEvolutionItem[] = Object.keys(monthlyMap)
+      .sort()
+      .slice(-12)
+      .map(key => {
+        const v = monthlyMap[key];
+        const [year, month] = key.split('-');
+        return {
+          mes: key,
+          mesLabel: `${meses[parseInt(month) - 1]}/${year.slice(2)}`,
+          totalLeads: v.total,
+          qualificados: v.qualificados,
+          pctQualificacao: v.total > 0 ? Math.round((v.qualificados / v.total) * 100) : 0,
+          msgEnviadas: v.msgEnviadas,
+          msgRecebidas: v.msgRecebidas,
+          conversao: v.total > 0 ? Math.round((v.fechados / v.total) * 100) : 0,
+          fechados: v.fechados,
+        };
+      });
+
     return {
       kpiCards,
       pipelineStages,
@@ -657,6 +701,7 @@ export function useConferenciaData() {
       slaMock: slaMockData,
       robotInsights: robotInsightsData,
       scorePorOrigem,
+      monthlyEvolution,
     };
   }, [proposals, allMakeRecords, makeMap]);
 
