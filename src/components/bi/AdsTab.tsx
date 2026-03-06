@@ -72,7 +72,7 @@ export function AdsTab() {
 
       {/* V3: Sazonalidade */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V3 — Sazonalidade</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Sazonalidade</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Tendência mensal de leads e CPL</p>
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
