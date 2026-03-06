@@ -16,7 +16,7 @@ import {
   solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
   slaMock as mockSlaMock, robotInsightsMock as mockRobotInsights, scorePorOrigemMock as mockScoreOrigem,
 } from "@/data/conferenciaMockData";
-import { useConferenciaData } from "@/hooks/useConferenciaData";
+import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
