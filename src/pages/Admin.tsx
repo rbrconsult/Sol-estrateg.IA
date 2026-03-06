@@ -590,6 +590,10 @@ export default function Admin() {
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="modules">Módulos</TabsTrigger>
             <TabsTrigger value="organizations">Organizações</TabsTrigger>
+            <TabsTrigger value="login-analytics" className="flex items-center gap-1">
+              <Fingerprint className="h-3.5 w-3.5" />
+              Análise de Logins
+            </TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="logs">Logs de Acesso</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
