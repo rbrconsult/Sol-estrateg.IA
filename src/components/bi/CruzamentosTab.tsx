@@ -129,7 +129,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
           <div className="space-y-4">
             {/* C4: Aproveitamento */}
             <div className="rounded-lg border bg-card border-border/50 p-4">
-              <h3 className="text-sm font-semibold text-foreground mb-1">C4 — Aproveitamento do Lead Qualificado</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Aproveitamento do Lead Qualificado</h3>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">O que acontece após o MQL</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
