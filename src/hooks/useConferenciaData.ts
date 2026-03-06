@@ -300,7 +300,9 @@ export function useConferenciaData() {
 
     // ── Agendamentos (closer + proposta + fechado) ──
     const agendamentos = proposals.filter(p => {
-      const stage = getSolStage(p.etapa, p.status);
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      const stage = getSolStageEnriched(p.etapa, p.status, md);
       return ['Closer', 'Proposta', 'Fechado'].includes(stage);
     }).length;
 
