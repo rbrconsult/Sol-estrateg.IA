@@ -234,7 +234,7 @@ export function useBIData(dateRange?: DateRange) {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Qualificado' || stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
-    const leadsFechados = proposals.filter(p => {
+    const leadsFechados = filteredProposals.filter(p => {
       const phone = normalizePhone(p.cliente_telefone || '');
       if (!fupPhones.has(phone)) return false;
       return (p.status || '').toLowerCase().includes('ganho');
