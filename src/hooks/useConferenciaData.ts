@@ -324,8 +324,10 @@ export function useConferenciaData() {
     const tempByEtapa: Record<string, { quente: number; morno: number; frio: number }> = {};
     stageOrder.forEach(s => tempByEtapa[s] = { quente: 0, morno: 0, frio: 0 });
     proposals.forEach(p => {
-      const stage = getSolStage(p.etapa, p.status);
-      const temp = parseTemp(p.temperatura);
+      const phone = normalizePhone(p.cliente_telefone || '');
+      const md = phone ? (makeMap.get(phone) || []) : [];
+      const stage = getSolStageEnriched(p.etapa, p.status, md);
+      const temp = getEnrichedTemp(p);
       if (tempByEtapa[stage] && temp) {
         if (temp === 'QUENTE') tempByEtapa[stage].quente++;
         else if (temp === 'MORNO') tempByEtapa[stage].morno++;
