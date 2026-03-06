@@ -114,7 +114,7 @@ export function useBIData(dateRange?: DateRange) {
     const from = dateRange.from.getTime();
     const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
     return adaptedProposals.filter(p => {
-      const d = safeDate(p.dataCriacao);
+      const d = safeDate(p.dataCriacaoProjeto || p.dataCriacaoProposta);
       if (!d) return true;
       const t = d.getTime();
       return t >= from && t <= to;
