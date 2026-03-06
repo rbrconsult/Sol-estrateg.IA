@@ -73,7 +73,7 @@ function getSolStage(etapa: string, status: string): string {
 }
 
 // ─── Main Hook ───
-export function useBIData() {
+export function useBIData(dateRange?: DateRange) {
   const { data: sheetsData, isLoading: sheetsLoading, error: sheetsError } = useGoogleSheetsData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
@@ -83,12 +83,50 @@ export function useBIData() {
     return adaptSheetData(sheetsData.data as any);
   }, [sheetsData]);
 
-  const makeMap = useMemo(() => {
-    if (!makeRecords) return new Map<string, MakeRecord[]>();
-    return buildMakeMap(makeRecords);
-  }, [makeRecords]);
+  // Filter by date range
+  const filteredProposals = useMemo(() => {
+    if (!dateRange?.from) return proposals;
+    const from = dateRange.from.getTime();
+    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
+    return proposals.filter(p => {
+      const d = safeDate(p.data_criacao_projeto || p.data_criacao_proposta);
+      if (!d) return true; // keep records without dates
+      const t = d.getTime();
+      return t >= from && t <= to;
+    });
+  }, [proposals, dateRange]);
 
-  const allMakeRecords = makeRecords || [];
+  const filteredMakeRecords = useMemo(() => {
+    const records = makeRecords || [];
+    if (!dateRange?.from) return records;
+    const from = dateRange.from.getTime();
+    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
+    return records.filter(r => {
+      const d = safeDate(r.data_envio);
+      if (!d) return true;
+      const t = d.getTime();
+      return t >= from && t <= to;
+    });
+  }, [makeRecords, dateRange]);
+
+  const filteredAdaptedProposals = useMemo(() => {
+    if (!dateRange?.from) return adaptedProposals;
+    const from = dateRange.from.getTime();
+    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
+    return adaptedProposals.filter(p => {
+      const d = safeDate(p.dataCriacao);
+      if (!d) return true;
+      const t = d.getTime();
+      return t >= from && t <= to;
+    });
+  }, [adaptedProposals, dateRange]);
+
+  const makeMap = useMemo(() => {
+    if (!filteredMakeRecords) return new Map<string, MakeRecord[]>();
+    return buildMakeMap(filteredMakeRecords);
+  }, [filteredMakeRecords]);
+
+  const allMakeRecords = filteredMakeRecords;
 
   // ═══ SOL SDR (V5-V8) ═══
   const solSDR = useMemo(() => {
