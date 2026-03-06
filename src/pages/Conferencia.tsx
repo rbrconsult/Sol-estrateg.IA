@@ -204,17 +204,24 @@ export default function Conferencia() {
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [filterEtapa, filterTemp, searchTerm, tabelaLeads, effectiveDateRange]);
 
-  /** Derive KPIs, Pipeline, Sol Hoje from filteredLeads */
+  /** Derive KPIs: use original when no date filter, derive from filteredLeads when filtering */
+  const hasDateFilter = !!(effectiveDateRange.from || effectiveDateRange.to);
+
   const filteredKpis = useMemo(() => {
+    // When no date filter active (30d default), use the original computed KPIs from all proposals
+    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
+      return kpiCards;
+    }
+
+    // When filtering, derive from filteredLeads
     const total = filteredLeads.length;
     const qualificados = filteredLeads.filter(l => l.etapa !== 'Robô SOL');
     const mqlCount = qualificados.length;
     const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
     const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
     const agendamentos = filteredLeads.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa));
-    // For percentage-based KPIs, use original values
     const taxaResp = kpiCards.find(k => k.label === 'Taxa Resposta');
-    const fupReativados = kpiCards.find(k => k.label === 'Resgatados FUP');
+    const fupCard = kpiCards.find(k => k.label === 'Resgatados FUP');
 
     return [
       { label: 'Leads Recebidos', value: total, suffix: '', detail: `${total} leads no período` },
@@ -223,11 +230,14 @@ export default function Conferencia() {
       { label: 'SQL', value: comProposta.length, suffix: '', detail: `${mqlCount > 0 ? ((comProposta.length / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
       { label: 'Agendamentos', value: agendamentos.length, suffix: '', detail: `${comProposta.length > 0 ? ((agendamentos.length / comProposta.length) * 100).toFixed(0) : 0}%` },
       { label: 'Fechados', value: fechados.length, suffix: '', detail: `${total > 0 ? ((fechados.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
-      fupReativados ? { ...fupReativados } : { label: 'Resgatados FUP', value: 0, suffix: '', detail: 'R$ 0' },
+      fupCard ? { ...fupCard } : { label: 'Resgatados FUP', value: 0, suffix: '', detail: 'R$ 0' },
     ] as KPICard[];
-  }, [filteredLeads, kpiCards]);
+  }, [filteredLeads, kpiCards, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const filteredPipeline = useMemo(() => {
+    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
+      return pipelineStages;
+    }
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
     const icons = ['🤖', '🎯', '✅', '📞', '📋', '🏆'];
     return stageOrder.map((etapa, i) => {
@@ -235,7 +245,7 @@ export default function Conferencia() {
       const count = filteredLeads.filter(l => laterStages.includes(l.etapa)).length;
       return { etapa, valor: count, icon: icons[i], desc: `${count} leads` };
     });
-  }, [filteredLeads]);
+  }, [filteredLeads, pipelineStages, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const filteredFup = useMemo(() => {
     // Keep original FUP data (not filtered by date for now)
@@ -249,6 +259,9 @@ export default function Conferencia() {
   const filteredSolHoje = useMemo(() => solHojeData, [solHojeData]);
 
   const filteredTemperatura = useMemo(() => {
+    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
+      return temperaturaPorEtapa;
+    }
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta'];
     return stageOrder.map(etapa => {
       const inStage = filteredLeads.filter(l => l.etapa === etapa);
@@ -259,7 +272,7 @@ export default function Conferencia() {
         frio: inStage.filter(l => l.temperatura === 'FRIO').length,
       };
     });
-  }, [filteredLeads]);
+  }, [filteredLeads, temperaturaPorEtapa, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
