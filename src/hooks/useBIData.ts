@@ -376,7 +376,7 @@ export function useBIData(dateRange?: DateRange) {
     };
 
     // C5: Perfil do lead que fecha
-    const fechados = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const fechados = filteredProposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
     const perfilMap: Record<string, { count: number; valorTotal: number }> = {};
     fechados.forEach(p => {
       const origem = extractOrigem(p.etiquetas);
