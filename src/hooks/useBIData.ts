@@ -152,7 +152,7 @@ export function useBIData(dateRange?: DateRange) {
     ];
 
     // V6: Motivos de desqualificação
-    const desqualificados = proposals.filter(p => !isSolQualificado(p) && p.nota_completa);
+    const desqualificados = filteredProposals.filter(p => !isSolQualificado(p) && p.nota_completa);
     const motivosMap: Record<string, number> = {};
     desqualificados.forEach(p => {
       const nota = (p.nota_completa || '').toLowerCase();
