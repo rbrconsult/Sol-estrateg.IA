@@ -392,7 +392,7 @@ export function useBIData(dateRange?: DateRange) {
     })).sort((a, b) => b.fechados - a.fechados);
 
     // C6: Velocidade × Conversão
-    const velocidade = proposals
+    const velocidade = filteredProposals
       .filter(p => p.data_criacao_projeto && p.data_criacao_proposta)
       .map(p => {
         const d1 = safeDate(p.data_criacao_projeto);
