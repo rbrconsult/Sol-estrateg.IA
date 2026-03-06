@@ -353,7 +353,7 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ Cruzamentos Grupo B (SDR × SolarMarket) ═══
   const cruzamentosB = useMemo(() => {
-    if (proposals.length === 0 || allMakeRecords.length === 0) return null;
+    if (filteredProposals.length === 0 || allMakeRecords.length === 0) return null;
 
     // C4: Aproveitamento do lead qualificado
     const qualificadosSol = proposals.filter(p => isSolQualificado(p));
