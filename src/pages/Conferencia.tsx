@@ -198,7 +198,7 @@ export default function Conferencia() {
   /** Date-filtered leads (base for ALL metrics) */
   const filteredLeads = useMemo(() => {
     return tabelaLeads
-      .filter(l => isInDateRange(l.dataCriacao))
+      .filter(l => isInDateRange((l as any).dataCriacao))
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
