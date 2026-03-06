@@ -236,7 +236,7 @@ export function useBIData() {
       tentativasMap[faixa].total++;
       if (r.status_resposta === 'respondeu') tentativasMap[faixa].responderam++;
       const phone = r.telefone;
-      const rescued = leadsResgatados.some(p => normalizePhone(p.telefone || '') === phone);
+      const rescued = leadsResgatados.some(p => normalizePhone(p.cliente_telefone || '') === phone);
       if (rescued) tentativasMap[faixa].resgatados++;
     });
 
