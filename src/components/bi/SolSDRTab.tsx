@@ -36,7 +36,7 @@ export function SolSDRTab({ data, isLoading }: Props) {
     <div className="space-y-6">
       {/* V5: Funil Real-time */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">V5 — Funil Real-time SOL SDR</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Funil Real-time SOL SDR</h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-4">Pipeline do robô de qualificação</p>
         <div className="flex flex-wrap gap-2">
           {data.funil.map((stage, i) => {
