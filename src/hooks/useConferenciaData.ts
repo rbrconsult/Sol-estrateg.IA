@@ -92,6 +92,17 @@ function isSolQualificado(p: Proposal): boolean {
   return v === 'sim' || v === 'yes' || v === 'true' || v === '1' || v === 'qualificado';
 }
 
+/** Enrich qualification using Make Data Store status */
+function isSolQualificadoEnriched(p: Proposal, makeData: MakeRecord[]): boolean {
+  if (isSolQualificado(p)) return true;
+  // Check Make Data Store for qualification signals
+  for (const mr of makeData) {
+    const rawStatus = (mr as any)._rawMakeStatus || '';
+    if (rawStatus === 'QUALIFICADO' || rawStatus === 'WHATSAPP') return true;
+  }
+  return false;
+}
+
 function parseScore(s: string): number {
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
