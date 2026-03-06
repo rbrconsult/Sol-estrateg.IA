@@ -16,6 +16,12 @@ export interface MakeRecord {
   status_resposta: 'respondeu' | 'ignorou' | 'aguardando' | string;
   data_resposta?: string;
   historico: MakeInteraction[];
+  /** Raw status from Make Data Store (QUALIFICADO, WHATSAPP, DESQUALIFICADO, etc.) */
+  makeStatus?: string;
+  /** Temperature from Make Data Store */
+  makeTemperatura?: string;
+  /** Score from Make Data Store */
+  makeScore?: string;
 }
 
 interface MakeResponse {
