@@ -326,7 +326,7 @@ export function useBIData(dateRange?: DateRange) {
     // V9: Funil comercial
     const etapasOrder = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO'];
     const funilComercial = etapasOrder.map(etapa => {
-      const count = proposals.filter(p => (p.etapa || '').toUpperCase().trim() === etapa).length;
+      const count = filteredProposals.filter(p => (p.etapa || '').toUpperCase().trim() === etapa).length;
       return { etapa, valor: count };
     }).filter(e => e.valor > 0);
 
