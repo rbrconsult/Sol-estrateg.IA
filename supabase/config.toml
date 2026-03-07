@@ -1,37 +1,29 @@
 project_id = "xffzjdulkdgyicsllznp"
 
-[functions.track-session]
-verify_jwt = false
-
-[functions.impersonate-user]
-verify_jwt = false
-
-[functions.notify-ticket-whatsapp]
-verify_jwt = false
-
-[functions.whatsapp-webhook]
-verify_jwt = false
-
-[functions.whatsapp-proxy]
-verify_jwt = false
-
-[functions.fetch-sheets]
-verify_jwt = false
-
-[functions.fetch-make-data]
-verify_jwt = false
-
-[functions.fetch-make-errors]
-verify_jwt = false
-
-[functions.make-action]
-verify_jwt = false
-
-[functions.send-whatsapp-alert]
-verify_jwt = false
-
-[functions.fetch-make-heartbeat]
-verify_jwt = false
-
-[functions.manage-users]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.fetch-make-data]
+    verify_jwt = false
+  [functions.fetch-make-errors]
+    verify_jwt = false
+  [functions.fetch-make-heartbeat]
+    verify_jwt = false
+  [functions.fetch-sheets]
+    verify_jwt = false
+  [functions.impersonate-user]
+    verify_jwt = false
+  [functions.make-action]
+    verify_jwt = false
+  [functions.manage-users]
+    verify_jwt = false
+  [functions.notify-ticket-whatsapp]
+    verify_jwt = false
+  [functions.send-whatsapp-alert]
+    verify_jwt = false
+  [functions.track-session]
+    verify_jwt = false
+  [functions.whatsapp-proxy]
+    verify_jwt = false
+  [functions.whatsapp-webhook]
+    verify_jwt = false
