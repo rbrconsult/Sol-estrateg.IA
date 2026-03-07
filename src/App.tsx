@@ -17,6 +17,7 @@ import Vendedores from "./pages/Vendedores";
 import Perdas from "./pages/Perdas";
 import Origens from "./pages/Origens";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
 import Monitoramento from "./pages/Monitoramento";
@@ -40,6 +41,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>

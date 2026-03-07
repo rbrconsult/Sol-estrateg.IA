@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
@@ -18,6 +19,14 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
+  // Turnstile state
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
   const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -27,33 +36,80 @@ export default function Auth() {
     }
   }, [user, authLoading, navigate]);
 
+  // Fetch Turnstile site key
+  useEffect(() => {
+    const fetchSiteKey = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('turnstile-verify', {
+          method: 'GET',
+        });
+        if (data?.siteKey) {
+          setTurnstileSiteKey(data.siteKey);
+        }
+      } catch (err) {
+        console.warn('Turnstile não disponível:', err);
+      }
+    };
+    fetchSiteKey();
+  }, []);
+
   const validateInputs = () => {
     try {
       emailSchema.parse(email);
-    } catch (error) {
+    } catch {
       toast.error('Email inválido');
       return false;
     }
-    
     try {
       passwordSchema.parse(password);
-    } catch (error) {
+    } catch {
       toast.error('Senha deve ter pelo menos 6 caracteres');
       return false;
     }
-    
     return true;
+  };
+
+  const verifyTurnstile = async (): Promise<boolean> => {
+    if (!turnstileSiteKey || !turnstileToken) {
+      if (turnstileSiteKey) {
+        toast.error('Por favor, complete a verificação de segurança.');
+        return false;
+      }
+      // If no site key loaded, skip verification gracefully
+      return true;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('turnstile-verify', {
+        body: { token: turnstileToken },
+      });
+      if (error || !data?.success) {
+        toast.error('Verificação de segurança falhou. Tente novamente.');
+        setTurnstileToken(null);
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error('Erro na verificação de segurança.');
+      return false;
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateInputs()) return;
-    
+
     setLoading(true);
+
+    const verified = await verifyTurnstile();
+    if (!verified) {
+      setLoading(false);
+      return;
+    }
+
     const { error } = await signIn(email, password);
     setLoading(false);
-    
+
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Credenciais inválidas. Verifique email e senha.');
@@ -68,23 +124,27 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateInputs()) return;
-    
-    setLoading(true);
-    const { error } = await signUp(email, password);
-    setLoading(false);
-    
+    try {
+      emailSchema.parse(resetEmail);
+    } catch {
+      toast.error('Email inválido');
+      return;
+    }
+
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetLoading(false);
+
     if (error) {
-      if (error.message.includes('User already registered')) {
-        toast.error('Este email já está cadastrado. Tente fazer login.');
-      } else {
-        toast.error(error.message);
-      }
+      toast.error(error.message);
     } else {
-      toast.success('Conta criada com sucesso! Você já pode fazer login.');
+      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setForgotPassword(false);
+      setResetEmail('');
     }
   };
 
@@ -98,20 +158,62 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
-        <Card className="w-full max-w-md border-border/50 shadow-2xl">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <span className="text-2xl font-bold text-primary">S</span>
-              </div>
-              <span className="text-2xl font-bold">Sol Estrateg.IA</span>
+      <Card className="w-full max-w-md border-border/50 shadow-2xl">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="text-2xl font-bold text-primary">S</span>
             </div>
-            <CardTitle className="text-xl">Acesso ao Dashboard</CardTitle>
-            <CardDescription>
-              Entre com suas credenciais para acessar o sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            <span className="text-2xl font-bold">Sol Estrateg.IA</span>
+          </div>
+          <CardTitle className="text-xl">
+            {forgotPassword ? 'Recuperar Senha' : 'Acesso ao Dashboard'}
+          </CardTitle>
+          <CardDescription>
+            {forgotPassword
+              ? 'Digite seu email para receber o link de recuperação'
+              : 'Entre com suas credenciais para acessar o sistema'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {forgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={resetLoading}>
+                {resetLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar Link de Recuperação'
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setForgotPassword(false)}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar ao Login
+              </Button>
+            </form>
+          ) : (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signin-email">Email</Label>
@@ -150,7 +252,22 @@ export default function Auth() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+
+              {turnstileSiteKey && (
+                <TurnstileWidget
+                  siteKey={turnstileSiteKey}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                  theme="light"
+                />
+              )}
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || (!!turnstileSiteKey && !turnstileToken)}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -160,9 +277,20 @@ export default function Auth() {
                   'Entrar'
                 )}
               </Button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setForgotPassword(true)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+                >
+                  Esqueceu a senha?
+                </button>
+              </div>
             </form>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
