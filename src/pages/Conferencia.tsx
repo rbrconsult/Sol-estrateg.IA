@@ -318,6 +318,7 @@ export default function Conferencia() {
               <SelectItem value="7d">7 dias</SelectItem>
               <SelectItem value="30d">30 dias</SelectItem>
               <SelectItem value="90d">90 dias</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="custom">Personalizado</SelectItem>
             </SelectContent>
           </Select>
