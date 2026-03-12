@@ -25,11 +25,13 @@ export function TurnstileWidget({
   onVerify,
   onExpire,
   onError,
+  onUnsupported,
   theme = 'light',
   size = 'normal',
 }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const errorCountRef = useRef(0);
 
   const renderWidget = useCallback(() => {
     if (!containerRef.current || !window.turnstile || widgetIdRef.current) return;
@@ -38,11 +40,20 @@ export function TurnstileWidget({
       sitekey: siteKey,
       callback: onVerify,
       'expired-callback': onExpire,
-      'error-callback': onError,
+      'error-callback': () => {
+        errorCountRef.current += 1;
+        if (errorCountRef.current >= 2) {
+          // Turnstile is not working on this domain — skip it
+          console.warn('Turnstile failed multiple times, bypassing verification');
+          onUnsupported?.();
+        } else {
+          onError?.();
+        }
+      },
       theme,
       size,
     });
-  }, [siteKey, onVerify, onExpire, onError, theme, size]);
+  }, [siteKey, onVerify, onExpire, onError, onUnsupported, theme, size]);
 
   useEffect(() => {
     // Load the Turnstile script if not already loaded
