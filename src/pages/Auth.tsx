@@ -259,6 +259,10 @@ export default function Auth() {
                   onVerify={(token) => setTurnstileToken(token)}
                   onExpire={() => setTurnstileToken(null)}
                   onError={() => setTurnstileToken(null)}
+                  onUnsupported={() => {
+                    // Turnstile doesn't work on this domain — disable requirement
+                    setTurnstileSiteKey(null);
+                  }}
                   theme="light"
                 />
               )}
