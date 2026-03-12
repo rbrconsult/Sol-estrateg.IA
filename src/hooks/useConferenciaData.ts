@@ -458,7 +458,7 @@ export function useConferenciaData() {
       if (projId) seenProjects.add(projId);
       return true;
     });
-    const tabelaLeads: TabelaLead[] = uniqueProposals.slice(0, 50).map((p, i) => {
+    const tabelaLeads: TabelaLead[] = uniqueProposals.map((p, i) => {
       const phone = normalizePhone(p.cliente_telefone || '');
       const makeData = phone ? (makeMap.get(phone) || []) : [];
       // Enrich temperature from Make if CRM doesn't have it

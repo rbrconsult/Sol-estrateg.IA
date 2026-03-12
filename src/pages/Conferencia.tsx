@@ -174,8 +174,9 @@ export default function Conferencia() {
     if (periodo === "hoje") return { from: today, to: today };
     if (periodo === "3d") return { from: subDays(today, 3), to: today };
     if (periodo === "7d") return { from: subDays(today, 7), to: today };
+    if (periodo === "30d") return { from: subDays(today, 30), to: today };
     if (periodo === "90d") return { from: subDays(today, 90), to: today };
-    // "30d" is the default — no date filter applied (shows all data)
+    // "all" — no date filter
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [periodo, dateFrom, dateTo]);
 
