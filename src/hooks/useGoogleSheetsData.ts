@@ -65,8 +65,8 @@ export function useGoogleSheetsData() {
   return useQuery({
     queryKey: ['google-sheets-data', organizationId],
     queryFn: () => fetchSheetsData(organizationId),
-    staleTime: 1000 * 60 * 5,
-    refetchInterval: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 2,
+    refetchInterval: 1000 * 60 * 5,
     retry: 2,
     enabled: !!organizationId && !!user,
   });
