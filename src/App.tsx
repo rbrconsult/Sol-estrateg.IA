@@ -26,6 +26,7 @@ import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
+import Roadmap from "./pages/Roadmap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,11 @@ const App = () => (
               <Route path="/bi" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/roadmap" element={
+                <ProtectedRoute>
+                  <MainLayout><Roadmap /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
