@@ -19,7 +19,8 @@ import {
   Zap,
   Presentation,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Rocket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
