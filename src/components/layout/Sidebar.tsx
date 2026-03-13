@@ -229,6 +229,25 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-2 border-t border-border/50 space-y-2">
+        {/* Roadmap button — highlighted */}
+        <Link
+          to="/roadmap"
+          onClick={handleNavClick}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium",
+            "bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 text-primary hover:from-primary/30 hover:to-accent/30",
+            location.pathname === '/roadmap' && "from-primary/40 to-accent/40 border-primary/50"
+          )}
+        >
+          <Rocket className="h-5 w-5 shrink-0 animate-pulse" />
+          {!isCollapsed && (
+            <div className="overflow-hidden">
+              <span className="text-sm">Novidades</span>
+              <p className="text-[10px] text-primary/70 truncate">Roadmap & Changelog</p>
+            </div>
+          )}
+        </Link>
+
         {userRole === 'super_admin' && (
           <Link
             to="/admin"

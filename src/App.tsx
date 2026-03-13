@@ -118,6 +118,11 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/roadmap" element={
+                <ProtectedRoute>
+                  <MainLayout><Roadmap /></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
