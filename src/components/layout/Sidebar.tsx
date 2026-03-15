@@ -20,7 +20,8 @@ import {
   Presentation,
   AlertTriangle,
   BarChart3,
-  Rocket
+  Rocket,
+  RotateCcw as RotateCcwIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
