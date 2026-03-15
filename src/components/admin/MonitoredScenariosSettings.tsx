@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Activity, Plus, Trash2, Save, Loader2, GripVertical } from "lucide-react";
+import { Activity, Plus, Trash2, Save, Loader2, GripVertical, Search } from "lucide-react";
 
 interface MonitoredScenario {
   id: number;
@@ -17,7 +17,7 @@ export default function MonitoredScenariosSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newId, setNewId] = useState("");
-  const [newName, setNewName] = useState("");
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     fetchConfig();
@@ -56,19 +56,36 @@ export default function MonitoredScenariosSettings() {
     }
   };
 
-  const addScenario = () => {
+  const addScenario = async () => {
     const id = parseInt(newId);
-    if (!id || !newName.trim()) {
-      toast.error("Preencha o ID e o nome do cenário");
+    if (!id) {
+      toast.error("Preencha o ID do cenário");
       return;
     }
     if (scenarios.some((s) => s.id === id)) {
       toast.error("Cenário já existe na lista");
       return;
     }
-    setScenarios([...scenarios, { id, name: newName.trim() }]);
-    setNewId("");
-    setNewName("");
+
+    // Try to find the name from make_heartbeat
+    setSearching(true);
+    try {
+      const { data } = await supabase
+        .from("make_heartbeat" as any)
+        .select("scenario_name")
+        .eq("scenario_id", id)
+        .limit(1);
+
+      const name = (data as any)?.[0]?.scenario_name || `Cenário #${id}`;
+      setScenarios([...scenarios, { id, name }]);
+      setNewId("");
+      toast.success(`Adicionado: ${name}`);
+    } catch {
+      setScenarios([...scenarios, { id, name: `Cenário #${id}` }]);
+      setNewId("");
+    } finally {
+      setSearching(false);
+    }
   };
 
   const removeScenario = (id: number) => {
@@ -93,13 +110,13 @@ export default function MonitoredScenariosSettings() {
           Cenários Monitorados (Heartbeat)
         </CardTitle>
         <CardDescription>
-          Gerencie os fluxos do Make.com que aparecem na página de Monitoramento. A ordem define a exibição.
+          Adicione o ID do cenário Make.com — o nome é buscado automaticamente. A ordem define a exibição.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Existing scenarios */}
         <div className="space-y-2">
-          {scenarios.map((s, index) => (
+          {scenarios.map((s) => (
             <div
               key={s.id}
               className="flex items-center gap-2 p-2 rounded-md border border-border bg-muted/30"
@@ -126,28 +143,20 @@ export default function MonitoredScenariosSettings() {
           )}
         </div>
 
-        {/* Add new */}
+        {/* Add new - only ID, name is auto-fetched */}
         <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border">
-          <div className="space-y-1 sm:w-32">
+          <div className="space-y-1 flex-1">
             <Label className="text-xs">Scenario ID</Label>
             <Input
-              placeholder="3716678"
+              placeholder="Ex: 4347372"
               value={newId}
               onChange={(e) => setNewId(e.target.value.replace(/\D/g, ""))}
-            />
-          </div>
-          <div className="space-y-1 flex-1">
-            <Label className="text-xs">Nome do cenário</Label>
-            <Input
-              placeholder="Ex: Robô Sol"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addScenario()}
             />
           </div>
           <div className="flex items-end">
-            <Button variant="outline" size="sm" onClick={addScenario} className="gap-1">
-              <Plus className="h-4 w-4" /> Adicionar
+            <Button variant="outline" size="sm" onClick={addScenario} disabled={searching} className="gap-1">
+              {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-4 w-4" /> Buscar e Adicionar</>}
             </Button>
           </div>
         </div>
