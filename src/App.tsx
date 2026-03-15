@@ -108,6 +108,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </Lead360Provider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
