@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
+import { useLead360 } from "@/contexts/Lead360Context";
 import type { Proposal } from "@/data/dataAdapter";
 
 const tempBadge: Record<string, "default" | "destructive" | "secondary"> = {
