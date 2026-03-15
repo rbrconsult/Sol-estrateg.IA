@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Proposal } from "@/data/dataAdapter";
+import { useLead360 } from "@/contexts/Lead360Context";
 import { Phone, Mail, Copy } from "lucide-react";
 import { toast } from "sonner";
 
