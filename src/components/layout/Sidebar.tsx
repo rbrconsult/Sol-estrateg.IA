@@ -90,7 +90,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     '/dashboard': 'dashboard',
     '/pipeline': 'pipeline',
     '/performance': 'vendedores',
-    '/atividades': 'atividades',
+    '/performance': 'vendedores',
     '/chamados': 'chamados',
     '/bi': 'bi',
     '/operacoes': 'monitoramento',
