@@ -33,10 +33,12 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <Lead360Provider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <ImpersonationBanner />
+          <Lead360Drawer />
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
