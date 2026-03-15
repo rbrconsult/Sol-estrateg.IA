@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Kanban, 
-  Activity, 
+   
   ChevronLeft,
   ChevronRight,
   Sparkles,

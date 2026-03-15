@@ -63,11 +63,6 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/atividades" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="atividades"><Atividades /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
               <Route path="/chamados" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="chamados"><Chamados /></ModuleGuard></MainLayout>
