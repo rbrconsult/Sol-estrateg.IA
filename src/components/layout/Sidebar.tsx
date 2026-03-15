@@ -20,7 +20,8 @@ import {
   Presentation,
   AlertTriangle,
   BarChart3,
-  Rocket
+  Rocket,
+  RotateCcw as RotateCcwIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,12 @@ const menuItems = [
     icon: BarChart3, 
     path: "/bi",
     description: "Centro de Inteligência"
+  },
+  { 
+    title: "Reprocessamento", 
+    icon: RotateCcwIcon, 
+    path: "/reprocessamento",
+    description: "Webhook Reprocessar"
   },
 ];
 
