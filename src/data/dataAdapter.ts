@@ -32,6 +32,17 @@ export interface Proposal {
   origemLead: string;
   probabilidade: number;
   motivoPerda: string;
+  // Campos enriquecidos do Make Data Store
+  makeStatus?: string;
+  makeTemperatura?: string;
+  makeScore?: string;
+  makeRobo?: string;
+  makeStatusResposta?: string;
+  makeTotalMensagens?: number;
+  makeMensagensRecebidas?: number;
+  makeRespondeu?: boolean;
+  makeDataResposta?: string;
+  makeHistorico?: { tipo: string; mensagem: string; data: string }[];
 }
 
 // Etapas reais da planilha SOL Insights
