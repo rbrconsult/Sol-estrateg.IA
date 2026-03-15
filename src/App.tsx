@@ -28,6 +28,7 @@ import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
 import Roadmap from "./pages/Roadmap";
 import Reprocessamento from "./pages/Reprocessamento";
+import Sanitizacao from "./pages/Sanitizacao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
