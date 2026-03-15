@@ -119,11 +119,6 @@ export function KanbanBoard({ proposals }: KanbanBoardProps) {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
-      <ProjectDetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        proposal={selectedProposal}
-      />
     </>
   );
 }
