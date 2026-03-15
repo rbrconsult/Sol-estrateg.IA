@@ -15,6 +15,7 @@ interface ProjectsModalProps {
 }
 
 export function ProjectsModal({ isOpen, onClose, title, proposals }: ProjectsModalProps) {
+  const { openLead360 } = useLead360();
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
