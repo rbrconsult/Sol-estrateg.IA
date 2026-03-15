@@ -72,7 +72,7 @@ export function ProjectsModal({ isOpen, onClose, title, proposals }: ProjectsMod
             </TableHeader>
             <TableBody>
               {proposals.map((proposal) => (
-                <TableRow key={proposal.id} className="border-border hover:bg-secondary/30">
+                <TableRow key={proposal.id} className="border-border hover:bg-secondary/30 cursor-pointer" onClick={() => { onClose(); openLead360(proposal); }}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{proposal.projetoId}</TableCell>
                   <TableCell>
                     <div>
