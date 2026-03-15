@@ -12,9 +12,8 @@ import { ComercialResponsavelStats } from "@/components/dashboard/ComercialRespo
 import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
 import { VendedorRanking } from "@/components/dashboard/VendedorRanking";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
 import {
-  adaptSheetData,
   extractVendedores,
   extractPreVendedores,
   getKPIs,
@@ -37,25 +36,20 @@ const Index = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
 
-  const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
+  const { proposals, isLoading, error, refetch, isFetching, enrichedCount } = useEnrichedProposals();
 
   const handleDateRangeChange = (range: DateRange, preset: DateFilterPreset) => {
     setDateRange(range);
     setDatePreset(preset);
   };
 
-  const { proposals, vendedores, preVendedores, lastUpdate } = useMemo(() => {
-    if (sheetsData?.data && sheetsData.data.length > 0) {
-      const adapted = adaptSheetData(sheetsData.data);
-      return {
-        proposals: adapted,
-        vendedores: extractVendedores(adapted),
-        preVendedores: extractPreVendedores(adapted),
-        lastUpdate: new Date(sheetsData.lastUpdate).toLocaleString('pt-BR')
-      };
-    }
-    return { proposals: [], vendedores: [], preVendedores: [], lastUpdate: new Date().toLocaleString('pt-BR') };
-  }, [sheetsData]);
+  const { vendedores, preVendedores, lastUpdate } = useMemo(() => {
+    return {
+      vendedores: extractVendedores(proposals),
+      preVendedores: extractPreVendedores(proposals),
+      lastUpdate: new Date().toLocaleString('pt-BR')
+    };
+  }, [proposals]);
 
   const filteredProposals = useMemo(() => {
     return proposals.filter(p => {
