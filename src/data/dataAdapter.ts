@@ -1,4 +1,5 @@
 import { Proposal as SheetProposal } from '@/hooks/useGoogleSheetsData';
+import { MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 
 export interface Proposal {
   id: string;
