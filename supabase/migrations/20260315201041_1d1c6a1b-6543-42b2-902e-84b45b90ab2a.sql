@@ -1,0 +1,3 @@
+INSERT INTO public.app_settings (key, value)
+VALUES ('monitored_scenario_ids', '[{"id":3716678,"name":"Robô Sol"},{"id":4015856,"name":"Robô FUP FRIO"},{"id":3416132,"name":"Fluxo 1 - Captura Meta Ads (A)"},{"id":3724157,"name":"Fluxo 1 - Captura Meta Ads (B)"},{"id":3672582,"name":"Fluxo 1 - Captura Meta Ads (C)"},{"id":3576316,"name":"Fluxo 2 - Captura Site/Landing (A)"},{"id":3567830,"name":"Fluxo 2 - Captura Site/Landing (B)"},{"id":3403261,"name":"Fluxo 2 - Captura Site/Landing (C)"},{"id":3724150,"name":"Fluxo 2 - Captura Site/Landing (D)"},{"id":3616676,"name":"Autenticação (A)"},{"id":3415205,"name":"Autenticação (B)"}]')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now();

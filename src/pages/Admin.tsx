@@ -20,6 +20,7 @@ import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
 import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
+import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSettings';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -803,6 +804,7 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+            <MonitoredScenariosSettings />
           </TabsContent>
         </Tabs>
 
