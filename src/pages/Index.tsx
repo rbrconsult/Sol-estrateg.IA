@@ -120,6 +120,11 @@ const Index = () => {
               <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
               {proposals.length} propostas carregadas
             </span>
+            {hasEnrichment && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-chart-2/10 px-3 py-1 text-xs text-chart-2">
+                🔗 {enrichedCount} enriquecidas via Data Store
+              </span>
+            )}
             <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Atualizar

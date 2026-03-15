@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";

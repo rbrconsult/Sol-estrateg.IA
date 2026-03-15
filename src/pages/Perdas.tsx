@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData, getPerdasData } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { XCircle, TrendingDown, AlertTriangle, Target, Users, Lightbulb, RefreshCw } from "lucide-react";
@@ -11,13 +11,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const COLORS = ['hsl(var(--destructive))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--primary))'];
 
 export default function Perdas() {
-  const { data: sheetData, isLoading, error } = useGoogleSheetsData();
+  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
 
   const perdasData = useMemo(() => {
-    if (!sheetData?.data) return null;
-    const proposals = adaptSheetData(sheetData.data);
-    return getPerdasData(proposals);
-  }, [sheetData]);
+    if (allProposals.length === 0) return null;
+    return getPerdasData(allProposals);
+  }, [allProposals]);
 
   if (isLoading) {
     return (
