@@ -14,6 +14,7 @@ const tempBadge: Record<string, "default" | "destructive" | "secondary"> = {
 interface Props { leads: Proposal[] }
 
 export function LeadsTable({ leads }: Props) {
+  const { openLead360 } = useLead360();
   return (
     <Card>
       <CardHeader className="pb-2">
