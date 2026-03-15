@@ -14,7 +14,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import PipelinePage from "./pages/PipelinePage";
 import Performance from "./pages/Performance";
-import Atividades from "./pages/Atividades";
+
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
