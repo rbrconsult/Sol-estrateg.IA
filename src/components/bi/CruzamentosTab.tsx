@@ -43,7 +43,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
       <section>
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-base font-bold text-foreground">Grupo A — Ads × SDR</h2>
-          <Badge variant="outline" className="border-warning/50 text-warning text-xs">Mock — depende de Ads</Badge>
+          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
