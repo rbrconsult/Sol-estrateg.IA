@@ -13,7 +13,7 @@ import {
   RotateCcw,
   Presentation,
   BarChart3,
-  Rocket,
+  BarChart3,
   Settings,
   TrendingUp
 } from "lucide-react";
