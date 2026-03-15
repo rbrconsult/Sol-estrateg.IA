@@ -804,6 +804,7 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+            <MonitoredScenariosSettings />
           </TabsContent>
         </Tabs>
 
