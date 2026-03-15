@@ -36,7 +36,7 @@ export function LeadsTable({ leads }: Props) {
           </TableHeader>
           <TableBody>
             {leads.map((l) => (
-              <TableRow key={l.id}>
+              <TableRow key={l.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openLead360(l)}>
                 <TableCell className="font-medium">{l.nomeCliente}</TableCell>
                 <TableCell>{l.etapa}</TableCell>
                 <TableCell>
