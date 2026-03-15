@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Kanban, 
-  Activity, 
+   
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -51,12 +51,6 @@ const menuItems = [
     description: "Vendedores, Perdas & Origens"
   },
   { 
-    title: "Atividades", 
-    icon: Activity, 
-    path: "/atividades",
-    description: "Follow-ups"
-  },
-  { 
     title: "Chamados", 
     icon: Headset, 
     path: "/chamados",
@@ -96,7 +90,6 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     '/dashboard': 'dashboard',
     '/pipeline': 'pipeline',
     '/performance': 'vendedores',
-    '/atividades': 'atividades',
     '/chamados': 'chamados',
     '/bi': 'bi',
     '/operacoes': 'monitoramento',

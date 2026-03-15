@@ -14,7 +14,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import PipelinePage from "./pages/PipelinePage";
 import Performance from "./pages/Performance";
-import Atividades from "./pages/Atividades";
+
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
@@ -61,11 +61,6 @@ const App = () => (
               <Route path="/performance" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/atividades" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="atividades"><Atividades /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/chamados" element={
