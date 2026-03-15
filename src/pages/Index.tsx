@@ -97,12 +97,12 @@ const Index = () => {
     let worstIdx = 0;
     let worstConv = 100;
     for (let i = 1; i < funnelData.length; i++) {
-      const prev = funnelData[i - 1].quantity;
-      const curr = funnelData[i].quantity;
+      const prev = funnelData[i - 1].quantidade;
+      const curr = funnelData[i].quantidade;
       const conv = prev > 0 ? (curr / prev) * 100 : 100;
       if (conv < worstConv) { worstConv = conv; worstIdx = i; }
     }
-    return `${funnelData[worstIdx - 1]?.name || ""} → ${funnelData[worstIdx]?.name || ""} (${worstConv.toFixed(0)}%)`;
+    return `${funnelData[worstIdx - 1]?.etapa || ""} → ${funnelData[worstIdx]?.etapa || ""} (${worstConv.toFixed(0)}%)`;
   }, [funnelData]);
 
   return (
