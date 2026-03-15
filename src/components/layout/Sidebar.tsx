@@ -117,6 +117,12 @@ const menuItems = [
     path: "/reprocessamento",
     description: "Webhook Reprocessar"
   },
+  { 
+    title: "Sanitização", 
+    icon: ShieldCheck, 
+    path: "/sanitizacao",
+    description: "Qualidade da Base"
+  },
 ];
 
 interface SidebarProps {

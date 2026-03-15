@@ -130,6 +130,11 @@ const App = () => (
                   <MainLayout><Reprocessamento /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/sanitizacao" element={
+                <ProtectedRoute>
+                  <MainLayout><Sanitizacao /></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
