@@ -3,26 +3,19 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Kanban, 
-  TrendingUp, 
   Activity, 
-  Users, 
-  XCircle, 
-  Target,
   ChevronLeft,
   ChevronRight,
   Sparkles,
   LogOut,
   Shield,
   Headset,
-  HelpCircle,
   RotateCcw,
-  Zap,
   Presentation,
-  AlertTriangle,
   BarChart3,
   Rocket,
-  RotateCcw as RotateCcwIcon,
-  ShieldCheck
+  Settings,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,13 +42,13 @@ const menuItems = [
     title: "Pipeline", 
     icon: Kanban, 
     path: "/pipeline",
-    description: "Kanban Visual"
+    description: "Kanban & Forecast"
   },
   { 
-    title: "Forecast", 
+    title: "Performance", 
     icon: TrendingUp, 
-    path: "/forecast",
-    description: "Previsão de Receita"
+    path: "/performance",
+    description: "Vendedores, Perdas & Origens"
   },
   { 
     title: "Atividades", 
@@ -64,46 +57,10 @@ const menuItems = [
     description: "Follow-ups"
   },
   { 
-    title: "Vendedores", 
-    icon: Users, 
-    path: "/vendedores",
-    description: "Performance"
-  },
-  { 
-    title: "Perdas", 
-    icon: XCircle, 
-    path: "/perdas",
-    description: "Análise de Perdas"
-  },
-  { 
-    title: "Origens", 
-    icon: Target, 
-    path: "/origens",
-    description: "Origem dos Leads"
-  },
-  { 
     title: "Chamados", 
     icon: Headset, 
     path: "/chamados",
     description: "Suporte & SLA"
-  },
-  { 
-    title: "Monitoramento", 
-    icon: Activity, 
-    path: "/monitoramento",
-    description: "Status do Sistema"
-  },
-  { 
-    title: "Erros Make", 
-    icon: AlertTriangle, 
-    path: "/make-errors",
-    description: "Monitor Automações"
-  },
-  { 
-    title: "Ajuda",
-    icon: HelpCircle, 
-    path: "/ajuda",
-    description: "Central de Ajuda"
   },
   { 
     title: "BI", 
@@ -112,16 +69,10 @@ const menuItems = [
     description: "Centro de Inteligência"
   },
   { 
-    title: "Reprocessamento", 
-    icon: RotateCcwIcon, 
-    path: "/reprocessamento",
-    description: "Webhook Reprocessar"
-  },
-  { 
-    title: "Sanitização", 
-    icon: ShieldCheck, 
-    path: "/sanitizacao",
-    description: "Qualidade da Base"
+    title: "Operações", 
+    icon: Settings, 
+    path: "/operacoes",
+    description: "Monitor & Automações"
   },
 ];
 
@@ -141,20 +92,14 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const isCollapsed = isMobile ? false : collapsed;
 
   const pathToModule: Record<string, string> = {
-    '/leads': 'leads',
     '/': 'conferencia',
     '/dashboard': 'dashboard',
     '/pipeline': 'pipeline',
-    '/forecast': 'forecast',
+    '/performance': 'vendedores',
     '/atividades': 'atividades',
-    '/vendedores': 'vendedores',
-    '/perdas': 'perdas',
-    '/origens': 'origens',
     '/chamados': 'chamados',
-    '/monitoramento': 'monitoramento',
-    '/make-errors': 'make-errors',
-    '/ajuda': 'ajuda',
     '/bi': 'bi',
+    '/operacoes': 'monitoramento',
   };
 
   const visibleMenuItems = menuItems.filter(item => {

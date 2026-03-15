@@ -10,25 +10,19 @@ import { ModuleGuard } from "@/components/ModuleGuard";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
-import Pipeline from "./pages/Pipeline";
-import Forecast from "./pages/Forecast";
+import PipelinePage from "./pages/PipelinePage";
+import Performance from "./pages/Performance";
 import Atividades from "./pages/Atividades";
-import Vendedores from "./pages/Vendedores";
-import Perdas from "./pages/Perdas";
-import Origens from "./pages/Origens";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
-import Monitoramento from "./pages/Monitoramento";
-import MakeErrors from "./pages/MakeErrors";
+import Operacoes from "./pages/Operacoes";
 import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
 import Roadmap from "./pages/Roadmap";
-import Reprocessamento from "./pages/Reprocessamento";
-import Sanitizacao from "./pages/Sanitizacao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,12 +51,12 @@ const App = () => (
               } />
               <Route path="/pipeline" element={
                 <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="pipeline"><Pipeline /></ModuleGuard></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="pipeline"><PipelinePage /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/forecast" element={
+              <Route path="/performance" element={
                 <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="forecast"><Forecast /></ModuleGuard></MainLayout>
+                  <MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/atividades" element={
@@ -70,49 +64,9 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="atividades"><Atividades /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/vendedores" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="vendedores"><Vendedores /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/perdas" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="perdas"><Perdas /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/origens" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="origens"><Origens /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <MainLayout><Admin /></MainLayout>
-                </ProtectedRoute>
-              } />
               <Route path="/chamados" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="chamados"><Chamados /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/monitoramento" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Monitoramento /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/make-errors" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="make-errors"><MakeErrors /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/ajuda" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/leads" element={
-                <ProtectedRoute>
-                  <MainLayout><Leads /></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/bi" element={
@@ -120,19 +74,29 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/operacoes" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Operacoes /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/leads" element={
+                <ProtectedRoute>
+                  <MainLayout><Leads /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <MainLayout><Admin /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/ajuda" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/roadmap" element={
                 <ProtectedRoute>
                   <MainLayout><Roadmap /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/reprocessamento" element={
-                <ProtectedRoute>
-                  <MainLayout><Reprocessamento /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/sanitizacao" element={
-                <ProtectedRoute>
-                  <MainLayout><Sanitizacao /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
