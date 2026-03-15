@@ -1,28 +1,12 @@
-import { useMemo } from "react";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
 import { HelpButton } from "@/components/HelpButton";
 
 const Pipeline = () => {
-  const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
-
-  const { proposals, lastUpdate } = useMemo(() => {
-    if (sheetsData?.data && sheetsData.data.length > 0) {
-      const adapted = adaptSheetData(sheetsData.data);
-      return {
-        proposals: adapted,
-        lastUpdate: new Date(sheetsData.lastUpdate).toLocaleString('pt-BR')
-      };
-    }
-    return {
-      proposals: [],
-      lastUpdate: new Date().toLocaleString('pt-BR')
-    };
-  }, [sheetsData]);
+  const { proposals, lastUpdate, isLoading, error, refetch, isFetching, enrichedCount } = useEnrichedProposals();
 
   const hasData = proposals.length > 0;
 

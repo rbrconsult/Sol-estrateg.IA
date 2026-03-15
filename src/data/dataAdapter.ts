@@ -1,4 +1,5 @@
 import { Proposal as SheetProposal } from '@/hooks/useGoogleSheetsData';
+import { MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 
 export interface Proposal {
   id: string;
@@ -31,6 +32,17 @@ export interface Proposal {
   origemLead: string;
   probabilidade: number;
   motivoPerda: string;
+  // Campos enriquecidos do Make Data Store
+  makeStatus?: string;
+  makeTemperatura?: string;
+  makeScore?: string;
+  makeRobo?: string;
+  makeStatusResposta?: string;
+  makeTotalMensagens?: number;
+  makeMensagensRecebidas?: number;
+  makeRespondeu?: boolean;
+  makeDataResposta?: string;
+  makeHistorico?: { tipo: string; mensagem: string; data: string }[];
 }
 
 // Etapas reais da planilha SOL Insights
@@ -835,4 +847,94 @@ export function getROIPorOrigem(proposals: Proposal[]) {
     scoreMedio: d.scores.length > 0 ? d.scores.reduce((a, b) => a + b, 0) / d.scores.length : 0,
     ticketMedio: d.total > 0 ? d.valor / d.total : 0,
   })).sort((a, b) => b.valorTotal - a.valorTotal);
+}
+
+// ============ ENRIQUECIMENTO COM MAKE DATA STORE ============
+
+/**
+ * Enriquece propostas do CRM com dados do Make Data Store (cross 360°).
+ * Matching por telefone normalizado.
+ */
+export function enrichProposalsWithMake(proposals: Proposal[], makeRecords: MakeRecord[]): Proposal[] {
+  if (!makeRecords || makeRecords.length === 0) return proposals;
+  
+  const makeMap = buildMakeMap(makeRecords);
+  
+  return proposals.map(p => {
+    const phone = normalizePhone(p.clienteTelefone);
+    if (!phone) return p;
+    
+    const matches = makeMap.get(phone);
+    if (!matches || matches.length === 0) return p;
+    
+    // Use the most recent match (by data_envio)
+    const sorted = [...matches].sort((a, b) => {
+      const da = new Date(a.data_envio || 0).getTime();
+      const db = new Date(b.data_envio || 0).getTime();
+      return db - da;
+    });
+    const primary = sorted[0];
+    
+    // Aggregate across all matches
+    const totalMensagens = matches.reduce((sum, m) => sum + (m.historico?.length || 0), 0);
+    const mensagensRecebidas = matches.reduce((sum, m) => 
+      sum + (m.historico?.filter(h => h.tipo === 'recebida').length || 0), 0);
+    const respondeu = matches.some(m => m.status_resposta === 'respondeu');
+    
+    // Enrichment: fallback CRM fields with Make data
+    let temperatura = p.temperatura;
+    if (!temperatura && primary.makeTemperatura) {
+      const mt = primary.makeTemperatura.toUpperCase();
+      if (['QUENTE', 'MORNO', 'FRIO'].includes(mt)) {
+        temperatura = mt as Proposal['temperatura'];
+      }
+    }
+    
+    let solScore = p.solScore;
+    if (solScore === 0 && primary.makeScore) {
+      const parsed = parseFloat(primary.makeScore);
+      if (!isNaN(parsed)) solScore = parsed;
+    }
+    
+    // MQL/SQL enrichment: Make status QUALIFICADO or WHATSAPP = qualified
+    let solQualificado = p.solQualificado;
+    if (!solQualificado && primary.makeStatus) {
+      const ms = primary.makeStatus.toUpperCase();
+      if (ms === 'QUALIFICADO' || ms === 'WHATSAPP') {
+        solQualificado = true;
+      }
+    }
+    
+    // Recalculate probability with enriched data
+    let probabilidade = p.probabilidade;
+    if (p.status === 'Aberto') {
+      if (solScore > 0 && solScore !== p.solScore) {
+        probabilidade = Math.min(100, solScore * 10);
+      }
+      if (temperatura === 'QUENTE') probabilidade = Math.max(probabilidade, 70);
+      else if (temperatura === 'FRIO') probabilidade = Math.min(probabilidade, 30);
+      if (respondeu) probabilidade = Math.max(probabilidade, 60);
+    }
+    
+    // Flatten all historico from all matches
+    const allHistorico = matches.flatMap(m => m.historico || []);
+    
+    return {
+      ...p,
+      temperatura,
+      solScore,
+      solQualificado,
+      probabilidade,
+      makeStatus: primary.makeStatus,
+      makeTemperatura: primary.makeTemperatura,
+      makeScore: primary.makeScore,
+      makeRobo: primary.robo,
+      makeStatusResposta: primary.status_resposta,
+      makeTotalMensagens: totalMensagens,
+      makeMensagensRecebidas: mensagensRecebidas,
+      makeRespondeu: respondeu,
+      makeDataResposta: primary.data_resposta,
+      makeHistorico: allHistorico,
+    };
+  });
 }

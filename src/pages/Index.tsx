@@ -12,9 +12,8 @@ import { ComercialResponsavelStats } from "@/components/dashboard/ComercialRespo
 import { VendedorFunnel } from "@/components/dashboard/VendedorFunnel";
 import { VendedorRanking } from "@/components/dashboard/VendedorRanking";
 import { TrendsChart } from "@/components/dashboard/TrendsChart";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
 import {
-  adaptSheetData,
   extractVendedores,
   extractPreVendedores,
   getKPIs,
@@ -37,25 +36,20 @@ const Index = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
 
-  const { data: sheetsData, isLoading, error, refetch, isFetching } = useGoogleSheetsData();
+  const { proposals, isLoading, error, refetch, isFetching, enrichedCount } = useEnrichedProposals();
 
   const handleDateRangeChange = (range: DateRange, preset: DateFilterPreset) => {
     setDateRange(range);
     setDatePreset(preset);
   };
 
-  const { proposals, vendedores, preVendedores, lastUpdate } = useMemo(() => {
-    if (sheetsData?.data && sheetsData.data.length > 0) {
-      const adapted = adaptSheetData(sheetsData.data);
-      return {
-        proposals: adapted,
-        vendedores: extractVendedores(adapted),
-        preVendedores: extractPreVendedores(adapted),
-        lastUpdate: new Date(sheetsData.lastUpdate).toLocaleString('pt-BR')
-      };
-    }
-    return { proposals: [], vendedores: [], preVendedores: [], lastUpdate: new Date().toLocaleString('pt-BR') };
-  }, [sheetsData]);
+  const { vendedores, preVendedores, lastUpdate } = useMemo(() => {
+    return {
+      vendedores: extractVendedores(proposals),
+      preVendedores: extractPreVendedores(proposals),
+      lastUpdate: new Date().toLocaleString('pt-BR')
+    };
+  }, [proposals]);
 
   const filteredProposals = useMemo(() => {
     return proposals.filter(p => {
@@ -84,6 +78,7 @@ const Index = () => {
   }, []);
 
   const hasData = proposals.length > 0;
+  const hasEnrichment = enrichedCount > 0;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -125,6 +120,11 @@ const Index = () => {
               <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
               {proposals.length} propostas carregadas
             </span>
+            {hasEnrichment && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-chart-2/10 px-3 py-1 text-xs text-chart-2">
+                🔗 {enrichedCount} enriquecidas via Data Store
+              </span>
+            )}
             <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Atualizar

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData, getOrigensData } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { getOrigensData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Target, TrendingUp, DollarSign, Clock, Users, RefreshCw } from "lucide-react";
@@ -12,13 +12,12 @@ import { Progress } from "@/components/ui/progress";
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--destructive))'];
 
 export default function Origens() {
-  const { data: sheetData, isLoading, error } = useGoogleSheetsData();
+  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
 
   const origensData = useMemo(() => {
-    if (!sheetData?.data) return [];
-    const proposals = adaptSheetData(sheetData.data);
-    return getOrigensData(proposals);
-  }, [sheetData]);
+    if (allProposals.length === 0) return [];
+    return getOrigensData(allProposals);
+  }, [allProposals]);
 
   if (isLoading) {
     return (

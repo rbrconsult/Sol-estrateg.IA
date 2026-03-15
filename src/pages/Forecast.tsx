@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData, getForecastData, getKPIs } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { getForecastData, getKPIs } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
 import { TrendingUp, AlertTriangle, Target, Zap, Calendar, RefreshCw } from "lucide-react";
@@ -10,15 +10,14 @@ import { HelpButton } from "@/components/HelpButton";
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 export default function Forecast() {
-  const { data: sheetData, isLoading, error } = useGoogleSheetsData();
+  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
 
-  const { proposals, forecastData, kpis } = useMemo(() => {
-    if (!sheetData?.data) return { proposals: [], forecastData: null, kpis: null };
-    const proposals = adaptSheetData(sheetData.data);
-    const forecastData = getForecastData(proposals);
-    const kpis = getKPIs(proposals);
-    return { proposals, forecastData, kpis };
-  }, [sheetData]);
+  const { forecastData, kpis } = useMemo(() => {
+    if (allProposals.length === 0) return { forecastData: null, kpis: null };
+    const forecastData = getForecastData(allProposals);
+    const kpis = getKPIs(allProposals);
+    return { forecastData, kpis };
+  }, [allProposals]);
 
   if (isLoading) {
     return (

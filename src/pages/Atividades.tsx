@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData, getAtividadesData, getVendedorPerformance, Proposal } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { getAtividadesData, getVendedorPerformance, Proposal } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Activity, Clock, AlertTriangle, Phone, Calendar, Trophy, Zap, RefreshCw, ChevronDown, ChevronUp, X, User, MapPin } from "lucide-react";
@@ -167,16 +167,15 @@ function LeadList({ leads, type, onClose }: LeadListProps) {
 }
 
 export default function Atividades() {
-  const { data: sheetData, isLoading, error } = useGoogleSheetsData();
+  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
   const [activeKPI, setActiveKPI] = useState<KPIType>(null);
 
   const { proposals, atividadesData, vendedorPerformance } = useMemo(() => {
-    if (!sheetData?.data) return { proposals: [], atividadesData: null, vendedorPerformance: [] };
-    const proposals = adaptSheetData(sheetData.data);
-    const atividadesData = getAtividadesData(proposals);
-    const vendedorPerformance = getVendedorPerformance(proposals);
-    return { proposals, atividadesData, vendedorPerformance };
-  }, [sheetData]);
+    if (allProposals.length === 0) return { proposals: [], atividadesData: null, vendedorPerformance: [] };
+    const atividadesData = getAtividadesData(allProposals);
+    const vendedorPerformance = getVendedorPerformance(allProposals);
+    return { proposals: allProposals, atividadesData, vendedorPerformance };
+  }, [allProposals]);
 
   if (isLoading) {
     return (

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData, getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
 import { Users, TrendingUp, DollarSign, XCircle, RefreshCw } from "lucide-react";
@@ -10,15 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 export default function Vendedores() {
-  const { data: sheetData, isLoading, error } = useGoogleSheetsData();
+  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
 
   const { vendedorPerformance, perdasData } = useMemo(() => {
-    if (!sheetData?.data) return { vendedorPerformance: [], perdasData: null };
-    const proposals = adaptSheetData(sheetData.data);
-    const vendedorPerformance = getVendedorPerformance(proposals);
-    const perdasData = getPerdasData(proposals);
+    if (allProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
+    const vendedorPerformance = getVendedorPerformance(allProposals);
+    const perdasData = getPerdasData(allProposals);
     return { vendedorPerformance, perdasData };
-  }, [sheetData]);
+  }, [allProposals]);
 
   if (isLoading) {
     return (
