@@ -51,12 +51,6 @@ const menuItems = [
     description: "Vendedores, Perdas & Origens"
   },
   { 
-    title: "Atividades", 
-    icon: Activity, 
-    path: "/atividades",
-    description: "Follow-ups"
-  },
-  { 
     title: "Chamados", 
     icon: Headset, 
     path: "/chamados",
