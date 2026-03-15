@@ -124,6 +124,11 @@ const App = () => (
                   <MainLayout><Roadmap /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/reprocessamento" element={
+                <ProtectedRoute>
+                  <MainLayout><Reprocessamento /></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

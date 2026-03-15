@@ -110,6 +110,12 @@ const menuItems = [
     path: "/bi",
     description: "Centro de Inteligência"
   },
+  { 
+    title: "Reprocessamento", 
+    icon: RotateCcwIcon, 
+    path: "/reprocessamento",
+    description: "Webhook Reprocessar"
+  },
 ];
 
 interface SidebarProps {
