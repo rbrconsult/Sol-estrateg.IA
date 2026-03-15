@@ -242,7 +242,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
           <div className="rounded-lg border bg-card border-border/50 p-4">
             <h3 className="text-sm font-semibold text-foreground mb-1">LTV por Perfil</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Lifetime Value</p>
-            <Badge variant="outline" className="border-warning/50 text-warning text-[10px] mb-3">Mock</Badge>
+            
             <div className="space-y-2">
               {ltvPerfil.map((l, i) => (
                 <div key={i} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
