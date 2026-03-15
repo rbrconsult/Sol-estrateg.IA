@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
+import { useLead360 } from "@/contexts/Lead360Context";
 import type { Proposal } from "@/data/dataAdapter";
 
 const tempBadge: Record<string, "default" | "destructive" | "secondary"> = {
@@ -13,6 +14,7 @@ const tempBadge: Record<string, "default" | "destructive" | "secondary"> = {
 interface Props { leads: Proposal[] }
 
 export function LeadsTable({ leads }: Props) {
+  const { openLead360 } = useLead360();
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -34,7 +36,7 @@ export function LeadsTable({ leads }: Props) {
           </TableHeader>
           <TableBody>
             {leads.map((l) => (
-              <TableRow key={l.id}>
+              <TableRow key={l.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openLead360(l)}>
                 <TableCell className="font-medium">{l.nomeCliente}</TableCell>
                 <TableCell>{l.etapa}</TableCell>
                 <TableCell>

@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Proposal } from "@/data/dataAdapter";
 import { ProjectCard } from "./ProjectCard";
-import { ProjectDetailModal } from "./ProjectDetailModal";
+import { useLead360 } from "@/contexts/Lead360Context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface KanbanBoardProps {
@@ -30,8 +30,7 @@ const columnColors: Record<string, string> = {
 };
 
 export function KanbanBoard({ proposals }: KanbanBoardProps) {
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openLead360 } = useLead360();
 
   // Agrupa propostas por etapa
   const proposalsByStage = useMemo(() => {
@@ -55,8 +54,7 @@ export function KanbanBoard({ proposals }: KanbanBoardProps) {
   }, [proposals]);
 
   const handleCardClick = (proposal: Proposal) => {
-    setSelectedProposal(proposal);
-    setIsModalOpen(true);
+    openLead360(proposal);
   };
 
   const formatCurrency = (value: number) => {
@@ -121,11 +119,6 @@ export function KanbanBoard({ proposals }: KanbanBoardProps) {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
-      <ProjectDetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        proposal={selectedProposal}
-      />
     </>
   );
 }

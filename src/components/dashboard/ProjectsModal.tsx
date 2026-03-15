@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Proposal } from "@/data/dataAdapter";
+import { useLead360 } from "@/contexts/Lead360Context";
 import { Phone, Mail, Copy } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,6 +15,7 @@ interface ProjectsModalProps {
 }
 
 export function ProjectsModal({ isOpen, onClose, title, proposals }: ProjectsModalProps) {
+  const { openLead360 } = useLead360();
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -70,7 +72,7 @@ export function ProjectsModal({ isOpen, onClose, title, proposals }: ProjectsMod
             </TableHeader>
             <TableBody>
               {proposals.map((proposal) => (
-                <TableRow key={proposal.id} className="border-border hover:bg-secondary/30">
+                <TableRow key={proposal.id} className="border-border hover:bg-secondary/30 cursor-pointer" onClick={() => { onClose(); openLead360(proposal); }}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{proposal.projetoId}</TableCell>
                   <TableCell>
                     <div>

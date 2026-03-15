@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
+import { Lead360Provider } from "@/contexts/Lead360Context";
+import { Lead360Drawer } from "@/components/lead360/Lead360Drawer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
@@ -31,10 +33,12 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <Lead360Provider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <ImpersonationBanner />
+          <Lead360Drawer />
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
@@ -104,6 +108,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </Lead360Provider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
