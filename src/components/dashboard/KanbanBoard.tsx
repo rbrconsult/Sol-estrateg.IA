@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Proposal } from "@/data/dataAdapter";
 import { ProjectCard } from "./ProjectCard";
-import { ProjectDetailModal } from "./ProjectDetailModal";
+import { useLead360 } from "@/contexts/Lead360Context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface KanbanBoardProps {
