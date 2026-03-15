@@ -30,8 +30,7 @@ const columnColors: Record<string, string> = {
 };
 
 export function KanbanBoard({ proposals }: KanbanBoardProps) {
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openLead360 } = useLead360();
 
   // Agrupa propostas por etapa
   const proposalsByStage = useMemo(() => {
