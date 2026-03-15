@@ -10,10 +10,6 @@ export function AdsTab() {
 
   return (
     <div className="space-y-6">
-      <Badge variant="outline" className="border-warning/50 text-warning text-xs">
-        ⏳ Aguardando integração Meta / Google Ads — dados simulados
-      </Badge>
-
       {/* V1: Volume & CPL por Canal */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
         <h3 className="text-sm font-semibold text-foreground mb-1">Volume & CPL por Canal</h3>

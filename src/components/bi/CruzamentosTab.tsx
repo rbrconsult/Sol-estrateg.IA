@@ -43,7 +43,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
       <section>
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-base font-bold text-foreground">Grupo A — Ads × SDR</h2>
-          <Badge variant="outline" className="border-warning/50 text-warning text-xs">Mock — depende de Ads</Badge>
+          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,7 +218,6 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
           <div className="rounded-lg border bg-card border-border/50 p-4">
             <h3 className="text-sm font-semibold text-foreground mb-1">CAC Real</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Custo de Aquisição de Cliente</p>
-            <Badge variant="outline" className="border-warning/50 text-warning text-[10px] mb-3">Mock</Badge>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-xs text-muted-foreground">Ads</p>
@@ -243,7 +242,7 @@ export function CruzamentosTab({ cruzamentosB, leadsEmRisco, isLoading }: Props)
           <div className="rounded-lg border bg-card border-border/50 p-4">
             <h3 className="text-sm font-semibold text-foreground mb-1">LTV por Perfil</h3>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Lifetime Value</p>
-            <Badge variant="outline" className="border-warning/50 text-warning text-[10px] mb-3">Mock</Badge>
+            
             <div className="space-y-2">
               {ltvPerfil.map((l, i) => (
                 <div key={i} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">

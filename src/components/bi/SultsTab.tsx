@@ -9,10 +9,6 @@ export function SultsTab() {
 
   return (
     <div className="space-y-6">
-      <Badge variant="outline" className="border-warning/50 text-warning text-xs">
-        ⏳ Aguardando integração Sults API — dados simulados
-      </Badge>
-
       {/* V12: Funil Operacional Pós-venda */}
       <div className="rounded-lg border bg-card border-border/50 p-4">
         <h3 className="text-sm font-semibold text-foreground mb-1">Funil Operacional Pós-venda</h3>
