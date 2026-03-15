@@ -21,7 +21,8 @@ import {
   AlertTriangle,
   BarChart3,
   Rocket,
-  RotateCcw as RotateCcwIcon
+  RotateCcw as RotateCcwIcon,
+  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,12 @@ const menuItems = [
     icon: RotateCcwIcon, 
     path: "/reprocessamento",
     description: "Webhook Reprocessar"
+  },
+  { 
+    title: "Sanitização", 
+    icon: ShieldCheck, 
+    path: "/sanitizacao",
+    description: "Qualidade da Base"
   },
 ];
 

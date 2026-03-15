@@ -28,6 +28,7 @@ import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
 import Roadmap from "./pages/Roadmap";
 import Reprocessamento from "./pages/Reprocessamento";
+import Sanitizacao from "./pages/Sanitizacao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -127,6 +128,11 @@ const App = () => (
               <Route path="/reprocessamento" element={
                 <ProtectedRoute>
                   <MainLayout><Reprocessamento /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sanitizacao" element={
+                <ProtectedRoute>
+                  <MainLayout><Sanitizacao /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
