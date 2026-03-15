@@ -54,8 +54,7 @@ export function KanbanBoard({ proposals }: KanbanBoardProps) {
   }, [proposals]);
 
   const handleCardClick = (proposal: Proposal) => {
-    setSelectedProposal(proposal);
-    setIsModalOpen(true);
+    openLead360(proposal);
   };
 
   const formatCurrency = (value: number) => {
