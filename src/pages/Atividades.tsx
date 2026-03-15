@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
-import { adaptSheetData, getAtividadesData, getVendedorPerformance, Proposal } from "@/data/dataAdapter";
+import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { getAtividadesData, getVendedorPerformance, Proposal } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Activity, Clock, AlertTriangle, Phone, Calendar, Trophy, Zap, RefreshCw, ChevronDown, ChevronUp, X, User, MapPin } from "lucide-react";
