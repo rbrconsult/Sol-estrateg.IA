@@ -78,6 +78,7 @@ const Index = () => {
   }, []);
 
   const hasData = proposals.length > 0;
+  const hasEnrichment = enrichedCount > 0;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
