@@ -30,20 +30,10 @@ export interface ScenarioHealth {
   timeline: { time: string; status: "success" | "error" | "warning" | "empty" }[];
 }
 
-/** Scenario IDs in display order */
-const PRINCIPAL_SCENARIO_ORDER: number[] = [
-  // Robô Sol
-  3716678,
-  // Robô FUP FRIO
-  4015856,
-  // Fluxo 1 - Captura Meta Ads
-  3416132, 3724157, 3672582,
-  // Fluxo 2 - Captura Site/Landing
-  3576316, 3567830, 3403261, 3724150,
-  // Autenticações
-  3616676, 3415205,
-];
-const PRINCIPAL_SCENARIO_IDS = new Set(PRINCIPAL_SCENARIO_ORDER);
+interface MonitoredScenario {
+  id: number;
+  name: string;
+}
 
 function buildTimeline(entries: HeartbeatEntry[]): ScenarioHealth["timeline"] {
   const now = new Date();
@@ -73,7 +63,7 @@ function buildTimeline(entries: HeartbeatEntry[]): ScenarioHealth["timeline"] {
   return buckets;
 }
 
-function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
+function computeHealth(entries: HeartbeatEntry[], monitoredIds: Set<number>, monitoredOrder: number[]): ScenarioHealth[] {
   const byScenario = new Map<number, HeartbeatEntry[]>();
   for (const e of entries) {
     const arr = byScenario.get(e.scenario_id) || [];
@@ -114,21 +104,39 @@ function computeHealth(entries: HeartbeatEntry[]): ScenarioHealth[] {
   // Only keep principal scenarios with recent activity (48h)
   const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
   const active = result.filter((s) => {
-    if (!PRINCIPAL_SCENARIO_IDS.has(s.scenario_id)) return false;
+    if (!monitoredIds.has(s.scenario_id)) return false;
     const lastExec = s.lastSuccess || s.lastError;
     return lastExec && new Date(lastExec).getTime() >= cutoff48h;
   });
 
-  // Sort by defined order
+  // Sort by configured order
   return active.sort((a, b) => {
-    const ai = PRINCIPAL_SCENARIO_ORDER.indexOf(a.scenario_id);
-    const bi = PRINCIPAL_SCENARIO_ORDER.indexOf(b.scenario_id);
+    const ai = monitoredOrder.indexOf(a.scenario_id);
+    const bi = monitoredOrder.indexOf(b.scenario_id);
     return ai - bi;
   });
 }
 
 export function useMakeHeartbeat() {
   const queryClient = useQueryClient();
+
+  // Fetch monitored scenario IDs from app_settings
+  const configQuery = useQuery({
+    queryKey: ["monitored-scenarios-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "monitored_scenario_ids")
+        .single();
+      if (error) throw error;
+      return JSON.parse(data.value) as MonitoredScenario[];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const monitoredOrder = (configQuery.data ?? []).map((s) => s.id);
+  const monitoredIds = new Set(monitoredOrder);
 
   const heartbeatQuery = useQuery({
     queryKey: ["make-heartbeat"],
@@ -142,9 +150,10 @@ export function useMakeHeartbeat() {
       return data as unknown as HeartbeatEntry[];
     },
     refetchInterval: 5 * 60 * 1000,
+    enabled: configQuery.isSuccess,
   });
 
-  const healthData = heartbeatQuery.data ? computeHealth(heartbeatQuery.data) : [];
+  const healthData = heartbeatQuery.data ? computeHealth(heartbeatQuery.data, monitoredIds, monitoredOrder) : [];
 
   const syncMutation = useMutation({
     mutationFn: async () => {
