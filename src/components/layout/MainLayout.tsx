@@ -1,9 +1,10 @@
 import { ReactNode, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Menu } from "lucide-react";
+import { Menu, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -61,6 +62,15 @@ export function MainLayout({ children }: MainLayoutProps) {
       <main className={isMobile ? "" : "ml-16 lg:ml-64 transition-all duration-300"}>
         {children}
       </main>
+
+      {/* Floating "Novidades" button — bottom right */}
+      <Link
+        to="/roadmap"
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-border/50 bg-card/90 backdrop-blur-sm px-3 py-2 text-xs text-muted-foreground hover:text-primary hover:border-primary/40 shadow-sm transition-all"
+      >
+        <Rocket className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Novidades</span>
+      </Link>
       {checked && (
         <OnboardingModal
           open={showOnboarding}
