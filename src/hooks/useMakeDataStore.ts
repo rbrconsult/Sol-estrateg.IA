@@ -22,6 +22,24 @@ export interface MakeRecord {
   makeTemperatura?: string;
   /** Score from Make Data Store */
   makeScore?: string;
+  /** Lead name */
+  nome?: string;
+  /** City */
+  cidade?: string;
+  /** Monthly bill range */
+  valorConta?: string;
+  /** Property type */
+  imovel?: string;
+  /** Email */
+  email?: string;
+  /** Project ID from CRM */
+  projectId?: string;
+  /** Follow-up count */
+  followupCount?: number;
+  /** Last follow-up date */
+  lastFollowupDate?: string;
+  /** codigo_status from Make (NAO_RESPONDEU, etc.) */
+  codigoStatus?: string;
 }
 
 interface MakeResponse {
