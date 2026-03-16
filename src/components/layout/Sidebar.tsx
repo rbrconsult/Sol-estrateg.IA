@@ -235,7 +235,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
           <ThemeToggle />
         </div>
 
-        {!isCollapsed && (
+        <div className="px-2.5 py-1">
           <div className="px-2.5 py-1">
             <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
             {userRole === "super_admin" && (
