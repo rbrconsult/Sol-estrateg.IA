@@ -146,23 +146,11 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
               <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
-            {!isCollapsed && (
               <div className="overflow-hidden">
                 <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
                 <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
-            )}
           </div>
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCollapsed(!collapsed)}
-              className="h-7 w-7 shrink-0 hover:bg-primary/10"
-            >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
-          )}
         </div>
       </div>
 
