@@ -90,6 +90,12 @@ const menuItems = [
     description: "Lead + SLAs"
   },
   { 
+    title: "Painel Comercial", 
+    icon: Zap, 
+    path: "/painel-comercial",
+    description: "Alertas & Fila"
+  },
+  { 
     title: "Operações", 
     icon: Settings, 
     path: "/operacoes",
