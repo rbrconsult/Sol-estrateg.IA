@@ -1,5 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { Sidebar } from "./Sidebar";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +19,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checked, setChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       )}
 
       {/* Desktop sidebar */}
-      {!isMobile && <Sidebar onResetOnboarding={() => setShowOnboarding(true)} />}
+      {!isMobile && <Sidebar onResetOnboarding={() => setShowOnboarding(true)} collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />}
 
       {/* Mobile sidebar sheet */}
       {isMobile && (
@@ -59,7 +61,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </Sheet>
       )}
 
-      <main className={isMobile ? "" : "ml-16 lg:ml-64 transition-all duration-300"}>
+      <main className={isMobile ? "" : cn("transition-all duration-300", sidebarCollapsed ? "ml-16" : "ml-60")}>
         {children}
       </main>
 
