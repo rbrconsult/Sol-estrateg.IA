@@ -236,13 +236,11 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
         </div>
 
         <div className="px-2.5 py-1">
-          <div className="px-2.5 py-1">
-            <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
-            {userRole === "super_admin" && (
-              <p className="text-[10px] text-warning font-semibold">Super Admin</p>
-            )}
-          </div>
-        )}
+          <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+          {userRole === "super_admin" && (
+            <p className="text-[10px] text-warning font-semibold">Super Admin</p>
+          )}
+        </div>
 
         {onResetOnboarding && (
           <Button
