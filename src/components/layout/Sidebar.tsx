@@ -97,6 +97,12 @@ const menuItems = [
     description: "Alertas & Fila"
   },
   { 
+    title: "Reports", 
+    icon: FileText, 
+    path: "/reports",
+    description: "Templates WhatsApp"
+  },
+  { 
     title: "Operações", 
     icon: Settings, 
     path: "/operacoes",
