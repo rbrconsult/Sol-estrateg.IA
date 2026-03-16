@@ -87,10 +87,14 @@ const menuGroups: MenuGroup[] = [
 interface SidebarProps {
   onResetOnboarding?: () => void;
   onNavigate?: () => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (v: boolean) => void;
 }
 
-export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCollapsed, onCollapsedChange }: SidebarProps) {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const collapsed = controlledCollapsed ?? internalCollapsed;
+  const setCollapsed = (v: boolean) => { setInternalCollapsed(v); onCollapsedChange?.(v); };
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();

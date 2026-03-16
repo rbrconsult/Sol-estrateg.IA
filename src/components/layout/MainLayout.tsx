@@ -18,6 +18,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checked, setChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
