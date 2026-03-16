@@ -65,6 +65,30 @@ const menuItems = [
     description: "Centro de Inteligência"
   },
   { 
+    title: "Ads Performance", 
+    icon: Megaphone, 
+    path: "/ads-performance",
+    description: "Meta & Google Ads"
+  },
+  { 
+    title: "Robô SOL", 
+    icon: Bot, 
+    path: "/robo-sol",
+    description: "SDR IA — Performance"
+  },
+  { 
+    title: "FUP Frio", 
+    icon: Repeat, 
+    path: "/robo-fup-frio",
+    description: "Reengajamento"
+  },
+  { 
+    title: "Jornada", 
+    icon: Route, 
+    path: "/jornada-lead",
+    description: "Lead + SLAs"
+  },
+  { 
     title: "Operações", 
     icon: Settings, 
     path: "/operacoes",
