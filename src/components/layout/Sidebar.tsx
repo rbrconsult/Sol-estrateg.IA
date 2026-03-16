@@ -95,7 +95,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
 
-  const isCollapsed = isMobile ? false : collapsed;
+  
 
   // Track which groups are open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
