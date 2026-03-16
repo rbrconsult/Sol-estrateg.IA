@@ -24,6 +24,10 @@ import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
+import AdsPerformance from "./pages/AdsPerformance";
+import RoboSol from "./pages/RoboSol";
+import RoboFupFrio from "./pages/RoboFupFrio";
+import JornadaLead from "./pages/JornadaLead";
 import Roadmap from "./pages/Roadmap";
 import NotFound from "./pages/NotFound";
 
