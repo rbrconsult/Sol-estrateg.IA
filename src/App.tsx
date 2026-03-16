@@ -29,6 +29,7 @@ import RoboSol from "./pages/RoboSol";
 import RoboFupFrio from "./pages/RoboFupFrio";
 import JornadaLead from "./pages/JornadaLead";
 import Roadmap from "./pages/Roadmap";
+import PainelComercial from "./pages/PainelComercial";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -120,6 +121,11 @@ const App = () => (
               <Route path="/roadmap" element={
                 <ProtectedRoute>
                   <MainLayout><Roadmap /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/painel-comercial" element={
+                <ProtectedRoute>
+                  <MainLayout><PainelComercial /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

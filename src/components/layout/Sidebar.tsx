@@ -17,7 +17,8 @@ import {
   Megaphone,
   Bot,
   Repeat,
-  Route
+  Route,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,12 @@ const menuItems = [
     icon: Route, 
     path: "/jornada-lead",
     description: "Lead + SLAs"
+  },
+  { 
+    title: "Painel Comercial", 
+    icon: Zap, 
+    path: "/painel-comercial",
+    description: "Alertas & Fila"
   },
   { 
     title: "Operações", 
