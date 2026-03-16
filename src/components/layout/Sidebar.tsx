@@ -227,7 +227,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
             )}
           >
             <Shield className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span className="font-medium">Admin</span>}
+            <span className="font-medium">Admin</span>
           </Link>
         )}
 
