@@ -258,15 +258,11 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
 
         <Button
           variant="ghost"
-          size={isCollapsed ? "icon" : "default"}
           onClick={handleSignOut}
-          className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7",
-            isCollapsed && "px-0"
-          )}
+          className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7"
         >
           <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span className="ml-1.5">Sair</span>}
+          <span className="ml-1.5">Sair</span>
         </Button>
       </div>
     </aside>
