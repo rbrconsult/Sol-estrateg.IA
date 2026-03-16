@@ -244,7 +244,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
           </div>
         )}
 
-        {!isCollapsed && onResetOnboarding && (
+        {onResetOnboarding && (
           <Button
             variant="ghost"
             size="sm"
