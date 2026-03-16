@@ -135,7 +135,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
         "h-screen bg-card border-r border-border/50 flex flex-col",
         isMobile
           ? "w-full"
-          : cn("fixed left-0 top-0 z-50 transition-all duration-300", isCollapsed ? "w-16" : "w-60")
+          : "fixed left-0 top-0 z-50 w-60"
       )}
     >
       {/* Header */}
