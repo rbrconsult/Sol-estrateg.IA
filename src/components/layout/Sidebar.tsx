@@ -231,7 +231,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
           </Link>
         )}
 
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-2.5")}>
+        <div className="flex items-center px-2.5">
           <ThemeToggle />
         </div>
 
