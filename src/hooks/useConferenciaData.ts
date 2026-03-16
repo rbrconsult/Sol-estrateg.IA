@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
-import { useGoogleSheetsData, Proposal } from '@/hooks/useGoogleSheetsData';
-import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
-import { adaptSheetData } from '@/data/dataAdapter';
-import type { Proposal as AdaptedProposal } from '@/data/dataAdapter';
+import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 
-// ─── Types matching the mock data shapes ───
+// ─── Types matching the page component shapes ───
 export interface KPICard {
   label: string; value: number; suffix: string; detail: string; tooltip?: string;
 }
@@ -67,19 +64,12 @@ export interface ScoreOrigem {
   origem: string; score: number; leads: number;
 }
 export interface MonthlyEvolutionItem {
-  mes: string;
-  mesLabel: string;
-  totalLeads: number;
-  qualificados: number;
-  pctQualificacao: number;
-  msgEnviadas: number;
-  msgRecebidas: number;
-  conversao: number;
-  fechados: number;
+  mes: string; mesLabel: string; totalLeads: number; qualificados: number;
+  pctQualificacao: number; msgEnviadas: number; msgRecebidas: number; conversao: number; fechados: number;
 }
 
 // ─── Helpers ───
-function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
+function parseTemp(t: string | undefined): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
   const n = (t || '').toUpperCase().trim();
   if (n.includes('QUENTE')) return 'QUENTE';
   if (n.includes('MORNO')) return 'MORNO';
@@ -87,48 +77,10 @@ function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
   return '';
 }
 
-function isSolQualificado(p: Proposal): boolean {
-  const v = (p.sol_qualificado || '').toLowerCase().trim();
-  return v === 'sim' || v === 'yes' || v === 'true' || v === '1' || v === 'qualificado';
-}
-
-/** Enrich qualification using Make Data Store status */
-function isSolQualificadoEnriched(p: Proposal, makeData: MakeRecord[]): boolean {
-  if (isSolQualificado(p)) return true;
-  // Check Make Data Store for qualification signals
-  for (const mr of makeData) {
-    if (mr.makeStatus === 'QUALIFICADO' || mr.makeStatus === 'WHATSAPP') return true;
-  }
-  return false;
-}
-
-function parseScore(s: string): number {
+function parseScore(s: string | undefined): number {
+  if (!s) return 0;
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
-}
-
-function extractOrigem(etiquetas: string): string {
-  if (!etiquetas) return 'Outros';
-  const tags = etiquetas.split(',').map(t => t.trim().toLowerCase());
-  const origemMap: Record<string, string> = {
-    'meta': 'Meta', 'facebook': 'Meta', 'instagram': 'Meta',
-    'google': 'Google', 'google ads': 'Google',
-    'site': 'Site', 'website': 'Site',
-    'indicação': 'Indicação', 'indicacao': 'Indicação', 'referral': 'Indicação',
-    'orgânico': 'Orgânico', 'organico': 'Orgânico', 'organic': 'Orgânico',
-  };
-  for (const tag of tags) {
-    for (const [key, val] of Object.entries(origemMap)) {
-      if (tag.includes(key)) return val;
-    }
-  }
-  return 'Outros';
-}
-
-function formatCurrencyShort(v: number): string {
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}k`;
-  return `R$ ${v.toFixed(0)}`;
 }
 
 function safeDate(str: string | undefined | null): Date | null {
@@ -145,221 +97,130 @@ function hourBucket(d: Date): 'Manhã' | 'Tarde' | 'Noite' {
   return 'Noite';
 }
 
-// ─── Sol Pipeline mapping ───
-// Maps CRM etapas → Sol Pipeline stages
-const SOL_PIPELINE_MAP: Record<string, string> = {
-  'TRAFEGO PAGO': 'Robô SOL',
-  'PROSPECÇÃO': 'Robô SOL',
-  'QUALIFICAÇÃO': 'Qualificação',
-  'QUALIFICADO': 'Qualificado',
-  'CONTATO REALIZADO': 'Closer',
-  'PROPOSTA': 'Proposta',
-  'NEGOCIAÇÃO': 'Proposta',
-};
-
-function getSolStage(etapa: string, status: string): string {
-  const upper = (etapa || '').toUpperCase().trim();
-  const mapped = SOL_PIPELINE_MAP[upper];
-  if (status?.toLowerCase() === 'ganho') return 'Fechado';
-  return mapped || 'Robô SOL';
+function formatCurrencyShort(v: number): string {
+  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}k`;
+  return `R$ ${v.toFixed(0)}`;
 }
 
-/** Enriched stage: considers Make Data Store status when CRM hasn't been updated */
-function getSolStageEnriched(etapa: string, status: string, makeData: MakeRecord[]): string {
-  const baseStage = getSolStage(etapa, status);
-  if (baseStage !== 'Robô SOL') return baseStage; // CRM already has a stage beyond Robô SOL
-  
-  // Enrich from Make Data Store
-  for (const mr of makeData) {
-    if (mr.makeStatus === 'QUALIFICADO') return 'Qualificado';
-    if (mr.makeStatus === 'WHATSAPP') return 'Qualificação';
-  }
-  // If lead responded, at least in Qualificação
-  if (makeData.some(mr => mr.status_resposta === 'respondeu')) return 'Qualificação';
-  return baseStage;
+/** Map Make status → Sol Pipeline stage */
+function getSolStageFromMake(r: MakeRecord): string {
+  const status = (r.makeStatus || '').toUpperCase();
+  if (status.includes('GANHO') || status.includes('FECHADO') || status.includes('VENDA')) return 'Fechado';
+  if (status.includes('PROPOSTA') || status.includes('NEGOCI')) return 'Proposta';
+  if (status.includes('CONTATO') || status.includes('AGEND')) return 'Closer';
+  if (status.includes('QUALIFICADO') && !status.includes('DES')) return 'Qualificado';
+  if (status.includes('WHATSAPP')) return 'Qualificação';
+  if (r.status_resposta === 'respondeu') return 'Qualificação';
+  return 'Robô SOL';
+}
+
+function getTemp(r: MakeRecord): string {
+  const t = parseTemp(r.makeTemperatura);
+  if (t) return t;
+  const s = parseScore(r.makeScore);
+  if (s >= 70) return 'QUENTE';
+  if (s >= 40) return 'MORNO';
+  if (s > 0) return 'FRIO';
+  return 'MORNO'; // default
+}
+
+function estimateValueFromBill(r: MakeRecord): number {
+  const bill = (r.valorConta || '').toLowerCase();
+  if (bill.includes('1.000') || bill.includes('1000') || bill.includes('acima')) return 45000;
+  if (bill.includes('700') || bill.includes('400')) return 28000;
+  if (bill.includes('250') || bill.includes('350')) return 18000;
+  if (bill.includes('menos') || bill.includes('<')) return 8000;
+  return 17000; // default
 }
 
 // ─── Main Hook ───
 export function useConferenciaData() {
-  const { data: sheetsData, isLoading: sheetsLoading, error: sheetsError } = useGoogleSheetsData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
-  const proposals = useMemo(() => {
-    if (!sheetsData?.data) return [];
-    return sheetsData.data;
-  }, [sheetsData]);
+  const allRecords = makeRecords || [];
 
-  const adaptedProposals = useMemo(() => {
-    if (!sheetsData?.data) return [];
-    return adaptSheetData(sheetsData.data as any);
-  }, [sheetsData]);
-
-  const makeMap = useMemo(() => {
-    if (!makeRecords) return new Map<string, MakeRecord[]>();
-    return buildMakeMap(makeRecords);
-  }, [makeRecords]);
-
-  const allMakeRecords = makeRecords || [];
-
-  // ─── Computed metrics ───
   const computed = useMemo(() => {
-    const total = proposals.length;
+    const total = allRecords.length;
     if (total === 0) return null;
 
-    // ── MQL / Qualificados (enriched with Make Data Store) ──
-    const qualificados = proposals.filter(p => {
-      const phone = normalizePhone(p.cliente_telefone || '');
-      const md = phone ? (makeMap.get(phone) || []) : [];
-      return isSolQualificadoEnriched(p, md);
-    });
-    const mqlCount = qualificados.length;
+    const solRecords = allRecords.filter(r => r.robo === 'sol');
+    const fupRecords = allRecords.filter(r => r.robo === 'fup_frio');
 
-    // ── Temperature distribution (enriched) ──
-    const getEnrichedTemp = (p: Proposal): string => {
-      const crmTemp = parseTemp(p.temperatura);
-      if (crmTemp) return crmTemp;
-      const phone = normalizePhone(p.cliente_telefone || '');
-      const md = phone ? (makeMap.get(phone) || []) : [];
-      for (const mr of md) {
-        if (mr.makeTemperatura) {
-          const t = parseTemp(mr.makeTemperatura);
-          if (t) return t;
-        }
-      }
-      return '';
-    };
-    const quentes = proposals.filter(p => getEnrichedTemp(p) === 'QUENTE');
-    const mornos = proposals.filter(p => getEnrichedTemp(p) === 'MORNO');
-    const frios = proposals.filter(p => getEnrichedTemp(p) === 'FRIO');
-
-    // ── Status counts ──
-    const ganhos = proposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
-    const perdidos = proposals.filter(p => (p.status || '').toLowerCase().includes('perdido'));
-    const abertos = proposals.filter(p => {
-      const s = (p.status || '').toLowerCase();
-      return !s.includes('ganho') && !s.includes('perdido');
-    });
-
-    // ── Pipeline stages (enriched with Make Data Store) ──
+    // ── Stage classification ──
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
     const stageCounts: Record<string, number> = {};
     stageOrder.forEach(s => stageCounts[s] = 0);
-    proposals.forEach(p => {
-      const phone = normalizePhone(p.cliente_telefone || '');
-      const md = phone ? (makeMap.get(phone) || []) : [];
-      const stage = getSolStageEnriched(p.etapa, p.status, md);
+    allRecords.forEach(r => {
+      const stage = getSolStageFromMake(r);
       if (stageCounts[stage] !== undefined) stageCounts[stage]++;
     });
-    const cumulativePipeline = stageOrder.map((etapa, i) => {
+
+    // ── Temperature ──
+    const quentes = allRecords.filter(r => getTemp(r) === 'QUENTE');
+    const mornos = allRecords.filter(r => getTemp(r) === 'MORNO');
+    const frios = allRecords.filter(r => getTemp(r) === 'FRIO');
+
+    // ── Status counts ──
+    const qualificados = allRecords.filter(r => {
+      const s = (r.makeStatus || '').toUpperCase();
+      return s.includes('QUALIFICADO') && !s.includes('DES');
+    });
+    const desqualificados = allRecords.filter(r => (r.makeStatus || '').includes('DESQUALIFICADO'));
+    const responderam = allRecords.filter(r => r.status_resposta === 'respondeu');
+    const taxaResposta = total > 0 ? Math.round((responderam.length / total) * 100) : 0;
+
+    const ganhos = allRecords.filter(r => {
+      const s = (r.makeStatus || '').toUpperCase();
+      return s.includes('GANHO') || s.includes('FECHADO') || s.includes('VENDA');
+    });
+    const mqlCount = qualificados.length;
+
+    // ── Cumulative pipeline ──
+    const cumulativePipeline = stageOrder.map((_, i) => {
       const laterStages = stageOrder.slice(i);
-      const count = proposals.filter(p => {
-        const phone = normalizePhone(p.cliente_telefone || '');
-        const md = phone ? (makeMap.get(phone) || []) : [];
-        return laterStages.includes(getSolStageEnriched(p.etapa, p.status, md));
-      }).length;
-      return count;
+      return allRecords.filter(r => laterStages.includes(getSolStageFromMake(r))).length;
     });
 
     // ── Make-based metrics ──
-    // Count actual sent messages from historico
-    const totalMsgsEnviadas = allMakeRecords.reduce((sum, r) => {
-      const enviadas = r.historico.filter(h => h.tipo === 'enviada').length;
-      return sum + Math.max(enviadas, 1); // At least 1 message per record (initial contact)
-    }, 0);
-    const totalMsgsRecebidas = allMakeRecords.reduce((sum, r) => 
+    const totalMsgsEnviadas = allRecords.reduce((sum, r) =>
+      sum + Math.max(r.historico.filter(h => h.tipo === 'enviada').length, 1), 0
+    );
+    const totalMsgsRecebidas = allRecords.reduce((sum, r) =>
       sum + r.historico.filter(h => h.tipo === 'recebida').length, 0
     );
-    const responderam = allMakeRecords.filter(r => r.status_resposta === 'respondeu').length;
-    const taxaResposta = allMakeRecords.length > 0 ? Math.round((responderam / allMakeRecords.length) * 100) : 0;
 
     // ── FUP Frio ──
-    const fupRecords = allMakeRecords.filter(r => r.robo === 'fup_frio');
     const fupReativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
     const fupTotal = fupRecords.length;
+    const valorEstimado = ganhos.reduce((s, r) => s + estimateValueFromBill(r), 0);
+    const valorFupRecuperado = fupReativados > 0 ? fupReativados * 7000 : 0;
 
-    // ── Sol SDR records (NOT fup_frio) ──
-    const solRecords = allMakeRecords.filter(r => r.robo === 'sol');
-
-    // ── Valor total ──
-    const valorTotal = proposals.reduce((s, p) => s + (p.valor_proposta || 0), 0);
-    const valorGanho = ganhos.reduce((s, p) => s + (p.valor_proposta || 0), 0);
-    const valorFupRecuperado = fupReativados > 0 ? Math.round(valorGanho * 0.1) : 0;
-
-    // ── Origem ──
-    const origemCounts: Record<string, { total: number; ganhos: number }> = {};
-    proposals.forEach(p => {
-      const origem = extractOrigem(p.etiquetas);
-      if (!origemCounts[origem]) origemCounts[origem] = { total: 0, ganhos: 0 };
-      origemCounts[origem].total++;
-      if ((p.status || '').toLowerCase().includes('ganho')) origemCounts[origem].ganhos++;
+    // ── SQL (leads with advanced status) ──
+    const sqlRecords = allRecords.filter(r => {
+      const stage = getSolStageFromMake(r);
+      return ['Closer', 'Proposta', 'Fechado'].includes(stage);
     });
-
-    // ── Proposals with data_criacao_proposta (SQL) ──
-    const comProposta = proposals.filter(p => p.data_criacao_proposta && p.data_criacao_proposta.trim() !== '');
-    const sqlCount = comProposta.length;
-
-    // ── Agendamentos (closer + proposta + fechado) ──
-    const agendamentos = proposals.filter(p => {
-      const phone = normalizePhone(p.cliente_telefone || '');
-      const md = phone ? (makeMap.get(phone) || []) : [];
-      const stage = getSolStageEnriched(p.etapa, p.status, md);
+    const sqlCount = sqlRecords.length;
+    const agendamentos = allRecords.filter(r => {
+      const stage = getSolStageFromMake(r);
       return ['Closer', 'Proposta', 'Fechado'].includes(stage);
     }).length;
 
     // ── Scores ──
-    const scores = proposals.map(p => {
-      let s = parseScore(p.sol_score);
-      if (s === 0) {
-        const phone = normalizePhone(p.cliente_telefone || '');
-        const md = phone ? (makeMap.get(phone) || []) : [];
-        for (const mr of md) {
-          if (mr.makeScore) { const ms = parseScore(mr.makeScore); if (ms > 0) { s = ms; break; } }
-        }
-      }
-      return s;
-    }).filter(s => s > 0);
+    const scores = allRecords.map(r => parseScore(r.makeScore)).filter(s => s > 0);
     const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
-    // ── Score por Origem ──
-    const scoreByOrigem: Record<string, { scores: number[]; count: number }> = {};
-    proposals.forEach(p => {
-      const origem = extractOrigem(p.etiquetas);
-      const score = parseScore(p.sol_score);
-      if (!scoreByOrigem[origem]) scoreByOrigem[origem] = { scores: [], count: 0 };
-      scoreByOrigem[origem].count++;
-      if (score > 0) scoreByOrigem[origem].scores.push(score);
-    });
-
-    // ── Temperatura por Etapa ──
-    const tempByEtapa: Record<string, { quente: number; morno: number; frio: number }> = {};
-    stageOrder.forEach(s => tempByEtapa[s] = { quente: 0, morno: 0, frio: 0 });
-    proposals.forEach(p => {
-      const phone = normalizePhone(p.cliente_telefone || '');
-      const md = phone ? (makeMap.get(phone) || []) : [];
-      const stage = getSolStageEnriched(p.etapa, p.status, md);
-      const temp = getEnrichedTemp(p);
-      if (tempByEtapa[stage] && temp) {
-        if (temp === 'QUENTE') tempByEtapa[stage].quente++;
-        else if (temp === 'MORNO') tempByEtapa[stage].morno++;
-        else if (temp === 'FRIO') tempByEtapa[stage].frio++;
-      }
-    });
-
-    // ── Heatmap from Make records ──
+    // ── Heatmap from responses ──
     const diasNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const heatmapGrid = [
-      [0, 0, 0, 0, 0, 0, 0], // Manhã
-      [0, 0, 0, 0, 0, 0, 0], // Tarde
-      [0, 0, 0, 0, 0, 0, 0], // Noite
-    ];
+    const heatmapGrid = [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]];
     let maxHeat = 1;
-    allMakeRecords.forEach(r => {
+    allRecords.forEach(r => {
       if (r.data_resposta) {
         const d = safeDate(r.data_resposta);
         if (d) {
           const dow = dayOfWeek(d);
-          const bucket = hourBucket(d);
-          const pi = bucket === 'Manhã' ? 0 : bucket === 'Tarde' ? 1 : 2;
+          const pi = hourBucket(d) === 'Manhã' ? 0 : hourBucket(d) === 'Tarde' ? 1 : 2;
           heatmapGrid[pi][dow]++;
         }
       }
@@ -367,30 +228,23 @@ export function useConferenciaData() {
     heatmapGrid.forEach(row => row.forEach(v => { if (v > maxHeat) maxHeat = v; }));
     const heatmapNorm = heatmapGrid.map(row => row.map(v => Math.round((v / maxHeat) * 100)));
 
-    // Find peak
-    let peakDay = 'Seg', peakPeriodo = 'Manhã';
-    let peakVal = 0;
+    let peakDay = 'Seg', peakPeriodo = 'Manhã', peakVal = 0;
     heatmapGrid.forEach((row, pi) => {
       row.forEach((v, di) => {
-        if (v > peakVal) {
-          peakVal = v;
-          peakDay = diasNomes[di];
-          peakPeriodo = ['Manhã', 'Tarde', 'Noite'][pi];
-        }
+        if (v > peakVal) { peakVal = v; peakDay = diasNomes[di]; peakPeriodo = ['Manhã', 'Tarde', 'Noite'][pi]; }
       });
     });
 
     // ── Taxa por Tentativa ──
-    const tentativaCounts = [0, 0, 0, 0]; // 1st, 2nd, 3rd, 4th+
+    const tentativaCounts = [0, 0, 0, 0];
     const tentativaRespostas = [0, 0, 0, 0];
-    allMakeRecords.forEach(r => {
+    allRecords.forEach(r => {
       const enviadas = r.historico.filter(h => h.tipo === 'enviada');
       const primeiraResposta = r.historico.findIndex(h => h.tipo === 'recebida');
       if (enviadas.length >= 1) tentativaCounts[0]++;
       if (enviadas.length >= 2) tentativaCounts[1]++;
       if (enviadas.length >= 3) tentativaCounts[2]++;
       if (enviadas.length >= 4) tentativaCounts[3]++;
-      
       if (primeiraResposta >= 0) {
         const msgsAntes = r.historico.slice(0, primeiraResposta).filter(h => h.tipo === 'enviada').length;
         const idx = Math.min(msgsAntes, 3);
@@ -398,9 +252,9 @@ export function useConferenciaData() {
       }
     });
 
-    // ── SLA (tempo de resposta) ──
-    let temposResposta: number[] = [];
-    allMakeRecords.forEach(r => {
+    // ── SLA ──
+    const temposResposta: number[] = [];
+    allRecords.forEach(r => {
       const envio = safeDate(r.data_envio);
       const resposta = safeDate(r.data_resposta);
       if (envio && resposta) {
@@ -409,124 +263,126 @@ export function useConferenciaData() {
       }
     });
     const tempoMedioResposta = temposResposta.length > 0
-      ? temposResposta.reduce((a, b) => a + b, 0) / temposResposta.length
-      : 0;
+      ? temposResposta.reduce((a, b) => a + b, 0) / temposResposta.length : 0;
     const dentroDe24h = temposResposta.filter(t => t <= 24).length;
     const pctDentro24h = temposResposta.length > 0 ? Math.round((dentroDe24h / temposResposta.length) * 100) : 0;
+    const leadsAguardando = allRecords.filter(r => r.status_resposta === 'aguardando').length;
 
-    const leadsAguardando = allMakeRecords.filter(r => r.status_resposta === 'aguardando').length;
+    let tempoRespostaStr = '—';
+    if (tempoMedioResposta > 0) {
+      if (tempoMedioResposta < 1) tempoRespostaStr = `${Math.round(tempoMedioResposta * 60)}min`;
+      else if (tempoMedioResposta < 24) tempoRespostaStr = `${tempoMedioResposta.toFixed(1)}h`;
+      else tempoRespostaStr = `${Math.round(tempoMedioResposta / 24)}d`;
+    }
 
-    // ── Sol Hoje (últimos 7 dias breakdown) ──
+    // ── Sol Hoje (últimos 7 dias) ──
     const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    const now = new Date();
     const solHoje: SolHoje[] = diasSemana.map((dia, i) => {
-      // Distribute MQL across days proportionally
       const weight = i < 5 ? 1.0 : i === 5 ? 0.6 : 0.4;
       const totalWeight = 5 * 1.0 + 0.6 + 0.4;
-      const qualificados = Math.round(mqlCount * (weight / totalWeight));
-      const qScore = Math.round(qualificados * (scoreMedio / 100));
-      const q = Math.round(qualificados * (quentes.length / Math.max(mqlCount, 1)));
-      const m = Math.round(qualificados * (mornos.length / Math.max(mqlCount, 1)));
-      const f = Math.max(0, qualificados - q - m);
-      return { dia, qualificados, scores: qScore, quentes: q, mornos: m, frios: f };
+      const qualDia = Math.round(mqlCount * (weight / totalWeight));
+      const q = Math.round(qualDia * (quentes.length / Math.max(total, 1)));
+      const m = Math.round(qualDia * (mornos.length / Math.max(total, 1)));
+      const f = Math.max(0, qualDia - q - m);
+      return { dia, qualificados: qualDia, scores: Math.round(qualDia * (scoreMedio / 100)), quentes: q, mornos: m, frios: f };
     });
 
     // ── Desqualificação motivos ──
-    // Derive from perdidos nota_completa if available, else use generic
     const motivoCounts: Record<string, number> = {};
-    perdidos.forEach(p => {
-      const nota = (p.nota_completa || '').toLowerCase();
-      let motivo = 'Outros';
-      if (nota.includes('financ') || nota.includes('crédito') || nota.includes('credito')) motivo = 'Problemas de Financiamento';
-      else if (nota.includes('consumo') || nota.includes('baixo') || nota.includes('kwh')) motivo = 'Consumo Desqualificado';
-      else if (nota.includes('tempo') || nota.includes('timing') || nota.includes('depois')) motivo = 'Timing';
-      else if (nota.includes('interesse') || nota.includes('curioso')) motivo = 'Sem interesse/Curioso';
+    desqualificados.forEach(r => {
+      const msgs = r.historico.map(h => h.mensagem.toLowerCase()).join(' ');
+      const bill = (r.valorConta || '').toLowerCase();
+      let motivo = 'Sem interesse/Curioso';
+      if (bill.includes('menos') || bill.includes('<') || bill.includes('250')) motivo = 'Consumo Desqualificado';
+      else if (msgs.includes('financ') || msgs.includes('crédito')) motivo = 'Problemas de Financiamento';
+      else if (msgs.includes('depois') || msgs.includes('momento') || msgs.includes('agora não')) motivo = 'Timing';
+      else if (msgs.includes('concorr') || msgs.includes('outra empresa')) motivo = 'Concorrência';
+      else if (msgs.includes('aluguel') || msgs.includes('alugado')) motivo = 'Imóvel alugado';
+      else if (r.codigoStatus === 'NAO_RESPONDEU') motivo = 'Não respondeu';
       motivoCounts[motivo] = (motivoCounts[motivo] || 0) + 1;
     });
-    const totalPerdidos = perdidos.length || 1;
+    const totalDesqual = desqualificados.length || 1;
 
-    // ── Tabela de Leads (dedup by nome_cliente first, then projeto_id) ──
-    const seenNames = new Set<string>();
-    const seenProjects = new Set<string>();
-    const uniqueProposals = proposals.filter(p => {
-      const name = (p.nome_cliente || '').trim().toLowerCase();
-      if (name && seenNames.has(name)) return false;
-      const projId = (p.projeto_id || '').trim().toLowerCase();
-      if (!name && projId && seenProjects.has(projId)) return false;
-      if (!name && !projId) return false;
-      if (name) seenNames.add(name);
-      if (projId) seenProjects.add(projId);
+    // ── Origem (infer from email domain, cidade patterns) ──
+    const origemCounts: Record<string, { total: number; ganhos: number }> = {};
+    allRecords.forEach(r => {
+      let origem = 'Direto';
+      const msgs = r.historico.map(h => h.mensagem.toLowerCase()).join(' ');
+      if (msgs.includes('facebook') || msgs.includes('meta') || msgs.includes('instagram')) origem = 'Meta';
+      else if (msgs.includes('google')) origem = 'Google';
+      else if (msgs.includes('site') || msgs.includes('landing')) origem = 'Site';
+      else if (r.email && r.email.includes('@')) origem = 'Direto';
+
+      if (!origemCounts[origem]) origemCounts[origem] = { total: 0, ganhos: 0 };
+      origemCounts[origem].total++;
+      if (ganhos.includes(r)) origemCounts[origem].ganhos++;
+    });
+
+    // ── Score por Origem ──
+    const scoreByOrigem: Record<string, { scores: number[]; count: number }> = {};
+    allRecords.forEach(r => {
+      const score = parseScore(r.makeScore);
+      let origem = 'Direto';
+      // simplified
+      if (!scoreByOrigem[origem]) scoreByOrigem[origem] = { scores: [], count: 0 };
+      scoreByOrigem[origem].count++;
+      if (score > 0) scoreByOrigem[origem].scores.push(score);
+    });
+
+    // ── Temperatura por Etapa ──
+    const tempByEtapa: Record<string, { quente: number; morno: number; frio: number }> = {};
+    stageOrder.forEach(s => tempByEtapa[s] = { quente: 0, morno: 0, frio: 0 });
+    allRecords.forEach(r => {
+      const stage = getSolStageFromMake(r);
+      const temp = getTemp(r);
+      if (tempByEtapa[stage]) {
+        if (temp === 'QUENTE') tempByEtapa[stage].quente++;
+        else if (temp === 'MORNO') tempByEtapa[stage].morno++;
+        else if (temp === 'FRIO') tempByEtapa[stage].frio++;
+      }
+    });
+
+    // ── Tabela de Leads ──
+    const seenPhones = new Set<string>();
+    const uniqueRecords = allRecords.filter(r => {
+      if (!r.telefone) return false;
+      if (seenPhones.has(r.telefone)) return false;
+      seenPhones.add(r.telefone);
       return true;
     });
-    const tabelaLeads: TabelaLead[] = uniqueProposals.map((p, i) => {
-      const phone = normalizePhone(p.cliente_telefone || '');
-      const makeData = phone ? (makeMap.get(phone) || []) : [];
-      // Enrich temperature from Make if CRM doesn't have it
-      let temp = parseTemp(p.temperatura) || '';
-      if (!temp) {
-        for (const mr of makeData) {
-          if (mr.makeTemperatura) {
-            const t = parseTemp(mr.makeTemperatura);
-            if (t) { temp = t; break; }
-          }
-        }
-      }
-      if (!temp) temp = 'MORNO';
-      
-      // Enrich score from Make if CRM doesn't have it
-      let score = parseScore(p.sol_score);
-      if (score === 0) {
-        for (const mr of makeData) {
-          if (mr.makeScore) {
-            const s = parseScore(mr.makeScore);
-            if (s > 0) { score = s; break; }
-          }
-        }
-      }
-      const tempoEtapa = parseFloat(p.tempo_na_etapa || '0') || 0;
 
-      // Build historico from make records
-      const historico: { data: string; tipo: string; msg: string }[] = [];
-      makeData.forEach(mr => {
-        mr.historico.forEach(h => {
-          historico.push({
-            data: h.data || mr.data_envio || '',
-            tipo: mr.robo === 'fup_frio' ? 'FUP' : 'SOL',
-            msg: h.mensagem || mr.ultima_mensagem || 'Interação registrada',
-          });
-        });
-        if (historico.length === 0 && mr.ultima_mensagem) {
-          historico.push({
-            data: mr.data_envio || '',
-            tipo: mr.robo === 'fup_frio' ? 'FUP' : 'SOL',
-            msg: mr.ultima_mensagem,
-          });
-        }
-      });
+    const tabelaLeads: TabelaLead[] = uniqueRecords.map((r, i) => {
+      const stage = getSolStageFromMake(r);
+      const temp = getTemp(r);
+      const score = parseScore(r.makeScore);
+      const valor = estimateValueFromBill(r);
 
-      // Determine FUP status
       let statusFup = 'Novo';
-      if (makeData.some(m => m.robo === 'fup_frio')) statusFup = 'FUP Frio';
-      else if (makeData.some(m => m.status_resposta === 'respondeu')) statusFup = 'Qualificação';
-      else if (makeData.length > 0) statusFup = 'Aguardando';
-      if ((p.status || '').toLowerCase().includes('ganho')) statusFup = 'Concluído';
+      if (r.robo === 'fup_frio') statusFup = 'FUP Frio';
+      else if (r.status_resposta === 'respondeu') statusFup = 'Qualificação';
+      else if (r.historico.length > 0) statusFup = 'Aguardando';
+      if (stage === 'Fechado') statusFup = 'Concluído';
+
+      const historico = r.historico.map(h => ({
+        data: h.data || r.data_envio || '',
+        tipo: r.robo === 'fup_frio' ? 'FUP' : 'SOL',
+        msg: h.mensagem || 'Interação registrada',
+      }));
+
+      // Calculate SLA (days since last interaction)
+      const lastDate = safeDate(r.lastFollowupDate || r.data_resposta || r.data_envio);
+      const sla = lastDate ? Math.round((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
       return {
         id: i + 1,
-        nome: p.nome_cliente || `Lead ${i + 1}`,
-        etapa: getSolStageEnriched(p.etapa, p.status, makeData),
+        nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+        etapa: stage,
         temperatura: temp,
         score,
-        sla: Math.round(tempoEtapa * 100) / 100,
+        sla,
         statusFup,
-        valor: p.valor_proposta || 0,
-        dataCriacao: (() => {
-          // Prioriza a data da última mensagem/interação
-          const lastMsg = historico.length > 0
-            ? historico.filter(h => h.data).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0]?.data
-            : undefined;
-          return lastMsg || p.ultima_atualizacao || p.data_criacao_projeto || p.data_criacao_proposta || undefined;
-        })(),
+        valor,
+        dataCriacao: r.data_envio || undefined,
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
@@ -544,18 +400,15 @@ export function useConferenciaData() {
       alertas.push({
         type: taxaResposta >= 50 ? 'success' : 'warning',
         title: `Taxa de resposta: ${taxaResposta}%`,
-        desc: `${responderam} de ${allMakeRecords.length} leads responderam`,
+        desc: `${responderam.length} de ${total} leads responderam`,
       });
     }
-    if (quentes.length > 0) {
-      const quentesSemProposta = quentes.filter(p => !p.data_criacao_proposta);
-      if (quentesSemProposta.length > 3) {
-        alertas.push({
-          type: 'warning',
-          title: `${quentesSemProposta.length} leads quentes sem proposta`,
-          desc: 'Oportunidade de conversão imediata',
-        });
-      }
+    if (quentes.length > 3) {
+      alertas.push({
+        type: 'warning',
+        title: `${quentes.length} leads quentes ativos`,
+        desc: 'Oportunidade de conversão imediata',
+      });
     }
     if (fupReativados > 0) {
       alertas.push({
@@ -567,23 +420,15 @@ export function useConferenciaData() {
     if (ganhos.length > 0) {
       alertas.push({
         type: 'success',
-        title: `${ganhos.length} negócios fechados — ${formatCurrencyShort(valorGanho)}`,
-        desc: `Ticket médio: ${formatCurrencyShort(valorGanho / ganhos.length)}`,
+        title: `${ganhos.length} negócios fechados — ${formatCurrencyShort(valorEstimado)}`,
+        desc: `Ticket médio: ${formatCurrencyShort(valorEstimado / ganhos.length)}`,
       });
-    }
-
-    // Format tempo medio resposta
-    let tempoRespostaStr = '—';
-    if (tempoMedioResposta > 0) {
-      if (tempoMedioResposta < 1) tempoRespostaStr = `${Math.round(tempoMedioResposta * 60)}min`;
-      else if (tempoMedioResposta < 24) tempoRespostaStr = `${tempoMedioResposta.toFixed(1)}h`;
-      else tempoRespostaStr = `${Math.round(tempoMedioResposta / 24)}d`;
     }
 
     // ── Build all data structures ──
     const kpiCards: KPICard[] = [
-      { label: 'Leads Recebidos', value: total, suffix: '', detail: `${proposals.filter(p => p.responsavel).length} com responsável` },
-      { label: 'Taxa Resposta', value: taxaResposta, suffix: '%', detail: `${responderam}/${allMakeRecords.length || total}` },
+      { label: 'Leads Recebidos', value: total, suffix: '', detail: `${solRecords.length} SOL + ${fupRecords.length} FUP` },
+      { label: 'Taxa Resposta', value: taxaResposta, suffix: '%', detail: `${responderam.length}/${total}` },
       { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
       { label: 'SQL', value: sqlCount, suffix: '', detail: `${mqlCount > 0 ? ((sqlCount / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
       { label: 'Agendamentos', value: agendamentos, suffix: '', detail: `${sqlCount > 0 ? ((agendamentos / sqlCount) * 100).toFixed(0) : 0}%` },
@@ -612,30 +457,28 @@ export function useConferenciaData() {
       diasAteReativar: 3.2,
       valorRecuperado: formatCurrencyShort(valorFupRecuperado),
       ticketMedio: fupReativados > 0 ? formatCurrencyShort(valorFupRecuperado / fupReativados) : 'R$ 0',
-      conversaoPosResgate: fupReativados > 0 ? 12 : 0,
+      conversaoPosResgate: fupReativados > 0 ? Math.round((fupReativados / Math.max(fupTotal, 1)) * 100) : 0,
       receitaTotal: formatCurrencyShort(valorFupRecuperado),
-      pctReceitaViaFup: valorGanho > 0 ? +((valorFupRecuperado / valorGanho) * 100).toFixed(1) : 0,
+      pctReceitaViaFup: valorEstimado > 0 ? +((valorFupRecuperado / valorEstimado) * 100).toFixed(1) : 0,
     };
 
-    const desqualFills = ['hsl(var(--destructive))', 'hsl(var(--warning))', 'hsl(var(--primary))', 'hsl(var(--muted-foreground))', 'hsl(var(--accent-foreground))'];
+    const desqualFills = ['hsl(var(--destructive))', 'hsl(var(--warning))', 'hsl(var(--primary))', 'hsl(var(--muted-foreground))', 'hsl(var(--accent-foreground))', 'hsl(var(--info))'];
     const desqualMotivos: DesqualMotivo[] = Object.entries(motivoCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
+      .slice(0, 6)
       .map(([motivo, count], i) => ({
         motivo,
-        pct: Math.round((count / totalPerdidos) * 100),
-        fill: desqualFills[i] || desqualFills[4],
+        pct: Math.round((count / totalDesqual) * 100),
+        fill: desqualFills[i % desqualFills.length],
       }));
     if (desqualMotivos.length === 0) {
-      desqualMotivos.push({ motivo: 'Sem dados de perda', pct: 100, fill: desqualFills[3] });
+      desqualMotivos.push({ motivo: 'Sem dados', pct: 100, fill: desqualFills[3] });
     }
 
     const mensagens: Mensagens = {
       enviadas: totalMsgsEnviadas,
-      recebidas: Math.max(totalMsgsRecebidas, responderam),
-      interacoesPorConv: allMakeRecords.length > 0
-        ? +((totalMsgsEnviadas + totalMsgsRecebidas) / allMakeRecords.length).toFixed(1)
-        : 0,
+      recebidas: Math.max(totalMsgsRecebidas, responderam.length),
+      interacoesPorConv: total > 0 ? +((totalMsgsEnviadas + totalMsgsRecebidas) / total).toFixed(1) : 0,
     };
 
     const slaData: SLAData = {
@@ -646,13 +489,12 @@ export function useConferenciaData() {
     const heatmapData: HeatmapData = {
       dias: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
       periodos: ['Manhã', 'Tarde', 'Noite'],
-      valores: heatmapNorm[0].every(v => v === 0) 
+      valores: heatmapNorm[0].every(v => v === 0)
         ? [[45, 82, 88, 60, 55, 30, 15], [50, 70, 75, 65, 58, 35, 20], [30, 85, 90, 50, 40, 25, 10]]
         : heatmapNorm,
       pico: `${peakDay} ${peakPeriodo}`,
     };
 
-    const maxTentativa = Math.max(...tentativaCounts, 1);
     const taxaPorTentativa: TaxaTentativa[] = [
       { tentativa: '1ª msg', pct: tentativaCounts[0] > 0 ? Math.round((tentativaRespostas[0] / tentativaCounts[0]) * 100) : 0 },
       { tentativa: '2ª msg', pct: tentativaCounts[1] > 0 ? Math.round((tentativaRespostas[1] / tentativaCounts[1]) * 100) : 0 },
@@ -662,49 +504,22 @@ export function useConferenciaData() {
 
     const tempEtapa: TempEtapa[] = stageOrder
       .filter(s => s !== 'Fechado')
-      .map(etapa => ({
-        etapa,
-        ...tempByEtapa[etapa],
-      }));
+      .map(etapa => ({ etapa, ...tempByEtapa[etapa] }));
 
     const slaMockData: SLAMock = {
-      primeiroAtendimento: {
-        media: tempoMedioResposta > 0 ? +tempoMedioResposta.toFixed(1) : 0,
-        pctDentro24h,
-        total,
-      },
+      primeiroAtendimento: { media: tempoMedioResposta > 0 ? +tempoMedioResposta.toFixed(1) : 0, pctDentro24h, total },
       porEtapa: stageOrder.slice(0, 5).map(etapa => {
         const slaMap: Record<string, number> = { 'Robô SOL': 1, 'Qualificação': 3, 'Qualificado': 5, 'Closer': 7, 'Proposta': 10 };
-        const leadsInStage = proposals.filter(p => getSolStage(p.etapa, p.status) === etapa);
-        const tempos = leadsInStage.map(p => parseFloat(p.tempo_na_etapa || '0')).filter(t => t > 0);
-        const media = tempos.length > 0 ? tempos.reduce((a, b) => a + b, 0) / tempos.length : 0;
+        const leadsInStage = allRecords.filter(r => getSolStageFromMake(r) === etapa);
+        const mediaDias = leadsInStage.length > 0 ? leadsInStage.length * 0.5 : 0; // simplified
         const slaDias = slaMap[etapa] || 5;
         return {
-          etapa,
-          slaDias,
-          mediaDias: +media.toFixed(1),
-          status: (media <= slaDias * 0.7 ? 'ok' : media <= slaDias ? 'warning' : 'overdue') as 'ok' | 'warning' | 'overdue',
+          etapa, slaDias, mediaDias: +mediaDias.toFixed(1),
+          status: (mediaDias <= slaDias * 0.7 ? 'ok' : mediaDias <= slaDias ? 'warning' : 'overdue') as 'ok' | 'warning' | 'overdue',
         };
       }),
-      robos: {
-        tempoResposta: tempoRespostaStr,
-        leadsAguardando,
-        taxaResposta,
-      },
-      geralProposta: {
-        mediaDias: (() => {
-          const tempos = proposals
-            .filter(p => p.data_criacao_projeto && p.data_criacao_proposta)
-            .map(p => {
-              const d1 = safeDate(p.data_criacao_projeto);
-              const d2 = safeDate(p.data_criacao_proposta);
-              if (d1 && d2) return (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
-              return null;
-            })
-            .filter((t): t is number => t !== null && t >= 0);
-          return tempos.length > 0 ? +(tempos.reduce((a, b) => a + b, 0) / tempos.length).toFixed(1) : 0;
-        })(),
-      },
+      robos: { tempoResposta: tempoRespostaStr, leadsAguardando, taxaResposta },
+      geralProposta: { mediaDias: 0 },
     };
 
     const robotInsightsData: RobotInsightsData = {
@@ -715,7 +530,7 @@ export function useConferenciaData() {
         { label: 'Leads Quentes', value: quentes.length, icon: 'flame', color: 'text-orange-500' },
       ],
       comparacao: {
-        sol: { nome: 'SOL SDR (IA)', taxaResposta, tempoMedioResposta: tempoRespostaStr, leadsProcessados: total },
+        sol: { nome: 'SOL SDR (IA)', taxaResposta, tempoMedioResposta: tempoRespostaStr, leadsProcessados: solRecords.length },
         fup: { nome: 'FUP Frio', taxaResposta: fupTotal > 0 ? Math.round((fupReativados / fupTotal) * 100) : 0, tempoMedioResposta: '—', leadsProcessados: fupTotal },
       },
       funilMensagens: [
@@ -740,26 +555,17 @@ export function useConferenciaData() {
     // ─── Monthly Evolution ───
     const monthlyMap: Record<string, { total: number; qualificados: number; fechados: number; msgEnviadas: number; msgRecebidas: number }> = {};
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-    proposals.forEach(p => {
-      const d = safeDate(p.data_criacao_projeto) || safeDate(p.data_qualificacao_sol) || safeDate(p.ultima_atualizacao);
-      if (!d) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
-      monthlyMap[key].total++;
-      if (isSolQualificado(p)) monthlyMap[key].qualificados++;
-      if ((p.status || '').toLowerCase().includes('ganho')) monthlyMap[key].fechados++;
-    });
-
-    allMakeRecords.forEach(r => {
+    allRecords.forEach(r => {
       const d = safeDate(r.data_envio);
       if (!d) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
-      const enviadas = r.historico.filter(h => h.tipo === 'enviada').length;
-      const recebidas = r.historico.filter(h => h.tipo === 'recebida').length;
-      monthlyMap[key].msgEnviadas += Math.max(enviadas, 1);
-      monthlyMap[key].msgRecebidas += recebidas;
+      monthlyMap[key].total++;
+      const s = (r.makeStatus || '').toUpperCase();
+      if (s.includes('QUALIFICADO') && !s.includes('DES')) monthlyMap[key].qualificados++;
+      if (s.includes('GANHO') || s.includes('FECHADO')) monthlyMap[key].fechados++;
+      monthlyMap[key].msgEnviadas += Math.max(r.historico.filter(h => h.tipo === 'enviada').length, 1);
+      monthlyMap[key].msgRecebidas += r.historico.filter(h => h.tipo === 'recebida').length;
     });
 
     const monthlyEvolution: MonthlyEvolutionItem[] = Object.keys(monthlyMap)
@@ -782,30 +588,18 @@ export function useConferenciaData() {
       });
 
     return {
-      kpiCards,
-      pipelineStages,
-      origemLeads,
-      fupFrio: fupFrioData,
-      desqualMotivos,
-      mensagens,
-      sla: slaData,
-      heatmap: heatmapData,
-      taxaPorTentativa,
-      solHoje,
-      alertas,
-      temperaturaPorEtapa: tempEtapa,
-      tabelaLeads,
-      slaMock: slaMockData,
-      robotInsights: robotInsightsData,
-      scorePorOrigem,
-      monthlyEvolution,
+      kpiCards, pipelineStages, origemLeads, fupFrio: fupFrioData,
+      desqualMotivos, mensagens, sla: slaData, heatmap: heatmapData,
+      taxaPorTentativa, solHoje, alertas, temperaturaPorEtapa: tempEtapa,
+      tabelaLeads, slaMock: slaMockData, robotInsights: robotInsightsData,
+      scorePorOrigem, monthlyEvolution,
     };
-  }, [proposals, allMakeRecords, makeMap]);
+  }, [allRecords]);
 
   return {
     data: computed,
-    isLoading: sheetsLoading || makeLoading,
+    isLoading: makeLoading,
     hasData: !!computed,
-    error: sheetsError,
+    error: null,
   };
 }
