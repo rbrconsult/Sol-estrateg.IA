@@ -1,112 +1,86 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Kanban, 
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  LogOut,
-  Shield,
-  Headset,
-  RotateCcw,
-  Presentation,
-  BarChart3,
-  Settings,
-  TrendingUp,
-  Megaphone,
-  Bot,
-  Repeat,
-  Route,
-  Zap,
-  FileText,
+import {
+  LayoutDashboard, Kanban, ChevronLeft, ChevronRight, ChevronDown,
+  Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
+  BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
+  Zap, FileText, DollarSign, Clock, Target, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const menuItems = [
-  { 
-    title: "Sol Estrateg.IA", 
-    icon: Presentation, 
-    path: "/",
-    description: "Painel SOL SDR"
+interface MenuItem {
+  title: string;
+  icon: React.ElementType;
+  path: string;
+  moduleKey?: string;
+}
+
+interface MenuGroup {
+  title: string;
+  icon: React.ElementType;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: "Visão Geral",
+    icon: Presentation,
+    items: [
+      { title: "Sol Estrateg.IA", icon: Presentation, path: "/", moduleKey: "conferencia" },
+      { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
+    ],
   },
-  { 
-    title: "Dashboard", 
-    icon: LayoutDashboard, 
-    path: "/dashboard",
-    description: "Painel Executivo"
+  {
+    title: "Vendas",
+    icon: TrendingUp,
+    items: [
+      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
+      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
+      { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
+      { title: "Monitor de SLA", icon: Clock, path: "/sla" },
+    ],
   },
-  { 
-    title: "Pipeline", 
-    icon: Kanban, 
-    path: "/pipeline",
-    description: "Kanban & Forecast"
+  {
+    title: "Robôs",
+    icon: Bot,
+    items: [
+      { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
+      { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
+      { title: "Analista Follow-up", icon: Target, path: "/followup" },
+    ],
   },
-  { 
-    title: "Performance", 
-    icon: TrendingUp, 
-    path: "/performance",
-    description: "Vendedores, Perdas & Origens"
+  {
+    title: "Mídia",
+    icon: Megaphone,
+    items: [
+      { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "bi" },
+      { title: "Mídia × Receita", icon: DollarSign, path: "/midia" },
+    ],
   },
-  { 
-    title: "Chamados", 
-    icon: Headset, 
-    path: "/chamados",
-    description: "Suporte & SLA"
+  {
+    title: "Inteligência",
+    icon: BarChart3,
+    items: [
+      { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
+      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "bi" },
+      { title: "Leads", icon: Users, path: "/leads" },
+    ],
   },
-  { 
-    title: "BI", 
-    icon: BarChart3, 
-    path: "/bi",
-    description: "Centro de Inteligência"
-  },
-  { 
-    title: "Ads Performance", 
-    icon: Megaphone, 
-    path: "/ads-performance",
-    description: "Meta & Google Ads"
-  },
-  { 
-    title: "Robô SOL", 
-    icon: Bot, 
-    path: "/robo-sol",
-    description: "SDR IA — Performance"
-  },
-  { 
-    title: "FUP Frio", 
-    icon: Repeat, 
-    path: "/robo-fup-frio",
-    description: "Reengajamento"
-  },
-  { 
-    title: "Jornada", 
-    icon: Route, 
-    path: "/jornada-lead",
-    description: "Lead + SLAs"
-  },
-  { 
-    title: "Painel Comercial", 
-    icon: Zap, 
-    path: "/painel-comercial",
-    description: "Alertas & Fila"
-  },
-  { 
-    title: "Reports", 
-    icon: FileText, 
-    path: "/reports",
-    description: "Templates WhatsApp"
-  },
-  { 
-    title: "Operações", 
-    icon: Settings, 
-    path: "/operacoes",
-    description: "Monitor & Automações"
+  {
+    title: "Operacional",
+    icon: Settings,
+    items: [
+      { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
+      { title: "Reports", icon: FileText, path: "/reports" },
+      { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
+    ],
   },
 ];
 
@@ -122,58 +96,61 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
 
-  // On mobile inside sheet, always expanded
   const isCollapsed = isMobile ? false : collapsed;
 
-  const pathToModule: Record<string, string> = {
-    '/': 'conferencia',
-    '/dashboard': 'dashboard',
-    '/pipeline': 'pipeline',
-    '/performance': 'vendedores',
-    '/chamados': 'chamados',
-    '/bi': 'bi',
-    '/ads-performance': 'bi',
-    '/robo-sol': 'bi',
-    '/robo-fup-frio': 'bi',
-    '/jornada-lead': 'bi',
-    '/operacoes': 'monitoramento',
-  };
-
-  const visibleMenuItems = menuItems.filter(item => {
-    const moduleKey = pathToModule[item.path];
-    return moduleKey ? hasAccess(moduleKey) : true;
+  // Track which groups are open
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuGroups.forEach((g) => {
+      initial[g.title] = g.items.some((item) => item.path === location.pathname);
+    });
+    return initial;
   });
+
+  const toggleGroup = (title: string) => {
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success('Logout realizado com sucesso!');
+    toast.success("Logout realizado com sucesso!");
   };
 
   const handleNavClick = () => {
     onNavigate?.();
   };
 
+  // Filter items based on module permissions
+  const visibleGroups = menuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        item.moduleKey ? hasAccess(item.moduleKey) : true
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
-    <aside 
+    <aside
       className={cn(
         "h-screen bg-card border-r border-border/50 flex flex-col",
-        isMobile 
-          ? "w-full" 
-          : cn("fixed left-0 top-0 z-50 transition-all duration-300", isCollapsed ? "w-16" : "w-64")
+        isMobile
+          ? "w-full"
+          : cn("fixed left-0 top-0 z-50 transition-all duration-300", isCollapsed ? "w-16" : "w-60")
       )}
     >
       {/* Header */}
-      <div className="p-4 border-b border-border/50">
+      <div className="p-3 border-b border-border/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
-              <span className="text-lg font-black text-primary-foreground tracking-tighter">S</span>
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
+              <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
             {!isCollapsed && (
               <div className="overflow-hidden">
-                <h1 className="text-lg font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
-                <p className="text-xs text-muted-foreground truncate">BI, CRM e Suporte</p>
+                <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
+                <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
             )}
           </div>
@@ -182,7 +159,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
               variant="ghost"
               size="icon"
               onClick={() => setCollapsed(!collapsed)}
-              className="h-8 w-8 shrink-0 hover:bg-primary/10"
+              className="h-7 w-7 shrink-0 hover:bg-primary/10"
             >
               {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </Button>
@@ -191,64 +168,119 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {visibleMenuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={handleNavClick}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              )}
-            >
-              <item.icon className={cn("h-5 w-5 shrink-0", isActive && "animate-pulse")} />
-              {!isCollapsed && (
-                <div className="overflow-hidden">
-                  <span className="font-medium text-sm">{item.title}</span>
-                  <p className={cn(
-                    "text-xs truncate",
-                    isActive ? "text-primary-foreground/70" : "text-muted-foreground"
-                  )}>
-                    {item.description}
-                  </p>
-                </div>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
+        {isCollapsed ? (
+          // Collapsed: show flat icon list
+          <div className="space-y-0.5">
+            {visibleGroups.flatMap((group) =>
+              group.items.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={handleNavClick}
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-lg transition-all",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    )}
+                    title={item.title}
+                  >
+                    <item.icon className={cn("h-4.5 w-4.5", isActive && "animate-pulse")} />
+                  </Link>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          // Expanded: show grouped collapsible
+          visibleGroups.map((group) => {
+            const isGroupActive = group.items.some((item) => item.path === location.pathname);
+            const isOpen = openGroups[group.title] ?? isGroupActive;
+
+            return (
+              <Collapsible
+                key={group.title}
+                open={isOpen}
+                onOpenChange={() => toggleGroup(group.title)}
+              >
+                <CollapsibleTrigger className="w-full">
+                  <div
+                    className={cn(
+                      "flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                      isGroupActive
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <group.icon className="h-3.5 w-3.5" />
+                      <span style={{ fontFamily: "'Syne', sans-serif" }}>{group.title}</span>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "h-3 w-3 transition-transform",
+                        isOpen && "rotate-180"
+                      )}
+                    />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="ml-3 pl-2.5 border-l border-border/40 space-y-0.5 mt-0.5 mb-1">
+                    {group.items.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={handleNavClick}
+                          className={cn(
+                            "flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          )}
+                        >
+                          <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+                          <span>{item.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })
+        )}
       </nav>
 
       {/* Footer */}
-      <div className="p-2 border-t border-border/50 space-y-2">
-
-        {userRole === 'super_admin' && (
+      <div className="p-1.5 border-t border-border/50 space-y-1">
+        {userRole === "super_admin" && (
           <Link
             to="/admin"
             onClick={handleNavClick}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-warning hover:bg-warning/10",
-              location.pathname === '/admin' && "bg-warning/10"
+              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
+              location.pathname === "/admin" && "bg-warning/10"
             )}
           >
-            <Shield className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span className="text-sm font-medium">Admin</span>}
+            <Shield className="h-4 w-4 shrink-0" />
+            {!isCollapsed && <span className="font-medium">Admin</span>}
           </Link>
         )}
 
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-3")}>
+        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-2.5")}>
           <ThemeToggle />
         </div>
 
         {!isCollapsed && (
-          <div className="px-3 py-2">
-            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            {userRole === 'super_admin' && (
-              <p className="text-xs text-warning font-semibold">Super Admin</p>
+          <div className="px-2.5 py-1">
+            <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+            {userRole === "super_admin" && (
+              <p className="text-[10px] text-warning font-semibold">Super Admin</p>
             )}
           </div>
         )}
@@ -258,9 +290,9 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
             variant="ghost"
             size="sm"
             onClick={onResetOnboarding}
-            className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start"
+            className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start text-xs h-7"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
             Refazer Tour
           </Button>
         )}
@@ -270,12 +302,12 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
           size={isCollapsed ? "icon" : "default"}
           onClick={handleSignOut}
           className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7",
             isCollapsed && "px-0"
           )}
         >
-          <LogOut className="h-5 w-5" />
-          {!isCollapsed && <span className="ml-2">Sair</span>}
+          <LogOut className="h-4 w-4" />
+          {!isCollapsed && <span className="ml-1.5">Sair</span>}
         </Button>
       </div>
     </aside>

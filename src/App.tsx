@@ -33,6 +33,11 @@ import PainelComercial from "./pages/PainelComercial";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
+// Fase 3-4 pages
+import SLAMonitor from "./pages/SLAMonitor";
+import MidiaReceita from "./pages/MidiaReceita";
+import AnalistaFollowup from "./pages/AnalistaFollowup";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -132,6 +137,22 @@ const App = () => (
               <Route path="/reports" element={
                 <ProtectedRoute>
                   <MainLayout><Reports /></MainLayout>
+                </ProtectedRoute>
+              } />
+              {/* Fase 3-4 routes */}
+              <Route path="/sla" element={
+                <ProtectedRoute>
+                  <MainLayout><SLAMonitor /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/midia" element={
+                <ProtectedRoute>
+                  <MainLayout><MidiaReceita /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/followup" element={
+                <ProtectedRoute>
+                  <MainLayout><AnalistaFollowup /></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
