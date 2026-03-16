@@ -30,6 +30,7 @@ import RoboFupFrio from "./pages/RoboFupFrio";
 import JornadaLead from "./pages/JornadaLead";
 import Roadmap from "./pages/Roadmap";
 import PainelComercial from "./pages/PainelComercial";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
