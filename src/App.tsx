@@ -24,6 +24,10 @@ import Ajuda from "./pages/Ajuda";
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
+import AdsPerformance from "./pages/AdsPerformance";
+import RoboSol from "./pages/RoboSol";
+import RoboFupFrio from "./pages/RoboFupFrio";
+import JornadaLead from "./pages/JornadaLead";
 import Roadmap from "./pages/Roadmap";
 import NotFound from "./pages/NotFound";
 
@@ -91,6 +95,26 @@ const App = () => (
               <Route path="/ajuda" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/ads-performance" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><AdsPerformance /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/robo-sol" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><RoboSol /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/robo-fup-frio" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><RoboFupFrio /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/jornada-lead" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><JornadaLead /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/roadmap" element={
