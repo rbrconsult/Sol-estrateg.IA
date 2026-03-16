@@ -142,6 +142,15 @@ function parseRecords(raw: any[]): MakeRecord[] {
       makeStatus: String(d.status || '').toUpperCase() || undefined,
       makeTemperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || undefined,
       makeScore: String(d.Score || d.score || '') || undefined,
+      nome: String(d.nome || d.name || ''),
+      cidade: String(d.Cidade || d.cidade || d.city || ''),
+      valorConta: String(d.valor_conta || ''),
+      imovel: String(d.imovel || ''),
+      email: String(d.email || ''),
+      projectId: String(d.projectId || ''),
+      followupCount: fupCount,
+      lastFollowupDate: String(d.last_followup_date || ''),
+      codigoStatus: codigoStatus,
     };
   });
 }
