@@ -19,7 +19,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checked, setChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       )}
 
       {/* Desktop sidebar */}
-      {!isMobile && <Sidebar onResetOnboarding={() => setShowOnboarding(true)} collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />}
+      {!isMobile && <Sidebar onResetOnboarding={() => setShowOnboarding(true)} />}
 
       {/* Mobile sidebar sheet */}
       {isMobile && (
@@ -61,7 +61,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </Sheet>
       )}
 
-      <main className={isMobile ? "" : cn("transition-all duration-300", sidebarCollapsed ? "ml-16" : "ml-60")}>
+      <main className={isMobile ? "" : "ml-60"}>
         {children}
       </main>
 

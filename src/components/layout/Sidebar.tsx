@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Kanban, ChevronLeft, ChevronRight, ChevronDown,
+  LayoutDashboard, Kanban, ChevronDown,
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
@@ -87,20 +87,15 @@ const menuGroups: MenuGroup[] = [
 interface SidebarProps {
   onResetOnboarding?: () => void;
   onNavigate?: () => void;
-  collapsed?: boolean;
-  onCollapsedChange?: (v: boolean) => void;
 }
 
-export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCollapsed, onCollapsedChange }: SidebarProps) {
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const collapsed = controlledCollapsed ?? internalCollapsed;
-  const setCollapsed = (v: boolean) => { setInternalCollapsed(v); onCollapsedChange?.(v); };
+export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
 
-  const isCollapsed = isMobile ? false : collapsed;
+  
 
   // Track which groups are open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -140,7 +135,7 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCo
         "h-screen bg-card border-r border-border/50 flex flex-col",
         isMobile
           ? "w-full"
-          : cn("fixed left-0 top-0 z-50 transition-all duration-300", isCollapsed ? "w-16" : "w-60")
+          : "fixed left-0 top-0 z-50 w-60"
       )}
     >
       {/* Header */}
@@ -151,56 +146,17 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCo
               <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
             </div>
-            {!isCollapsed && (
               <div className="overflow-hidden">
                 <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
                 <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
               </div>
-            )}
           </div>
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCollapsed(!collapsed)}
-              className="h-7 w-7 shrink-0 hover:bg-primary/10"
-            >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
-          )}
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
-        {isCollapsed ? (
-          // Collapsed: show flat icon list
-          <div className="space-y-0.5">
-            {visibleGroups.flatMap((group) =>
-              group.items.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={handleNavClick}
-                    className={cn(
-                      "flex items-center justify-center p-2 rounded-lg transition-all",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    )}
-                    title={item.title}
-                  >
-                    <item.icon className={cn("h-4.5 w-4.5", isActive && "animate-pulse")} />
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        ) : (
-          // Expanded: show grouped collapsible
-          visibleGroups.map((group) => {
+        {visibleGroups.map((group) => {
             const isGroupActive = group.items.some((item) => item.path === location.pathname);
             const isOpen = openGroups[group.title] ?? isGroupActive;
 
@@ -255,9 +211,8 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCo
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-            );
-          })
-        )}
+          );
+        })}
       </nav>
 
       {/* Footer */}
@@ -272,24 +227,22 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCo
             )}
           >
             <Shield className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span className="font-medium">Admin</span>}
+            <span className="font-medium">Admin</span>
           </Link>
         )}
 
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-2.5")}>
+        <div className="flex items-center px-2.5">
           <ThemeToggle />
         </div>
 
-        {!isCollapsed && (
-          <div className="px-2.5 py-1">
-            <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
-            {userRole === "super_admin" && (
-              <p className="text-[10px] text-warning font-semibold">Super Admin</p>
-            )}
-          </div>
-        )}
+        <div className="px-2.5 py-1">
+          <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+          {userRole === "super_admin" && (
+            <p className="text-[10px] text-warning font-semibold">Super Admin</p>
+          )}
+        </div>
 
-        {!isCollapsed && onResetOnboarding && (
+        {onResetOnboarding && (
           <Button
             variant="ghost"
             size="sm"
@@ -303,15 +256,11 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed: controlledCo
 
         <Button
           variant="ghost"
-          size={isCollapsed ? "icon" : "default"}
           onClick={handleSignOut}
-          className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7",
-            isCollapsed && "px-0"
-          )}
+          className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7"
         >
           <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span className="ml-1.5">Sair</span>}
+          <span className="ml-1.5">Sair</span>
         </Button>
       </div>
     </aside>
