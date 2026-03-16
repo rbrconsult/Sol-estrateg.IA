@@ -60,7 +60,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </Sheet>
       )}
 
-      <main className={isMobile ? "" : "ml-16 lg:ml-64 transition-all duration-300"}>
+      <main className={isMobile ? "" : cn("transition-all duration-300", sidebarCollapsed ? "ml-16" : "ml-60")}>
         {children}
       </main>
 
