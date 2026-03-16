@@ -156,34 +156,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
-        {isCollapsed ? (
-          // Collapsed: show flat icon list
-          <div className="space-y-0.5">
-            {visibleGroups.flatMap((group) =>
-              group.items.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={handleNavClick}
-                    className={cn(
-                      "flex items-center justify-center p-2 rounded-lg transition-all",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    )}
-                    title={item.title}
-                  >
-                    <item.icon className={cn("h-4.5 w-4.5", isActive && "animate-pulse")} />
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        ) : (
-          // Expanded: show grouped collapsible
-          visibleGroups.map((group) => {
+        {visibleGroups.map((group) => {
             const isGroupActive = group.items.some((item) => item.path === location.pathname);
             const isOpen = openGroups[group.title] ?? isGroupActive;
 
