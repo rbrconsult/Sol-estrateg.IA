@@ -211,9 +211,8 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-            );
-          })
-        )}
+          );
+        })}
       </nav>
 
       {/* Footer */}
