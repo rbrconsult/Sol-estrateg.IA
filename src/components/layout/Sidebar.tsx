@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Kanban, ChevronDown,
+  LayoutDashboard, Kanban,
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
@@ -9,7 +8,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
@@ -22,66 +20,24 @@ interface MenuItem {
   moduleKey?: string;
 }
 
-interface MenuGroup {
-  title: string;
-  icon: React.ElementType;
-  items: MenuItem[];
-}
-
-const menuGroups: MenuGroup[] = [
-  {
-    title: "Visão Geral",
-    icon: Presentation,
-    items: [
-      { title: "Sol Estrateg.IA", icon: Presentation, path: "/", moduleKey: "conferencia" },
-      { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
-    ],
-  },
-  {
-    title: "Vendas",
-    icon: TrendingUp,
-    items: [
-      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
-      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
-      { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
-      { title: "Monitor de SLA", icon: Clock, path: "/sla" },
-    ],
-  },
-  {
-    title: "Robôs",
-    icon: Bot,
-    items: [
-      { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
-      { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
-      { title: "Analista Follow-up", icon: Target, path: "/followup" },
-    ],
-  },
-  {
-    title: "Mídia",
-    icon: Megaphone,
-    items: [
-      { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "bi" },
-      { title: "Mídia × Receita", icon: DollarSign, path: "/midia" },
-    ],
-  },
-  {
-    title: "Inteligência",
-    icon: BarChart3,
-    items: [
-      { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
-      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "bi" },
-      { title: "Leads", icon: Users, path: "/leads" },
-    ],
-  },
-  {
-    title: "Operacional",
-    icon: Settings,
-    items: [
-      { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
-      { title: "Reports", icon: FileText, path: "/reports" },
-      { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
-    ],
-  },
+const menuItems: MenuItem[] = [
+  { title: "Sol Estrateg.IA", icon: Presentation, path: "/", moduleKey: "conferencia" },
+  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
+  { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
+  { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
+  { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
+  { title: "Monitor de SLA", icon: Clock, path: "/sla" },
+  { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
+  { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
+  { title: "Analista Follow-up", icon: Target, path: "/followup" },
+  { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "bi" },
+  { title: "Mídia × Receita", icon: DollarSign, path: "/midia" },
+  { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
+  { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "bi" },
+  { title: "Leads", icon: Users, path: "/leads" },
+  { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
+  { title: "Reports", icon: FileText, path: "/reports" },
+  { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
 ];
 
 interface SidebarProps {
@@ -95,21 +51,6 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
 
-  
-
-  // Track which groups are open
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    menuGroups.forEach((g) => {
-      initial[g.title] = g.items.some((item) => item.path === location.pathname);
-    });
-    return initial;
-  });
-
-  const toggleGroup = (title: string) => {
-    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
-  };
-
   const handleSignOut = async () => {
     await signOut();
     toast.success("Logout realizado com sucesso!");
@@ -119,15 +60,9 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     onNavigate?.();
   };
 
-  // Filter items based on module permissions
-  const visibleGroups = menuGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) =>
-        item.moduleKey ? hasAccess(item.moduleKey) : true
-      ),
-    }))
-    .filter((group) => group.items.length > 0);
+  const visibleItems = menuItems.filter((item) =>
+    item.moduleKey ? hasAccess(item.moduleKey) : true
+  );
 
   return (
     <aside
@@ -140,77 +75,37 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     >
       {/* Header */}
       <div className="p-3 border-b border-border/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
-              <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
-              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
-            </div>
-              <div className="overflow-hidden">
-                <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
-                <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
-              </div>
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
+            <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
+            <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
+          </div>
+          <div className="overflow-hidden">
+            <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
+            <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
-        {visibleGroups.map((group) => {
-            const isGroupActive = group.items.some((item) => item.path === location.pathname);
-            const isOpen = openGroups[group.title] ?? isGroupActive;
-
-            return (
-              <Collapsible
-                key={group.title}
-                open={isOpen}
-                onOpenChange={() => toggleGroup(group.title)}
-              >
-                <CollapsibleTrigger className="w-full">
-                  <div
-                    className={cn(
-                      "flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                      isGroupActive
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <group.icon className="h-3.5 w-3.5" />
-                      <span style={{ fontFamily: "'Syne', sans-serif" }}>{group.title}</span>
-                    </div>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 transition-transform",
-                        isOpen && "rotate-180"
-                      )}
-                    />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="ml-3 pl-2.5 border-l border-border/40 space-y-0.5 mt-0.5 mb-1">
-                    {group.items.map((item) => {
-                      const isActive = location.pathname === item.path;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={handleNavClick}
-                          className={cn(
-                            "flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs",
-                            isActive
-                              ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                          )}
-                        >
-                          <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
-                          <span>{item.title}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+        {visibleItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={handleNavClick}
+              className={cn(
+                "flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+              <span>{item.title}</span>
+            </Link>
           );
         })}
       </nav>
