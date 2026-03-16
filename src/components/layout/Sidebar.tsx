@@ -19,6 +19,7 @@ import {
   Repeat,
   Route,
   Zap,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,12 @@ const menuItems = [
     icon: Zap, 
     path: "/painel-comercial",
     description: "Alertas & Fila"
+  },
+  { 
+    title: "Reports", 
+    icon: FileText, 
+    path: "/reports",
+    description: "Templates WhatsApp"
   },
   { 
     title: "Operações", 
