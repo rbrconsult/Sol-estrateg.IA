@@ -97,6 +97,26 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/ads-performance" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><AdsPerformance /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/robo-sol" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><RoboSol /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/robo-fup-frio" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><RoboFupFrio /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/jornada-lead" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="bi"><JornadaLead /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/roadmap" element={
                 <ProtectedRoute>
                   <MainLayout><Roadmap /></MainLayout>

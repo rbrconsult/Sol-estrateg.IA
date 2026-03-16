@@ -118,6 +118,10 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     '/performance': 'vendedores',
     '/chamados': 'chamados',
     '/bi': 'bi',
+    '/ads-performance': 'bi',
+    '/robo-sol': 'bi',
+    '/robo-fup-frio': 'bi',
+    '/jornada-lead': 'bi',
     '/operacoes': 'monitoramento',
   };
 
