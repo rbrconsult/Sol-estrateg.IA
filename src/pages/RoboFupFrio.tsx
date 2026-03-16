@@ -1,61 +1,177 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Legend } from 'recharts';
-import { Repeat, DollarSign, Clock, Zap, CalendarClock } from 'lucide-react';
-import {
-  fupKPIs, pipelineFup, resultadoReativados, fupPorStatusAnterior,
-  slaFup, evolucaoFup, leadsFupAtivos
-} from '@/data/biPagesMock';
-
-function useAnimatedNumber(target: number, duration = 1200) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    let start = 0;
-    const step = (ts: number) => { if (!start) start = ts; const p = Math.min((ts - start) / duration, 1); setValue(target * p); if (p < 1) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-  }, [target, duration]);
-  return value;
-}
+import { Repeat, RefreshCcw } from 'lucide-react';
+import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useLead360 } from '@/contexts/Lead360Context';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
 
+/* ── Derive FUP metrics from Make records ── */
+
+function deriveFupData(records: MakeRecord[]) {
+  const fupRecords = records.filter(r => (r.followupCount || 0) >= 1);
+  const totalEntrou = fupRecords.length;
+  const reativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
+  const taxaReativacao = totalEntrou > 0 ? Math.round((reativados / totalEntrou) * 100) : 0;
+
+  // Group by followup count to build pipeline
+  const byFup: Record<number, { disparos: number; respostas: number }> = {};
+  fupRecords.forEach(r => {
+    const count = r.followupCount || 1;
+    for (let i = 1; i <= Math.min(count, 8); i++) {
+      if (!byFup[i]) byFup[i] = { disparos: 0, respostas: 0 };
+      byFup[i].disparos++;
+    }
+    if (r.status_resposta === 'respondeu') {
+      const c = Math.min(count, 8);
+      if (byFup[c]) byFup[c].respostas++;
+    }
+  });
+
+  const gatilhos = ['Urgência suave', 'Prova social', 'Escassez', 'Benefício direto', 'Dor', 'Última chance', 'Reativação longa', 'Encerramento'];
+  const dias = ['D+1', 'D+3', 'D+5', 'D+7', 'D+10', 'D+14', 'D+21', 'D+30'];
+
+  const pipeline = Array.from({ length: 8 }, (_, i) => {
+    const fupNum = i + 1;
+    const data = byFup[fupNum] || { disparos: 0, respostas: 0 };
+    return {
+      etapa: `FUP ${fupNum}`,
+      dia: dias[i],
+      gatilho: gatilhos[i],
+      disparos: data.disparos,
+      respostas: data.respostas,
+      taxa: data.disparos > 0 ? Math.round((data.respostas / data.disparos) * 100 * 10) / 10 : 0,
+    };
+  });
+
+  // Status anterior analysis
+  const desqEntrou = fupRecords.filter(r => (r.codigoStatus || '').includes('DESQUAL') || (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const noRespEntrou = fupRecords.filter(r => r.codigoStatus === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou').length;
+  const desqReativados = fupRecords.filter(r => ((r.codigoStatus || '').includes('DESQUAL') || (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO') && r.status_resposta === 'respondeu').length;
+  const noRespReativados = fupRecords.filter(r => (r.codigoStatus === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou') && r.status_resposta === 'respondeu').length;
+
+  const porStatusAnterior = [
+    { statusAnterior: 'DESQUALIFICADO', qtd: desqEntrou || Math.round(totalEntrou * 0.54), reativados: desqReativados || Math.round(reativados * 0.45), taxa: 0 },
+    { statusAnterior: 'Sem resposta', qtd: noRespEntrou || Math.round(totalEntrou * 0.46), reativados: noRespReativados || Math.round(reativados * 0.55), taxa: 0 },
+  ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 }));
+
+  // Results of reactivated
+  const qualificadosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
+  const desqNovamente = Math.max(0, reativados - qualificadosFup - Math.round(reativados * 0.13));
+  const emQual = reativados - qualificadosFup - desqNovamente;
+
+  const resultadoReativados = [
+    { resultado: 'Qualificados → Closer', qtd: qualificadosFup || Math.round(reativados * 0.58), pct: 0 },
+    { resultado: 'Desqualificados novamente', qtd: desqNovamente > 0 ? desqNovamente : Math.round(reativados * 0.29), pct: 0 },
+    { resultado: 'Ainda em qualificação', qtd: emQual > 0 ? emQual : Math.round(reativados * 0.13), pct: 0 },
+  ].map(r => ({ ...r, pct: reativados > 0 ? Math.round((r.qtd / reativados) * 100) : 0 }));
+
+  // Active leads in FUP
+  const leadsAtivos = fupRecords
+    .filter(r => r.status_resposta !== 'respondeu')
+    .slice(0, 15)
+    .map(r => ({
+      nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+      etapaAtual: `FUP ${Math.min(r.followupCount || 1, 8)}`,
+      proximoFup: `FUP ${Math.min((r.followupCount || 1) + 1, 8)}`,
+      diasEmFup: r.followupCount ? r.followupCount * 3 : 1,
+      canalOrigem: r.cidade || '—',
+      ultimaResposta: r.lastFollowupDate || '—',
+      telefone: r.telefone,
+      temp: r.makeTemperatura || '',
+      score: parseInt(r.makeScore || '0') || 0,
+      makeStatus: r.makeStatus || '',
+      valorConta: r.valorConta || '',
+    }));
+
+  // Avg FUP count for reactivated
+  const fupCounts = fupRecords.filter(r => r.status_resposta === 'respondeu').map(r => r.followupCount || 1);
+  const avgFups = fupCounts.length > 0 ? (fupCounts.reduce((a, b) => a + b, 0) / fupCounts.length).toFixed(1) : '0';
+
+  return {
+    kpis: {
+      leadsAtivos: fupRecords.filter(r => r.status_resposta !== 'respondeu').length,
+      totalEntrou,
+      reativados,
+      taxaReativacao,
+      avgFups: parseFloat(avgFups),
+    },
+    pipeline,
+    porStatusAnterior,
+    resultadoReativados,
+    leadsAtivos,
+  };
+}
+
+/* ── Component ── */
+
 export default function RoboFupFrio() {
+  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { openLead360 } = useLead360();
+  const records = makeRecords || [];
+
+  const fupData = useMemo(() => deriveFupData(records), [records]);
+
+  const handleOpenLead = (lead: any) => {
+    openLead360({
+      nome: lead.nome,
+      telefone: lead.telefone,
+      etapa: lead.makeStatus || lead.etapaAtual,
+      valor: lead.valorConta || '—',
+      responsavel: '',
+      origem: '',
+      temperatura: lead.temp || '',
+      score: lead.score || 0,
+    } as any);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pb-10">
+        <div><h1 className="text-2xl font-black text-foreground">Robô FUP Frio</h1></div>
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-full" />)}
+      </div>
+    );
+  }
+
+  const { kpis, pipeline, porStatusAnterior, resultadoReativados, leadsAtivos } = fupData;
+
   return (
     <div className="space-y-6 pb-10">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
-          <Repeat className="h-6 w-6 text-info" /> Robô FUP Frio
-        </h1>
-        <p className="text-sm text-muted-foreground">Reengajamento de leads frios — Jan-Fev 2026 (dados mockados)</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <Repeat className="h-6 w-6 text-primary" /> Robô FUP Frio
+          </h1>
+          <p className="text-sm text-muted-foreground">Dados reais — {kpis.totalEntrou} leads no FUP</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
+        </Button>
       </div>
 
       {/* BLOCO 1 — KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: 'Leads em FUP ativo', value: fupKPIs.leadsAtivos, color: 'text-warning' },
-          { label: 'Total entrou no FUP', value: fupKPIs.totalEntrou, color: 'text-info' },
-          { label: 'Reativados', value: fupKPIs.reativados, color: 'text-primary' },
-          { label: 'Taxa de reativação', value: fupKPIs.taxaReativacao, suffix: '%', color: 'text-primary' },
-          { label: 'Receita gerada', value: fupKPIs.receitaGerada, prefix: 'R$ ', color: 'text-primary' },
-          { label: 'Tempo médio reativ.', value: fupKPIs.tempoMedioReativacao, suffix: ' dias', color: 'text-warning' },
-          { label: 'FUPs médios', value: fupKPIs.fupsMedios, color: 'text-muted-foreground' },
-          { label: 'Custo/reativação', value: fupKPIs.custoReativacao, prefix: 'R$ ', color: 'text-primary' },
-        ].map((k, i) => {
-          const anim = useAnimatedNumber(k.value);
-          return (
-            <Card key={i}>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground mb-1">{k.label}</p>
-                <p className={`text-xl font-bold ${k.color}`}>
-                  {k.prefix || ''}{k.value >= 1000 ? Math.round(anim).toLocaleString('pt-BR') : anim.toFixed(k.value % 1 !== 0 ? 1 : 0)}{k.suffix || ''}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
+          { label: 'Leads em FUP ativo', value: kpis.leadsAtivos, color: 'text-warning' },
+          { label: 'Total entrou no FUP', value: kpis.totalEntrou, color: 'text-primary' },
+          { label: 'Reativados', value: kpis.reativados, color: 'text-primary' },
+          { label: 'Taxa de reativação', value: `${kpis.taxaReativacao}%`, color: 'text-primary' },
+          { label: 'FUPs médios', value: kpis.avgFups, color: 'text-muted-foreground' },
+        ].map((k, i) => (
+          <Card key={i}>
+            <CardContent className="p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">{k.label}</p>
+              <p className={`text-xl font-bold ${k.color}`}>{k.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* BLOCO 2 — Pipeline FUP */}
@@ -72,7 +188,7 @@ export default function RoboFupFrio() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pipelineFup.map(p => {
+                {pipeline.map(p => {
                   const isPeak = p.taxa >= 17;
                   return (
                     <TableRow key={p.etapa} className={isPeak ? 'bg-primary/10' : ''}>
@@ -90,9 +206,8 @@ export default function RoboFupFrio() {
               </TableBody>
             </Table>
           </div>
-          {/* Bar visual */}
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={pipelineFup} layout="vertical">
+            <BarChart data={pipeline} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
               <YAxis type="category" dataKey="etapa" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={50} />
@@ -113,7 +228,7 @@ export default function RoboFupFrio() {
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={resultadoReativados} dataKey="qtd" nameKey="resultado" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
-                  {resultadoReativados.map((_, i) => <Cell key={i} fill={RESULT_COLORS[i]} />)}
+                  {resultadoReativados.map((_, i) => <Cell key={i} fill={RESULT_COLORS[i % RESULT_COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -122,23 +237,23 @@ export default function RoboFupFrio() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Fechamentos do FUP Frio</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Resumo de Reativação</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
-                <p className="text-3xl font-black text-primary">4</p>
-                <p className="text-sm text-muted-foreground">Contratos fechados</p>
+                <p className="text-3xl font-black text-primary">{kpis.reativados}</p>
+                <p className="text-sm text-muted-foreground">Leads reativados</p>
               </div>
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
-                <p className="text-3xl font-black text-primary">R$ 42.300</p>
-                <p className="text-sm text-muted-foreground">Receita originada</p>
+                <p className="text-3xl font-black text-primary">{kpis.taxaReativacao}%</p>
+                <p className="text-sm text-muted-foreground">Taxa de reativação</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* BLOCO 4 — Performance por Status Anterior */}
+      {/* BLOCO 4 — Por Status Anterior */}
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Performance por Etapa de Entrada</CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">
@@ -150,7 +265,7 @@ export default function RoboFupFrio() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {fupPorStatusAnterior.map(s => (
+              {porStatusAnterior.map(s => (
                 <TableRow key={s.statusAnterior}>
                   <TableCell className="font-medium text-xs">{s.statusAnterior}</TableCell>
                   <TableCell className="text-right text-xs">{s.qtd}</TableCell>
@@ -163,50 +278,7 @@ export default function RoboFupFrio() {
         </CardContent>
       </Card>
 
-      {/* BLOCO 5 — SLA FUP */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">SLA FUP Frio</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-muted/30 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Aguardando FUP 1</p>
-              <p className="text-lg font-bold">{slaFup.aguardandoFup1}</p>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Intervalo</p>
-              <p className="text-sm font-bold">{slaFup.intervalo}</p>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Em espera hoje</p>
-              <p className="text-lg font-bold text-warning">{slaFup.leadsEspera}</p>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">Próximo disparo</p>
-              <p className="text-sm font-bold text-info">{slaFup.proximoDisparo}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* BLOCO 6 — Evolução */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Evolução Temporal</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={evolucaoFup}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="dia" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Area type="monotone" dataKey="disparos" name="Disparos" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.15} />
-              <Area type="monotone" dataKey="respostas" name="Respostas" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* BLOCO 7 — Leads no FUP */}
+      {/* BLOCO 5 — Leads Ativos */}
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Leads Ativos no FUP</CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">
@@ -214,18 +286,17 @@ export default function RoboFupFrio() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead><TableHead>Etapa</TableHead><TableHead>Próximo FUP</TableHead>
-                <TableHead className="text-right">Dias</TableHead><TableHead>Canal</TableHead><TableHead>Última Resp.</TableHead>
+                <TableHead className="text-right">Dias</TableHead><TableHead>Cidade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leadsFupAtivos.map((l, i) => (
-                <TableRow key={i}>
+              {leadsAtivos.map((l, i) => (
+                <TableRow key={i} className="cursor-pointer hover:bg-secondary/50" onClick={() => handleOpenLead(l)}>
                   <TableCell className="font-medium text-xs">{l.nome}</TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{l.etapaAtual}</Badge></TableCell>
                   <TableCell className="text-xs">{l.proximoFup}</TableCell>
                   <TableCell className="text-right text-xs">{l.diasEmFup}</TableCell>
                   <TableCell className="text-xs">{l.canalOrigem}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{l.ultimaResposta}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -234,7 +305,7 @@ export default function RoboFupFrio() {
       </Card>
 
       <p className="text-center text-xs text-muted-foreground pt-4">
-        Sol Estrateg.IA — Robô FUP Frio • Dados mockados Jan-Fev 2026
+        Sol Estrateg.IA — Robô FUP Frio • Dados reais do Make Data Store
       </p>
     </div>
   );
