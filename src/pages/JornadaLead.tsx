@@ -47,8 +47,6 @@ const SLA_DEFS: SLADef[] = [
     ator: 'Robô Sol',
     getRecords: (recs) => recs.filter(r => r.status_resposta === 'respondeu'),
     getTimeMinutes: (r) => {
-      // Approximate from data fields
-      if (r.data_envio && r.data_resposta) {
       if (r.data_envio && r.data_resposta) {
         const diff = new Date(r.data_resposta).getTime() - new Date(r.data_envio).getTime();
         return diff > 0 ? diff / 60000 : null;
