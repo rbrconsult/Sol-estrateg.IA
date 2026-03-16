@@ -123,6 +123,11 @@ const App = () => (
                   <MainLayout><Roadmap /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/painel-comercial" element={
+                <ProtectedRoute>
+                  <MainLayout><PainelComercial /></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
