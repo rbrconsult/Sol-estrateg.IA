@@ -1,5 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { Sidebar } from "./Sidebar";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useAuth } from "@/hooks/useAuth";
