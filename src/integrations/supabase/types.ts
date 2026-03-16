@@ -62,6 +62,166 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          new_etapa: string | null
+          new_status: string
+          old_etapa: string | null
+          old_status: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          new_etapa?: string | null
+          new_status: string
+          old_etapa?: string | null
+          old_status?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          new_etapa?: string | null
+          new_status?: string
+          old_etapa?: string | null
+          old_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_status_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_consolidados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads_consolidados: {
+        Row: {
+          campanha: string | null
+          canal_origem: string | null
+          cidade: string | null
+          codigo_status: string | null
+          created_at: string | null
+          data_agendamento: string | null
+          data_entrada: string | null
+          data_fechamento: string | null
+          data_proposta: string | null
+          data_qualificacao: string | null
+          email: string | null
+          etapa: string | null
+          followup_count: number | null
+          id: string
+          imovel: string | null
+          interesse_detectado: string | null
+          last_followup_date: string | null
+          nome: string | null
+          organization_id: string | null
+          project_id: string | null
+          respondeu: boolean | null
+          responsavel: string | null
+          robo: string | null
+          score: number | null
+          sentimento_resposta: string | null
+          status: string | null
+          synced_at: string | null
+          telefone: string
+          temperatura: string | null
+          tempo_resposta_seg: number | null
+          updated_at: string | null
+          valor_conta: string | null
+          valor_proposta: number | null
+        }
+        Insert: {
+          campanha?: string | null
+          canal_origem?: string | null
+          cidade?: string | null
+          codigo_status?: string | null
+          created_at?: string | null
+          data_agendamento?: string | null
+          data_entrada?: string | null
+          data_fechamento?: string | null
+          data_proposta?: string | null
+          data_qualificacao?: string | null
+          email?: string | null
+          etapa?: string | null
+          followup_count?: number | null
+          id?: string
+          imovel?: string | null
+          interesse_detectado?: string | null
+          last_followup_date?: string | null
+          nome?: string | null
+          organization_id?: string | null
+          project_id?: string | null
+          respondeu?: boolean | null
+          responsavel?: string | null
+          robo?: string | null
+          score?: number | null
+          sentimento_resposta?: string | null
+          status?: string | null
+          synced_at?: string | null
+          telefone: string
+          temperatura?: string | null
+          tempo_resposta_seg?: number | null
+          updated_at?: string | null
+          valor_conta?: string | null
+          valor_proposta?: number | null
+        }
+        Update: {
+          campanha?: string | null
+          canal_origem?: string | null
+          cidade?: string | null
+          codigo_status?: string | null
+          created_at?: string | null
+          data_agendamento?: string | null
+          data_entrada?: string | null
+          data_fechamento?: string | null
+          data_proposta?: string | null
+          data_qualificacao?: string | null
+          email?: string | null
+          etapa?: string | null
+          followup_count?: number | null
+          id?: string
+          imovel?: string | null
+          interesse_detectado?: string | null
+          last_followup_date?: string | null
+          nome?: string | null
+          organization_id?: string | null
+          project_id?: string | null
+          respondeu?: boolean | null
+          responsavel?: string | null
+          robo?: string | null
+          score?: number | null
+          sentimento_resposta?: string | null
+          status?: string | null
+          synced_at?: string | null
+          telefone?: string
+          temperatura?: string | null
+          tempo_resposta_seg?: number | null
+          updated_at?: string | null
+          valor_conta?: string | null
+          valor_proposta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_consolidados_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       make_errors: {
         Row: {
           attempts: number | null

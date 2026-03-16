@@ -1,19 +1,18 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertTriangle,
-  Clock,
   Users,
   TrendingUp,
   MessageSquare,
   Flame,
   Thermometer,
   CalendarCheck,
-  Phone,
   Eye,
   ChevronRight,
   Send,
@@ -21,67 +20,209 @@ import {
   Zap,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
+import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 
-/* ── mock data ─────────────────────────────────────────── */
+/* ── helpers ───────────────────────────────────────────── */
 
-const alertasUrgentes = [
-  { id: 1, tipo: "sla", label: "SLA Estourado", desc: "Lead João Silva — Proposta há 12 dias (meta 7d)", severity: "critical" as const, time: "há 2h" },
-  { id: 2, tipo: "sla", label: "SLA Estourado", desc: "Lead Maria Santos — Closer sem contato há 3h (meta 1h)", severity: "critical" as const, time: "há 45min" },
-  { id: 3, tipo: "dup", label: "Duplicata", desc: "(19) 99812-3456 aparece em 3 projetos diferentes", severity: "warning" as const, time: "há 1h" },
-  { id: 4, tipo: "quente", label: "Lead Quente s/ Agend.", desc: "Carlos Oliveira — Score 87, sem agendamento há 2 dias", severity: "warning" as const, time: "há 3h" },
-  { id: 5, tipo: "fup", label: "FUP Reativado", desc: "Ana Costa reativou no D+7 — Encaminhar ao closer", severity: "info" as const, time: "há 30min" },
-  { id: 6, tipo: "sla", label: "SLA Estourado", desc: "Lead Pedro Souza — Reunião → Proposta há 6h (meta 3h)", severity: "critical" as const, time: "há 1h" },
-];
+type Severity = "critical" | "warning" | "info";
 
-const closers = [
-  {
-    nome: "Ricardo Lima",
-    leads: [
-      { nome: "João Silva", score: 87, temp: "QUENTE", etapa: "Proposta Enviada", valor: "R$ 18.400", prioridade: "alta" },
-      { nome: "Ana Costa", score: 72, temp: "MORNO", etapa: "Agendamento", valor: "R$ 12.300", prioridade: "media" },
-      { nome: "Pedro Alves", score: 45, temp: "FRIO", etapa: "Qualificado", valor: "R$ 8.900", prioridade: "baixa" },
-    ],
-    stats: { conversao: 34, ticketMedio: "R$ 14.200", sla: "47min" },
-  },
-  {
-    nome: "Fernanda Dias",
-    leads: [
-      { nome: "Maria Santos", score: 91, temp: "QUENTE", etapa: "Negociação", valor: "R$ 22.100", prioridade: "alta" },
-      { nome: "Carlos Oliveira", score: 68, temp: "MORNO", etapa: "Reunião Marcada", valor: "R$ 15.600", prioridade: "media" },
-    ],
-    stats: { conversao: 41, ticketMedio: "R$ 18.800", sla: "32min" },
-  },
-  {
-    nome: "Bruno Costa",
-    leads: [
-      { nome: "Lucia Ferreira", score: 55, temp: "MORNO", etapa: "Qualificado", valor: "R$ 9.700", prioridade: "media" },
-      { nome: "Roberto Nunes", score: 38, temp: "FRIO", etapa: "Qualificado", valor: "R$ 7.200", prioridade: "baixa" },
-      { nome: "Patrícia Lima", score: 82, temp: "QUENTE", etapa: "Proposta Enviada", valor: "R$ 19.500", prioridade: "alta" },
-      { nome: "Marcos Souza", score: 61, temp: "MORNO", etapa: "Agendamento", valor: "R$ 11.400", prioridade: "media" },
-    ],
-    stats: { conversao: 28, ticketMedio: "R$ 11.900", sla: "58min" },
-  },
-];
+interface Alert {
+  id: string;
+  tipo: string;
+  label: string;
+  desc: string;
+  severity: Severity;
+  time: string;
+}
 
-const resumoDia = {
-  leadsHoje: 14,
-  qualificados: 5,
-  agendamentos: 3,
-  propostasEnviadas: 2,
-  vendasFechadas: 1,
-  faturamento: "R$ 18.400",
-  taxaConversao: "29,6%",
-  scoreMedia: 62,
-  tempMedia: "MORNO",
-  acoes: [
-    { hora: "16:42", desc: "João Silva recebeu proposta — R$ 18.400", tipo: "proposta" },
-    { hora: "15:18", desc: "Ana Costa reativou via FUP D+7", tipo: "fup" },
-    { hora: "14:05", desc: "Maria Santos agendou reunião para 18/03", tipo: "agendamento" },
-    { hora: "11:30", desc: "Carlos Oliveira qualificado — Score 87", tipo: "qualificacao" },
-    { hora: "10:15", desc: "3 leads novos entraram via Meta Ads", tipo: "lead" },
-    { hora: "09:02", desc: "Robô Sol iniciou 8 conversas", tipo: "robo" },
-  ],
+const severityStyles: Record<Severity, string> = {
+  critical: "bg-destructive/15 text-destructive border-destructive/30",
+  warning: "bg-warning/15 text-warning border-warning/30",
+  info: "bg-primary/15 text-primary border-primary/30",
 };
+const severityBadge: Record<Severity, "destructive" | "secondary" | "outline"> = {
+  critical: "destructive",
+  warning: "secondary",
+  info: "outline",
+};
+
+const tempColor = (t: string) =>
+  t === "QUENTE" ? "text-red-400" : t === "MORNO" ? "text-yellow-400" : "text-blue-400";
+
+const prioridadeBadge = (p: string): "destructive" | "secondary" | "outline" =>
+  p === "alta" ? "destructive" : p === "media" ? "secondary" : "outline";
+
+const reportIcon = (tipo: string) => {
+  switch (tipo) { case "executivo": return "☀️"; case "closer": return "📊"; case "robos": return "🤖"; case "campanha": return "📣"; default: return "📄"; }
+};
+
+function getPrioridade(r: MakeRecord): string {
+  const score = parseInt(r.makeScore || "0") || 0;
+  if (score >= 70 || r.makeTemperatura === "QUENTE") return "alta";
+  if (score >= 40 || r.makeTemperatura === "MORNO") return "media";
+  return "baixa";
+}
+
+function getEtapa(r: MakeRecord): string {
+  const s = (r.makeStatus || "").toUpperCase();
+  if (s === "QUALIFICADO") return "Qualificado";
+  if (s === "WHATSAPP") return "Em Qualificação";
+  if (s === "DESQUALIFICADO") return "Desqualificado";
+  if (s === "AGENDAMENTO" || s === "AGENDADO") return "Agendamento";
+  if (s === "PROPOSTA") return "Proposta Enviada";
+  if (s === "NEGOCIACAO") return "Negociação";
+  return s || "Novo";
+}
+
+function timeSince(dateStr: string): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `há ${mins}min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `há ${hrs}h`;
+  return `há ${Math.floor(hrs / 24)}d`;
+}
+
+/* ── derive alerts from Make data ─────────────────────── */
+
+function deriveAlerts(records: MakeRecord[]): Alert[] {
+  const alerts: Alert[] = [];
+  let id = 0;
+
+  // Detect duplicates by phone
+  const phoneCount = new Map<string, MakeRecord[]>();
+  records.forEach((r) => {
+    if (!r.telefone) return;
+    const arr = phoneCount.get(r.telefone) || [];
+    arr.push(r);
+    phoneCount.set(r.telefone, arr);
+  });
+  phoneCount.forEach((recs, phone) => {
+    if (recs.length >= 2) {
+      alerts.push({
+        id: `dup-${id++}`,
+        tipo: "dup",
+        label: "Duplicata",
+        desc: `${phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")} aparece em ${recs.length} registros`,
+        severity: "warning",
+        time: "",
+      });
+    }
+  });
+
+  // Hot leads without recent activity
+  records.forEach((r) => {
+    const score = parseInt(r.makeScore || "0") || 0;
+    const temp = (r.makeTemperatura || "").toUpperCase();
+    const status = (r.makeStatus || "").toUpperCase();
+
+    if ((score >= 70 || temp === "QUENTE") && status !== "QUALIFICADO" && status !== "AGENDAMENTO") {
+      alerts.push({
+        id: `quente-${id++}`,
+        tipo: "quente",
+        label: "Lead Quente s/ Agend.",
+        desc: `${r.nome || r.telefone} — Score ${score}, ${temp}`,
+        severity: "warning",
+        time: timeSince(r.data_envio),
+      });
+    }
+
+    // FUP reactivated
+    if (r.followupCount && r.followupCount >= 1 && r.status_resposta === "respondeu") {
+      alerts.push({
+        id: `fup-${id++}`,
+        tipo: "fup",
+        label: "FUP Reativado",
+        desc: `${r.nome || r.telefone} respondeu no FUP #${r.followupCount}`,
+        severity: "info",
+        time: timeSince(r.data_resposta || r.data_envio),
+      });
+    }
+  });
+
+  // Sort: critical first, then warning, then info
+  const order: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
+  alerts.sort((a, b) => order[a.severity] - order[b.severity]);
+  return alerts.slice(0, 20);
+}
+
+/* ── derive closer queue (group by status for now) ────── */
+
+interface CloserLead {
+  nome: string;
+  score: number;
+  temp: string;
+  etapa: string;
+  valor: string;
+  prioridade: string;
+  telefone: string;
+}
+
+interface CloserGroup {
+  nome: string;
+  leads: CloserLead[];
+  stats: { count: number; avgScore: number };
+}
+
+function deriveCloserQueue(records: MakeRecord[]): CloserGroup[] {
+  // Group qualified/engaged leads by temperature bucket
+  const qualified = records.filter((r) => {
+    const s = (r.makeStatus || "").toUpperCase();
+    return s === "QUALIFICADO" || s === "WHATSAPP" || s === "AGENDAMENTO" || s === "PROPOSTA" || s === "NEGOCIACAO";
+  });
+
+  const groups: Record<string, CloserLead[]> = { "Quentes": [], "Mornos": [], "Frios": [] };
+  qualified.forEach((r) => {
+    const temp = (r.makeTemperatura || "").toUpperCase();
+    const score = parseInt(r.makeScore || "0") || 0;
+    const lead: CloserLead = {
+      nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+      score,
+      temp: temp || "MORNO",
+      etapa: getEtapa(r),
+      valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+      prioridade: getPrioridade(r),
+      telefone: r.telefone,
+    };
+    if (temp === "QUENTE") groups["Quentes"].push(lead);
+    else if (temp === "FRIO") groups["Frios"].push(lead);
+    else groups["Mornos"].push(lead);
+  });
+
+  // Sort each group by score desc
+  Object.values(groups).forEach((g) => g.sort((a, b) => b.score - a.score));
+
+  return Object.entries(groups)
+    .filter(([, leads]) => leads.length > 0)
+    .map(([nome, leads]) => ({
+      nome,
+      leads: leads.slice(0, 8),
+      stats: {
+        count: leads.length,
+        avgScore: leads.length ? Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length) : 0,
+      },
+    }));
+}
+
+/* ── derive daily summary ─────────────────────────────── */
+
+function deriveSummary(records: MakeRecord[]) {
+  const total = records.length;
+  const qualificados = records.filter((r) => (r.makeStatus || "").toUpperCase() === "QUALIFICADO").length;
+  const responderam = records.filter((r) => r.status_resposta === "respondeu").length;
+  const fupAtivos = records.filter((r) => (r.followupCount || 0) >= 1).length;
+  const scores = records.map((r) => parseInt(r.makeScore || "0") || 0).filter((s) => s > 0);
+  const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+
+  const quentes = records.filter((r) => (r.makeTemperatura || "").toUpperCase() === "QUENTE").length;
+  const mornos = records.filter((r) => (r.makeTemperatura || "").toUpperCase() === "MORNO").length;
+  const frios = records.filter((r) => (r.makeTemperatura || "").toUpperCase() === "FRIO").length;
+
+  return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios };
+}
+
+/* ── report history mock (these come from Make, not DS) ── */
 
 const mensagensReports = [
   { id: 1, tipo: "executivo", titulo: "Relatório Executivo Diário", enviadoPara: "Diretoria", data: "16/03/2026 07:00", status: "enviado" },
@@ -92,46 +233,23 @@ const mensagensReports = [
   { id: 6, tipo: "robos", titulo: "Relatório dos Robôs", enviadoPara: "Gerente + Diretor", data: "15/03/2026 07:10", status: "falhou" },
 ];
 
-/* ── helpers ───────────────────────────────────────────── */
-
-const severityStyles = {
-  critical: "bg-destructive/15 text-destructive border-destructive/30",
-  warning: "bg-warning/15 text-warning border-warning/30",
-  info: "bg-primary/15 text-primary border-primary/30",
-};
-
-const severityBadge = {
-  critical: "destructive" as const,
-  warning: "secondary" as const,
-  info: "outline" as const,
-};
-
-const tempColor = (t: string) =>
-  t === "QUENTE" ? "text-red-400" : t === "MORNO" ? "text-yellow-400" : "text-blue-400";
-
-const prioridadeBadge = (p: string) =>
-  p === "alta" ? "destructive" as const : p === "media" ? "secondary" as const : "outline" as const;
-
-const reportIcon = (tipo: string) => {
-  switch (tipo) {
-    case "executivo": return "☀️";
-    case "closer": return "📊";
-    case "robos": return "🤖";
-    case "campanha": return "📣";
-    default: return "📄";
-  }
-};
-
 /* ── component ─────────────────────────────────────────── */
 
 export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
+  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
 
-  const handleOpenLead = (lead: { nome: string; score: number; temp: string; etapa: string; valor: string }) => {
+  const records = makeRecords || [];
+
+  const alerts = useMemo(() => deriveAlerts(records), [records]);
+  const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
+  const summary = useMemo(() => deriveSummary(records), [records]);
+
+  const handleOpenLead = (lead: CloserLead) => {
     openLead360({
       nome: lead.nome,
-      telefone: "",
+      telefone: lead.telefone,
       etapa: lead.etapa,
       valor: lead.valor,
       responsavel: "",
@@ -155,9 +273,9 @@ export default function PainelComercial() {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
             <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5 animate-pulse inline-block" />
-            Atualizado agora
+            {records.length} leads carregados
           </Badge>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
           </Button>
         </div>
@@ -173,140 +291,178 @@ export default function PainelComercial() {
 
         {/* ── PAINEL ──────────────────────────────── */}
         <TabsContent value="painel" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Col 1 — Alertas Urgentes */}
-            <Card className="border-destructive/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                  Alertas Urgentes
-                  <Badge variant="destructive" className="ml-auto">{alertasUrgentes.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[520px]">
-                  <div className="space-y-2 px-4 pb-4">
-                    {alertasUrgentes.map((a) => (
-                      <div
-                        key={a.id}
-                        className={`rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <Badge variant={severityBadge[a.severity]} className="text-[10px]">{a.label}</Badge>
-                          <span className="text-[10px] opacity-70">{a.time}</span>
-                        </div>
-                        <p className="text-xs leading-relaxed">{a.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Col 2 — Fila do Closer */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Fila do Closer
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[520px]">
-                  <div className="space-y-4 px-4 pb-4">
-                    {closers.map((c) => (
-                      <div key={c.nome} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-foreground">{c.nome}</span>
-                          <div className="flex gap-2 text-[10px] text-muted-foreground">
-                            <span>Conv: {c.stats.conversao}%</span>
-                            <span>TM: {c.stats.ticketMedio}</span>
-                            <span>SLA: {c.stats.sla}</span>
+          {isLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}><CardContent className="p-6"><Skeleton className="h-[500px] w-full" /></CardContent></Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Col 1 — Alertas Urgentes */}
+              <Card className="border-destructive/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Alertas Urgentes
+                    <Badge variant="destructive" className="ml-auto">{alerts.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[520px]">
+                    <div className="space-y-2 px-4 pb-4">
+                      {alerts.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-8">Nenhum alerta no momento ✅</p>
+                      )}
+                      {alerts.map((a) => (
+                        <div key={a.id} className={`rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <Badge variant={severityBadge[a.severity]} className="text-[10px]">{a.label}</Badge>
+                            {a.time && <span className="text-[10px] opacity-70">{a.time}</span>}
                           </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          {c.leads.map((l) => (
-                            <button
-                              key={l.nome}
-                              onClick={() => handleOpenLead(l)}
-                              className="w-full flex items-center gap-2 rounded-md border border-border/50 bg-card p-2 text-left hover:bg-secondary/50 transition-colors"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xs font-medium truncate">{l.nome}</span>
-                                  <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                                  <span className={tempColor(l.temp)}>{l.temp}</span>
-                                  <span>Score {l.score}</span>
-                                  <span className="truncate">{l.etapa}</span>
-                                </div>
-                              </div>
-                              <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
-                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Col 3 — Resumo do Dia */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  Resumo do Dia
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[520px]">
-                  <div className="px-4 pb-4 space-y-4">
-                    {/* KPIs grid */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "Leads", value: resumoDia.leadsHoje, icon: Flame },
-                        { label: "Qualificados", value: resumoDia.qualificados, icon: Thermometer },
-                        { label: "Agendamentos", value: resumoDia.agendamentos, icon: CalendarCheck },
-                        { label: "Propostas", value: resumoDia.propostasEnviadas, icon: Send },
-                        { label: "Vendas", value: resumoDia.vendasFechadas, icon: TrendingUp },
-                        { label: "Score ∅", value: resumoDia.scoreMedia, icon: Zap },
-                      ].map((k) => (
-                        <div key={k.label} className="rounded-lg border border-border/50 bg-secondary/30 p-2 text-center">
-                          <k.icon className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-0.5" />
-                          <div className="text-lg font-bold text-foreground">{k.value}</div>
-                          <div className="text-[10px] text-muted-foreground">{k.label}</div>
+                          <p className="text-xs leading-relaxed">{a.desc}</p>
                         </div>
                       ))}
                     </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
 
-                    {/* Faturamento */}
-                    <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-center">
-                      <div className="text-xs text-muted-foreground">Faturamento Hoje</div>
-                      <div className="text-xl font-black text-green-400">{resumoDia.faturamento}</div>
-                      <div className="text-[10px] text-muted-foreground">Conversão {resumoDia.taxaConversao}</div>
+              {/* Col 2 — Fila do Closer */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Fila do Closer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[520px]">
+                    <div className="space-y-4 px-4 pb-4">
+                      {closerQueue.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-8">Nenhum lead qualificado na fila</p>
+                      )}
+                      {closerQueue.map((c) => (
+                        <div key={c.nome} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-foreground">{c.nome}</span>
+                            <div className="flex gap-2 text-[10px] text-muted-foreground">
+                              <span>{c.stats.count} leads</span>
+                              <span>Score ∅ {c.stats.avgScore}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            {c.leads.map((l, i) => (
+                              <button
+                                key={`${l.telefone}-${i}`}
+                                onClick={() => handleOpenLead(l)}
+                                className="w-full flex items-center gap-2 rounded-md border border-border/50 bg-card p-2 text-left hover:bg-secondary/50 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-medium truncate">{l.nome}</span>
+                                    <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                                    <span className={tempColor(l.temp)}>{l.temp}</span>
+                                    <span>Score {l.score}</span>
+                                    <span className="truncate">{l.etapa}</span>
+                                  </div>
+                                </div>
+                                <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
+                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
 
-                    {/* Timeline */}
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground mb-2">Últimas Ações</p>
-                      <div className="space-y-2">
-                        {resumoDia.acoes.map((a, i) => (
-                          <div key={i} className="flex gap-2 text-xs">
-                            <span className="text-muted-foreground whitespace-nowrap font-mono">{a.hora}</span>
-                            <span className="text-foreground">{a.desc}</span>
+              {/* Col 3 — Resumo do Dia */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                    Resumo Geral
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[520px]">
+                    <div className="px-4 pb-4 space-y-4">
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: "Total Leads", value: summary.total, icon: Flame },
+                          { label: "Qualificados", value: summary.qualificados, icon: Thermometer },
+                          { label: "Responderam", value: summary.responderam, icon: CalendarCheck },
+                          { label: "FUP Ativos", value: summary.fupAtivos, icon: Send },
+                          { label: "Score ∅", value: summary.avgScore, icon: Zap },
+                          { label: "Quentes", value: summary.quentes, icon: Flame },
+                        ].map((k) => (
+                          <div key={k.label} className="rounded-lg border border-border/50 bg-secondary/30 p-2 text-center">
+                            <k.icon className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-0.5" />
+                            <div className="text-lg font-bold text-foreground">{k.value}</div>
+                            <div className="text-[10px] text-muted-foreground">{k.label}</div>
                           </div>
                         ))}
                       </div>
+
+                      {/* Temperature breakdown */}
+                      <div className="rounded-lg border border-border/50 p-3">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Distribuição de Temperatura</p>
+                        <div className="flex gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                            <span className="text-xs text-foreground">{summary.quentes} Quentes</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                            <span className="text-xs text-foreground">{summary.mornos} Mornos</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
+                            <span className="text-xs text-foreground">{summary.frios} Frios</span>
+                          </div>
+                        </div>
+                        {summary.total > 0 && (
+                          <div className="flex h-2 rounded-full overflow-hidden mt-2 bg-secondary">
+                            <div className="bg-red-400" style={{ width: `${(summary.quentes / summary.total) * 100}%` }} />
+                            <div className="bg-yellow-400" style={{ width: `${(summary.mornos / summary.total) * 100}%` }} />
+                            <div className="bg-blue-400" style={{ width: `${(summary.frios / summary.total) * 100}%` }} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Status breakdown */}
+                      <div className="rounded-lg border border-border/50 p-3">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Engajamento</p>
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Responderam</span>
+                            <span className="text-foreground font-medium">
+                              {summary.responderam} ({summary.total ? Math.round((summary.responderam / summary.total) * 100) : 0}%)
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Qualificados</span>
+                            <span className="text-foreground font-medium">
+                              {summary.qualificados} ({summary.total ? Math.round((summary.qualificados / summary.total) * 100) : 0}%)
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Em FUP</span>
+                            <span className="text-foreground font-medium">{summary.fupAtivos}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
 
         {/* ── CENTRAL DE MENSAGENS ────────────────── */}
@@ -321,10 +477,7 @@ export default function PainelComercial() {
             <CardContent>
               <div className="space-y-2">
                 {mensagensReports.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center gap-3 rounded-lg border border-border/50 p-3 hover:bg-secondary/30 transition-colors"
-                  >
+                  <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border/50 p-3 hover:bg-secondary/30 transition-colors">
                     <span className="text-xl">{reportIcon(m.tipo)}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
