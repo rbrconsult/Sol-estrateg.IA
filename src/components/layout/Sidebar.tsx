@@ -4,6 +4,7 @@ import {
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
+  ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MenuItem {
   title: string;
@@ -43,9 +45,11 @@ const menuItems: MenuItem[] = [
 interface SidebarProps {
   onResetOnboarding?: () => void;
   onNavigate?: () => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
+export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
@@ -64,100 +68,162 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     item.moduleKey ? hasAccess(item.moduleKey) : true
   );
 
+  const isCollapsed = !isMobile && collapsed;
+
   return (
-    <aside
-      className={cn(
-        "h-screen bg-card border-r border-border/50 flex flex-col",
-        isMobile
-          ? "w-full"
-          : "fixed left-0 top-0 z-50 w-60"
-      )}
-    >
-      {/* Header */}
-      <div className="p-3 border-b border-border/50">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
-            <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
-            <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
-          </div>
-          <div className="overflow-hidden">
-            <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
-            <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
+    <TooltipProvider delayDuration={0}>
+      <aside
+        className={cn(
+          "h-screen bg-card border-r border-border/50 flex flex-col transition-all duration-300",
+          isMobile
+            ? "w-full"
+            : "fixed left-0 top-0 z-50",
+          isCollapsed ? "w-16" : "w-60"
+        )}
+      >
+        {/* Header */}
+        <div className="p-3 border-b border-border/50">
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shrink-0">
+              <span className="text-base font-black text-primary-foreground tracking-tighter">S</span>
+              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-warning animate-pulse" />
+            </div>
+            {!isCollapsed && (
+              <div className="overflow-hidden">
+                <h1 className="text-sm font-black tracking-tight text-foreground">Sol Estrateg.IA</h1>
+                <p className="text-[10px] text-muted-foreground truncate">BI, CRM e Suporte</p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
-        {visibleItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={handleNavClick}
+        {/* Navigation */}
+        <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
+          {visibleItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const link = (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={handleNavClick}
+                className={cn(
+                  "flex items-center gap-2 rounded-md transition-all text-xs",
+                  isCollapsed ? "justify-center px-0 py-2" : "px-2.5 py-1.5",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                )}
+              >
+                <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+                {!isCollapsed && <span>{item.title}</span>}
+              </Link>
+            );
+
+            if (isCollapsed) {
+              return (
+                <Tooltip key={item.path}>
+                  <TooltipTrigger asChild>{link}</TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">
+                    {item.title}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return link;
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-1.5 border-t border-border/50 space-y-1">
+          {/* Collapse toggle (desktop only) */}
+          {!isMobile && onCollapsedChange && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onCollapsedChange(!collapsed)}
               className={cn(
-                "flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                "w-full text-muted-foreground hover:text-foreground hover:bg-secondary text-xs h-7",
+                isCollapsed ? "justify-center" : "justify-start"
               )}
             >
-              <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
-              <span>{item.title}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-1.5 border-t border-border/50 space-y-1">
-        {userRole === "super_admin" && (
-          <Link
-            to="/admin"
-            onClick={handleNavClick}
-            className={cn(
-              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
-              location.pathname === "/admin" && "bg-warning/10"
-            )}
-          >
-            <Shield className="h-4 w-4 shrink-0" />
-            <span className="font-medium">Admin</span>
-          </Link>
-        )}
-
-        <div className="flex items-center px-2.5">
-          <ThemeToggle />
-        </div>
-
-        <div className="px-2.5 py-1">
-          <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
-          {userRole === "super_admin" && (
-            <p className="text-[10px] text-warning font-semibold">Super Admin</p>
+              {isCollapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5 mr-1.5" />}
+              {!isCollapsed && <span>Recolher</span>}
+            </Button>
           )}
-        </div>
 
-        {onResetOnboarding && (
+          {userRole === "super_admin" && (
+            isCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/admin"
+                    onClick={handleNavClick}
+                    className={cn(
+                      "flex items-center justify-center py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
+                      location.pathname === "/admin" && "bg-warning/10"
+                    )}
+                  >
+                    <Shield className="h-4 w-4 shrink-0" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">Admin</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Link
+                to="/admin"
+                onClick={handleNavClick}
+                className={cn(
+                  "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
+                  location.pathname === "/admin" && "bg-warning/10"
+                )}
+              >
+                <Shield className="h-4 w-4 shrink-0" />
+                <span className="font-medium">Admin</span>
+              </Link>
+            )
+          )}
+
+          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-2.5")}>
+            <ThemeToggle />
+          </div>
+
+          {!isCollapsed && (
+            <>
+              <div className="px-2.5 py-1">
+                <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+                {userRole === "super_admin" && (
+                  <p className="text-[10px] text-warning font-semibold">Super Admin</p>
+                )}
+              </div>
+
+              {onResetOnboarding && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onResetOnboarding}
+                  className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start text-xs h-7"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                  Refazer Tour
+                </Button>
+              )}
+            </>
+          )}
+
           <Button
             variant="ghost"
-            size="sm"
-            onClick={onResetOnboarding}
-            className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start text-xs h-7"
+            onClick={handleSignOut}
+            className={cn(
+              "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7",
+              isCollapsed && "justify-center"
+            )}
           >
-            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-            Refazer Tour
+            <LogOut className="h-4 w-4" />
+            {!isCollapsed && <span className="ml-1.5">Sair</span>}
           </Button>
-        )}
-
-        <Button
-          variant="ghost"
-          onClick={handleSignOut}
-          className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="ml-1.5">Sair</span>
-        </Button>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </TooltipProvider>
   );
 }
