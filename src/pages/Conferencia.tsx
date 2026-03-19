@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 // Mock data removed — using real data only
 import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
-import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
