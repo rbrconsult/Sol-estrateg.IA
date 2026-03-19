@@ -20,20 +20,10 @@ export default function Comissoes() {
   const { proposals, isLoading, refetch, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
-  const pf = usePageFilters({ showPeriodo: true, showSearch: true });
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
 
-  // Apply page-level search filter
-  const filteredProposals = useMemo(() => {
-    let data = [...proposals];
-    if (pf.filters.searchTerm) {
-      const term = pf.filters.searchTerm.toLowerCase();
-      data = data.filter(p =>
-        (p.representante || "").toLowerCase().includes(term) ||
-        (p.nomeCliente || "").toLowerCase().includes(term)
-      );
-    }
-    return data;
-  }, [proposals, pf.filters.searchTerm]);
+  // Apply ALL page-level filters (period, temperatura, search) using filterProposals
+  const filteredProposals = useMemo(() => pf.filterProposals(proposals), [proposals, pf.filterProposals]);
 
   const vendedorPerf = useMemo(() => {
     if (!filteredProposals.length) return [];
@@ -116,6 +106,9 @@ export default function Comissoes() {
               🏢 {selectedOrgName}
             </Badge>
           )}
+          <Badge variant="outline" className="text-xs">
+            {filteredProposals.length} propostas
+          </Badge>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
           </Button>
@@ -125,8 +118,8 @@ export default function Comissoes() {
       <PageFloatingFilter
         filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
         setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
       />
 
       {/* KPIs */}

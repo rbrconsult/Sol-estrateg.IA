@@ -1,7 +1,5 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { RefreshCw, AlertCircle } from "lucide-react";
-import { isWithinInterval, parseISO, isValid } from "date-fns";
-import { Header } from "@/components/dashboard/Header";
 import { ExecutiveKPIs } from "@/components/dashboard/ExecutiveKPIs";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { GoalProgress } from "@/components/dashboard/GoalProgress";
@@ -15,62 +13,35 @@ import {
   getKPIs,
   getFunnelData,
   getVendedorPerformance,
-  getPreVendedorPerformance,
 } from "@/data/dataAdapter";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
 import { HelpButton } from "@/components/HelpButton";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { Badge } from "@/components/ui/badge";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const STORAGE_KEY = "sol_insights_meta";
 
 const Index = () => {
-  const [selectedVendedor, setSelectedVendedor] = useState("todos");
-  const [selectedPreVendedor, setSelectedPreVendedor] = useState("todos");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
+  const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
 
-  const { proposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
-  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
 
-  const handleDateRangeChange = (range: DateRange, preset: DateFilterPreset) => {
-    setDateRange(range);
-    setDatePreset(preset);
-  };
-
-  const { vendedores, preVendedores, lastUpdate } = useMemo(() => ({
-    vendedores: extractVendedores(proposals),
-    preVendedores: extractPreVendedores(proposals),
-    lastUpdate: new Date().toLocaleString('pt-BR')
-  }), [proposals]);
-
-  const filteredProposals = useMemo(() => {
-    return proposals.filter(p => {
-      if (selectedVendedor !== "todos" && p.representante !== selectedVendedor) return false;
-      if (selectedPreVendedor !== "todos" && p.responsavel !== selectedPreVendedor) return false;
-      if (dateRange.from) {
-        const proposalDate = p.dataCriacaoProposta ? parseISO(p.dataCriacaoProposta) : null;
-        if (!proposalDate || !isValid(proposalDate)) return false;
-        const interval = { start: dateRange.from, end: dateRange.to || dateRange.from };
-        if (!isWithinInterval(proposalDate, interval)) return false;
-      }
-      return true;
-    });
-  }, [proposals, selectedVendedor, selectedPreVendedor, dateRange]);
+  const lastUpdate = useMemo(() => new Date().toLocaleString('pt-BR'), []);
 
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
-  const preVendedorPerformance = useMemo(() => getPreVendedorPerformance(filteredProposals), [filteredProposals]);
 
   const meta = useMemo(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? Number(saved) : 5_000_000;
   }, []);
 
-  const hasData = proposals.length > 0;
+  const hasData = allProposals.length > 0;
 
   const topVendedor = useMemo(() => {
     if (vendedorPerformance.length === 0) return "N/A";
@@ -110,29 +81,28 @@ const Index = () => {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between">
-        <Header
-          lastUpdate={lastUpdate}
-          selectedVendedor={selectedVendedor}
-          selectedPreVendedor={selectedPreVendedor}
-          onVendedorChange={setSelectedVendedor}
-          onPreVendedorChange={setSelectedPreVendedor}
-          vendedores={vendedores}
-          preVendedores={preVendedores}
-          dateRange={dateRange}
-          datePreset={datePreset}
-          onDateRangeChange={handleDateRangeChange}
-        />
-        <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Inteligência Comercial • Atualizado em {lastUpdate}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {orgFilterActive && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+              🏢 {selectedOrgName}
+            </Badge>
+          )}
+          <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
+        </div>
       </div>
 
-      {/* Org context badge */}
-      {orgFilterActive && (
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
-            🏢 Filial: {selectedOrgName}
-          </Badge>
-        </div>
-      )}
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor ou cliente..." }}
+      />
 
       {/* Status bar */}
       {error && (
@@ -152,7 +122,7 @@ const Index = () => {
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            {proposals.length} propostas • {enrichedCount} enriquecidas
+            {filteredProposals.length} propostas • {enrichedCount} enriquecidas
           </span>
           <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
@@ -177,7 +147,7 @@ const Index = () => {
         </Alert>
       )}
 
-      {/* RAIO-X EXECUTIVO — Layout compacto */}
+      {/* RAIO-X EXECUTIVO */}
       {hasData && (
         <>
           <ExecutiveKPIs

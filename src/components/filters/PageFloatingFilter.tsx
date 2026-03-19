@@ -29,7 +29,7 @@ export interface FilterState {
 }
 
 const defaultState: FilterState = {
-  periodo: "30d",
+  periodo: "all",
   canal: "todos",
   temperatura: "todas",
   searchTerm: "",
@@ -46,7 +46,7 @@ export function usePageFilters(config?: FilterConfig) {
   const setSearchTerm = useCallback((v: string) => setFilters(f => ({ ...f, searchTerm: v })), []);
   const clearFilters = useCallback(() => setFilters(defaultState), []);
 
-  const hasFilters = filters.periodo !== "30d" || !!filters.dateFrom || !!filters.dateTo ||
+  const hasFilters = filters.periodo !== "all" || !!filters.dateFrom || !!filters.dateTo ||
     filters.canal !== "todos" || filters.temperatura !== "todas" || !!filters.searchTerm;
 
   const effectiveDateRange = useMemo(() => {
@@ -63,7 +63,7 @@ export function usePageFilters(config?: FilterConfig) {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
-  /** Filter records by date, canal, temperatura, search */
+  /** Filter MakeRecords by date, canal, temperatura, search */
   const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string }>(records: T[]): T[] => {
     return records.filter(r => {
       // Date
@@ -86,10 +86,37 @@ export function usePageFilters(config?: FilterConfig) {
     });
   }, [effectiveDateRange, filters.canal, filters.temperatura, filters.searchTerm]);
 
+  /** Filter Proposals (from dataAdapter) by period, temperatura, search */
+  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string }>(proposals: T[]): T[] => {
+    return proposals.filter(p => {
+      // Date
+      const { from, to } = effectiveDateRange;
+      if (from || to) {
+        const dateStr = p.dataCriacaoProposta;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return false;
+        if (from && d < from) return false;
+        if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
+      }
+      // Temperatura
+      if (filters.temperatura !== "todas" && (p.temperatura || "").toUpperCase() !== filters.temperatura) return false;
+      // Search
+      if (filters.searchTerm) {
+        const term = filters.searchTerm.toLowerCase();
+        const match = (p.nomeCliente || "").toLowerCase().includes(term) ||
+          (p.representante || "").toLowerCase().includes(term) ||
+          (p.responsavel || "").toLowerCase().includes(term);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [effectiveDateRange, filters.temperatura, filters.searchTerm]);
+
   return {
     filters, hasFilters, clearFilters,
     setPeriodo, setDateFrom, setDateTo, setCanal, setTemperatura, setSearchTerm,
-    effectiveDateRange, filterRecords,
+    effectiveDateRange, filterRecords, filterProposals,
   };
 }
 
@@ -117,7 +144,7 @@ export function PageFloatingFilter({
   const [open, setOpen] = useState(false);
 
   const activeCount = [
-    filters.periodo !== "30d",
+    filters.periodo !== "all",
     filters.canal !== "todos",
     filters.temperatura !== "todas",
     !!filters.searchTerm,
@@ -251,7 +278,7 @@ export function PageFloatingFilter({
           {/* Active chips */}
           {hasFilters && (
             <div className="flex flex-wrap gap-1 pt-1 border-t border-border/30">
-              {filters.periodo !== "30d" && <Badge variant="secondary" className="text-[9px]">{filters.periodo}</Badge>}
+              {filters.periodo !== "all" && <Badge variant="secondary" className="text-[9px]">{filters.periodo}</Badge>}
               {filters.canal !== "todos" && <Badge variant="secondary" className="text-[9px]">{filters.canal}</Badge>}
               {filters.temperatura !== "todas" && <Badge variant="secondary" className="text-[9px]">{filters.temperatura}</Badge>}
               {filters.searchTerm && <Badge variant="secondary" className="text-[9px]">"{filters.searchTerm}"</Badge>}
