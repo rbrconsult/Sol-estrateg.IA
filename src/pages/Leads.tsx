@@ -1,11 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp, Timer, Search } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, Bot, MessageSquare, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { useMakeDataStore, buildMakeMap, normalizePhone, type MakeRecord } from "@/hooks/useMakeDataStore";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import {
   adaptSheetData,
   getLeadsKPIs,
