@@ -20,14 +20,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // User-scoped client (for RLS)
+    // Parse optional body for org override (super admin)
+    let orgOverride: string | null = null;
+    try {
+      const body = await req.json();
+      if (body?.org_id) orgOverride = String(body.org_id);
+    } catch {
+      // No body or invalid JSON — that's fine
+    }
+
+    // User-scoped client
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Admin client (bypasses RLS for internal lookups)
+    // Admin client (bypasses RLS)
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -50,27 +59,37 @@ Deno.serve(async (req) => {
       _role: "super_admin",
     });
 
-    // Get user's organization
-    const { data: orgId } = await adminClient.rpc("get_user_org", {
-      p_user_id: userId,
-    });
+    // Determine which org to filter by
+    let targetOrgId: string | null = null;
 
-    // Get allowed responsavel IDs from organization_configs
+    if (isSuperAdmin && orgOverride) {
+      // Super admin chose a specific filial
+      targetOrgId = orgOverride;
+    } else if (isSuperAdmin && !orgOverride) {
+      // Super admin in Global mode — no filter
+      targetOrgId = null;
+    } else {
+      // Regular user — use their own org
+      const { data: orgId } = await adminClient.rpc("get_user_org", { p_user_id: userId });
+      targetOrgId = orgId;
+    }
+
+    // Get allowed responsavel IDs if filtering by org
     let allowedIds: string[] = [];
-    if (!isSuperAdmin && orgId) {
+    if (targetOrgId) {
       const { data: configs } = await adminClient
         .from("organization_configs")
         .select("config_value")
-        .eq("organization_id", orgId)
+        .eq("organization_id", targetOrgId)
         .eq("config_category", "responsavel");
 
       allowedIds = (configs || [])
         .map((c: any) => String(c.config_value).trim())
         .filter(Boolean);
 
-      // Security: if no responsaveis configured, return empty
-      if (allowedIds.length === 0) {
-        console.log(`fetch-make-comercial: no responsaveis configured for org ${orgId}, returning empty`);
+      // Security: non-admin with no responsaveis configured = empty result
+      if (allowedIds.length === 0 && !isSuperAdmin) {
+        console.log(`fetch-make-comercial: no responsaveis for org ${targetOrgId}, returning empty`);
         return new Response(
           JSON.stringify({ data: [], count: 0, lastUpdate: new Date().toISOString() }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -81,12 +100,13 @@ Deno.serve(async (req) => {
     // Get Make API credentials — try org-specific first, fallback to global
     let makeApiKey = "";
     let dataStoreId = "";
+    const configOrgId = targetOrgId || null;
 
-    if (orgId) {
+    if (configOrgId) {
       const { data: orgConfigs } = await adminClient
         .from("organization_configs")
         .select("config_key, config_value")
-        .eq("organization_id", orgId)
+        .eq("organization_id", configOrgId)
         .in("config_key", ["make_api_key", "ds_comercial"]);
 
       for (const c of orgConfigs || []) {
@@ -141,17 +161,17 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    // Filter by responsavel_id if not super_admin
+    // Filter by responsavel_id if we have allowed IDs
     let filteredRecords = allRecords;
-    if (!isSuperAdmin && allowedIds.length > 0) {
+    if (allowedIds.length > 0) {
       filteredRecords = allRecords.filter((r) => {
         const d = r.data || r;
         const respId = String(d.responsavel_id || "").trim();
         return respId && allowedIds.includes(respId);
       });
-      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered for org ${orgId} (${allowedIds.length} allowed IDs)`);
+      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, ${allowedIds.length} IDs)`);
     } else {
-      console.log(`fetch-make-comercial: ${allRecords.length} records (super_admin, no filter)`);
+      console.log(`fetch-make-comercial: ${allRecords.length} records (no filter, global/super_admin)`);
     }
 
     return new Response(

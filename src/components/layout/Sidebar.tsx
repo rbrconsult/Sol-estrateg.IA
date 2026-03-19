@@ -1,17 +1,18 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Kanban,
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
-  Activity, RefreshCw, Eraser,
+  Activity, RefreshCw, Eraser, Building2, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -84,9 +85,15 @@ interface SidebarProps {
 
 export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
+  const isSuperAdmin = userRole === "super_admin";
+
+  let orgFilter: ReturnType<typeof useOrgFilter> | null = null;
+  try { orgFilter = useOrgFilter(); } catch {}
+
 
   const handleSignOut = async () => {
     await signOut();
@@ -124,6 +131,21 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
               </div>
             )}
           </div>
+
+          {/* Filial indicator for super admins */}
+          {!isCollapsed && isSuperAdmin && orgFilter && (
+            <button
+              onClick={() => { navigate("/selecao"); handleNavClick(); }}
+              className="mt-2 w-full flex items-center gap-1.5 px-2 py-1 rounded-md border border-border/40 bg-muted/30 text-[10px] text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+            >
+              {orgFilter.isGlobal ? (
+                <Globe className="h-3 w-3 text-primary shrink-0" />
+              ) : (
+                <Building2 className="h-3 w-3 text-warning shrink-0" />
+              )}
+              <span className="truncate font-medium">{orgFilter.selectedOrgName}</span>
+            </button>
+          )}
         </div>
 
         {/* Navigation — all groups always visible, no collapse */}
