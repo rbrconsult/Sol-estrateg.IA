@@ -56,6 +56,7 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <OrgFilterProvider>
         <Lead360Provider>
         <TooltipProvider>
           <Toaster />
