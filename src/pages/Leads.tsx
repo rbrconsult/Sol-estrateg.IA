@@ -1,11 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CalendarIcon, X, RefreshCw, Bot, MessageSquare, Clock, ChevronDown, ChevronUp, Timer, Search } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, Bot, MessageSquare, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { useMakeDataStore, buildMakeMap, normalizePhone, type MakeRecord } from "@/hooks/useMakeDataStore";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import {
   adaptSheetData,
   getLeadsKPIs,
@@ -20,12 +23,7 @@ import {
 } from "@/data/dataAdapter";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
-} from "recharts";
+import { Badge } from "@/components/ui/badge";
 import type { Proposal } from "@/data/dataAdapter";
 import { SLAMetrics } from "@/components/leads/SLAMetrics";
 import { RobotInsights } from "@/components/leads/RobotInsights";
@@ -101,17 +99,18 @@ export default function Leads() {
   const queryClient = useQueryClient();
   const { data: sheetsData, isLoading, error, refetch } = useGoogleSheetsData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
+  const { proposals: orgFilteredProposals, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
   const [searchTerm, setSearchTerm] = useState("");
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
     queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
   };
 
-  const proposals = useMemo(() => {
-    if (!sheetsData?.data) return [];
-    return adaptSheetData(sheetsData.data);
-  }, [sheetsData]);
+  // Use org-filtered proposals
+  const proposals = orgFilteredProposals;
 
   const makeMap = useMemo(() => buildMakeMap(makeRecords || []), [makeRecords]);
 
@@ -124,56 +123,26 @@ export default function Leads() {
 
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
 
-  /* ── filters ── */
-  const [periodo, setPeriodo] = useState("all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [etapaFilter, setEtapaFilter] = useState("todas");
-  const [temperaturaFilter, setTemperaturaFilter] = useState("todas");
-  const [responsavelFilter, setResponsavelFilter] = useState("todos");
-
-  const etapas = useMemo(() => [...new Set(proposals.map(p => p.etapa))].filter(Boolean).sort(), [proposals]);
-  const responsaveis = useMemo(() => [...new Set(proposals.map(p => p.responsavel))].filter(Boolean).sort(), [proposals]);
-
-  const hasFilters = periodo !== "all" || etapaFilter !== "todas" || temperaturaFilter !== "todas" || responsavelFilter !== "todos" || dateFrom || dateTo;
-  const clearFilters = () => {
-    setPeriodo("all");
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setEtapaFilter("todas");
-    setTemperaturaFilter("todas");
-    setResponsavelFilter("todos");
-  };
-
-  /* ── filtered data ── */
+  /* ── filtered data (using PageFloatingFilter state) ── */
   const filtered = useMemo(() => {
     let data = [...proposals];
 
-    // Period
-    if (periodo !== "custom" && periodo !== "all") {
-      const days = periodo === "7d" ? 7 : periodo === "90d" ? 90 : 30;
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
-      data = data.filter(p => {
-        if (!p.dataCriacaoProposta) return true;
-        return new Date(p.dataCriacaoProposta) >= cutoff;
-      });
-    } else if (dateFrom || dateTo) {
-      data = data.filter(p => {
-        if (!p.dataCriacaoProposta) return true;
-        const d = new Date(p.dataCriacaoProposta);
-        if (dateFrom && d < dateFrom) return false;
-        if (dateTo && d > dateTo) return false;
-        return true;
-      });
+    // Temperature from floating filter
+    if (pf.filters.temperatura !== "todas") {
+      data = data.filter(p => (p.temperatura || "").toUpperCase() === pf.filters.temperatura);
     }
 
-    if (etapaFilter !== "todas") data = data.filter(p => p.etapa === etapaFilter);
-    if (temperaturaFilter !== "todas") data = data.filter(p => p.temperatura === temperaturaFilter);
-    if (responsavelFilter !== "todos") data = data.filter(p => p.responsavel === responsavelFilter);
+    // Search from floating filter
+    if (pf.filters.searchTerm) {
+      const term = pf.filters.searchTerm.toLowerCase();
+      data = data.filter(p =>
+        (p.nomeCliente || "").toLowerCase().includes(term) ||
+        (p.responsavel || "").toLowerCase().includes(term)
+      );
+    }
 
     return data;
-  }, [proposals, periodo, dateFrom, dateTo, etapaFilter, temperaturaFilter, responsavelFilter]);
+  }, [proposals, pf.filters.temperatura, pf.filters.searchTerm]);
 
   /* ── filtered Make records (synced with filtered proposals) ── */
   const filteredPhones = useMemo(() => {
@@ -399,6 +368,11 @@ export default function Leads() {
             <p className="text-xs text-muted-foreground mt-0.5">Qualificação, jornada e performance · {filtered.length} leads</p>
           </div>
           <div className="flex items-center gap-5">
+            {orgFilterActive && (
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+                🏢 {selectedOrgName}
+              </Badge>
+            )}
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Dados reais
@@ -412,80 +386,13 @@ export default function Leads() {
           </div>
         </header>
 
-        {/* ══════ FILTROS ══════ */}
-        <section className="mt-4 flex flex-wrap items-center gap-2">
-          <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
-            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="7d">7 dias</SelectItem>
-              <SelectItem value="30d">30 dias</SelectItem>
-              <SelectItem value="90d">90 dias</SelectItem>
-              <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {periodo === "custom" && (
-            <>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yy") : "Início"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateTo ? format(dateTo, "dd/MM/yy") : "Fim"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
-
-          <div className="h-4 w-px bg-border/50 mx-1" />
-
-          <Select value={etapaFilter} onValueChange={setEtapaFilter}>
-            <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Etapa" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as etapas</SelectItem>
-              {etapas.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <Select value={temperaturaFilter} onValueChange={setTemperaturaFilter}>
-            <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Temperatura" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas</SelectItem>
-              <SelectItem value="QUENTE">Quente</SelectItem>
-              <SelectItem value="MORNO">Morno</SelectItem>
-              <SelectItem value="FRIO">Frio</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={responsavelFilter} onValueChange={setResponsavelFilter}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Responsável" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              {responsaveis.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1" onClick={clearFilters}>
-              <X className="h-3 w-3" /> Limpar
-            </Button>
-          )}
-        </section>
+        {/* ══════ FILTRO FLUTUANTE ══════ */}
+        <PageFloatingFilter
+          filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+          setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+        />
 
         {/* ══════ KPIs ══════ */}
         <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 mt-4">

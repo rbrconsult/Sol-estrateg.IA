@@ -5,24 +5,40 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { getVendedorPerformance } from "@/data/dataAdapter";
 import { DollarSign, Percent, Users, TrendingUp, RefreshCcw } from "lucide-react";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const COMMISSION_RATES: Record<string, number> = {};
-const DEFAULT_RATE = 3; // 3% default
+const DEFAULT_RATE = 3;
 
 export default function Comissoes() {
-  const { proposals, isLoading, refetch } = useEnrichedProposals();
+  const { proposals, isLoading, refetch, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
+  const pf = usePageFilters({ showPeriodo: true, showSearch: true });
+
+  // Apply page-level search filter
+  const filteredProposals = useMemo(() => {
+    let data = [...proposals];
+    if (pf.filters.searchTerm) {
+      const term = pf.filters.searchTerm.toLowerCase();
+      data = data.filter(p =>
+        (p.representante || "").toLowerCase().includes(term) ||
+        (p.nomeCliente || "").toLowerCase().includes(term)
+      );
+    }
+    return data;
+  }, [proposals, pf.filters.searchTerm]);
 
   const vendedorPerf = useMemo(() => {
-    if (!proposals.length) return [];
-    return getVendedorPerformance(proposals);
-  }, [proposals]);
+    if (!filteredProposals.length) return [];
+    return getVendedorPerformance(filteredProposals);
+  }, [filteredProposals]);
 
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
@@ -94,10 +110,24 @@ export default function Comissoes() {
           <h1 className="text-2xl font-bold text-foreground">Comissões</h1>
           <p className="text-sm text-muted-foreground">Comissão calculada sobre valor fechado por vendedor</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          {orgFilterActive && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+              🏢 {selectedOrgName}
+            </Badge>
+          )}
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
+          </Button>
+        </div>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -203,7 +233,6 @@ export default function Comissoes() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {/* Totals row */}
                 <TableRow className="border-t-2 border-border bg-muted/30 font-bold">
                   <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
                   <TableCell className="text-center text-foreground">{totals.ganhos}</TableCell>

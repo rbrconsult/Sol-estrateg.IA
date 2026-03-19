@@ -8,7 +8,7 @@ import { GoalProgress } from "@/components/dashboard/GoalProgress";
 import { HealthScore } from "@/components/dashboard/HealthScore";
 import { StrategicAlerts } from "@/components/dashboard/StrategicAlerts";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import {
   extractVendedores,
   extractPreVendedores,
@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
 import { HelpButton } from "@/components/HelpButton";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { Badge } from "@/components/ui/badge";
 
 const STORAGE_KEY = "sol_insights_meta";
 
@@ -30,7 +32,8 @@ const Index = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
 
-  const { proposals, isLoading, error, refetch, isFetching, enrichedCount } = useEnrichedProposals();
+  const { proposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName, isGlobal } = useOrgFilter();
 
   const handleDateRangeChange = (range: DateRange, preset: DateFilterPreset) => {
     setDateRange(range);
@@ -69,7 +72,6 @@ const Index = () => {
 
   const hasData = proposals.length > 0;
 
-  // Derived data for AI summary
   const topVendedor = useMemo(() => {
     if (vendedorPerformance.length === 0) return "N/A";
     const sorted = [...vendedorPerformance].sort((a, b) => b.valorTotal - a.valorTotal);
@@ -123,6 +125,15 @@ const Index = () => {
         <HelpButton moduleId="bi-estrategico" label="Ajuda do Dashboard" />
       </div>
 
+      {/* Org context badge */}
+      {orgFilterActive && (
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+            🏢 Filial: {selectedOrgName}
+          </Badge>
+        </div>
+      )}
+
       {/* Status bar */}
       {error && (
         <Alert className="border-destructive/50 bg-destructive/10">
@@ -169,7 +180,6 @@ const Index = () => {
       {/* RAIO-X EXECUTIVO — Layout compacto */}
       {hasData && (
         <>
-          {/* KPIs principais */}
           <ExecutiveKPIs
             receitaPrevista={kpis.receitaPrevista}
             valorGanho={kpis.valorGanho}
@@ -181,7 +191,6 @@ const Index = () => {
             negociosGanhos={kpis.negociosGanhos}
           />
 
-          {/* Resumo IA + Meta + Health */}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-4">
               <ExecutiveSummary
@@ -196,7 +205,6 @@ const Index = () => {
             <HealthScore proposals={filteredProposals} kpis={kpis} vendedorPerformance={vendedorPerformance} />
           </div>
 
-          {/* Alertas + Funil */}
           <div className="grid gap-6 lg:grid-cols-2">
             <StrategicAlerts
               proposals={filteredProposals}

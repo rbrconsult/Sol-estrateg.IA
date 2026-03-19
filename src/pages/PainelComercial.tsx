@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
 import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
@@ -37,6 +38,7 @@ interface Alert {
   desc: string;
   severity: Severity;
   time: string;
+  leadData?: { nome: string; telefone: string; score: number; temp: string; etapa: string; valor: string };
 }
 
 const severityStyles: Record<Severity, string> = {
@@ -129,6 +131,14 @@ function deriveAlerts(records: MakeRecord[]): Alert[] {
         desc: `${r.nome || r.telefone} — Score ${score}, ${temp}`,
         severity: "warning",
         time: timeSince(r.data_envio),
+        leadData: {
+          nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+          telefone: r.telefone,
+          score,
+          temp: temp || "MORNO",
+          etapa: getEtapa(r),
+          valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+        },
       });
     }
 
@@ -141,6 +151,14 @@ function deriveAlerts(records: MakeRecord[]): Alert[] {
         desc: `${r.nome || r.telefone} respondeu no FUP #${r.followupCount}`,
         severity: "info",
         time: timeSince(r.data_resposta || r.data_envio),
+        leadData: {
+          nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+          telefone: r.telefone,
+          score: parseInt(r.makeScore || "0") || 0,
+          temp: (r.makeTemperatura || "MORNO").toUpperCase(),
+          etapa: getEtapa(r),
+          valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+        },
       });
     }
   });
@@ -243,7 +261,8 @@ export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const { proposals } = useEnrichedProposals();
+  const { proposals, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
 
   const allRecords = makeRecords || [];
   const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
@@ -279,8 +298,13 @@ export default function PainelComercial() {
           <p className="text-sm text-muted-foreground mt-1">Visão operacional em tempo real — alertas, fila e ações</p>
         </div>
         <div className="flex items-center gap-2">
+          {orgFilterActive && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+              🏢 {selectedOrgName}
+            </Badge>
+          )}
           <Badge variant="outline" className="text-xs">
-            <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5 animate-pulse inline-block" />
+            <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse inline-block" />
             {records.length} leads carregados
           </Badge>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -333,13 +357,33 @@ export default function PainelComercial() {
                         <p className="text-xs text-muted-foreground text-center py-8">Nenhum alerta no momento ✅</p>
                       )}
                       {alerts.map((a) => (
-                        <div key={a.id} className={`rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors`}>
+                        <button
+                          key={a.id}
+                          onClick={() => {
+                            if (a.leadData) {
+                              openLead360({
+                                nome: a.leadData.nome,
+                                telefone: a.leadData.telefone,
+                                etapa: a.leadData.etapa,
+                                valor: a.leadData.valor,
+                                responsavel: "",
+                                origem: "",
+                                temperatura: a.leadData.temp,
+                                score: a.leadData.score,
+                              } as any);
+                            }
+                          }}
+                          className={`w-full text-left rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors ${a.leadData ? "cursor-pointer hover:opacity-80" : ""}`}
+                        >
                           <div className="flex items-center justify-between mb-1">
                             <Badge variant={severityBadge[a.severity]} className="text-[10px]">{a.label}</Badge>
                             {a.time && <span className="text-[10px] opacity-70">{a.time}</span>}
                           </div>
                           <p className="text-xs leading-relaxed">{a.desc}</p>
-                        </div>
+                          {a.leadData && (
+                            <p className="text-[9px] mt-1 opacity-60">Clique para abrir detalhes →</p>
+                          )}
+                        </button>
                       ))}
                     </div>
                   </ScrollArea>
