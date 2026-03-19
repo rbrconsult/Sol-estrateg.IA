@@ -158,7 +158,10 @@ export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { openLead360 } = useLead360();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const pf = usePageFilters({ showPeriodo: true, showSearch: true });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveSLAData(records), [records]);
 
