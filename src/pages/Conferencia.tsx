@@ -299,52 +299,18 @@ export default function Conferencia() {
           </div>
         </header>
 
-        {/* ══════ FILTROS ══════ */}
-        <section className="mt-3 flex flex-wrap items-center gap-2 mb-5">
-          <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
-            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hoje">Hoje</SelectItem>
-              <SelectItem value="3d">3 dias</SelectItem>
-              <SelectItem value="7d">7 dias</SelectItem>
-              <SelectItem value="30d">30 dias</SelectItem>
-              <SelectItem value="90d">90 dias</SelectItem>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
-          {periodo === "custom" && (
-            <>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yy") : "Início"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateTo ? format(dateTo, "dd/MM/yy") : "Fim"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1" onClick={clearFilters}>
-              <X className="h-3 w-3" /> Limpar
-            </Button>
-          )}
-          </section>
+        {/* ══════ FLOATING FILTER FAB ══════ */}
+        <FloatingFilter
+          periodo={periodo} setPeriodo={setPeriodo}
+          dateFrom={dateFrom} setDateFrom={setDateFrom}
+          dateTo={dateTo} setDateTo={setDateTo}
+          filterEtapa={filterEtapa} setFilterEtapa={setFilterEtapa}
+          filterTemp={filterTemp} setFilterTemp={setFilterTemp}
+          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+          etapasUnicas={etapasUnicas}
+          hasFilters={hasFilters} clearFilters={clearFilters}
+        />
+
 
           {/* ══════ FILTROS OPERACIONAIS ══════ */}
           <section className="flex flex-wrap items-center gap-2 mb-5">
