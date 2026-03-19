@@ -130,6 +130,14 @@ function deriveAlerts(records: MakeRecord[]): Alert[] {
         desc: `${r.nome || r.telefone} — Score ${score}, ${temp}`,
         severity: "warning",
         time: timeSince(r.data_envio),
+        leadData: {
+          nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+          telefone: r.telefone,
+          score,
+          temp: temp || "MORNO",
+          etapa: getEtapa(r),
+          valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+        },
       });
     }
 
