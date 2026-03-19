@@ -29,7 +29,7 @@ export interface FilterState {
 }
 
 const defaultState: FilterState = {
-  periodo: "30d",
+  periodo: "all",
   canal: "todos",
   temperatura: "todas",
   searchTerm: "",
