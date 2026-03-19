@@ -586,11 +586,11 @@ export default function Admin() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs defaultValue="organizations" className="space-y-4">
           <TabsList className="flex-wrap">
+            <TabsTrigger value="organizations">Filiais</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="modules">Módulos</TabsTrigger>
-            <TabsTrigger value="organizations">Organizações</TabsTrigger>
             <TabsTrigger value="seguranca" className="flex items-center gap-1">
               <Fingerprint className="h-3.5 w-3.5" />
               Segurança & Logs
