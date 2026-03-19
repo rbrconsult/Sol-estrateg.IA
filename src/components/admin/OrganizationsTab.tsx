@@ -276,6 +276,10 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
           </Button>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg border border-border bg-muted/50">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span className="text-sm text-muted-foreground">Matriz: <strong className="text-foreground">RBR Consult</strong> — administração global (super admin)</span>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
