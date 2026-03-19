@@ -144,7 +144,7 @@ export function PageFloatingFilter({
   const [open, setOpen] = useState(false);
 
   const activeCount = [
-    filters.periodo !== "30d",
+    filters.periodo !== "all",
     filters.canal !== "todos",
     filters.temperatura !== "todas",
     !!filters.searchTerm,
