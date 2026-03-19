@@ -39,6 +39,11 @@ import SLAMonitor from "./pages/SLAMonitor";
 import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 
+// Solar Market
+import PreVenda from "./pages/solar/PreVenda";
+import Comercial from "./pages/solar/Comercial";
+import { SolarLayout } from "./components/layout/SolarLayout";
+
 const queryClient = new QueryClient();
 
 const App = () => (
