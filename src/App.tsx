@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Lead360Provider } from "@/contexts/Lead360Context";
+import { OrgFilterProvider } from "@/contexts/OrgFilterContext";
 import { Lead360Drawer } from "@/components/lead360/Lead360Drawer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/ModuleGuard";
