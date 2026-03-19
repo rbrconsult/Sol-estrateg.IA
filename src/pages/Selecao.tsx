@@ -162,35 +162,34 @@ export default function Selecao() {
         </button>
       </div>
 
-        {/* Animated message */}
-        <div
-          className={`mt-8 text-center transition-all duration-700 ${
-            showMessage
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-4"
-          }`}
-        >
-          {selected === "solar" && (
-            <div className="space-y-2 animate-fade-in">
-              <p className="text-lg font-semibold text-warning">
-                ☀️ Mesmas decisões te levam sempre ao mesmo lugar
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Redirecionando para o Solar Market...
-              </p>
-            </div>
-          )}
-          {selected === "sol" && (
-            <div className="space-y-2 animate-fade-in">
-              <p className="text-lg font-semibold text-primary">
-                🎉 Sua melhor escolha! Parabéns!
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Preparando o SOL.estrateg.IA para você...
-              </p>
-            </div>
-          )}
-        </div>
+      {/* Animated message */}
+      <div
+        className={`relative z-10 mt-8 text-center transition-all duration-700 ${
+          showMessage
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4"
+        }`}
+      >
+        {selected === "solar" && (
+          <div className="space-y-2 animate-fade-in">
+            <p className="text-lg font-semibold text-warning">
+              ☀️ Mesmas decisões te levam sempre ao mesmo lugar
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Redirecionando para o Solar Market...
+            </p>
+          </div>
+        )}
+        {selected === "sol" && (
+          <div className="space-y-2 animate-fade-in">
+            <p className="text-lg font-semibold text-primary">
+              🎉 Sua melhor escolha! Parabéns!
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Preparando o SOL.estrateg.IA para você...
+            </p>
+          </div>
+        )}
       </div>
 
       {/* CSS for ambient animations */}
