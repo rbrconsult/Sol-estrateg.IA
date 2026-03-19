@@ -156,7 +156,7 @@ export default function Conferencia() {
   const [filterResp, setFilterResp] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const hasFilters = periodo !== "30d" || dateFrom || dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || searchTerm;
+  const hasFilters = periodo !== "30d" || !!dateFrom || !!dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || !!searchTerm;
   const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); setFilterEtapa("todas"); setFilterTemp("todas"); setFilterResp("todos"); setSearchTerm(""); };
 
   const effectiveDateRange = useMemo(() => {
