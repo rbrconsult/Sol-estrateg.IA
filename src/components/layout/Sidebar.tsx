@@ -131,6 +131,21 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
               </div>
             )}
           </div>
+
+          {/* Filial indicator for super admins */}
+          {!isCollapsed && isSuperAdmin && orgFilter && (
+            <button
+              onClick={() => { navigate("/selecao"); handleNavClick(); }}
+              className="mt-2 w-full flex items-center gap-1.5 px-2 py-1 rounded-md border border-border/40 bg-muted/30 text-[10px] text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+            >
+              {orgFilter.isGlobal ? (
+                <Globe className="h-3 w-3 text-primary shrink-0" />
+              ) : (
+                <Building2 className="h-3 w-3 text-warning shrink-0" />
+              )}
+              <span className="truncate font-medium">{orgFilter.selectedOrgName}</span>
+            </button>
+          )}
         </div>
 
         {/* Navigation — all groups always visible, no collapse */}

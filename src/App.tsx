@@ -220,6 +220,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
         </Lead360Provider>
+        </OrgFilterProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
