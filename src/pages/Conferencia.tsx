@@ -752,20 +752,8 @@ export default function Conferencia() {
         <RobotInsightsMock data={robotInsightsData} />
 
         {/* ══════ ROW 10 — Score por Origem ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <section className="mt-4">
           <ScorePorOrigem data={scorePorOrigemData} />
-          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Resumo Operacional</p>
-              <p className="text-3xl font-extrabold text-foreground tabular-nums">{filteredLeads.length}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">leads filtrados</p>
-              <div className="flex gap-3 mt-3 justify-center">
-                <span className="text-[10px] text-orange-500 font-semibold">{filteredLeads.filter(l => l.temperatura === "QUENTE").length} quentes</span>
-                <span className="text-[10px] text-amber-400 font-semibold">{filteredLeads.filter(l => l.temperatura === "MORNO").length} mornos</span>
-                <span className="text-[10px] text-blue-400 font-semibold">{filteredLeads.filter(l => l.temperatura === "FRIO").length} frios</span>
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ══════ ROW 11 — Monthly Evolution ══════ */}
