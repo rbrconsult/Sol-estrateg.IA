@@ -333,6 +333,47 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_configs: {
+        Row: {
+          config_category: string
+          config_key: string
+          config_value: string
+          created_at: string | null
+          id: string
+          is_secret: boolean
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_category?: string
+          config_key: string
+          config_value?: string
+          created_at?: string | null
+          id?: string
+          is_secret?: boolean
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_category?: string
+          config_key?: string
+          config_value?: string
+          created_at?: string | null
+          id?: string
+          is_secret?: boolean
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
