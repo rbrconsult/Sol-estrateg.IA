@@ -104,6 +104,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     setDataStores([{ key: '', name: '', datastoreId: '' }]);
     setWebhooks([{ key: '', name: '', url: '', category: 'SDR' }]);
     setResponsaveis([{ nome: '', identificador: '' }]);
+    setEnabledModules(MODULE_DEFINITIONS.reduce((acc, m) => ({ ...acc, [m.key]: true }), {} as Record<string, boolean>));
     setSelectedUserIds([]);
     setShowNewUser(false);
     setNewUserForm({ email: '', full_name: '', password: '' });
