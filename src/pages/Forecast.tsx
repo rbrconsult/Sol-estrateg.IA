@@ -117,6 +117,7 @@ export default function Forecast() {
             <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.pipelinePonderado)}</p>
             <p className="text-xs text-muted-foreground mt-1">Valor ponderado</p>
           </CardContent>
+        </Card>
       </div>
 
       {/* Mode selector */}
