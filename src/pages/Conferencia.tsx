@@ -697,90 +697,53 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ ROW 7 — Tabela de Leads Detalhados ══════ */}
-        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Tabela de Leads Detalhados</p>
-          <div className="overflow-auto max-h-[500px]">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-medium w-10">#</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Cliente</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Etapa</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Temp</th>
-                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">Score</th>
-                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">SLA (dias)</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">FUP</th>
-                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">Valor</th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLeads.map((lead, idx) => (
-                  <>
-                    <tr
-                      key={lead.id}
-                      className={cn(
-                        "border-b border-border/30 hover:bg-muted/30 cursor-pointer transition-colors",
-                        expandedLead === lead.id && "bg-muted/20"
-                      )}
-                      onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
-                    >
-                      <td className="py-2 px-2 text-center text-muted-foreground tabular-nums">{idx + 1}</td>
-                      <td className="py-2 px-2 font-medium text-foreground">{lead.nome}</td>
-                      <td className="py-2 px-2 text-muted-foreground">{lead.etapa}</td>
-                      <td className="py-2 px-2"><TempDot t={lead.temperatura} /></td>
-                      <td className="py-2 px-2 text-right tabular-nums font-semibold">{lead.score}</td>
-                      <td className="py-2 px-2 text-right tabular-nums text-muted-foreground">{lead.sla}</td>
-                      <td className="py-2 px-2">
-                        <Badge
-                          variant={
-                            lead.statusFup === "Concluído" ? "default" :
-                            lead.statusFup === "Novo" ? "outline" :
-                            "secondary"
-                          }
-                          className={cn(
-                            "text-[9px] px-1.5 py-0",
-                            lead.statusFup === "FUP Frio" && "bg-blue-500/15 text-blue-500 border-blue-500/30",
-                            lead.statusFup === "Qualificação" && "bg-primary/15 text-primary border-primary/30",
-                            lead.statusFup === "Aguardando" && "bg-warning/15 text-warning border-warning/30",
-                            lead.statusFup === "Concluído" && "bg-success/15 text-success border-success/30",
-                          )}
-                        >
-                          {lead.statusFup}
-                        </Badge>
-                      </td>
-                      <td className="py-2 px-2 text-right tabular-nums text-foreground">
-                        {lead.valor > 0 ? `R$ ${(lead.valor / 1000).toFixed(0)}k` : "—"}
-                      </td>
-                      <td className="py-2 px-1">
-                        {expandedLead === lead.id ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
-                      </td>
-                    </tr>
-                    {expandedLead === lead.id && (
-                      <tr key={`${lead.id}-detail`}>
-                        <td colSpan={8} className="px-4 py-2 bg-muted/10">
-                          <div className="space-y-1.5 pl-4 border-l-2 border-primary/30">
-                            {lead.historico.map((h, hi) => (
-                              <div key={hi} className="flex items-start gap-2">
-                                <Badge variant="secondary" className="text-[8px] px-1 py-0 shrink-0">{h.tipo}</Badge>
-                                <span className="text-[10px] text-muted-foreground shrink-0">{h.data}</span>
-                                <span className="text-[10px] text-foreground">{h.msg}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                ))}
-              </tbody>
-            </table>
+        {/* ══════ ROW 7 — SLA Consolidado ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex flex-col items-center justify-center">
+            <SLAGauge pct={sla.pctAbordados5min} />
+            <p className="text-[10px] text-muted-foreground mt-2">Abordados em &lt;5min</p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card p-4 space-y-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Tempo Médio de Resposta</p>
+            <p className="text-3xl font-extrabold text-foreground text-center">{sla.tempoMedioRespostaLead}</p>
+            <p className="text-[10px] text-muted-foreground text-center">resposta do lead</p>
+            <div className="pt-2 border-t border-border/30 space-y-1.5">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">1º Atendimento</span>
+                <span className="font-semibold text-foreground">{slaMockData.primeiroAtendimento.media}min</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">Dentro 24h</span>
+                <span className="font-semibold text-foreground">{slaMockData.primeiroAtendimento.pctDentro24h}%</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">Proposta (média)</span>
+                <span className="font-semibold text-foreground">{slaMockData.geralProposta.mediaDias}d</span>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card p-4 space-y-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA por Etapa</p>
+            <div className="space-y-2">
+              {slaMockData.porEtapa.slice(0, 5).map((e: any) => {
+                const pct = e.meta > 0 ? Math.min((e.mediaDias / e.meta) * 100, 100) : 0;
+                const status = pct <= 60 ? "bg-success" : pct <= 85 ? "bg-warning" : "bg-destructive";
+                return (
+                  <div key={e.etapa}>
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-muted-foreground truncate">{e.etapa}</span>
+                      <span className="font-semibold text-foreground tabular-nums">{e.mediaDias}d / {e.meta}d</span>
+                    </div>
+                    <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                      <div className={cn("h-full rounded transition-all", status)} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        {/* ══════ ROW 8 — SLA Metrics ══════ */}
-        <SLAMetricsMock data={slaMockData} />
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
         <RobotInsightsMock data={robotInsightsData} />
