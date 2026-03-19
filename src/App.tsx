@@ -43,6 +43,7 @@ import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
 import Reprocessamento from "./pages/Reprocessamento";
+import OrgConfigPage from "./pages/admin/OrgConfigPage";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
