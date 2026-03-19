@@ -20,10 +20,17 @@ Deno.serve(async (req) => {
       });
     }
 
+    // User-scoped client (for RLS)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Admin client (bypasses RLS for internal lookups)
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     const token = authHeader.replace("Bearer ", "");
@@ -35,8 +42,62 @@ Deno.serve(async (req) => {
       });
     }
 
-    const makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
-    const dataStoreId = (Deno.env.get("MAKE_COMERCIAL_DATASTORE_ID") || "").trim();
+    const userId = claimsData.claims.sub as string;
+
+    // Check if super_admin
+    const { data: isSuperAdmin } = await adminClient.rpc("has_role", {
+      _user_id: userId,
+      _role: "super_admin",
+    });
+
+    // Get user's organization
+    const { data: orgId } = await adminClient.rpc("get_user_org", {
+      p_user_id: userId,
+    });
+
+    // Get allowed responsavel IDs from organization_configs
+    let allowedIds: string[] = [];
+    if (!isSuperAdmin && orgId) {
+      const { data: configs } = await adminClient
+        .from("organization_configs")
+        .select("config_value")
+        .eq("organization_id", orgId)
+        .eq("config_category", "responsavel");
+
+      allowedIds = (configs || [])
+        .map((c: any) => String(c.config_value).trim())
+        .filter(Boolean);
+
+      // Security: if no responsaveis configured, return empty
+      if (allowedIds.length === 0) {
+        console.log(`fetch-make-comercial: no responsaveis configured for org ${orgId}, returning empty`);
+        return new Response(
+          JSON.stringify({ data: [], count: 0, lastUpdate: new Date().toISOString() }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Get Make API credentials — try org-specific first, fallback to global
+    let makeApiKey = "";
+    let dataStoreId = "";
+
+    if (orgId) {
+      const { data: orgConfigs } = await adminClient
+        .from("organization_configs")
+        .select("config_key, config_value")
+        .eq("organization_id", orgId)
+        .in("config_key", ["make_api_key", "ds_comercial"]);
+
+      for (const c of orgConfigs || []) {
+        if (c.config_key === "make_api_key") makeApiKey = c.config_value.trim();
+        if (c.config_key === "ds_comercial") dataStoreId = c.config_value.trim();
+      }
+    }
+
+    // Fallback to global secrets
+    if (!makeApiKey) makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
+    if (!dataStoreId) dataStoreId = (Deno.env.get("MAKE_COMERCIAL_DATASTORE_ID") || "").trim();
 
     if (!makeApiKey || !dataStoreId) {
       return new Response(
@@ -45,6 +106,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch all records from Make Data Store
     const allRecords: any[] = [];
     let offset = 0;
     const limit = 100;
@@ -52,7 +114,7 @@ Deno.serve(async (req) => {
 
     while (hasMore) {
       const apiUrl = `https://us2.make.com/api/v2/data-stores/${dataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
-      
+
       const makeRes = await fetch(apiUrl, {
         headers: {
           "Authorization": `Token ${makeApiKey}`,
@@ -79,10 +141,21 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    console.log(`fetch-make-comercial: ${allRecords.length} records fetched`);
+    // Filter by responsavel_id if not super_admin
+    let filteredRecords = allRecords;
+    if (!isSuperAdmin && allowedIds.length > 0) {
+      filteredRecords = allRecords.filter((r) => {
+        const d = r.data || r;
+        const respId = String(d.responsavel_id || "").trim();
+        return respId && allowedIds.includes(respId);
+      });
+      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered for org ${orgId} (${allowedIds.length} allowed IDs)`);
+    } else {
+      console.log(`fetch-make-comercial: ${allRecords.length} records (super_admin, no filter)`);
+    }
 
     return new Response(
-      JSON.stringify({ data: allRecords, count: allRecords.length, lastUpdate: new Date().toISOString() }),
+      JSON.stringify({ data: filteredRecords, count: filteredRecords.length, lastUpdate: new Date().toISOString() }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

@@ -7,6 +7,7 @@ export interface ComercialRecord {
   telefone: string;
   etapaSM: string;
   responsavel: string;
+  responsavelId: string;
   representante: string;
   etiquetas: string;
   nomeProposta: string;
@@ -32,6 +33,7 @@ function parseRecords(raw: any[]): ComercialRecord[] {
       telefone: String(d.telefone || ''),
       etapaSM: String(d.etapa_sm || ''),
       responsavel: String(d.responsavel || ''),
+      responsavelId: String(d.responsavel_id || ''),
       representante: String(d.representante || ''),
       etiquetas: String(d.etiquetas || ''),
       nomeProposta: String(d.nome_proposta || ''),
