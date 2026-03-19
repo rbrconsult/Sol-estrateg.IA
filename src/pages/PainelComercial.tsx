@@ -289,6 +289,13 @@ export default function PainelComercial() {
         </div>
       </div>
 
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true }}
+      />
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="painel">Painel</TabsTrigger>
