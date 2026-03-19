@@ -87,6 +87,11 @@ const App = () => (
                   <SolarLayout><Comercial /></SolarLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/solarmarket/vendedores" element={
+                <ProtectedRoute>
+                  <SolarLayout><VendedorPerformance /></SolarLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="dashboard"><Index /></ModuleGuard></MainLayout>
