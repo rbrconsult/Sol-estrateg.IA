@@ -244,8 +244,63 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
 
   const maskValue = (val: string) => val.length > 8 ? val.slice(0, 4) + '••••' + val.slice(-4) : '••••••••';
 
-  const getCategoryBadge = (cat: string) => {
-    const styles: Record<string, string> = {
+  const handleAddConfig = async () => {
+    if (!configsOrg || !newConfigForm.config_key || !newConfigForm.config_value) { toast.error('Chave e valor são obrigatórios'); return; }
+    setConfigSaving(true);
+    try {
+      const { error } = await supabase.from('organization_configs').insert({
+        organization_id: configsOrg.id,
+        config_key: newConfigForm.config_key,
+        config_value: newConfigForm.config_value,
+        config_category: newConfigForm.config_category,
+        is_secret: newConfigForm.is_secret,
+      });
+      if (error) throw error;
+      toast.success('Configuração adicionada!');
+      setNewConfigForm({ config_key: '', config_value: '', config_category: 'general', is_secret: false });
+      setIsAddingConfig(false);
+      await openConfigs(configsOrg);
+      fetchOrganizations();
+    } catch (error: any) { toast.error(error.message || 'Erro ao adicionar'); }
+    finally { setConfigSaving(false); }
+  };
+
+  const handleUpdateConfig = async (id: string) => {
+    if (!configsOrg) return;
+    setConfigSaving(true);
+    try {
+      const { error } = await supabase.from('organization_configs').update({
+        config_key: editConfigForm.config_key,
+        config_value: editConfigForm.config_value,
+        config_category: editConfigForm.config_category,
+        is_secret: editConfigForm.is_secret,
+      }).eq('id', id);
+      if (error) throw error;
+      toast.success('Configuração atualizada!');
+      setEditingConfig(null);
+      await openConfigs(configsOrg);
+    } catch (error: any) { toast.error(error.message || 'Erro ao atualizar'); }
+    finally { setConfigSaving(false); }
+  };
+
+  const handleDeleteConfig = async () => {
+    if (!deleteConfig || !configsOrg) return;
+    setConfigSaving(true);
+    try {
+      const { error } = await supabase.from('organization_configs').delete().eq('id', deleteConfig.id);
+      if (error) throw error;
+      toast.success('Configuração excluída!');
+      setDeleteConfig(null);
+      await openConfigs(configsOrg);
+      fetchOrganizations();
+    } catch (error: any) { toast.error(error.message || 'Erro ao excluir'); }
+    finally { setConfigSaving(false); }
+  };
+
+  const startEditConfig = (c: OrgConfig) => {
+    setEditingConfig(c.id);
+    setEditConfigForm({ config_key: c.config_key, config_value: c.config_value, config_category: c.config_category, is_secret: c.is_secret });
+  };
       webhook: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       datastore: 'bg-green-500/20 text-green-400 border-green-500/30',
       api: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
