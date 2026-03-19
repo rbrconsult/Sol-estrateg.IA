@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { DollarSign, TrendingUp, Users, Target, RefreshCcw } from "lucide-react";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const TEMP_COLORS = { quente: "hsl(var(--destructive))", morno: "hsl(var(--warning))", frio: "hsl(var(--info))" };
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
