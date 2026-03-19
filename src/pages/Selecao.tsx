@@ -14,7 +14,7 @@ export default function Selecao() {
   const isSuperAdmin = userRole === "super_admin";
 
   // Super admins must pick a filial first
-  const [filialChosen, setFilialChosen] = useState(!isSuperAdmin);
+  const [filialChosen, setFilialChosen] = useState(false);
   const [selected, setSelected] = useState<Choice>(null);
   const [animating, setAnimating] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
