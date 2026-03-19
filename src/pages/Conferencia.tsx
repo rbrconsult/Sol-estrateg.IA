@@ -11,6 +11,7 @@ import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
+import { FloatingFilter } from "@/components/conferencia/FloatingFilter";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
