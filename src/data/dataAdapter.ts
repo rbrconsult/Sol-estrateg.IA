@@ -43,6 +43,11 @@ export interface Proposal {
   makeRespondeu?: boolean;
   makeDataResposta?: string;
   makeHistorico?: { tipo: string; mensagem: string; data: string }[];
+  makeCidade?: string;
+  makeValorConta?: string;
+  makeEmail?: string;
+  makeImovel?: string;
+  makeNome?: string;
 }
 
 // Etapas reais da planilha SOL Insights
