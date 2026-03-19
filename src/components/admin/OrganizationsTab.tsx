@@ -104,11 +104,13 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       const cCountMap: Record<string, number> = {};
       configCounts?.forEach(c => { cCountMap[c.organization_id] = (cCountMap[c.organization_id] || 0) + 1; });
 
-      setOrganizations((orgs || []).map(o => ({
-        ...o,
-        member_count: mCountMap[o.id] || 0,
-        config_count: cCountMap[o.id] || 0,
-      })));
+      setOrganizations((orgs || [])
+        .filter(o => o.id !== MATRIZ_ORG_ID)
+        .map(o => ({
+          ...o,
+          member_count: mCountMap[o.id] || 0,
+          config_count: cCountMap[o.id] || 0,
+        })));
     } catch (error) {
       console.error('Error fetching organizations:', error);
       toast.error('Erro ao carregar organizações');
