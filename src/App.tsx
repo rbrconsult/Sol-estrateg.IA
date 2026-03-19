@@ -40,6 +40,7 @@ import SLAMonitor from "./pages/SLAMonitor";
 import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
+import Sanitizacao from "./pages/Sanitizacao";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
@@ -198,6 +199,11 @@ const App = () => (
               <Route path="/comissoes" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sanitizacao" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
