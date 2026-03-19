@@ -195,6 +195,11 @@ const App = () => (
                   <MainLayout><AnalistaFollowup /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/comissoes" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
