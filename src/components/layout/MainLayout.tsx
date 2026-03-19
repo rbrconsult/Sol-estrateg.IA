@@ -52,11 +52,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       {/* Desktop sidebar */}
       {!isMobile && (
-        <Sidebar
-          onResetOnboarding={() => setShowOnboarding(true)}
-          collapsed={collapsed}
-          onCollapsedChange={setCollapsed}
-        />
+        <Sidebar onResetOnboarding={() => setShowOnboarding(true)} />
       )}
 
       {/* Mobile sidebar sheet */}
