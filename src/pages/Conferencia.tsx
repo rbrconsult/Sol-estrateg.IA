@@ -9,13 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  kpiCards as mockKpiCards, pipelineStages as mockPipeline, origemLeads as mockOrigem,
-  fupFrio as mockFupFrio, desqualMotivos as mockDesqual,
-  mensagens as mockMensagens, sla as mockSla, heatmap as mockHeatmap, taxaPorTentativa as mockTaxa,
-  solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
-  slaMock as mockSlaMock, robotInsightsMock as mockRobotInsights, scorePorOrigemMock as mockScoreOrigem,
-} from "@/data/conferenciaMockData";
+// Mock data removed — using real data only
 import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
