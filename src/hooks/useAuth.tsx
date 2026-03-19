@@ -76,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: { action: 'validate', user_id: userId, session_token: sessionToken }
       });
       
-      if (response.data && !response.data.valid) {
+      // Only force logout if the response explicitly says valid=false
+      // Ignore 401/error responses (e.g. during logout→login transitions)
+      if (response.data && response.data.valid === false && !response.data.error) {
         toast.error('Sua sessão foi encerrada. Outro dispositivo fez login com suas credenciais.');
         await supabase.auth.signOut();
         localStorage.removeItem(SESSION_KEY);
