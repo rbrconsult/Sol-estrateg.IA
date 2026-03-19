@@ -44,11 +44,25 @@ export default function Comercial() {
   const { data: records, isLoading, error, refetch, isFetching } = useMakeComercialData();
   const [search, setSearch] = useState("");
   const [filterResp, setFilterResp] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterEtapa, setFilterEtapa] = useState("all");
 
-  // Derive unique responsaveis
+  // Derive unique values for filters
   const responsaveis = useMemo(() => {
     if (!records) return [];
     const set = new Set(records.filter(r => r.responsavel).map(r => r.responsavel));
+    return Array.from(set).sort();
+  }, [records]);
+
+  const statuses = useMemo(() => {
+    if (!records) return [];
+    const set = new Set(records.filter(r => r.statusProposta).map(r => r.statusProposta));
+    return Array.from(set).sort();
+  }, [records]);
+
+  const etapas = useMemo(() => {
+    if (!records) return [];
+    const set = new Set(records.filter(r => r.etapaSM).map(r => r.etapaSM));
     return Array.from(set).sort();
   }, [records]);
 
@@ -57,6 +71,8 @@ export default function Comercial() {
     if (!records) return [];
     return records.filter(r => {
       if (filterResp !== "all" && r.responsavel !== filterResp) return false;
+      if (filterStatus !== "all" && r.statusProposta !== filterStatus) return false;
+      if (filterEtapa !== "all" && r.etapaSM !== filterEtapa) return false;
       if (search) {
         const q = search.toLowerCase();
         return (
@@ -69,7 +85,7 @@ export default function Comercial() {
       }
       return true;
     });
-  }, [records, search, filterResp]);
+  }, [records, search, filterResp, filterStatus, filterEtapa]);
 
   // Group by etapa for Kanban
   const byEtapa = useMemo(() => {
@@ -109,27 +125,59 @@ export default function Comercial() {
             Pipeline SolarMarket • {records?.length ?? 0} projetos
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar projeto..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="pl-9 w-48"
+              className="pl-9 w-44"
             />
           </div>
           <Select value={filterResp} onValueChange={setFilterResp}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Responsável" />
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Vendedor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">Todos Vendedores</SelectItem>
               {responsaveis.map(r => (
                 <SelectItem key={r} value={r}>{r}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Status</SelectItem>
+              {statuses.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterEtapa} onValueChange={setFilterEtapa}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Etapa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas Etapas</SelectItem>
+              {etapas.map(e => (
+                <SelectItem key={e} value={e}>{e}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(filterResp !== "all" || filterStatus !== "all" || filterEtapa !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setFilterResp("all"); setFilterStatus("all"); setFilterEtapa("all"); }}
+              className="text-xs text-muted-foreground"
+            >
+              Limpar filtros
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Atualizar
