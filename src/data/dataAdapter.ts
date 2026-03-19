@@ -940,6 +940,11 @@ export function enrichProposalsWithMake(proposals: Proposal[], makeRecords: Make
       makeRespondeu: respondeu,
       makeDataResposta: primary.data_resposta,
       makeHistorico: allHistorico,
+      makeCidade: primary.Cidade || primary.cidade,
+      makeValorConta: primary.valorConta,
+      makeEmail: primary.email,
+      makeImovel: primary.imovel,
+      makeNome: primary.nome,
     };
   });
 }
