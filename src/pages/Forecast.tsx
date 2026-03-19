@@ -200,3 +200,6 @@ export default function Forecast() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
