@@ -289,6 +289,9 @@ export default function PainelComercial() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="painel">Painel</TabsTrigger>
+          <TabsTrigger value="oportunidades">
+            <TrendingUp className="h-4 w-4 mr-1" /> Oportunidades
+          </TabsTrigger>
           <TabsTrigger value="mensagens">
             <MessageSquare className="h-4 w-4 mr-1" /> Central de Mensagens
           </TabsTrigger>
