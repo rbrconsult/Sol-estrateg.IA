@@ -166,6 +166,8 @@ export default function Conferencia() {
     if (periodo === "7d") return { from: subDays(today, 7), to: today };
     if (periodo === "30d") return { from: subDays(today, 30), to: today };
     if (periodo === "90d") return { from: subDays(today, 90), to: today };
+    if (periodo === "mes") return { from: startOfMonth(today), to: today };
+    if (periodo === "ano" || periodo === "ytd") return { from: startOfYear(today), to: today };
     // "all" — no date filter
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [periodo, dateFrom, dateTo]);
