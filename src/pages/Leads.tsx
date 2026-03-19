@@ -23,12 +23,7 @@ import {
 } from "@/data/dataAdapter";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip,
-} from "recharts";
+import { Badge } from "@/components/ui/badge";
 import type { Proposal } from "@/data/dataAdapter";
 import { SLAMetrics } from "@/components/leads/SLAMetrics";
 import { RobotInsights } from "@/components/leads/RobotInsights";
