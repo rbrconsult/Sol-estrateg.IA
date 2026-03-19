@@ -298,8 +298,13 @@ export default function PainelComercial() {
           <p className="text-sm text-muted-foreground mt-1">Visão operacional em tempo real — alertas, fila e ações</p>
         </div>
         <div className="flex items-center gap-2">
+          {orgFilterActive && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+              🏢 {selectedOrgName}
+            </Badge>
+          )}
           <Badge variant="outline" className="text-xs">
-            <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5 animate-pulse inline-block" />
+            <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse inline-block" />
             {records.length} leads carregados
           </Badge>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
