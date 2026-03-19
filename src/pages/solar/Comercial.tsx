@@ -139,7 +139,7 @@ export default function Comercial() {
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Vendedor" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999]" position="popper" sideOffset={4}>
               <SelectItem value="all">Todos Vendedores</SelectItem>
               {responsaveis.map(r => (
                 <SelectItem key={r} value={r}>{r}</SelectItem>
@@ -150,7 +150,7 @@ export default function Comercial() {
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999]" position="popper" sideOffset={4}>
               <SelectItem value="all">Todos Status</SelectItem>
               {statuses.map(s => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -161,7 +161,7 @@ export default function Comercial() {
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Etapa" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999]" position="popper" sideOffset={4}>
               <SelectItem value="all">Todas Etapas</SelectItem>
               {etapas.map(e => (
                 <SelectItem key={e} value={e}>{e}</SelectItem>
