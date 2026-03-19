@@ -19,7 +19,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checked, setChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  
   
   const isMobile = useIsMobile();
 
@@ -52,11 +52,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       {/* Desktop sidebar */}
       {!isMobile && (
-        <Sidebar
-          onResetOnboarding={() => setShowOnboarding(true)}
-          collapsed={collapsed}
-          onCollapsedChange={setCollapsed}
-        />
+        <Sidebar onResetOnboarding={() => setShowOnboarding(true)} />
       )}
 
       {/* Mobile sidebar sheet */}
@@ -70,7 +66,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       <main className={cn(
         "transition-all duration-300",
-        isMobile ? "" : collapsed ? "ml-16" : "ml-52"
+        isMobile ? "" : "ml-52"
       )}>
         {children}
       </main>

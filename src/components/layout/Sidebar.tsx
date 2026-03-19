@@ -2,9 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Kanban,
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
-  BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
+  BarChart3, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
-  ChevronsLeft, ChevronsRight, FileCheck, Handshake, Percent,
+  FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -80,11 +80,9 @@ const menuGroups: MenuGroup[] = [
 interface SidebarProps {
   onResetOnboarding?: () => void;
   onNavigate?: () => void;
-  collapsed?: boolean;
-  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCollapsedChange }: SidebarProps) {
+export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const location = useLocation();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
@@ -99,7 +97,7 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
     onNavigate?.();
   };
 
-  const isCollapsed = !isMobile && collapsed;
+  const isCollapsed = false;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -207,21 +205,6 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
 
         {/* Footer */}
         <div className="p-1.5 border-t border-border/50 space-y-1">
-          {!isMobile && onCollapsedChange && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCollapsedChange(!collapsed)}
-              className={cn(
-                "w-full text-muted-foreground hover:text-foreground hover:bg-secondary text-xs h-7",
-                isCollapsed ? "justify-center" : "justify-start"
-              )}
-            >
-              {isCollapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5 mr-1.5" />}
-              {!isCollapsed && <span>Recolher</span>}
-            </Button>
-          )}
-
           {userRole === "super_admin" && (
             isCollapsed ? (
               <Tooltip>
