@@ -1,62 +1,165 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  LineChart, Line, Legend, PieChart, Pie, Cell,
+  LineChart, Line, Legend,
 } from "recharts";
-import {
-  midiaKPIs, funisOrigem, radarComparativo, campanhas, scorePorOrigem,
-  temperaturaPorCanal, engajamentoMeta, evolucaoSemanal,
-} from "@/data/mockFase3";
-import { useMakeDataStore } from "@/hooks/useMakeDataStore";
-import { DollarSign, TrendingUp, Users, Target, Lock } from "lucide-react";
+import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { DollarSign, TrendingUp, Users, Target, RefreshCcw } from "lucide-react";
 
 const TEMP_COLORS = { quente: "hsl(var(--destructive))", morno: "hsl(var(--warning))", frio: "hsl(var(--info))" };
+const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
+
+function deriveMidiaData(records: MakeRecord[]) {
+  // Group by canal
+  const canais: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[]; quentes: number; mornos: number; frios: number }> = {};
+
+  records.forEach(r => {
+    let canal = r.cidade || 'Outros';
+    if (!canais[canal]) canais[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0, mornos: 0, frios: 0 };
+    canais[canal].leads++;
+    if (r.status_resposta === 'respondeu') canais[canal].responderam++;
+    if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') canais[canal].qualificados++;
+    const s = parseInt(r.makeScore || '0') || 0;
+    if (s > 0) canais[canal].scores.push(s);
+    const temp = (r.makeTemperatura || '').toUpperCase();
+    if (temp === 'QUENTE') canais[canal].quentes++;
+    else if (temp === 'MORNO') canais[canal].mornos++;
+    else canais[canal].frios++;
+  });
+
+  const canalList = Object.entries(canais)
+    .map(([canal, d]) => ({
+      canal,
+      ...d,
+      taxaResp: d.leads > 0 ? Math.round((d.responderam / d.leads) * 100) : 0,
+      taxaQual: d.leads > 0 ? Math.round((d.qualificados / d.leads) * 100) : 0,
+      scoreMedia: d.scores.length > 0 ? Math.round(d.scores.reduce((a, b) => a + b, 0) / d.scores.length) : 0,
+    }))
+    .sort((a, b) => b.leads - a.leads);
+
+  // Funnel per origin (top 4)
+  const funisOrigem = canalList.slice(0, 4).map((c, i) => ({
+    origem: c.canal,
+    cor: ['#1877F2', '#34A853', '#F59E0B', '#25D366'][i] || '#888',
+    etapas: [
+      { label: 'Leads', valor: c.leads, pct: '100%' },
+      { label: 'Responderam', valor: c.responderam, pct: `${c.taxaResp}%` },
+      { label: 'Qualificados', valor: c.qualificados, pct: c.responderam > 0 ? `${Math.round((c.qualificados / c.responderam) * 100)}%` : '0%' },
+    ],
+  }));
+
+  // Radar
+  const top2 = canalList.slice(0, 2);
+  const radarComparativo = [
+    { eixo: "Volume", a: top2[0]?.leads || 0, b: top2[1]?.leads || 0 },
+    { eixo: "Taxa Resp.", a: top2[0]?.taxaResp || 0, b: top2[1]?.taxaResp || 0 },
+    { eixo: "Taxa Qual.", a: top2[0]?.taxaQual || 0, b: top2[1]?.taxaQual || 0 },
+    { eixo: "Score Médio", a: top2[0]?.scoreMedia || 0, b: top2[1]?.scoreMedia || 0 },
+    { eixo: "Quentes", a: top2[0]?.quentes || 0, b: top2[1]?.quentes || 0 },
+  ];
+
+  // Score por Origem
+  const scorePorOrigem = canalList.filter(c => c.scoreMedia > 0).slice(0, 5).map(c => ({ origem: c.canal, score: c.scoreMedia }));
+
+  // Temperatura por Canal
+  const temperaturaPorCanal = canalList.slice(0, 4).map(c => {
+    const total = c.quentes + c.mornos + c.frios || 1;
+    return { canal: c.canal, quente: Math.round((c.quentes / total) * 100), morno: Math.round((c.mornos / total) * 100), frio: Math.round((c.frios / total) * 100) };
+  });
+
+  // Weekly evolution
+  const byWeek: Record<string, Record<string, { leads: number }>> = {};
+  records.forEach(r => {
+    if (!r.data_envio) return;
+    try {
+      const d = new Date(r.data_envio);
+      if (isNaN(d.getTime())) return;
+      const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
+      const key = ws.toISOString().slice(0, 10);
+      const canal = r.cidade || 'Outros';
+      if (!byWeek[key]) byWeek[key] = {};
+      if (!byWeek[key][canal]) byWeek[key][canal] = { leads: 0 };
+      byWeek[key][canal].leads++;
+    } catch { /* skip */ }
+  });
+  const topCanais = canalList.slice(0, 2).map(c => c.canal);
+  const evolucaoSemanal = Object.entries(byWeek)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-8)
+    .map(([semana, canals]) => ({
+      semana: semana.slice(5),
+      [topCanais[0] || 'Canal 1']: canals[topCanais[0]]?.leads || 0,
+      [topCanais[1] || 'Canal 2']: canals[topCanais[1]]?.leads || 0,
+    }));
+
+  // KPIs table
+  const totalLeads = records.length;
+  const totalResp = records.filter(r => r.status_resposta === 'respondeu').length;
+  const totalQual = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
+  const kpiTable = [
+    { metrica: "Leads gerados", total: String(totalLeads) },
+    { metrica: "Responderam", total: String(totalResp) },
+    { metrica: "Qualificados", total: String(totalQual) },
+    { metrica: "Taxa resposta", total: `${totalLeads > 0 ? Math.round((totalResp / totalLeads) * 100) : 0}%` },
+    { metrica: "Taxa qualificação", total: `${totalLeads > 0 ? Math.round((totalQual / totalLeads) * 100) : 0}%` },
+  ];
+
+  return { canalList, funisOrigem, radarComparativo, scorePorOrigem, temperaturaPorCanal, evolucaoSemanal, kpiTable, topCanais };
+}
 
 export default function MidiaReceita() {
-  const { data: makeRecords } = useMakeDataStore();
+  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const records = makeRecords || [];
 
-  // Enrich with real data where available
-  const realLeadCount = makeRecords?.length ?? 0;
+  const d = useMemo(() => deriveMidiaData(records), [records]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 pb-10">
+        <div><h1 className="text-2xl font-bold text-foreground">Mídia × Receita</h1></div>
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-full" />)}
+      </div>
+    );
+  }
+
+  if (records.length === 0) {
+    return (
+      <div className="space-y-6 pb-10">
+        <div><h1 className="text-2xl font-bold text-foreground">Mídia × Receita</h1></div>
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhum dado disponível no Data Store.</CardContent></Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-          Mídia × Receita — Atribuição e ROI
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-          Jan-Fev 2026 · {realLeadCount > 0 ? `${realLeadCount} leads reais + ` : ""}dados consolidados
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Mídia × Receita — Atribuição e ROI</h1>
+          <p className="text-sm text-muted-foreground mt-1">{records.length} leads · Dados reais do Data Store</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
-      {/* BLOCO 1 — KPIs TOPO */}
+      {/* KPIs */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base" style={{ fontFamily: "'Syne', sans-serif" }}>
-            KPIs por Plataforma
-          </CardTitle>
-        </CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-base">KPIs Gerais</CardTitle></CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Métrica</TableHead>
-                  <TableHead><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#1877F2" }} /> Meta</span></TableHead>
-                  <TableHead><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#34A853" }} /> Google</span></TableHead>
-                  <TableHead className="font-bold">Total</TableHead>
-                </TableRow>
+                <TableRow><TableHead>Métrica</TableHead><TableHead className="font-bold">Total</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {midiaKPIs.map((kpi) => (
+                {d.kpiTable.map(kpi => (
                   <TableRow key={kpi.metrica}>
                     <TableCell className="font-medium text-sm">{kpi.metrica}</TableCell>
-                    <TableCell className="font-mono text-sm">{kpi.meta}</TableCell>
-                    <TableCell className="font-mono text-sm">{kpi.google}</TableCell>
                     <TableCell className="font-mono text-sm font-bold">{kpi.total}</TableCell>
                   </TableRow>
                 ))}
@@ -66,13 +169,11 @@ export default function MidiaReceita() {
         </CardContent>
       </Card>
 
-      {/* BLOCO 2 — FUNIL POR ORIGEM */}
+      {/* Funil por Origem */}
       <div>
-        <h2 className="text-lg font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-          Funil por Origem
-        </h2>
+        <h2 className="text-lg font-bold mb-3">Funil por Origem</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {funisOrigem.map((funil) => (
+          {d.funisOrigem.map(funil => (
             <Card key={funil.origem}>
               <CardHeader className="pb-2 pt-4 px-4">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -82,7 +183,7 @@ export default function MidiaReceita() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 {funil.etapas.map((etapa, i) => {
-                  const maxVal = funil.etapas[0].valor;
+                  const maxVal = funil.etapas[0].valor || 1;
                   const width = (etapa.valor / maxVal) * 100;
                   return (
                     <div key={i} className="mb-2 last:mb-0">
@@ -91,10 +192,7 @@ export default function MidiaReceita() {
                         <span className="font-mono font-bold">{etapa.valor}</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${width}%`, backgroundColor: funil.cor, opacity: 1 - i * 0.15 }}
-                        />
+                        <div className="h-full rounded-full transition-all" style={{ width: `${width}%`, backgroundColor: funil.cor, opacity: 1 - i * 0.15 }} />
                       </div>
                       {i < funil.etapas.length - 1 && (
                         <p className="text-[10px] text-muted-foreground text-center font-mono">↓ {funil.etapas[i + 1]?.pct}</p>
@@ -108,64 +206,50 @@ export default function MidiaReceita() {
         </div>
       </div>
 
-      {/* BLOCO 3 — COMPARATIVO RADAR */}
+      {/* Radar + Score */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Comparativo Meta vs Google
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Comparativo Top 2 Canais</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={radarComparativo}>
+              <RadarChart data={d.radarComparativo}>
                 <PolarGrid stroke="hsl(var(--border))" />
                 <PolarAngleAxis dataKey="eixo" tick={{ fontSize: 11 }} />
                 <PolarRadiusAxis tick={{ fontSize: 9 }} />
-                <Radar name="Meta" dataKey="meta" stroke="#1877F2" fill="#1877F2" fillOpacity={0.2} />
-                <Radar name="Google" dataKey="google" stroke="#34A853" fill="#34A853" fillOpacity={0.2} />
+                <Radar name={d.topCanais[0] || 'Canal 1'} dataKey="a" stroke="#1877F2" fill="#1877F2" fillOpacity={0.2} />
+                <Radar name={d.topCanais[1] || 'Canal 2'} dataKey="b" stroke="#34A853" fill="#34A853" fillOpacity={0.2} />
                 <Legend />
-                <Tooltip />
+                <Tooltip contentStyle={tooltipStyle} />
               </RadarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* BLOCO 5 — SCORE MÉDIO POR ORIGEM */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Score Médio por Origem
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Score Médio por Origem</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {scorePorOrigem.map((item) => (
+              {d.scorePorOrigem.map(item => (
                 <div key={item.origem}>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span>{item.origem}</span>
                     <span className="font-mono font-bold">{item.score} ⭐</span>
                   </div>
                   <div className="h-3 rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${item.score}%` }}
-                    />
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${item.score}%` }} />
                   </div>
                 </div>
               ))}
             </div>
-
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {temperaturaPorCanal.map((canal) => {
-                const total = canal.quente + canal.morno + canal.frio;
+              {d.temperaturaPorCanal.map(canal => {
                 return (
                   <div key={canal.canal}>
                     <p className="text-xs font-medium mb-1">{canal.canal}</p>
                     <div className="flex h-4 rounded-full overflow-hidden">
-                      <div style={{ width: `${(canal.quente / total) * 100}%`, backgroundColor: TEMP_COLORS.quente }} />
-                      <div style={{ width: `${(canal.morno / total) * 100}%`, backgroundColor: TEMP_COLORS.morno }} />
-                      <div style={{ width: `${(canal.frio / total) * 100}%`, backgroundColor: TEMP_COLORS.frio }} />
+                      <div style={{ width: `${canal.quente}%`, backgroundColor: TEMP_COLORS.quente }} />
+                      <div style={{ width: `${canal.morno}%`, backgroundColor: TEMP_COLORS.morno }} />
+                      <div style={{ width: `${canal.frio}%`, backgroundColor: TEMP_COLORS.frio }} />
                     </div>
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5 font-mono">
                       <span>🔥{canal.quente}%</span>
@@ -180,49 +264,30 @@ export default function MidiaReceita() {
         </Card>
       </div>
 
-      {/* BLOCO 4 — PERFORMANCE POR CAMPANHA */}
+      {/* Performance table */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Performance por Campanha
-          </CardTitle>
-        </CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Performance por Canal</CardTitle></CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Campanha</TableHead>
-                <TableHead>Plataforma</TableHead>
+                <TableHead>Canal</TableHead>
                 <TableHead className="text-right">Leads</TableHead>
-                <TableHead className="text-right">CPL</TableHead>
+                <TableHead className="text-right">Resp.</TableHead>
                 <TableHead className="text-right">Qualif.</TableHead>
-                <TableHead className="text-right">% Qual</TableHead>
-                <TableHead className="text-right">Contratos</TableHead>
-                <TableHead className="text-right">ROAS</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="text-right">Taxa Qual</TableHead>
+                <TableHead className="text-right">Score ∅</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campanhas.map((c) => (
-                <TableRow key={c.nome} className={c.status === "verde" ? "bg-success/5" : c.status === "vermelho" ? "bg-destructive/5" : ""}>
-                  <TableCell className="font-medium text-sm">{c.nome}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px]" style={{
-                      borderColor: c.plataforma === "Meta" ? "#1877F2" : "#34A853",
-                      color: c.plataforma === "Meta" ? "#1877F2" : "#34A853",
-                    }}>
-                      {c.plataforma}
-                    </Badge>
-                  </TableCell>
+              {d.canalList.slice(0, 8).map(c => (
+                <TableRow key={c.canal}>
+                  <TableCell className="font-medium text-sm">{c.canal}</TableCell>
                   <TableCell className="text-right font-mono">{c.leads}</TableCell>
-                  <TableCell className="text-right font-mono">{c.cpl}</TableCell>
-                  <TableCell className="text-right font-mono">{c.qualificados}</TableCell>
-                  <TableCell className="text-right font-mono">{c.pctQual}</TableCell>
-                  <TableCell className="text-right font-mono font-bold">{c.contratos}</TableCell>
-                  <TableCell className="text-right font-mono font-bold">{c.roas}</TableCell>
-                  <TableCell>
-                    {c.status === "verde" ? "🟢" : c.status === "amarelo" ? "🟡" : "🔴"}
-                  </TableCell>
+                  <TableCell className="text-right font-mono">{c.responderam}</TableCell>
+                  <TableCell className="text-right font-mono font-bold">{c.qualificados}</TableCell>
+                  <TableCell className="text-right font-mono">{c.taxaQual}%</TableCell>
+                  <TableCell className="text-right font-mono">{c.scoreMedia}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -230,73 +295,25 @@ export default function MidiaReceita() {
         </CardContent>
       </Card>
 
-      {/* BLOCO 6 — ENGAJAMENTO META ADS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Evolução */}
+      {d.evolucaoSemanal.length > 0 && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#1877F2" }} />
-              Engajamento Meta Ads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
-              {engajamentoMeta.map((item) => (
-                <div key={item.metrica} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                  <span className="text-xs text-muted-foreground">{item.metrica}</span>
-                  <span className="text-sm font-bold font-mono">{item.valor}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* BLOCO 7 — EVOLUÇÃO SEMANAL */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Evolução Semanal
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Evolução Semanal</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={evolucaoSemanal}>
+              <BarChart data={d.evolucaoSemanal}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="semana" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="leads" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="cpl" orientation="right" tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Legend />
-                <Line yAxisId="leads" type="monotone" dataKey="leadsMeta" name="Leads Meta" stroke="#1877F2" strokeWidth={2} dot={{ r: 3 }} />
-                <Line yAxisId="leads" type="monotone" dataKey="leadsGoogle" name="Leads Google" stroke="#34A853" strokeWidth={2} dot={{ r: 3 }} />
-                <Line yAxisId="cpl" type="monotone" dataKey="cplMeta" name="CPL Meta" stroke="#1877F2" strokeDasharray="5 5" strokeWidth={1} dot={false} />
-                <Line yAxisId="cpl" type="monotone" dataKey="cplGoogle" name="CPL Google" stroke="#34A853" strokeDasharray="5 5" strokeWidth={1} dot={false} />
-              </LineChart>
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey={d.topCanais[0] || 'Canal 1'} name={d.topCanais[0] || 'Canal 1'} fill="#1877F2" radius={[4, 4, 0, 0]} />
+                <Bar dataKey={d.topCanais[1] || 'Canal 2'} name={d.topCanais[1] || 'Canal 2'} fill="#34A853" radius={[4, 4, 0, 0]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
-
-      {/* BLOCO 8 — MÉTRICAS DE PÁGINA (EM DESENVOLVIMENTO) */}
-      <Card className="border-dashed opacity-60">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-            <Lock className="h-4 w-4" />
-            Métricas de Página
-            <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">🚧 Em desenvolvimento</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {["Visualizações da LP", "Taxa de conversão da LP", "Scroll depth", "Origem do tráfego", "Heatmap de cliques"].map((item) => (
-              <div key={item} className="p-3 rounded-lg bg-muted/20 border border-dashed text-center">
-                <p className="text-xs text-muted-foreground">{item}</p>
-                <p className="text-lg font-bold text-muted-foreground/40 font-mono mt-1">—</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      )}
     </div>
   );
 }

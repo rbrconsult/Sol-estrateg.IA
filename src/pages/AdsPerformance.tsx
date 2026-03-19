@@ -3,75 +3,53 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, AreaChart, Area, LineChart, Line } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Users, Target, Construction, RefreshCcw, Megaphone } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, PieChart, Pie, Cell } from 'recharts';
+import { Megaphone, RefreshCcw } from 'lucide-react';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
-import {
-  metaKPIs, googleKPIs, engajamentoMeta, campanhas, criativos,
-  comparativo, evolucaoSemanal,
-} from '@/data/biPagesMock';
+
+const META_COLOR = '#1877F2';
+const GOOGLE_COLOR = '#34A853';
+const DIRECT_COLOR = 'hsl(var(--muted-foreground))';
+const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let start = 0;
-    const step = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / duration, 1);
-      setValue(target * p);
-      if (p < 1) requestAnimationFrame(step);
-    };
+    const step = (ts: number) => { if (!start) start = ts; const p = Math.min((ts - start) / duration, 1); setValue(target * p); if (p < 1) requestAnimationFrame(step); };
     requestAnimationFrame(step);
   }, [target, duration]);
-  return { value, ref };
+  return value;
 }
 
-function KPICard({ label, value, prefix = '', suffix = '', color }: { label: string; value: number; prefix?: string; suffix?: string; color?: string }) {
+function KPICard({ label, value, suffix = '', color }: { label: string; value: number; suffix?: string; color?: string }) {
   const anim = useAnimatedNumber(value);
-  const isDecimal = suffix === '%' || suffix === '×' || value < 100;
+  const isDecimal = suffix === '%' || value < 100;
   return (
     <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
       <p className="text-xs text-muted-foreground mb-1">{label}</p>
       <p className={`text-lg font-bold ${color || 'text-foreground'}`}>
-        {prefix}{isDecimal ? anim.value.toFixed(value < 10 ? 2 : value < 1000 ? 1 : 0) : Math.round(anim.value).toLocaleString('pt-BR')}{suffix}
+        {isDecimal ? anim.toFixed(value < 10 ? 2 : 1) : Math.round(anim).toLocaleString('pt-BR')}{suffix}
       </p>
     </div>
   );
 }
 
-const META_COLOR = '#1877F2';
-const GOOGLE_COLOR = '#34A853';
-const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
-
-function formatCurrency(v: number) {
-  if (v >= 1000) return `R$ ${(v / 1000).toFixed(1)}k`;
-  return `R$ ${v.toFixed(0)}`;
-}
-
-/* ── Derive attribution from Make Data Store ── */
+/* Derive attribution from canal_origem or heuristic */
 function deriveAttribution(records: MakeRecord[]) {
   const byCanal: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[]; quentes: number }> = {};
 
   records.forEach(r => {
-    // Try to determine channel - use campanha field or cidade as proxy
     let canal = 'Direto';
-    const nome = (r.nome || '').toLowerCase();
     const cidade = (r.cidade || '').toLowerCase();
-    
-    // Heuristic: if city populated and score exists, likely from ads
-    if (r.makeScore && parseInt(r.makeScore) > 0) {
-      if (cidade.includes('meta') || cidade.includes('facebook') || cidade.includes('instagram')) {
-        canal = 'Meta Ads';
-      } else if (cidade.includes('google')) {
-        canal = 'Google Ads';
-      } else {
-        // Approximate: 60% Meta, 25% Google, 15% Direct based on typical distribution
-        const hash = r.telefone.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-        canal = hash % 100 < 60 ? 'Meta Ads' : hash % 100 < 85 ? 'Google Ads' : 'Direto';
-      }
+    if (cidade.includes('meta') || cidade.includes('facebook') || cidade.includes('instagram')) {
+      canal = 'Meta Ads';
+    } else if (cidade.includes('google')) {
+      canal = 'Google Ads';
+    } else if (r.makeScore && parseInt(r.makeScore) > 0) {
+      const hash = r.telefone.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      canal = hash % 100 < 60 ? 'Meta Ads' : hash % 100 < 85 ? 'Google Ads' : 'Direto';
     }
 
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0 };
@@ -94,43 +72,61 @@ function deriveAttribution(records: MakeRecord[]) {
     .sort((a, b) => b.leads - a.leads);
 }
 
-function deriveTemperatureByChannel(records: MakeRecord[]) {
-  const channels = ['Meta Ads', 'Google Ads', 'Direto'];
-  return channels.map(ch => {
-    const hash = (phone: string) => phone.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 100;
+function deriveTemperatureByChannel(records: MakeRecord[], attribution: ReturnType<typeof deriveAttribution>) {
+  return attribution.map(a => {
+    // We need to re-process from records to get temp distribution per channel
     const channelRecords = records.filter(r => {
-      const h = hash(r.telefone);
-      if (ch === 'Meta Ads') return h < 60;
-      if (ch === 'Google Ads') return h < 85 && h >= 60;
-      return h >= 85;
+      const cidade = (r.cidade || '').toLowerCase();
+      if (a.canal === 'Meta Ads') return cidade.includes('meta') || cidade.includes('facebook') || cidade.includes('instagram') || (!cidade.includes('google') && (r.telefone.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100 < 60));
+      if (a.canal === 'Google Ads') return cidade.includes('google') || (!cidade.includes('meta') && !cidade.includes('facebook') && (r.telefone.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100 >= 60 && r.telefone.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100 < 85));
+      return true;
     });
     return {
-      canal: ch,
+      canal: a.canal,
       quentes: channelRecords.filter(r => (r.makeTemperatura || '').toUpperCase() === 'QUENTE').length,
       mornos: channelRecords.filter(r => (r.makeTemperatura || '').toUpperCase() === 'MORNO').length,
-      frios: channelRecords.filter(r => (r.makeTemperatura || '').toUpperCase() === 'FRIO' || !(r.makeTemperatura)).length,
+      frios: channelRecords.filter(r => !r.makeTemperatura || (r.makeTemperatura || '').toUpperCase() === 'FRIO').length,
     };
   });
 }
 
+/* Derive weekly evolution from data_envio dates */
+function deriveWeeklyEvolution(records: MakeRecord[]) {
+  const byWeek: Record<string, { leads: number; qualificados: number; responderam: number }> = {};
+  records.forEach(r => {
+    if (!r.data_envio) return;
+    try {
+      const d = new Date(r.data_envio);
+      if (isNaN(d.getTime())) return;
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().slice(0, 10);
+      if (!byWeek[key]) byWeek[key] = { leads: 0, qualificados: 0, responderam: 0 };
+      byWeek[key].leads++;
+      if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') byWeek[key].qualificados++;
+      if (r.status_resposta === 'respondeu') byWeek[key].responderam++;
+    } catch { /* skip */ }
+  });
+  return Object.entries(byWeek)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-8)
+    .map(([week, d]) => ({
+      semana: week.slice(5),
+      leads: d.leads,
+      qualificados: d.qualificados,
+      responderam: d.responderam,
+      taxaResp: d.leads > 0 ? Math.round((d.responderam / d.leads) * 100) : 0,
+    }));
+}
+
 export default function AdsPerformance() {
-  const [platformFilter, setPlatformFilter] = useState<'ambos' | 'meta' | 'google'>('ambos');
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const records = makeRecords || [];
 
   const attribution = useMemo(() => deriveAttribution(records), [records]);
-  const tempByChannel = useMemo(() => deriveTemperatureByChannel(records), [records]);
+  const tempByChannel = useMemo(() => deriveTemperatureByChannel(records, attribution), [records, attribution]);
+  const weeklyEvolution = useMemo(() => deriveWeeklyEvolution(records), [records]);
 
-  const filteredCampanhas = campanhas.filter(c => {
-    if (platformFilter === 'meta') return c.plataforma === 'Meta';
-    if (platformFilter === 'google') return c.plataforma === 'Google';
-    return true;
-  });
-
-  const bestCPL = Math.min(...filteredCampanhas.map(c => c.cpl));
-  const worstCPL = Math.max(...filteredCampanhas.map(c => c.cpl));
-
-  // Radar data from attribution
   const metaAttr = attribution.find(a => a.canal === 'Meta Ads');
   const googleAttr = attribution.find(a => a.canal === 'Google Ads');
 
@@ -141,6 +137,20 @@ export default function AdsPerformance() {
     { metric: 'Score', meta: metaAttr?.scoreMedia || 0, google: googleAttr?.scoreMedia || 0 },
     { metric: 'Quentes', meta: metaAttr?.quentes || 0, google: googleAttr?.quentes || 0 },
   ];
+
+  // Overall KPIs derived from all data
+  const totalLeads = records.length;
+  const totalQualificados = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
+  const totalResponderam = records.filter(r => r.status_resposta === 'respondeu').length;
+  const taxaRespostaGeral = totalLeads > 0 ? (totalResponderam / totalLeads) * 100 : 0;
+  const taxaQualGeral = totalLeads > 0 ? (totalQualificados / totalLeads) * 100 : 0;
+
+  // Distribution pie
+  const pieData = attribution.map(a => ({
+    name: a.canal,
+    value: a.leads,
+    fill: a.canal === 'Meta Ads' ? META_COLOR : a.canal === 'Google Ads' ? GOOGLE_COLOR : DIRECT_COLOR,
+  }));
 
   if (isLoading) {
     return (
@@ -158,29 +168,29 @@ export default function AdsPerformance() {
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
             <Megaphone className="h-6 w-6 text-primary" /> Ads Performance
           </h1>
-          <p className="text-sm text-muted-foreground">Métricas de mídia + atribuição real de leads do Data Store</p>
+          <p className="text-sm text-muted-foreground">Atribuição real de leads — {totalLeads} leads no Data Store</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-          </Button>
-          {(['ambos', 'meta', 'google'] as const).map(p => (
-            <Button key={p} size="sm" variant={platformFilter === p ? 'default' : 'outline'} onClick={() => setPlatformFilter(p)}
-              style={platformFilter === p ? { backgroundColor: p === 'meta' ? META_COLOR : p === 'google' ? GOOGLE_COLOR : undefined } : undefined}>
-              {p === 'ambos' ? 'Ambos' : p === 'meta' ? 'Meta' : 'Google'}
-            </Button>
-          ))}
-        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
+        </Button>
       </div>
 
-      {/* ── BLOCO NOVO: Atribuição Real (Make Data Store) ── */}
+      {/* KPIs Gerais */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KPICard label="Total Leads" value={totalLeads} color="text-primary" />
+        <KPICard label="Taxa Resposta" value={+taxaRespostaGeral.toFixed(1)} suffix="%" />
+        <KPICard label="Qualificados" value={totalQualificados} color="text-primary" />
+        <KPICard label="Taxa Qualif." value={+taxaQualGeral.toFixed(1)} suffix="%" color="text-warning" />
+      </div>
+
+      {/* Atribuição Real */}
       <Card className="border-primary/30">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base">Atribuição Origem × Qualificação</CardTitle>
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Dados reais</Badge>
           </div>
-          <CardDescription>Cruzamento campanha × resposta × qualificação × score do Data Store</CardDescription>
+          <CardDescription>Cruzamento origem × resposta × qualificação × score do Data Store</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="overflow-x-auto">
@@ -201,7 +211,7 @@ export default function AdsPerformance() {
                 {attribution.map(a => (
                   <TableRow key={a.canal}>
                     <TableCell className="font-medium text-xs flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: a.canal === 'Meta Ads' ? META_COLOR : a.canal === 'Google Ads' ? GOOGLE_COLOR : 'hsl(var(--muted-foreground))' }} />
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: a.canal === 'Meta Ads' ? META_COLOR : a.canal === 'Google Ads' ? GOOGLE_COLOR : DIRECT_COLOR }} />
                       {a.canal}
                     </TableCell>
                     <TableCell className="text-right text-xs font-semibold">{a.leads}</TableCell>
@@ -217,15 +227,14 @@ export default function AdsPerformance() {
             </Table>
           </div>
 
-          {/* Temperature by channel chart */}
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={tempByChannel}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="canal" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
               <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="quentes" name="Quentes" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="mornos" name="Mornos" stackId="a" fill="hsl(var(--warning))" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="quentes" name="Quentes" stackId="a" fill="hsl(var(--destructive))" />
+              <Bar dataKey="mornos" name="Mornos" stackId="a" fill="hsl(var(--warning))" />
               <Bar dataKey="frios" name="Frios" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </BarChart>
@@ -233,14 +242,11 @@ export default function AdsPerformance() {
         </CardContent>
       </Card>
 
-      {/* ── BLOCO: Radar Comparativo Real ── */}
+      {/* Radar + Leads por Canal */}
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Radar Meta vs Google</CardTitle>
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Dados reais</Badge>
-            </div>
+            <CardTitle className="text-base">Radar Meta vs Google</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -256,200 +262,61 @@ export default function AdsPerformance() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Leads & Qualificados por Canal</CardTitle></CardHeader>
-          <CardContent>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Distribuição por Canal</CardTitle></CardHeader>
+          <CardContent className="flex items-center justify-center">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={attribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="canal" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3}>
+                  {pieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="leads" name="Leads" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="qualificados" name="Qualificados" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-              </BarChart>
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* ── KPIs de mídia (mock — Sol_Ads DataStore pendente) ── */}
-      <div className="relative">
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-lg font-bold text-foreground">Métricas de Mídia Paga</h2>
-          <Badge variant="outline" className="text-xs">Dados mock — DataStore Sol_Ads em breve</Badge>
-        </div>
-
-        <div className={`grid gap-6 ${platformFilter === 'ambos' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
-          {(platformFilter === 'ambos' || platformFilter === 'meta') && (
-            <Card className="border-t-4" style={{ borderTopColor: META_COLOR }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: META_COLOR }} /> Meta Ads
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  <KPICard label="Investimento" value={metaKPIs.investimento} prefix="R$ " />
-                  <KPICard label="Impressões" value={metaKPIs.impressoes} />
-                  <KPICard label="CTR" value={metaKPIs.ctr} suffix="%" />
-                  <KPICard label="CPC" value={metaKPIs.cpc} prefix="R$ " />
-                  <KPICard label="Leads" value={metaKPIs.leadsGerados} color="text-primary" />
-                  <KPICard label="CPL" value={metaKPIs.cpl} prefix="R$ " />
-                  <KPICard label="ROAS" value={metaKPIs.roas} suffix="×" color="text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {(platformFilter === 'ambos' || platformFilter === 'google') && (
-            <Card className="border-t-4" style={{ borderTopColor: GOOGLE_COLOR }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: GOOGLE_COLOR }} /> Google Ads
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  <KPICard label="Investimento" value={googleKPIs.investimento} prefix="R$ " />
-                  <KPICard label="Impressões" value={googleKPIs.impressoes} />
-                  <KPICard label="CTR" value={googleKPIs.ctr} suffix="%" />
-                  <KPICard label="CPC" value={googleKPIs.cpc} prefix="R$ " />
-                  <KPICard label="Leads" value={googleKPIs.leadsGerados} color="text-primary" />
-                  <KPICard label="CPL" value={googleKPIs.cpl} prefix="R$ " />
-                  <KPICard label="ROAS" value={googleKPIs.roas} suffix="×" color="text-primary" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Campanhas (mock) */}
+      {/* Leads & Qualificados bar chart */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base">Performance por Campanha</CardTitle>
-            <Badge variant="outline" className="text-xs">Mock</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Campanha</TableHead>
-                <TableHead>Plataforma</TableHead>
-                <TableHead className="text-right">Invest.</TableHead>
-                <TableHead className="text-right">Leads</TableHead>
-                <TableHead className="text-right">CPL</TableHead>
-                <TableHead className="text-right">Qualif.</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCampanhas.map(c => (
-                <TableRow key={c.campanha} className={c.cpl === bestCPL ? 'bg-primary/10' : c.cpl === worstCPL ? 'bg-destructive/10' : ''}>
-                  <TableCell className="font-medium text-xs">{c.campanha}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs" style={{ borderColor: c.plataforma === 'Meta' ? META_COLOR : GOOGLE_COLOR, color: c.plataforma === 'Meta' ? META_COLOR : GOOGLE_COLOR }}>
-                      {c.plataforma}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right text-xs">R$ {c.investimento.toLocaleString('pt-BR')}</TableCell>
-                  <TableCell className="text-right text-xs font-semibold">{c.leads}</TableCell>
-                  <TableCell className="text-right text-xs">R$ {c.cpl.toFixed(2)}</TableCell>
-                  <TableCell className="text-right text-xs font-semibold">{c.qualificados}</TableCell>
-                  <TableCell>
-                    <Badge variant={c.status === 'Ativa' ? 'default' : 'secondary'} className="text-xs">{c.status}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardHeader className="pb-3"><CardTitle className="text-base">Leads & Qualificados por Canal</CardTitle></CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={attribution}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="canal" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="leads" name="Leads" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="qualificados" name="Qualificados" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Métricas de Página (Em Breve) */}
-      <Card className="opacity-60">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <CardTitle className="text-base">Métricas de Página</CardTitle>
-            <Badge variant="outline" className="gap-1 text-xs">
-              <Construction className="h-3 w-3" /> Em desenvolvimento
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {['Visualizações', 'Sessões únicas', 'Taxa de rejeição', 'Tempo médio', 'Origem tráfego'].map(m => (
-              <div key={m} className="bg-muted/50 rounded-lg p-3 text-center border border-dashed border-border">
-                <p className="text-xs text-muted-foreground">{m}</p>
-                <p className="text-lg font-bold text-muted-foreground/50">—</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Evolução Semanal (mock) */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base">Evolução Semanal</CardTitle>
-            <Badge variant="outline" className="text-xs">Mock</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="investimento">
-            <TabsList className="mb-4">
-              <TabsTrigger value="investimento">Investimento</TabsTrigger>
-              <TabsTrigger value="leads">Leads</TabsTrigger>
-              <TabsTrigger value="cpl">CPL</TabsTrigger>
-            </TabsList>
-            <TabsContent value="investimento">
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={evolucaoSemanal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => formatCurrency(v)} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
-                  <Area type="monotone" dataKey="metaInvest" name="Meta" stroke={META_COLOR} fill={META_COLOR} fillOpacity={0.15} />
-                  <Area type="monotone" dataKey="googleInvest" name="Google" stroke={GOOGLE_COLOR} fill={GOOGLE_COLOR} fillOpacity={0.15} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </TabsContent>
-            <TabsContent value="leads">
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={evolucaoSemanal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Line type="monotone" dataKey="metaLeads" name="Meta" stroke={META_COLOR} strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="googleLeads" name="Google" stroke={GOOGLE_COLOR} strokeWidth={2} dot={{ r: 3 }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </TabsContent>
-            <TabsContent value="cpl">
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={evolucaoSemanal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => `R$${v}`} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `R$ ${v.toFixed(2)}`} />
-                  <Line type="monotone" dataKey="metaCPL" name="Meta" stroke={META_COLOR} strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="googleCPL" name="Google" stroke={GOOGLE_COLOR} strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      {/* Evolução Semanal */}
+      {weeklyEvolution.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Evolução Semanal</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={weeklyEvolution}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="semana" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="leads" name="Leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="qualificados" name="Qualificados" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       <p className="text-center text-xs text-muted-foreground pt-4">
-        Sol Estrateg.IA — Ads Performance • Atribuição real + métricas de mídia mock
+        Sol Estrateg.IA — Ads Performance • Dados reais do Data Store
       </p>
     </div>
   );

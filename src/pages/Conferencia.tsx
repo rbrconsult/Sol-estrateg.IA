@@ -9,13 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  kpiCards as mockKpiCards, pipelineStages as mockPipeline, origemLeads as mockOrigem,
-  fupFrio as mockFupFrio, desqualMotivos as mockDesqual,
-  mensagens as mockMensagens, sla as mockSla, heatmap as mockHeatmap, taxaPorTentativa as mockTaxa,
-  solHojeMock, alertasMock, temperaturaPorEtapaMock, tabelaLeadsMock,
-  slaMock as mockSlaMock, robotInsightsMock as mockRobotInsights, scorePorOrigemMock as mockScoreOrigem,
-} from "@/data/conferenciaMockData";
+// Mock data removed — using real data only
 import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
 import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
@@ -130,23 +124,23 @@ function TempDot({ t }: { t: string }) {
 export default function Conferencia() {
   const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData();
 
-  // Use real data when available, fallback to mock
-  const kpiCards = realData?.kpiCards ?? mockKpiCards;
-  const pipelineStages = realData?.pipelineStages ?? mockPipeline;
-  const origemLeads = realData?.origemLeads ?? mockOrigem;
-  const fupFrio = realData?.fupFrio ?? mockFupFrio;
-  const desqualMotivos = realData?.desqualMotivos ?? mockDesqual;
-  const mensagens = realData?.mensagens ?? mockMensagens;
-  const sla = realData?.sla ?? mockSla;
-  const heatmap = realData?.heatmap ?? mockHeatmap;
-  const taxaPorTentativa = realData?.taxaPorTentativa ?? mockTaxa;
-  const solHojeData = realData?.solHoje ?? solHojeMock;
-  const alertasData = realData?.alertas ?? alertasMock;
-  const temperaturaPorEtapa = realData?.temperaturaPorEtapa ?? temperaturaPorEtapaMock;
-  const tabelaLeads = realData?.tabelaLeads ?? tabelaLeadsMock;
-  const slaMockData = realData?.slaMock ?? mockSlaMock;
-  const robotInsightsData = realData?.robotInsights ?? mockRobotInsights;
-  const scorePorOrigemData = realData?.scorePorOrigem ?? mockScoreOrigem;
+  // Use real data only — no mock fallbacks
+  const kpiCards = realData?.kpiCards ?? [];
+  const pipelineStages = realData?.pipelineStages ?? [];
+  const origemLeads = realData?.origemLeads ?? [];
+  const fupFrio = realData?.fupFrio ?? { entraram: 0, reativados: 0, pctReativados: 0, diasAteReativar: 0, valorRecuperado: 'R$ 0', ticketMedio: 'R$ 0', conversaoPosResgate: 0, receitaTotal: 'R$ 0', pctReceitaViaFup: 0 };
+  const desqualMotivos = realData?.desqualMotivos ?? [];
+  const mensagens = realData?.mensagens ?? { enviadas: 0, recebidas: 0, interacoesPorConv: 0 };
+  const sla = realData?.sla ?? { pctAbordados5min: 0, tempoMedioRespostaLead: '—' };
+  const heatmap = realData?.heatmap ?? { dias: [], periodos: [], valores: [], pico: '—' };
+  const taxaPorTentativa = realData?.taxaPorTentativa ?? [];
+  const solHojeData = realData?.solHoje ?? [];
+  const alertasData = realData?.alertas ?? [];
+  const temperaturaPorEtapa = realData?.temperaturaPorEtapa ?? [];
+  const tabelaLeads = realData?.tabelaLeads ?? [];
+  const slaMockData = realData?.slaMock ?? { primeiroAtendimento: { media: 0, pctDentro24h: 0, total: 0 }, porEtapa: [], robos: { tempoResposta: '—', leadsAguardando: 0, taxaResposta: 0 }, geralProposta: { mediaDias: 0 } };
+  const robotInsightsData = realData?.robotInsights ?? { destaques: [], comparacao: { sol: { nome: 'SOL', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 }, fup: { nome: 'FUP', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 } }, funilMensagens: [], alertasUrgentes: [] };
+  const scorePorOrigemData = realData?.scorePorOrigem ?? [];
   const monthlyEvolution = realData?.monthlyEvolution ?? [];
 
   const [expandedLead, setExpandedLead] = useState<number | null>(null);
