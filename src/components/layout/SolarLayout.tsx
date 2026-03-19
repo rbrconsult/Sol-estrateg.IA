@@ -9,8 +9,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const menuItems = [
-  { title: "Pré-venda", icon: Search, path: "/solar" },
-  { title: "Comercial", icon: HandCoins, path: "/solar/comercial" },
+  { title: "Pré-venda", icon: Search, path: "/solarmarket" },
+  { title: "Comercial", icon: HandCoins, path: "/solarmarket/comercial" },
 ];
 
 export function SolarLayout({ children }: { children: ReactNode }) {
