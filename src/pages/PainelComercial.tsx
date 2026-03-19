@@ -245,7 +245,9 @@ export default function PainelComercial() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { proposals } = useEnrichedProposals();
 
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const alerts = useMemo(() => deriveAlerts(records), [records]);
   const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
