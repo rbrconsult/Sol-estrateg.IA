@@ -1,23 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HandCoins } from "lucide-react";
-
 export default function Comercial() {
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Comercial</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <HandCoins className="h-4 w-4 text-muted-foreground" />
-            Comercial
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Conteúdo da tela Comercial será construído aqui.
-          </p>
-        </CardContent>
-      </Card>
+    <div className="h-[calc(100vh-0px)] w-full">
+      <iframe
+        src="https://dashboard.solarmarket.com.br/dashboard/QJ2PPS/6c4d7d12-7de7-43fa-a6aa-46d58bbdc073"
+        className="w-full h-full border-0"
+        allow="fullscreen"
+        title="Comercial"
+      />
     </div>
   );
 }
