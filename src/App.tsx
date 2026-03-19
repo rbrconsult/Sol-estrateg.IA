@@ -60,9 +60,25 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/selecao" element={
+                <ProtectedRoute>
+                  <Selecao />
+                </ProtectedRoute>
+              } />
               <Route path="/" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              {/* Solar Market routes */}
+              <Route path="/solar" element={
+                <ProtectedRoute>
+                  <SolarLayout><PreVenda /></SolarLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/solar/comercial" element={
+                <ProtectedRoute>
+                  <SolarLayout><Comercial /></SolarLayout>
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={
