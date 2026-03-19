@@ -205,21 +205,6 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
 
         {/* Footer */}
         <div className="p-1.5 border-t border-border/50 space-y-1">
-          {!isMobile && onCollapsedChange && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCollapsedChange(!collapsed)}
-              className={cn(
-                "w-full text-muted-foreground hover:text-foreground hover:bg-secondary text-xs h-7",
-                isCollapsed ? "justify-center" : "justify-start"
-              )}
-            >
-              {isCollapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5 mr-1.5" />}
-              {!isCollapsed && <span>Recolher</span>}
-            </Button>
-          )}
-
           {userRole === "super_admin" && (
             isCollapsed ? (
               <Tooltip>

@@ -66,7 +66,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       <main className={cn(
         "transition-all duration-300",
-        isMobile ? "" : collapsed ? "ml-16" : "ml-52"
+        isMobile ? "" : "ml-52"
       )}>
         {children}
       </main>
