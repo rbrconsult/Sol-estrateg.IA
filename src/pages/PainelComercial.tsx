@@ -260,7 +260,8 @@ export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const { proposals } = useEnrichedProposals();
+  const { proposals, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
 
   const allRecords = makeRecords || [];
   const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
