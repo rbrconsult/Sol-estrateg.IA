@@ -67,6 +67,11 @@ const App = () => (
               } />
               <Route path="/" element={
                 <ProtectedRoute>
+                  <Navigate to="/selecao" replace />
+                </ProtectedRoute>
+              } />
+              <Route path="/conferencia" element={
+                <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
