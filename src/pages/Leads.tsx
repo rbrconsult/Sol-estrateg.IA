@@ -99,17 +99,18 @@ export default function Leads() {
   const queryClient = useQueryClient();
   const { data: sheetsData, isLoading, error, refetch } = useGoogleSheetsData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
+  const { proposals: orgFilteredProposals, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
   const [searchTerm, setSearchTerm] = useState("");
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
     queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
   };
 
-  const proposals = useMemo(() => {
-    if (!sheetsData?.data) return [];
-    return adaptSheetData(sheetsData.data);
-  }, [sheetsData]);
+  // Use org-filtered proposals
+  const proposals = orgFilteredProposals;
 
   const makeMap = useMemo(() => buildMakeMap(makeRecords || []), [makeRecords]);
 
@@ -122,56 +123,26 @@ export default function Leads() {
 
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
 
-  /* ── filters ── */
-  const [periodo, setPeriodo] = useState("all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [etapaFilter, setEtapaFilter] = useState("todas");
-  const [temperaturaFilter, setTemperaturaFilter] = useState("todas");
-  const [responsavelFilter, setResponsavelFilter] = useState("todos");
-
-  const etapas = useMemo(() => [...new Set(proposals.map(p => p.etapa))].filter(Boolean).sort(), [proposals]);
-  const responsaveis = useMemo(() => [...new Set(proposals.map(p => p.responsavel))].filter(Boolean).sort(), [proposals]);
-
-  const hasFilters = periodo !== "all" || etapaFilter !== "todas" || temperaturaFilter !== "todas" || responsavelFilter !== "todos" || dateFrom || dateTo;
-  const clearFilters = () => {
-    setPeriodo("all");
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setEtapaFilter("todas");
-    setTemperaturaFilter("todas");
-    setResponsavelFilter("todos");
-  };
-
-  /* ── filtered data ── */
+  /* ── filtered data (using PageFloatingFilter state) ── */
   const filtered = useMemo(() => {
     let data = [...proposals];
 
-    // Period
-    if (periodo !== "custom" && periodo !== "all") {
-      const days = periodo === "7d" ? 7 : periodo === "90d" ? 90 : 30;
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
-      data = data.filter(p => {
-        if (!p.dataCriacaoProposta) return true;
-        return new Date(p.dataCriacaoProposta) >= cutoff;
-      });
-    } else if (dateFrom || dateTo) {
-      data = data.filter(p => {
-        if (!p.dataCriacaoProposta) return true;
-        const d = new Date(p.dataCriacaoProposta);
-        if (dateFrom && d < dateFrom) return false;
-        if (dateTo && d > dateTo) return false;
-        return true;
-      });
+    // Temperature from floating filter
+    if (pf.filters.temperatura !== "todas") {
+      data = data.filter(p => (p.temperatura || "").toUpperCase() === pf.filters.temperatura);
     }
 
-    if (etapaFilter !== "todas") data = data.filter(p => p.etapa === etapaFilter);
-    if (temperaturaFilter !== "todas") data = data.filter(p => p.temperatura === temperaturaFilter);
-    if (responsavelFilter !== "todos") data = data.filter(p => p.responsavel === responsavelFilter);
+    // Search from floating filter
+    if (pf.filters.searchTerm) {
+      const term = pf.filters.searchTerm.toLowerCase();
+      data = data.filter(p =>
+        (p.nomeCliente || "").toLowerCase().includes(term) ||
+        (p.responsavel || "").toLowerCase().includes(term)
+      );
+    }
 
     return data;
-  }, [proposals, periodo, dateFrom, dateTo, etapaFilter, temperaturaFilter, responsavelFilter]);
+  }, [proposals, pf.filters.temperatura, pf.filters.searchTerm]);
 
   /* ── filtered Make records (synced with filtered proposals) ── */
   const filteredPhones = useMemo(() => {
