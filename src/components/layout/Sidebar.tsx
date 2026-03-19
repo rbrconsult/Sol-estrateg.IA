@@ -85,9 +85,15 @@ interface SidebarProps {
 
 export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
+  const isSuperAdmin = userRole === "super_admin";
+
+  let orgFilter: ReturnType<typeof useOrgFilter> | null = null;
+  try { orgFilter = useOrgFilter(); } catch {}
+
 
   const handleSignOut = async () => {
     await signOut();

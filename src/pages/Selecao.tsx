@@ -1,15 +1,32 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sun, BarChart3, Sparkles } from "lucide-react";
+import { Sun, BarChart3, Sparkles, Building2, Globe } from "lucide-react";
 import confetti from "canvas-confetti";
+import { useAuth } from "@/hooks/useAuth";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
 
 type Choice = "solar" | "sol" | null;
 
 export default function Selecao() {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
+  const { orgs, selectedOrgId, setSelectedOrgId, loading } = useOrgFilter();
+  const isSuperAdmin = userRole === "super_admin";
+
+  // Super admins must pick a filial first
+  const [filialChosen, setFilialChosen] = useState(!isSuperAdmin);
   const [selected, setSelected] = useState<Choice>(null);
   const [animating, setAnimating] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
+
+  useEffect(() => {
+    if (!isSuperAdmin) setFilialChosen(true);
+  }, [isSuperAdmin]);
+
+  const handleFilialSelect = (orgId: string | null) => {
+    setSelectedOrgId(orgId);
+    setFilialChosen(true);
+  };
 
   const handleSelect = useCallback((choice: Choice) => {
     if (animating) return;
@@ -18,36 +35,21 @@ export default function Selecao() {
     setShowMessage(true);
 
     if (choice === "sol") {
-      // Confetti explosion
       const end = Date.now() + 2000;
       const colors = ["hsl(142,76%,36%)", "#ffffff", "hsl(45,93%,47%)", "hsl(199,89%,48%)"];
-
       const frame = () => {
-        confetti({
-          particleCount: 4,
-          angle: 60,
-          spread: 80,
-          origin: { x: 0, y: 0.7 },
-          colors,
-        });
-        confetti({
-          particleCount: 4,
-          angle: 120,
-          spread: 80,
-          origin: { x: 1, y: 0.7 },
-          colors,
-        });
+        confetti({ particleCount: 4, angle: 60, spread: 80, origin: { x: 0, y: 0.7 }, colors });
+        confetti({ particleCount: 4, angle: 120, spread: 80, origin: { x: 1, y: 0.7 }, colors });
         if (Date.now() < end) requestAnimationFrame(frame);
       };
       frame();
-
       setTimeout(() => navigate("/conferencia"), 2800);
     } else if (choice === "solar") {
       setTimeout(() => navigate("/solarmarket/prevenda"), 2200);
     }
   }, [animating, navigate]);
 
-  // Floating particles for ambient motion
+  // Floating particles
   const [particles] = useState(() =>
     Array.from({ length: 20 }, (_, i) => ({
       id: i,
@@ -59,38 +61,136 @@ export default function Selecao() {
     }))
   );
 
+  // --- Filial selection step (super admin only) ---
+  if (isSuperAdmin && !filialChosen) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden">
+        {/* Ambient particles */}
+        {particles.map((p) => (
+          <div
+            key={p.id}
+            className="absolute rounded-full bg-primary/10"
+            style={{
+              width: p.size, height: p.size,
+              left: `${p.x}%`, top: `${p.y}%`,
+              animation: `float ${p.speed}s ease-in-out ${p.delay}s infinite alternate`,
+            }}
+          />
+        ))}
+
+        {/* Glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute w-[600px] h-[600px] rounded-full opacity-[0.07]"
+            style={{
+              background: "radial-gradient(circle, hsl(var(--primary)), transparent)",
+              left: "50%", top: "50%",
+              transform: "translate(-50%, -50%)",
+              animation: "pulse-glow 4s ease-in-out infinite",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 text-center mb-10 animate-fade-in">
+          <Building2 className="h-6 w-6 text-primary mx-auto mb-4 opacity-60" />
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight mb-3">
+            Selecione a Filial
+          </h1>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            Escolha qual ambiente deseja visualizar
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="relative z-10 text-muted-foreground text-sm animate-pulse">
+            Carregando filiais...
+          </div>
+        ) : (
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-6 max-w-3xl">
+            {/* Global option */}
+            <button
+              onClick={() => handleFilialSelect(null)}
+              className="flex flex-col items-center gap-3 w-full py-10 px-6 rounded-2xl border bg-card/80 backdrop-blur-sm shadow-lg transition-all duration-300 group border-border hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 hover:scale-[1.02]"
+            >
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 group-hover:bg-primary/20 transition-all">
+                <Globe className="h-7 w-7 text-primary" />
+              </div>
+              <span className="text-lg font-bold text-foreground tracking-tight">Global</span>
+              <span className="text-[11px] text-muted-foreground">Todas as filiais</span>
+            </button>
+
+            {/* Each filial */}
+            {orgs.map((org) => (
+              <button
+                key={org.id}
+                onClick={() => handleFilialSelect(org.id)}
+                className="flex flex-col items-center gap-3 w-full py-10 px-6 rounded-2xl border bg-card/80 backdrop-blur-sm shadow-lg transition-all duration-300 group border-border hover:border-warning/50 hover:shadow-xl hover:shadow-warning/5 hover:scale-[1.02]"
+              >
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-warning/10 group-hover:bg-warning/20 transition-all">
+                  <Building2 className="h-7 w-7 text-warning" />
+                </div>
+                <span className="text-lg font-bold text-foreground tracking-tight">{org.name}</span>
+                <span className="text-[11px] text-muted-foreground">{org.slug}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <style>{`
+          @keyframes float {
+            from { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+            to { transform: translateY(-30px) translateX(15px); opacity: 0.8; }
+          }
+          @keyframes pulse-glow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.07; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.12; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // --- Environment selection step ---
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden">
-      {/* Ambient floating particles */}
       {particles.map((p) => (
         <div
           key={p.id}
           className="absolute rounded-full bg-primary/10"
           style={{
-            width: p.size,
-            height: p.size,
-            left: `${p.x}%`,
-            top: `${p.y}%`,
+            width: p.size, height: p.size,
+            left: `${p.x}%`, top: `${p.y}%`,
             animation: `float ${p.speed}s ease-in-out ${p.delay}s infinite alternate`,
           }}
         />
       ))}
 
-      {/* Glow background */}
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute w-[600px] h-[600px] rounded-full opacity-[0.07]"
           style={{
             background: "radial-gradient(circle, hsl(var(--primary)), transparent)",
-            left: "50%",
-            top: "50%",
+            left: "50%", top: "50%",
             transform: "translate(-50%, -50%)",
             animation: "pulse-glow 4s ease-in-out infinite",
           }}
         />
       </div>
 
-      {/* Title */}
+      {/* Filial badge for super admins */}
+      {isSuperAdmin && (
+        <button
+          onClick={() => setFilialChosen(false)}
+          className="relative z-10 mb-6 flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 bg-card/80 backdrop-blur-sm text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all animate-fade-in"
+        >
+          <Building2 className="h-3.5 w-3.5" />
+          <span>
+            Filial: <span className="font-semibold text-foreground">{selectedOrgId ? orgs.find(o => o.id === selectedOrgId)?.name : "Global"}</span>
+          </span>
+          <span className="text-[10px] text-muted-foreground/60">trocar</span>
+        </button>
+      )}
+
       <div className="relative z-10 text-center mb-12 animate-fade-in">
         <Sparkles className="h-6 w-6 text-primary mx-auto mb-4 opacity-60" />
         <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight mb-3">
@@ -101,7 +201,6 @@ export default function Selecao() {
         </p>
       </div>
 
-      {/* Cards separados */}
       <div className="relative z-10 flex flex-col sm:flex-row gap-6 px-6">
         {/* SOLAR MARKET */}
         <button
@@ -115,21 +214,13 @@ export default function Selecao() {
               : "border-border hover:border-warning/40 hover:shadow-xl hover:shadow-warning/5"
           }`}
         >
-          <div
-            className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
-              selected === "solar"
-                ? "bg-warning/20 scale-110"
-                : "bg-warning/10 group-hover:bg-warning/15"
-            }`}
-          >
+          <div className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
+            selected === "solar" ? "bg-warning/20 scale-110" : "bg-warning/10 group-hover:bg-warning/15"
+          }`}>
             <Sun className="h-8 w-8 text-warning" />
           </div>
-          <span className="text-xl font-bold text-foreground tracking-tight">
-            SOLAR MARKET
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Pré-venda & Comercial
-          </span>
+          <span className="text-xl font-bold text-foreground tracking-tight">SOLAR MARKET</span>
+          <span className="text-xs text-muted-foreground">Pré-venda & Comercial</span>
         </button>
 
         {/* SOL.estrategia */}
@@ -144,55 +235,35 @@ export default function Selecao() {
               : "border-border hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5"
           }`}
         >
-          <div
-            className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
-              selected === "sol"
-                ? "bg-primary/20 scale-110"
-                : "bg-primary/10 group-hover:bg-primary/15"
-            }`}
-          >
+          <div className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
+            selected === "sol" ? "bg-primary/20 scale-110" : "bg-primary/10 group-hover:bg-primary/15"
+          }`}>
             <BarChart3 className="h-8 w-8 text-primary" />
           </div>
           <span className="text-xl font-bold text-foreground tracking-tight">
             SOL.estrateg<span className="text-primary">IA</span>
           </span>
-          <span className="text-xs text-muted-foreground">
-            Inteligência & Operações
-          </span>
+          <span className="text-xs text-muted-foreground">Inteligência & Operações</span>
         </button>
       </div>
 
-      {/* Animated message */}
-      <div
-        className={`relative z-10 mt-8 text-center transition-all duration-700 ${
-          showMessage
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-4"
-        }`}
-      >
+      <div className={`relative z-10 mt-8 text-center transition-all duration-700 ${
+        showMessage ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}>
         {selected === "solar" && (
           <div className="space-y-2 animate-fade-in">
-            <p className="text-lg font-semibold text-warning">
-              ☀️ Mesmas decisões te levam sempre ao mesmo lugar
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Redirecionando para o Solar Market...
-            </p>
+            <p className="text-lg font-semibold text-warning">☀️ Mesmas decisões te levam sempre ao mesmo lugar</p>
+            <p className="text-sm text-muted-foreground">Redirecionando para o Solar Market...</p>
           </div>
         )}
         {selected === "sol" && (
           <div className="space-y-2 animate-fade-in">
-            <p className="text-lg font-semibold text-primary">
-              🎉 Sua melhor escolha! Parabéns!
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Preparando o SOL.estrateg.IA para você...
-            </p>
+            <p className="text-lg font-semibold text-primary">🎉 Sua melhor escolha! Parabéns!</p>
+            <p className="text-sm text-muted-foreground">Preparando o SOL.estrateg.IA para você...</p>
           </div>
         )}
       </div>
 
-      {/* CSS for ambient animations */}
       <style>{`
         @keyframes float {
           from { transform: translateY(0px) translateX(0px); opacity: 0.3; }
