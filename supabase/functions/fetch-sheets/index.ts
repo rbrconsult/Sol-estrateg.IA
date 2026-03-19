@@ -171,22 +171,54 @@ serve(async (req) => {
     const userId = authUser.id;
 
     // Parse body
-    let organizationId: string | null = null;
+    let requestedOrgId: string | null = null;
     try {
       const body = await req.json();
-      organizationId = body.organization_id || null;
+      requestedOrgId = body.organization_id || null;
     } catch { /* no body is fine */ }
 
-    // Security: non-super_admin can only fetch their own org
+    // Security: check roles and determine target org
     const { data: userOrg } = await supabaseAdmin.rpc('get_user_org', { p_user_id: userId });
     const { data: isSuperAdmin } = await supabaseAdmin.rpc('has_role', { _user_id: userId, _role: 'super_admin' });
 
-    if (!isSuperAdmin) {
-      organizationId = userOrg || null;
+    let targetOrgId: string | null = null;
+
+    if (isSuperAdmin && requestedOrgId) {
+      // Super admin selected a specific filial
+      targetOrgId = requestedOrgId;
+    } else if (isSuperAdmin && !requestedOrgId) {
+      // Super admin in Global mode — no org filter, use fallback sheet
+      targetOrgId = null;
+    } else {
+      // Regular user — use their own org
+      targetOrgId = userOrg || null;
     }
 
-    // Resolve sheet ID
-    const SHEET_ID = await resolveSheetId(supabaseAdmin, organizationId);
+    // Get allowed responsáveis if filtering by org
+    let allowedResponsaveis: string[] = [];
+    if (targetOrgId) {
+      const { data: configs } = await supabaseAdmin
+        .from('organization_configs')
+        .select('config_value')
+        .eq('organization_id', targetOrgId)
+        .eq('config_category', 'responsavel');
+
+      allowedResponsaveis = (configs || [])
+        .map((c: any) => String(c.config_value).trim().toLowerCase())
+        .filter(Boolean);
+
+      // Non-admin with no responsáveis configured = empty result
+      if (allowedResponsaveis.length === 0 && !isSuperAdmin) {
+        console.log(`fetch-sheets: no responsaveis for org ${targetOrgId}, returning empty`);
+        return new Response(
+          JSON.stringify({ data: [], count: 0, lastUpdate: new Date().toISOString() }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Resolve sheet ID (use targetOrgId for org-specific sheets)
+    const SHEET_ID = await resolveSheetId(supabaseAdmin, targetOrgId);
     const CLIENT_EMAIL = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
     const PRIVATE_KEY = Deno.env.get('GOOGLE_PRIVATE_KEY');
 
@@ -209,9 +241,22 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const proposals = parseRows(data.values || []);
+    let proposals = parseRows(data.values || []);
 
-    console.log(`Fetched ${proposals.length} proposals for org ${organizationId || 'fallback'}`);
+    // Server-side filter by responsáveis when an org is selected
+    if (allowedResponsaveis.length > 0) {
+      const before = proposals.length;
+      proposals = proposals.filter((p) => {
+        const resp = (p.responsavel || '').trim().toLowerCase();
+        const rep = (p.representante || '').trim().toLowerCase();
+        return allowedResponsaveis.some(
+          (name) => resp === name || rep === name
+        );
+      });
+      console.log(`fetch-sheets: ${before} total → ${proposals.length} filtered (org: ${targetOrgId}, ${allowedResponsaveis.length} allowed responsáveis)`);
+    } else {
+      console.log(`fetch-sheets: ${proposals.length} proposals (no filter, global/super_admin)`);
+    }
 
     return new Response(
       JSON.stringify({ data: proposals, count: proposals.length, lastUpdate: new Date().toISOString() }),
