@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
 
 export interface ComercialRecord {
   projetoId: string;
@@ -46,8 +47,15 @@ function parseRecords(raw: any[]): ComercialRecord[] {
   });
 }
 
-async function fetchComercialData(): Promise<ComercialRecord[]> {
-  const { data, error } = await supabase.functions.invoke<MakeResponse>('fetch-make-comercial');
+async function fetchComercialData(orgOverride?: string | null): Promise<ComercialRecord[]> {
+  const body: Record<string, string> = {};
+  if (orgOverride) {
+    body.org_id = orgOverride;
+  }
+
+  const { data, error } = await supabase.functions.invoke<MakeResponse>('fetch-make-comercial', {
+    body: Object.keys(body).length > 0 ? body : undefined,
+  });
 
   if (error) {
     console.error('Error fetching comercial data:', error);
@@ -63,10 +71,15 @@ async function fetchComercialData(): Promise<ComercialRecord[]> {
 
 export function useMakeComercialData() {
   const { user } = useAuth();
+  let selectedOrgId: string | null = null;
+  try {
+    const orgFilter = useOrgFilter();
+    selectedOrgId = orgFilter.selectedOrgId;
+  } catch {}
 
   return useQuery({
-    queryKey: ['make-comercial-data'],
-    queryFn: fetchComercialData,
+    queryKey: ['make-comercial-data', selectedOrgId],
+    queryFn: () => fetchComercialData(selectedOrgId),
     staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 10,
     retry: 1,
