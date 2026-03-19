@@ -13,6 +13,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import PipelinePage from "./pages/PipelinePage";
+import Forecast from "./pages/Forecast";
 import Performance from "./pages/Performance";
 
 import Auth from "./pages/Auth";
