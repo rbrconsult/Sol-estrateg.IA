@@ -1,31 +1,52 @@
 
 
-## Situacao Atual
+## Filtro de Dados Comerciais por Responsavel ID
 
-- **RBR Consult** (`00000000-0000-0000-0000-000000000001`) e a organizacao padrao/matriz do sistema. Todos os novos usuarios sao atribuidos a ela automaticamente (trigger `handle_new_user`).
-- **comercial@rbrconsult.com.br** ja e `super_admin` e pertence a RBR Consult.
-- A Evolve Energia e a unica filial real.
+### Entendimento
 
-## O que acho
+O campo `responsavel_id` no Data Store 84404 corresponde ao `responsavel.id` do SolarMarket (GraphQL). E o identificador unico do vendedor. Cada filial cadastra os IDs dos seus vendedores no Admin, e a Edge Function filtra os registros server-side.
 
-RBR Consult nao deve aparecer como filial na listagem porque ela e a **matriz** — a entidade administrativa raiz. Faz sentido:
+### Nomenclatura
 
-1. **Ocultar RBR Consult da listagem de filiais** — filtrar a org padrao (`00000000-...0001`) na query do `OrganizationsTab`, para que apenas filiais reais aparecam.
-2. **Manter RBR Consult no banco** — ela continua sendo a org padrao para o trigger de novos usuarios e para dados nao atribuidos a nenhuma filial.
-3. **Super Admin = acesso global** — `comercial@rbrconsult.com.br` ja e `super_admin`, o que ja lhe da acesso a todas as filiais via RLS (`has_role(auth.uid(), 'super_admin')`). Nenhuma mudanca de permissao necessaria.
+Manter `responsavel_id` como nome padrao — e claro, vem direto do Make/SolarMarket, e e o campo de filtro.
 
-## Plano de Implementacao
+### Plano
 
-### 1. Ocultar a org padrao na aba Filiais
-- Em `OrganizationsTab.tsx`, na funcao `fetchOrganizations`, filtrar a org com id `00000000-0000-0000-0000-000000000001` do resultado antes de setar no estado.
-- Adicionar um banner/info discreto no topo: "Matriz: RBR Consult (administracao global)" para contexto.
+**1. Edge Function `fetch-make-comercial/index.ts`**
 
-### 2. Nenhuma alteracao no banco
-- A trigger `handle_new_user` continua apontando para a org padrao.
-- As RLS policies continuam funcionando normalmente.
-- O super_admin ja tem acesso total a todas as filiais.
+- Criar um admin client (service role) para consultas internas
+- Identificar o `user_id` do token JWT via `getClaims`
+- Verificar se e `super_admin` via `has_role` — se sim, retorna tudo sem filtro
+- Buscar `organization_id` do usuario via `get_user_org`
+- Buscar todos os `config_value` de `organization_configs` onde `organization_id` = org do usuario e `config_category = 'responsavel'`
+- Apos buscar todos os registros do Data Store, filtrar: manter apenas os que tem `responsavel_id` (campo raw do DS) presente na lista de IDs configurados
+- Se nenhum responsavel configurado, retornar vazio (seguranca — nao vazar dados)
 
----
+**2. Hook `useMakeComercialData.ts`**
 
-**Resumo**: Apenas 1 arquivo editado (`OrganizationsTab.tsx`) para ocultar a RBR Consult da lista de filiais, mantendo-a como org administrativa interna.
+- Adicionar `responsavelId` ao interface `ComercialRecord`
+- Parsear `d.responsavel_id` no `parseRecords`
+
+**3. Admin (Filiais > Configs) — sem mudanca de codigo**
+
+Os responsaveis ja sao cadastrados com `config_category: 'responsavel'`. O valor (`config_value`) deve ser o ID do SolarMarket (ex: `"12345"`). O CRUD existente ja permite gerenciar isso.
+
+### Fluxo
+
+```text
+Admin cadastra:
+  config_key: "resp_joao"
+  config_value: "12345"        ← responsavel.id do SolarMarket
+  config_category: "responsavel"
+
+Edge Function:
+  1. user → get_user_org → org_id
+  2. org_id → organization_configs (category=responsavel) → ["12345", "67890"]
+  3. Data Store records → filtrar onde responsavel_id ∈ ["12345", "67890"]
+  4. Retornar apenas registros filtrados
+```
+
+### Arquivos modificados
+- `supabase/functions/fetch-make-comercial/index.ts` — filtro server-side
+- `src/hooks/useMakeComercialData.ts` — expor `responsavelId` no tipo
 
