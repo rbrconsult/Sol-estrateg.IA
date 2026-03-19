@@ -68,8 +68,8 @@ const menuGroups: MenuGroup[] = [
   {
     label: "Operacional",
     items: [
-      { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
+      { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
     ],
   },
 ];
