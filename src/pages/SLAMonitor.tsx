@@ -201,6 +201,13 @@ export default function SLAMonitor() {
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+      />
+
       {/* Status geral */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {d.slaStages.map(stage => {

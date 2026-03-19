@@ -188,6 +188,14 @@ export default function AnalistaFollowup() {
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true }}
+      />
+
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {d.kpis.map(kpi => (
