@@ -32,7 +32,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate('/');
+      navigate('/selecao');
     }
   }, [user, authLoading, navigate]);
 
