@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
 import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
