@@ -301,6 +301,9 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
     setEditingConfig(c.id);
     setEditConfigForm({ config_key: c.config_key, config_value: c.config_value, config_category: c.config_category, is_secret: c.is_secret });
   };
+
+  const getCategoryBadge = (cat: string) => {
+    const styles: Record<string, string> = {
       webhook: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       datastore: 'bg-green-500/20 text-green-400 border-green-500/30',
       api: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
