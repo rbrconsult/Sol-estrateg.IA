@@ -49,6 +49,7 @@ const STEPS = [
   { label: 'Data Stores', icon: Database },
   { label: 'Webhooks', icon: Webhook },
   { label: 'Responsáveis', icon: UserCheck },
+  { label: 'Módulos', icon: LayoutGrid },
   { label: 'Usuários', icon: Users },
 ];
 
