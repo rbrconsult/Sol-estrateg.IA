@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
 
 export interface Proposal {
   etapa: string;
@@ -38,9 +39,12 @@ interface SheetsResponse {
   message?: string;
 }
 
-async function fetchSheetsData(organizationId: string | null): Promise<SheetsResponse> {
+async function fetchSheetsData(organizationId: string | null, selectedOrgId: string | null): Promise<SheetsResponse> {
+  // For super admins with a selected filial, pass that org; otherwise pass user's own org
+  const orgToSend = selectedOrgId || organizationId;
+
   const { data, error } = await supabase.functions.invoke<SheetsResponse>('fetch-sheets', {
-    body: { organization_id: organizationId },
+    body: { organization_id: orgToSend },
   });
   
   if (error) {
@@ -62,12 +66,23 @@ async function fetchSheetsData(organizationId: string | null): Promise<SheetsRes
 export function useGoogleSheetsData() {
   const { organizationId, user } = useAuth();
 
+  // Get selected org from OrgFilter (super admin filial selector)
+  let selectedOrgId: string | null = null;
+  try {
+    const orgFilter = useOrgFilter();
+    selectedOrgId = orgFilter.selectedOrgId;
+  } catch {
+    // OrgFilterProvider not available
+  }
+
+  const effectiveOrgId = selectedOrgId || organizationId;
+
   return useQuery({
-    queryKey: ['google-sheets-data', organizationId],
-    queryFn: () => fetchSheetsData(organizationId),
+    queryKey: ['google-sheets-data', effectiveOrgId],
+    queryFn: () => fetchSheetsData(organizationId, selectedOrgId),
     staleTime: 1000 * 60 * 2,
     refetchInterval: 1000 * 60 * 5,
     retry: 2,
-    enabled: !!organizationId && !!user,
+    enabled: !!effectiveOrgId && !!user,
   });
 }
