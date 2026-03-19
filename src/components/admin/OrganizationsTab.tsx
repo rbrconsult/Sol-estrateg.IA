@@ -46,7 +46,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   // Create/Edit org dialog
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
-  const [orgForm, setOrgForm] = useState({ name: '', slug: '', googleSheetId: '', statusUrl: '' });
+  const [orgForm, setOrgForm] = useState({ name: '', slug: '' });
 
   // Delete org dialog
   const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
@@ -103,7 +103,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
     }
     setFormLoading(true);
     try {
-      const settings = { google_sheet_id: orgForm.googleSheetId || null, status_url: orgForm.statusUrl || null };
+      const settings = {};
       if (editingOrg) {
         const { error } = await supabase
           .from('organizations')
@@ -155,15 +155,13 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
 
   const openEditOrg = (org: Organization) => {
     setEditingOrg(org);
-    const sheetId = (org.settings as any)?.google_sheet_id || '';
-    const statusUrl = (org.settings as any)?.status_url || '';
-    setOrgForm({ name: org.name, slug: org.slug, googleSheetId: sheetId, statusUrl });
+    setOrgForm({ name: org.name, slug: org.slug });
     setIsOrgDialogOpen(true);
   };
 
   const openCreateOrg = () => {
     setEditingOrg(null);
-    setOrgForm({ name: '', slug: '', googleSheetId: '', statusUrl: '' });
+    setOrgForm({ name: '', slug: '' });
     setIsOrgDialogOpen(true);
   };
 
@@ -369,24 +367,6 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
                 placeholder="slug-da-organizacao"
               />
               <p className="text-xs text-muted-foreground">Identificador único (apenas letras minúsculas, números e hifens)</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Google Sheet ID</Label>
-              <Input
-                value={orgForm.googleSheetId}
-                onChange={(e) => setOrgForm({ ...orgForm, googleSheetId: e.target.value.trim() })}
-                placeholder="Ex: 18LfyoHUA7Yk4VBEi-hXHy600pzxBWpqinSvFEIIT1ng"
-              />
-              <p className="text-xs text-muted-foreground">ID da planilha Google Sheets vinculada a esta organização</p>
-            </div>
-            <div className="space-y-2">
-              <Label>URL do Painel de Status</Label>
-              <Input
-                value={orgForm.statusUrl}
-                onChange={(e) => setOrgForm({ ...orgForm, statusUrl: e.target.value.trim() })}
-                placeholder="Ex: https://status.rbrsistemas.com/status/evolve"
-              />
-              <p className="text-xs text-muted-foreground">Link do painel de monitoramento exibido para os usuários desta organização</p>
             </div>
           </div>
           <DialogFooter>
