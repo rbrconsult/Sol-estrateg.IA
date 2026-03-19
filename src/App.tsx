@@ -43,6 +43,7 @@ import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
 import Reprocessamento from "./pages/Reprocessamento";
+import OrgConfigPage from "./pages/admin/OrgConfigPage";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
@@ -141,6 +142,11 @@ const App = () => (
               <Route path="/admin" element={
                 <ProtectedRoute>
                   <MainLayout><Admin /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/filial/:orgId" element={
+                <ProtectedRoute>
+                  <MainLayout><OrgConfigPage /></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/ajuda" element={
