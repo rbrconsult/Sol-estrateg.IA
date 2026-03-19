@@ -496,7 +496,7 @@ export default function PainelComercial() {
                         <div key={p.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
                           <div>
                             <p className="font-medium text-foreground text-sm">{p.nomeCliente}</p>
-                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.vendedor || '—'}</p>
+                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.representante || '—'}</p>
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-chart-3">{formatCurrencyAbbrev(p.valorProposta)}</p>
