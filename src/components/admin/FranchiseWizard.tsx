@@ -438,6 +438,32 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
 
           {step === 5 && (
             <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">Módulos Habilitados</p>
+                <p className="text-xs text-muted-foreground">Selecione quais módulos os usuários desta franquia poderão acessar</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto">
+                {MODULE_DEFINITIONS.map(m => (
+                  <div key={m.key} className="flex items-center justify-between p-2.5 rounded-md border bg-muted/30">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{m.label}</p>
+                      <p className="text-xs text-muted-foreground">{m.description}</p>
+                    </div>
+                    <Switch
+                      checked={enabledModules[m.key] ?? true}
+                      onCheckedChange={(checked) => setEnabledModules(prev => ({ ...prev, [m.key]: checked }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {Object.values(enabledModules).filter(Boolean).length} de {MODULE_DEFINITIONS.length} módulos habilitados
+              </p>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">Selecione ou crie usuários para esta franquia</p>
                 <Button variant="outline" size="sm" onClick={() => setShowNewUser(!showNewUser)}>
