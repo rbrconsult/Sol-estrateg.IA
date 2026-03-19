@@ -12,6 +12,7 @@ import {
   Zap, User, Bot, Clock, AlertTriangle, CheckCircle2, XCircle, Search,
   ArrowRight, TrendingDown, RefreshCcw,
 } from "lucide-react";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 type SLAStatus = "dentro" | "atencao" | "fora";
 
