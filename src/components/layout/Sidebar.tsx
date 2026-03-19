@@ -2,9 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Kanban,
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
-  BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
+  BarChart3, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
-  ChevronsLeft, ChevronsRight, FileCheck, Handshake, Percent,
+  FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
