@@ -152,7 +152,11 @@ function deriveCidades(records: MakeRecord[]) {
 export default function AnalistaFollowup() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { openLead360 } = useLead360();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveFupData(records), [records]);
 
