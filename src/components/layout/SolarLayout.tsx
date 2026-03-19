@@ -61,7 +61,7 @@ export function SolarLayout({ children }: { children: ReactNode }) {
           Trocar ambiente
         </button>
         <button
-          onClick={() => navigate("/conferencia")}
+          onClick={() => navigate("/selecao")}
           className="flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
         >
           <BarChart3 className="h-3.5 w-3.5" />
