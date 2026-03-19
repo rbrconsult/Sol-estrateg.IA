@@ -8,6 +8,7 @@ import { Bot, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { format, parseISO } from 'date-fns';
+import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -230,7 +231,11 @@ function deriveSolData(records: MakeRecord[]) {
 
 export default function RoboSol() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
 
@@ -265,6 +270,14 @@ export default function RoboSol() {
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal} setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true }}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

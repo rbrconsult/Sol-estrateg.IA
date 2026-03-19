@@ -13,6 +13,7 @@ import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Repeat, Users, DollarSign, Clock, Zap, TrendingUp, MessageSquare, Target, RefreshCcw,
 } from "lucide-react";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
@@ -151,7 +152,11 @@ function deriveCidades(records: MakeRecord[]) {
 export default function AnalistaFollowup() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { openLead360 } = useLead360();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveFupData(records), [records]);
 
@@ -182,6 +187,14 @@ export default function AnalistaFollowup() {
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true }}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

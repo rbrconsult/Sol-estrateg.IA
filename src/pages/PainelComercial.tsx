@@ -24,6 +24,7 @@ import { useLead360 } from "@/contexts/Lead360Context";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
 import { getForecastData } from "@/data/dataAdapter";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 /* ── helpers ───────────────────────────────────────────── */
 
@@ -244,7 +245,9 @@ export default function PainelComercial() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { proposals } = useEnrichedProposals();
 
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const alerts = useMemo(() => deriveAlerts(records), [records]);
   const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
@@ -285,6 +288,13 @@ export default function PainelComercial() {
           </Button>
         </div>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true }}
+      />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>

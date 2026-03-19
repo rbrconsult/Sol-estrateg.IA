@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Repeat, RefreshCcw } from 'lucide-react';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { useLead360 } from '@/contexts/Lead360Context';
+import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
@@ -114,7 +115,11 @@ function deriveFupData(records: MakeRecord[]) {
 export default function RoboFupFrio() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { openLead360 } = useLead360();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const fupData = useMemo(() => deriveFupData(records), [records]);
 
@@ -155,6 +160,14 @@ export default function RoboFupFrio() {
           <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
         </Button>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true, showSearch: true }}
+      />
 
       {/* BLOCO 1 — KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

@@ -12,6 +12,7 @@ import {
   Zap, User, Bot, Clock, AlertTriangle, CheckCircle2, XCircle, Search,
   ArrowRight, TrendingDown, RefreshCcw,
 } from "lucide-react";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 type SLAStatus = "dentro" | "atencao" | "fora";
 
@@ -157,7 +158,10 @@ export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
   const { openLead360 } = useLead360();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const pf = usePageFilters({ showPeriodo: true, showSearch: true });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveSLAData(records), [records]);
 
@@ -196,6 +200,13 @@ export default function SLAMonitor() {
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+      />
 
       {/* Status geral */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

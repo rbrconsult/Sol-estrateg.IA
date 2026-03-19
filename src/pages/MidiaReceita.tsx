@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { DollarSign, TrendingUp, Users, Target, RefreshCcw } from "lucide-react";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const TEMP_COLORS = { quente: "hsl(var(--destructive))", morno: "hsl(var(--warning))", frio: "hsl(var(--info))" };
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
@@ -115,7 +116,11 @@ function deriveMidiaData(records: MakeRecord[]) {
 
 export default function MidiaReceita() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveMidiaData(records), [records]);
 
@@ -146,6 +151,14 @@ export default function MidiaReceita() {
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+      />
 
       {/* KPIs */}
       <Card>
