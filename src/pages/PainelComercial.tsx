@@ -350,13 +350,33 @@ export default function PainelComercial() {
                         <p className="text-xs text-muted-foreground text-center py-8">Nenhum alerta no momento ✅</p>
                       )}
                       {alerts.map((a) => (
-                        <div key={a.id} className={`rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors`}>
+                        <button
+                          key={a.id}
+                          onClick={() => {
+                            if (a.leadData) {
+                              openLead360({
+                                nome: a.leadData.nome,
+                                telefone: a.leadData.telefone,
+                                etapa: a.leadData.etapa,
+                                valor: a.leadData.valor,
+                                responsavel: "",
+                                origem: "",
+                                temperatura: a.leadData.temp,
+                                score: a.leadData.score,
+                              } as any);
+                            }
+                          }}
+                          className={`w-full text-left rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors ${a.leadData ? "cursor-pointer hover:opacity-80" : ""}`}
+                        >
                           <div className="flex items-center justify-between mb-1">
                             <Badge variant={severityBadge[a.severity]} className="text-[10px]">{a.label}</Badge>
                             {a.time && <span className="text-[10px] opacity-70">{a.time}</span>}
                           </div>
                           <p className="text-xs leading-relaxed">{a.desc}</p>
-                        </div>
+                          {a.leadData && (
+                            <p className="text-[9px] mt-1 opacity-60">Clique para abrir detalhes →</p>
+                          )}
+                        </button>
                       ))}
                     </div>
                   </ScrollArea>
