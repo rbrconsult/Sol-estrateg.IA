@@ -55,13 +55,6 @@ export function SolarLayout({ children }: { children: ReactNode }) {
       <div className="border-t border-border/30 p-3 space-y-2">
         <button
           onClick={() => navigate("/selecao")}
-          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Trocar ambiente
-        </button>
-        <button
-          onClick={() => navigate("/selecao")}
           className="flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
         >
           <BarChart3 className="h-3.5 w-3.5" />
