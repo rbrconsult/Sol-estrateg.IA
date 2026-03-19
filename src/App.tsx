@@ -41,6 +41,7 @@ import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
+import Reprocessamento from "./pages/Reprocessamento";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
@@ -204,6 +205,11 @@ const App = () => (
               <Route path="/sanitizacao" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/reprocessamento" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
