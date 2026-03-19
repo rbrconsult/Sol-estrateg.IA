@@ -152,6 +152,14 @@ export default function MidiaReceita() {
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+      />
+
       {/* KPIs */}
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">KPIs Gerais</CardTitle></CardHeader>
