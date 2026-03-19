@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, ArrowLeft, ArrowRight, Check, Building2, Webhook, Database, Key, Users } from 'lucide-react';
+import { Loader2, Plus, Trash2, ArrowLeft, ArrowRight, Check, Building2, Webhook, Database, Key, Users, UserPlus, UserCheck } from 'lucide-react';
 
 interface UserOption {
   id: string;
@@ -29,6 +29,11 @@ interface WebhookEntry {
   category: string;
 }
 
+interface ResponsavelEntry {
+  nome: string;
+  identificador: string;
+}
+
 interface FranchiseWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,6 +46,7 @@ const STEPS = [
   { label: 'API Make.com', icon: Key },
   { label: 'Data Stores', icon: Database },
   { label: 'Webhooks', icon: Webhook },
+  { label: 'Responsáveis', icon: UserCheck },
   { label: 'Usuários', icon: Users },
 ];
 
@@ -68,8 +74,19 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     { key: '', name: '', url: '', category: 'SDR' }
   ]);
 
-  // Step 5 - Users
+  // Step 5 - Responsáveis
+  const [responsaveis, setResponsaveis] = useState<ResponsavelEntry[]>([
+    { nome: '', identificador: '' }
+  ]);
+
+  // Step 6 - Users
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showNewUser, setShowNewUser] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ email: '', full_name: '', password: '' });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createdUsers, setCreatedUsers] = useState<UserOption[]>([]);
+
+  const allUsers = [...users, ...createdUsers];
 
   const resetForm = () => {
     setStep(0);
@@ -79,7 +96,11 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     setMakeTeamId('');
     setDataStores([{ key: '', name: '', datastoreId: '' }]);
     setWebhooks([{ key: '', name: '', url: '', category: 'SDR' }]);
+    setResponsaveis([{ nome: '', identificador: '' }]);
     setSelectedUserIds([]);
+    setShowNewUser(false);
+    setNewUserForm({ email: '', full_name: '', password: '' });
+    setCreatedUsers([]);
   };
 
   const generateSlug = (val: string) => {
@@ -89,11 +110,45 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
   const canNext = () => {
     switch (step) {
       case 0: return name.trim().length > 0 && slug.trim().length > 0;
-      case 1: return true; // API keys optional
+      case 1: return true;
       case 2: return true;
       case 3: return true;
       case 4: return true;
+      case 5: return true;
       default: return false;
+    }
+  };
+
+  const handleCreateUser = async () => {
+    const { email, full_name, password } = newUserForm;
+    if (!email || !password) { toast.error('Email e senha são obrigatórios'); return; }
+    if (password.length < 6) { toast.error('Senha mínima: 6 caracteres'); return; }
+
+    setCreatingUser(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke('manage-users', {
+        body: { action: 'create', email, password, full_name, role: 'user' },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+
+      const newUser: UserOption = {
+        id: res.data.user.id,
+        email,
+        full_name: full_name || null,
+      };
+      setCreatedUsers(prev => [...prev, newUser]);
+      setSelectedUserIds(prev => [...prev, newUser.id]);
+      setNewUserForm({ email: '', full_name: '', password: '' });
+      setShowNewUser(false);
+      toast.success(`Usuário ${email} criado e vinculado!`);
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao criar usuário');
+    } finally {
+      setCreatingUser(false);
     }
   };
 
@@ -117,29 +172,20 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
       if (makeTeamId) configs.push({ organization_id: orgId, config_key: 'make_team_id', config_value: makeTeamId, config_category: 'api', is_secret: false });
 
       dataStores.filter(ds => ds.key && ds.datastoreId).forEach(ds => {
-        configs.push({
-          organization_id: orgId,
-          config_key: `ds_${ds.key}`,
-          config_value: ds.datastoreId,
-          config_category: 'datastore',
-          is_secret: false,
-        });
+        configs.push({ organization_id: orgId, config_key: `ds_${ds.key}`, config_value: ds.datastoreId, config_category: 'datastore', is_secret: false });
       });
 
       webhooks.filter(wh => wh.key && wh.url).forEach(wh => {
-        configs.push({
-          organization_id: orgId,
-          config_key: `webhook_${wh.key}`,
-          config_value: wh.url,
-          config_category: 'webhook',
-          is_secret: false,
-        });
+        configs.push({ organization_id: orgId, config_key: `webhook_${wh.key}`, config_value: wh.url, config_category: 'webhook', is_secret: false });
+      });
+
+      // Save responsáveis
+      responsaveis.filter(r => r.nome && r.identificador).forEach(r => {
+        configs.push({ organization_id: orgId, config_key: `responsavel_${generateSlug(r.nome)}`, config_value: r.identificador, config_category: 'responsavel', is_secret: false });
       });
 
       if (configs.length > 0) {
-        const { error: cfgError } = await supabase
-          .from('organization_configs')
-          .insert(configs);
+        const { error: cfgError } = await supabase.from('organization_configs').insert(configs);
         if (cfgError) throw cfgError;
       }
 
@@ -150,12 +196,9 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
           user_id: uid,
           role: 'user' as const,
         }));
-        const { error: memError } = await supabase
-          .from('organization_members')
-          .insert(members);
+        const { error: memError } = await supabase.from('organization_members').insert(members);
         if (memError) throw memError;
 
-        // Update profiles
         for (const uid of selectedUserIds) {
           await supabase.from('profiles').update({ organization_id: orgId }).eq('id', uid);
         }
@@ -189,6 +232,14 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     updated[i] = { ...updated[i], [field]: val };
     if (field === 'name') updated[i].key = generateSlug(val);
     setWebhooks(updated);
+  };
+
+  const addResponsavel = () => setResponsaveis([...responsaveis, { nome: '', identificador: '' }]);
+  const removeResponsavel = (i: number) => setResponsaveis(responsaveis.filter((_, idx) => idx !== i));
+  const updateResponsavel = (i: number, field: keyof ResponsavelEntry, val: string) => {
+    const updated = [...responsaveis];
+    updated[i] = { ...updated[i], [field]: val };
+    setResponsaveis(updated);
   };
 
   const toggleUser = (uid: string) => {
@@ -246,7 +297,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
 
           {step === 1 && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Credenciais da API Make.com para esta franquia. Se não preencher, a franquia usará as credenciais globais.</p>
+              <p className="text-sm text-muted-foreground">Credenciais da API Make.com para esta franquia.</p>
               <div className="space-y-2">
                 <Label>Make API Key</Label>
                 <Input type="password" value={makeApiKey} onChange={e => setMakeApiKey(e.target.value)} placeholder="Token xxx..." />
@@ -327,29 +378,106 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
 
           {step === 4 && (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Selecione os usuários que terão acesso a esta franquia</p>
-              <div className="max-h-[300px] overflow-y-auto space-y-1">
-                {users.map(u => (
-                  <div
-                    key={u.id}
-                    onClick={() => toggleUser(u.id)}
-                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
-                      selectedUserIds.includes(u.id) ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'
-                    }`}
-                  >
-                    <div className={`h-4 w-4 rounded border flex items-center justify-center ${
-                      selectedUserIds.includes(u.id) ? 'bg-primary border-primary' : 'border-muted-foreground/30'
-                    }`}>
-                      {selectedUserIds.includes(u.id) && <Check className="h-3 w-3 text-primary-foreground" />}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Responsáveis / Vendedores</p>
+                  <p className="text-xs text-muted-foreground">IDs dos responsáveis que atuam nesta franquia (usados no CRM e funis)</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={addResponsavel}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                </Button>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Identificador (ID / código)</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {responsaveis.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Input value={r.nome} onChange={e => updateResponsavel(i, 'nome', e.target.value)} placeholder="Ex: João Silva" className="h-8" />
+                      </TableCell>
+                      <TableCell>
+                        <Input value={r.identificador} onChange={e => updateResponsavel(i, 'identificador', e.target.value)} placeholder="Ex: joao-silva ou ID externo" className="h-8" />
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeResponsavel(i)} disabled={responsaveis.length === 1}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">Selecione ou crie usuários para esta franquia</p>
+                <Button variant="outline" size="sm" onClick={() => setShowNewUser(!showNewUser)}>
+                  <UserPlus className="h-3.5 w-3.5 mr-1" />
+                  {showNewUser ? 'Cancelar' : 'Criar Novo'}
+                </Button>
+              </div>
+
+              {showNewUser && (
+                <div className="border rounded-md p-3 space-y-3 bg-muted/30">
+                  <p className="text-xs font-medium text-muted-foreground">Novo Usuário</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nome completo</Label>
+                      <Input value={newUserForm.full_name} onChange={e => setNewUserForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nome Sobrenome" className="h-8" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{u.full_name || u.email}</p>
-                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Email *</Label>
+                      <Input type="email" value={newUserForm.email} onChange={e => setNewUserForm(p => ({ ...p, email: e.target.value }))} placeholder="email@exemplo.com" className="h-8" />
                     </div>
                   </div>
-                ))}
-                {users.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário disponível</p>
+                  <div className="grid grid-cols-2 gap-2 items-end">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Senha *</Label>
+                      <Input type="password" value={newUserForm.password} onChange={e => setNewUserForm(p => ({ ...p, password: e.target.value }))} placeholder="Mín. 6 caracteres" className="h-8" />
+                    </div>
+                    <Button size="sm" onClick={handleCreateUser} disabled={creatingUser} className="h-8">
+                      {creatingUser ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <UserPlus className="h-3.5 w-3.5 mr-1" />}
+                      Criar e Vincular
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="max-h-[250px] overflow-y-auto space-y-1">
+                {allUsers.map(u => {
+                  const isCreated = createdUsers.some(cu => cu.id === u.id);
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => toggleUser(u.id)}
+                      className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                        selectedUserIds.includes(u.id) ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted border border-transparent'
+                      }`}
+                    >
+                      <div className={`h-4 w-4 rounded border flex items-center justify-center ${
+                        selectedUserIds.includes(u.id) ? 'bg-primary border-primary' : 'border-muted-foreground/30'
+                      }`}>
+                        {selectedUserIds.includes(u.id) && <Check className="h-3 w-3 text-primary-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{u.full_name || u.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                      </div>
+                      {isCreated && <Badge variant="secondary" className="text-[10px]">Novo</Badge>}
+                    </div>
+                  );
+                })}
+                {allUsers.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">Nenhum usuário disponível. Crie um novo acima.</p>
                 )}
               </div>
               {selectedUserIds.length > 0 && (
