@@ -200,33 +200,3 @@ export default function Forecast() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Trend */}
-      {forecastData.tendencia && forecastData.tendencia.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tendência Mensal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={forecastData.tendencia}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrencyAbbrev(value)}
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Line type="monotone" dataKey="valor" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
