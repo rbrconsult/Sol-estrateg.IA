@@ -494,48 +494,157 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       </Dialog>
 
       {/* Configs Dialog */}
-      <Dialog open={!!configsOrg} onOpenChange={o => !o && setConfigsOrg(null)}>
+      <Dialog open={!!configsOrg} onOpenChange={o => { if (!o) { setConfigsOrg(null); setEditingConfig(null); setIsAddingConfig(false); } }}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Settings className="h-5 w-5" />Configurações — {configsOrg?.name}</DialogTitle>
             <DialogDescription>Webhooks, Data Stores e credenciais da franquia</DialogDescription>
           </DialogHeader>
+
+          {/* Add new config button */}
+          {!isAddingConfig && (
+            <Button size="sm" variant="outline" className="self-start" onClick={() => setIsAddingConfig(true)}>
+              <Plus className="h-4 w-4 mr-1" />Nova Configuração
+            </Button>
+          )}
+
+          {/* Add config form */}
+          {isAddingConfig && (
+            <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
+              <p className="text-sm font-medium">Nova Configuração</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Chave</Label>
+                  <Input value={newConfigForm.config_key} onChange={e => setNewConfigForm({ ...newConfigForm, config_key: e.target.value })} placeholder="ex: webhook_leads" className="font-mono text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Categoria</Label>
+                  <Select value={newConfigForm.config_category} onValueChange={v => setNewConfigForm({ ...newConfigForm, config_category: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="webhook">Webhook</SelectItem>
+                      <SelectItem value="datastore">Datastore</SelectItem>
+                      <SelectItem value="api">API</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Valor</Label>
+                <Input value={newConfigForm.config_value} onChange={e => setNewConfigForm({ ...newConfigForm, config_value: e.target.value })} placeholder="Valor da configuração" className="font-mono text-xs" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="new-secret" checked={newConfigForm.is_secret} onCheckedChange={v => setNewConfigForm({ ...newConfigForm, is_secret: !!v })} />
+                <Label htmlFor="new-secret" className="text-xs">Valor secreto (ocultar por padrão)</Label>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="ghost" onClick={() => { setIsAddingConfig(false); setNewConfigForm({ config_key: '', config_value: '', config_category: 'general', is_secret: false }); }}>
+                  <X className="h-3.5 w-3.5 mr-1" />Cancelar
+                </Button>
+                <Button size="sm" onClick={handleAddConfig} disabled={configSaving}>
+                  {configSaving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />}Salvar
+                </Button>
+              </div>
+            </div>
+          )}
+
           {configsLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
-          ) : configs.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma configuração cadastrada. Use o Wizard para configurar.</p>
-          ) : (
+          ) : configs.length === 0 && !isAddingConfig ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma configuração cadastrada.</p>
+          ) : configs.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Chave</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="text-right w-28">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {configs.map(c => (
+                {configs.map(c => editingConfig === c.id ? (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <Select value={editConfigForm.config_category} onValueChange={v => setEditConfigForm({ ...editConfigForm, config_category: v })}>
+                        <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="webhook">Webhook</SelectItem>
+                          <SelectItem value="datastore">Datastore</SelectItem>
+                          <SelectItem value="api">API</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input value={editConfigForm.config_key} onChange={e => setEditConfigForm({ ...editConfigForm, config_key: e.target.value })} className="h-8 font-mono text-xs" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Input value={editConfigForm.config_value} onChange={e => setEditConfigForm({ ...editConfigForm, config_value: e.target.value })} className="h-8 font-mono text-xs" />
+                        <div className="flex items-center gap-1">
+                          <Checkbox id={`edit-secret-${c.id}`} checked={editConfigForm.is_secret} onCheckedChange={v => setEditConfigForm({ ...editConfigForm, is_secret: !!v })} />
+                          <Label htmlFor={`edit-secret-${c.id}`} className="text-xs whitespace-nowrap">Secreto</Label>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUpdateConfig(c.id)} disabled={configSaving}>
+                          {configSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 text-green-500" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingConfig(null)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
                   <TableRow key={c.id}>
                     <TableCell>{getCategoryBadge(c.config_category)}</TableCell>
                     <TableCell className="font-mono text-xs">{c.config_key}</TableCell>
                     <TableCell className="font-mono text-xs max-w-[300px] truncate">
                       {c.is_secret && !revealedSecrets.has(c.id) ? maskValue(c.config_value) : c.config_value}
                     </TableCell>
-                    <TableCell>
-                      {c.is_secret && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleReveal(c.id)}>
-                          {revealedSecrets.has(c.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {c.is_secret && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleReveal(c.id)}>
+                            {revealedSecrets.has(c.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditConfig(c)}>
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                      )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteConfig(c)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Config Dialog */}
+      <AlertDialog open={!!deleteConfig} onOpenChange={o => !o && setDeleteConfig(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Configuração</AlertDialogTitle>
+            <AlertDialogDescription>Tem certeza que deseja excluir <strong className="font-mono">{deleteConfig?.config_key}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfig} disabled={configSaving} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {configSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Franchise Wizard */}
       <FranchiseWizard open={wizardOpen} onOpenChange={setWizardOpen} users={users} onComplete={fetchOrganizations} />
