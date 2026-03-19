@@ -9,10 +9,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2, Webhook, Database, Key, Settings, Eye, EyeOff } from 'lucide-react';
+import FranchiseWizard from './FranchiseWizard';
 
 interface Organization {
   id: string;
@@ -21,6 +23,7 @@ interface Organization {
   created_at: string;
   settings: any;
   member_count?: number;
+  config_count?: number;
 }
 
 interface OrgMember {
@@ -30,6 +33,14 @@ interface OrgMember {
   created_at: string;
   email?: string;
   full_name?: string;
+}
+
+interface OrgConfig {
+  id: string;
+  config_key: string;
+  config_value: string;
+  config_category: string;
+  is_secret: boolean;
 }
 
 interface UserOption {
@@ -43,20 +54,26 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
 
-  // Create/Edit org dialog
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [orgForm, setOrgForm] = useState({ name: '', slug: '' });
 
-  // Delete org dialog
   const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
 
-  // Members dialog
   const [membersOrg, setMembersOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [addingMember, setAddingMember] = useState(false);
+
+  // Configs dialog
+  const [configsOrg, setConfigsOrg] = useState<Organization | null>(null);
+  const [configs, setConfigs] = useState<OrgConfig[]>([]);
+  const [configsLoading, setConfigsLoading] = useState(false);
+  const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+
+  // Wizard
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   useEffect(() => {
     fetchOrganizations();
@@ -69,24 +86,26 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
         .from('organizations')
         .select('*')
         .order('created_at', { ascending: true });
-
       if (error) throw error;
 
-      // Fetch member counts
-      const { data: memberCounts, error: mcError } = await supabase
+      const { data: memberCounts } = await supabase
         .from('organization_members')
         .select('organization_id');
 
-      if (mcError) throw mcError;
+      const { data: configCounts } = await supabase
+        .from('organization_configs')
+        .select('organization_id');
 
-      const countMap: Record<string, number> = {};
-      memberCounts?.forEach(m => {
-        countMap[m.organization_id] = (countMap[m.organization_id] || 0) + 1;
-      });
+      const mCountMap: Record<string, number> = {};
+      memberCounts?.forEach(m => { mCountMap[m.organization_id] = (mCountMap[m.organization_id] || 0) + 1; });
+
+      const cCountMap: Record<string, number> = {};
+      configCounts?.forEach(c => { cCountMap[c.organization_id] = (cCountMap[c.organization_id] || 0) + 1; });
 
       setOrganizations((orgs || []).map(o => ({
         ...o,
-        member_count: countMap[o.id] || 0
+        member_count: mCountMap[o.id] || 0,
+        config_count: cCountMap[o.id] || 0,
       })));
     } catch (error) {
       console.error('Error fetching organizations:', error);
@@ -97,24 +116,15 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   };
 
   const handleSaveOrg = async () => {
-    if (!orgForm.name || !orgForm.slug) {
-      toast.error('Nome e slug são obrigatórios');
-      return;
-    }
+    if (!orgForm.name || !orgForm.slug) { toast.error('Nome e slug são obrigatórios'); return; }
     setFormLoading(true);
     try {
-      const settings = {};
       if (editingOrg) {
-        const { error } = await supabase
-          .from('organizations')
-          .update({ name: orgForm.name, slug: orgForm.slug, settings })
-          .eq('id', editingOrg.id);
+        const { error } = await supabase.from('organizations').update({ name: orgForm.name, slug: orgForm.slug }).eq('id', editingOrg.id);
         if (error) throw error;
         toast.success('Organização atualizada!');
       } else {
-        const { error } = await supabase
-          .from('organizations')
-          .insert({ name: orgForm.name, slug: orgForm.slug, settings });
+        const { error } = await supabase.from('organizations').insert({ name: orgForm.name, slug: orgForm.slug, settings: {} });
         if (error) throw error;
         toast.success('Organização criada!');
       }
@@ -122,7 +132,6 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       setEditingOrg(null);
       fetchOrganizations();
     } catch (error: any) {
-      console.error('Error saving org:', error);
       toast.error(error.message || 'Erro ao salvar organização');
     } finally {
       setFormLoading(false);
@@ -131,22 +140,15 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
 
   const handleDeleteOrg = async () => {
     if (!deleteOrg) return;
-    if ((deleteOrg.member_count || 0) > 0) {
-      toast.error('Não é possível excluir uma organização com membros');
-      return;
-    }
+    if ((deleteOrg.member_count || 0) > 0) { toast.error('Não é possível excluir organização com membros'); return; }
     setFormLoading(true);
     try {
-      const { error } = await supabase
-        .from('organizations')
-        .delete()
-        .eq('id', deleteOrg.id);
+      const { error } = await supabase.from('organizations').delete().eq('id', deleteOrg.id);
       if (error) throw error;
       toast.success('Organização excluída!');
       setDeleteOrg(null);
       fetchOrganizations();
     } catch (error: any) {
-      console.error('Error deleting org:', error);
       toast.error(error.message || 'Erro ao excluir organização');
     } finally {
       setFormLoading(false);
@@ -159,12 +161,6 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
     setIsOrgDialogOpen(true);
   };
 
-  const openCreateOrg = () => {
-    setEditingOrg(null);
-    setOrgForm({ name: '', slug: '' });
-    setIsOrgDialogOpen(true);
-  };
-
   const openMembers = async (org: Organization) => {
     setMembersOrg(org);
     setSelectedUserId('');
@@ -174,101 +170,93 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const fetchMembers = async (orgId: string) => {
     setMembersLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select('id, user_id, role, created_at')
-        .eq('organization_id', orgId);
-
+      const { data, error } = await supabase.from('organization_members').select('id, user_id, role, created_at').eq('organization_id', orgId);
       if (error) throw error;
-
-      // Enrich with profile info
-      const enriched: OrgMember[] = (data || []).map(m => {
+      setMembers((data || []).map(m => {
         const u = users.find(u => u.id === m.user_id);
-        return {
-          ...m,
-          email: u?.email || m.user_id,
-          full_name: u?.full_name || null
-        };
-      });
-      setMembers(enriched);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-      toast.error('Erro ao carregar membros');
-    } finally {
-      setMembersLoading(false);
-    }
+        return { ...m, email: u?.email || m.user_id, full_name: u?.full_name || null };
+      }));
+    } catch { toast.error('Erro ao carregar membros'); }
+    finally { setMembersLoading(false); }
   };
 
   const handleAddMember = async () => {
     if (!membersOrg || !selectedUserId) return;
     setAddingMember(true);
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .insert({ organization_id: membersOrg.id, user_id: selectedUserId, role: 'user' as any });
+      const { error } = await supabase.from('organization_members').insert({ organization_id: membersOrg.id, user_id: selectedUserId, role: 'user' as any });
       if (error) throw error;
-
-      // Also update user profile's organization_id
-      await supabase
-        .from('profiles')
-        .update({ organization_id: membersOrg.id })
-        .eq('id', selectedUserId);
-
+      await supabase.from('profiles').update({ organization_id: membersOrg.id }).eq('id', selectedUserId);
       toast.success('Membro adicionado!');
       setSelectedUserId('');
       await fetchMembers(membersOrg.id);
       fetchOrganizations();
-    } catch (error: any) {
-      console.error('Error adding member:', error);
-      toast.error(error.message || 'Erro ao adicionar membro');
-    } finally {
-      setAddingMember(false);
-    }
+    } catch (error: any) { toast.error(error.message || 'Erro ao adicionar membro'); }
+    finally { setAddingMember(false); }
   };
 
-  const handleRemoveMember = async (membershipId: string, userId: string) => {
+  const handleRemoveMember = async (membershipId: string) => {
     if (!membersOrg) return;
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('id', membershipId);
+      const { error } = await supabase.from('organization_members').delete().eq('id', membershipId);
       if (error) throw error;
       toast.success('Membro removido!');
       await fetchMembers(membersOrg.id);
       fetchOrganizations();
-    } catch (error: any) {
-      console.error('Error removing member:', error);
-      toast.error(error.message || 'Erro ao remover membro');
-    }
+    } catch (error: any) { toast.error(error.message || 'Erro ao remover membro'); }
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
+  // Configs
+  const openConfigs = async (org: Organization) => {
+    setConfigsOrg(org);
+    setRevealedSecrets(new Set());
+    setConfigsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('organization_configs')
+        .select('id, config_key, config_value, config_category, is_secret')
+        .eq('organization_id', org.id)
+        .order('config_category', { ascending: true });
+      if (error) throw error;
+      setConfigs(data || []);
+    } catch { toast.error('Erro ao carregar configs'); }
+    finally { setConfigsLoading(false); }
+  };
+
+  const toggleReveal = (id: string) => {
+    setRevealedSecrets(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const maskValue = (val: string) => val.length > 8 ? val.slice(0, 4) + '••••' + val.slice(-4) : '••••••••';
+
+  const getCategoryBadge = (cat: string) => {
+    const styles: Record<string, string> = {
+      webhook: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      datastore: 'bg-green-500/20 text-green-400 border-green-500/30',
+      api: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      general: 'bg-muted text-muted-foreground',
+    };
+    return <Badge className={styles[cat] || styles.general}>{cat}</Badge>;
   };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'super_admin':
-        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Super Admin</Badge>;
-      case 'admin':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Admin</Badge>;
-      default:
-        return <Badge variant="outline">Usuário</Badge>;
+      case 'super_admin': return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Super Admin</Badge>;
+      case 'admin': return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Admin</Badge>;
+      default: return <Badge variant="outline">Usuário</Badge>;
     }
   };
 
-  // Users not already in the current org
+  const formatDate = (d: string) => format(new Date(d), "dd/MM/yyyy HH:mm", { locale: ptBR });
+
   const availableUsers = users.filter(u => !members.some(m => m.user_id === u.id));
 
   if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
+    return <Card><CardContent className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></CardContent></Card>;
   }
 
   return (
@@ -276,16 +264,17 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Organizações
-            </CardTitle>
-            <CardDescription>Gerencie as organizações e seus membros</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" />Franquias & Organizações</CardTitle>
+            <CardDescription>Gerencie franquias, integrações e membros</CardDescription>
           </div>
-          <Button onClick={openCreateOrg}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Organização
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setEditingOrg(null); setOrgForm({ name: '', slug: '' }); setIsOrgDialogOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />Organização Simples
+            </Button>
+            <Button onClick={() => setWizardOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />Nova Franquia
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -294,6 +283,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
                 <TableHead>Nome</TableHead>
                 <TableHead>Slug</TableHead>
                 <TableHead>Membros</TableHead>
+                <TableHead>Configs</TableHead>
                 <TableHead>Criada em</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -303,26 +293,25 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
                 <TableRow key={org.id}>
                   <TableCell className="font-medium">{org.name}</TableCell>
                   <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{org.slug}</code></TableCell>
+                  <TableCell><Badge variant="secondary">{org.member_count || 0}</Badge></TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{org.member_count || 0}</Badge>
+                    <Badge variant={org.config_count ? 'default' : 'outline'} className={org.config_count ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}>
+                      {org.config_count || 0}
+                    </Badge>
                   </TableCell>
                   <TableCell>{formatDate(org.created_at)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Configs" onClick={() => openConfigs(org)}>
+                        <Settings className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Membros" onClick={() => openMembers(org)}>
                         <Users className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" onClick={() => openEditOrg(org)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        title="Excluir"
-                        onClick={() => setDeleteOrg(org)}
-                        disabled={(org.member_count || 0) > 0}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Excluir" onClick={() => setDeleteOrg(org)} disabled={(org.member_count || 0) > 0}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -330,43 +319,28 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
                 </TableRow>
               ))}
               {organizations.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Nenhuma organização cadastrada
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma organização cadastrada</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Create/Edit Org Dialog */}
+      {/* Edit Org Dialog */}
       <Dialog open={isOrgDialogOpen} onOpenChange={setIsOrgDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingOrg ? 'Editar Organização' : 'Nova Organização'}</DialogTitle>
-            <DialogDescription>
-              {editingOrg ? `Editando ${editingOrg.name}` : 'Preencha os dados da nova organização'}
-            </DialogDescription>
+            <DialogDescription>{editingOrg ? `Editando ${editingOrg.name}` : 'Preencha os dados'}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Nome</Label>
-              <Input
-                value={orgForm.name}
-                onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })}
-                placeholder="Nome da organização"
-              />
+              <Input value={orgForm.name} onChange={e => setOrgForm({ ...orgForm, name: e.target.value })} placeholder="Nome da organização" />
             </div>
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input
-                value={orgForm.slug}
-                onChange={(e) => setOrgForm({ ...orgForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
-                placeholder="slug-da-organizacao"
-              />
-              <p className="text-xs text-muted-foreground">Identificador único (apenas letras minúsculas, números e hifens)</p>
+              <Input value={orgForm.slug} onChange={e => setOrgForm({ ...orgForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })} placeholder="slug-da-organizacao" />
             </div>
           </div>
           <DialogFooter>
@@ -380,62 +354,43 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       </Dialog>
 
       {/* Delete Org Dialog */}
-      <AlertDialog open={!!deleteOrg} onOpenChange={(open) => !open && setDeleteOrg(null)}>
+      <AlertDialog open={!!deleteOrg} onOpenChange={o => !o && setDeleteOrg(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Organização</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir <strong>{deleteOrg?.name}</strong>? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir <strong>{deleteOrg?.name}</strong>? Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteOrg} disabled={formLoading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Excluir
+              {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Members Dialog */}
-      <Dialog open={!!membersOrg} onOpenChange={(open) => !open && setMembersOrg(null)}>
+      <Dialog open={!!membersOrg} onOpenChange={o => !o && setMembersOrg(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Membros de {membersOrg?.name}
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Membros de {membersOrg?.name}</DialogTitle>
             <DialogDescription>Gerencie os membros desta organização</DialogDescription>
           </DialogHeader>
-
-          {/* Add member */}
           <div className="flex gap-2 items-end">
             <div className="flex-1 space-y-1">
               <Label className="text-xs">Adicionar membro</Label>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar usuário..." />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecionar usuário..." /></SelectTrigger>
                 <SelectContent>
-                  {availableUsers.map(u => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.full_name || u.email} ({u.email})
-                    </SelectItem>
-                  ))}
-                  {availableUsers.length === 0 && (
-                    <SelectItem value="_none" disabled>Todos os usuários já são membros</SelectItem>
-                  )}
+                  {availableUsers.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email} ({u.email})</SelectItem>)}
+                  {availableUsers.length === 0 && <SelectItem value="_none" disabled>Todos já são membros</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
             <Button onClick={handleAddMember} disabled={!selectedUserId || addingMember} size="sm">
-              {addingMember ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
-              Adicionar
+              {addingMember ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}Adicionar
             </Button>
           </div>
-
-          {/* Members list */}
           {membersLoading ? (
             <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin" /></div>
           ) : (
@@ -457,30 +412,65 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
                     <TableCell>{getRoleBadge(m.role)}</TableCell>
                     <TableCell>{formatDate(m.created_at)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        title="Remover membro"
-                        onClick={() => handleRemoveMember(m.id, m.user_id)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleRemoveMember(m.id)}>
                         <UserMinus className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
-                {members.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      Nenhum membro nesta organização
-                    </TableCell>
-                  </TableRow>
-                )}
+                {members.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Nenhum membro</TableCell></TableRow>}
               </TableBody>
             </Table>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Configs Dialog */}
+      <Dialog open={!!configsOrg} onOpenChange={o => !o && setConfigsOrg(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Settings className="h-5 w-5" />Configurações — {configsOrg?.name}</DialogTitle>
+            <DialogDescription>Webhooks, Data Stores e credenciais da franquia</DialogDescription>
+          </DialogHeader>
+          {configsLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          ) : configs.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma configuração cadastrada. Use o Wizard para configurar.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Chave</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {configs.map(c => (
+                  <TableRow key={c.id}>
+                    <TableCell>{getCategoryBadge(c.config_category)}</TableCell>
+                    <TableCell className="font-mono text-xs">{c.config_key}</TableCell>
+                    <TableCell className="font-mono text-xs max-w-[300px] truncate">
+                      {c.is_secret && !revealedSecrets.has(c.id) ? maskValue(c.config_value) : c.config_value}
+                    </TableCell>
+                    <TableCell>
+                      {c.is_secret && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleReveal(c.id)}>
+                          {revealedSecrets.has(c.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Franchise Wizard */}
+      <FranchiseWizard open={wizardOpen} onOpenChange={setWizardOpen} users={users} onComplete={fetchOrganizations} />
     </>
   );
 }
