@@ -41,6 +41,7 @@ import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
+import Reprocessamento from "./pages/Reprocessamento";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
