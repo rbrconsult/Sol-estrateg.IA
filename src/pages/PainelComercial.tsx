@@ -242,12 +242,14 @@ export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { proposals } = useEnrichedProposals();
 
   const records = makeRecords || [];
 
   const alerts = useMemo(() => deriveAlerts(records), [records]);
   const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
   const summary = useMemo(() => deriveSummary(records), [records]);
+  const forecastData = useMemo(() => proposals.length > 0 ? getForecastData(proposals) : null, [proposals]);
 
   const handleOpenLead = (lead: CloserLead) => {
     openLead360({
