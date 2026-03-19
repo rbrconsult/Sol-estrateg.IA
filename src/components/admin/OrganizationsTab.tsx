@@ -13,8 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2, Webhook, Database, Key, Settings, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2, Webhook, Database, Key, Settings, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import FranchiseWizard from './FranchiseWizard';
+
+const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';
 
 interface Organization {
   id: string;
