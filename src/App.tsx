@@ -103,6 +103,11 @@ const App = () => (
                   <MainLayout><ModuleGuard moduleKey="pipeline"><PipelinePage /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/forecast" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/performance" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout>

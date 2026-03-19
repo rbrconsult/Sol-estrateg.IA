@@ -123,7 +123,7 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
           isMobile
             ? "w-full"
             : "fixed left-0 top-0 z-50",
-          isCollapsed ? "w-16" : "w-60"
+          isCollapsed ? "w-16" : "w-52"
         )}
       >
         {/* Header */}
