@@ -116,7 +116,11 @@ function deriveMidiaData(records: MakeRecord[]) {
 
 export default function MidiaReceita() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveMidiaData(records), [records]);
 
