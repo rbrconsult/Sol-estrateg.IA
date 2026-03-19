@@ -1,33 +1,93 @@
 
 
-# Conectar os 4 novos componentes ao filtro de período
+## Documentar e Integrar Webhooks + Data Stores da Evolve Olímpia
 
-## Problema
-Os componentes Sol Hoje, Alertas, Temperatura por Etapa e Tabela de Leads usam dados mock fixos e não respondem ao filtro de período (`multiplier`), diferente dos KPIs, Pipeline, FUP e Heatmap que já escalam corretamente.
+### Inventário Completo — Evolve Olímpia
 
-## Solução
-Aplicar a mesma lógica de `scale()` / `multiplier` aos 4 componentes no arquivo `src/pages/Conferencia.tsx`.
+**14 Webhooks:**
 
-### 1. Sol Hoje — Atividade Diária
-- Envolver os valores do grid (qualificados, scores, quentes, mornos, frios) com `scale()`
-- Aplicar `scale()` nas barras do gráfico de 7 dias
-- Criar `filteredSolHoje` via `useMemo` similar aos outros dados filtrados
+| Nome | URL | Categoria |
+|---|---|---|
+| Conta de Energia - Leitura de Dados | `...5uomladm` | OCR |
+| Ganho Solar Market | `...m2vkc6bc` | Comercial |
+| Google Ads Sync - Trigger | `...ukdx7ho3` | Ads |
+| Krolic-Entrada | `...hznxse100` | SDR |
+| Krolic-Entrada Backup | `...tymardyp` | SDR |
+| Meta Ads Sync - Trigger | `...qoxmgudt` | Ads |
+| Meta CAPI - Sol Eventos | `...oecwv7a2` | Ads |
+| My gateway-webhook | `...tq7nb90e` | Gateway |
+| Perder Solar Market | `...56jkdk8t` | Comercial |
+| Qualificar | `...yv9ucyql` | SDR |
+| Reprocessamento Krolic - Robo Sol | `...ni9eirho` | SDR |
+| Sol II | `...rfop5ab9` | SDR |
+| TTS ElevenLabs | `...ju12sn4l` | Áudio |
+| Webhook SOL - Proposta Criada | `...5bg8j6h` | Comercial |
 
-### 2. Alertas & Insights
-- Alertas são textuais/qualitativos, então podem permanecer fixos (faz sentido contextualmente)
-- Alternativa: ajustar valores numéricos mencionados nos textos dos alertas (ex: "R$ 42k" -> escalar)
+**7 Data Stores:**
 
-### 3. Temperatura por Etapa
-- Criar `filteredTemperatura` via `useMemo` aplicando `scale()` aos valores quente/morno/frio
-- O gráfico de barras empilhadas refletirá automaticamente os valores escalados
+| Nome | Registros | Uso | Finalidade |
+|---|---|---|---|
+| Comercial | 1 | 358B/1MB | Pipeline comercial |
+| Google_Ads_Olimpia | 110 | 95KB/1MB | Leads Google Ads |
+| leads_site_geral | 357 | 35KB/1MB | Leads do site |
+| Meta_Ads_Olimpia | 52 | 45KB/1MB | Leads Meta Ads |
+| OCR Conta de Luz | 0 | 0/1MB | Leitura de contas |
+| Sol_Producao_Olimpia | 9 | 2.3KB/1MB | Produção solar |
+| thread_id | 933 | 455KB/1MB | Histórico conversas (SDR) |
 
-### 4. Tabela de Leads
-- Aplicar `scale()` ao campo `valor` de cada lead
-- Manter nome, etapa, temperatura, score e historico fixos (são dados qualitativos)
+### Plano de Implementação
 
-## Arquivo modificado
-- `src/pages/Conferencia.tsx` — adicionar 3 novos `useMemo` (filteredSolHoje, filteredTemperatura, leads com valor escalado) e atualizar as referências no JSX
+#### 1. Migração — Tabela `organization_configs`
 
-## Resultado
-Todos os componentes numéricos responderão ao filtro de período de forma consistente com o resto do dashboard.
+Criar tabela para armazenar configs por franquia com categorias:
+
+```sql
+CREATE TABLE public.organization_configs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  config_key text NOT NULL,
+  config_value text NOT NULL DEFAULT '',
+  config_category text NOT NULL DEFAULT 'general',
+  is_secret boolean NOT NULL DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(organization_id, config_key)
+);
+```
+
+#### 2. Seed — Evolve Olímpia
+
+Inserir todos os 14 webhooks e 7 data stores como registros na `organization_configs` com categorias: `webhook`, `datastore`, `ads`, `api`.
+
+#### 3. Wizard de Franquias (UI)
+
+Componente `FranchiseWizard.tsx` com 5 steps:
+
+- **Step 1 — Identidade**: Nome, slug, tipo (Franquia/Loja/Parceiro)
+- **Step 2 — API Make.com**: API Key, Team ID
+- **Step 3 — Data Stores**: Mapear cada DS com nome e ID (tabela editável)
+- **Step 4 — Webhooks**: Mapear cada webhook com nome, URL e categoria (tabela editável)
+- **Step 5 — Usuários**: Vincular usuários existentes ou criar novos
+
+#### 4. Painel de Configs por Franquia
+
+Substituir a aba Organizações atual por um painel com:
+- Cards por franquia mostrando status de integração
+- Lista de webhooks e data stores configurados
+- Botão "Nova Franquia" abrindo o Wizard
+- Botão "Editar" para alterar configs existentes
+
+#### 5. Atualizar `cron-sync` para Multi-Tenant
+
+O `cron-sync` lerá `organization_configs` para obter credenciais por org em vez de usar secrets globais. Iterará sobre cada organização ativa sincronizando seus data stores específicos.
+
+### Arquivos
+
+| Ação | Arquivo |
+|---|---|
+| Criar | Migração SQL (`organization_configs` + seed Olímpia) |
+| Criar | `src/components/admin/FranchiseWizard.tsx` |
+| Editar | `src/components/admin/OrganizationsTab.tsx` |
+| Editar | `supabase/functions/cron-sync/index.ts` |
+| Editar | `src/pages/Admin.tsx` |
 
