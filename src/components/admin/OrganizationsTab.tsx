@@ -74,6 +74,12 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const [configs, setConfigs] = useState<OrgConfig[]>([]);
   const [configsLoading, setConfigsLoading] = useState(false);
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [editingConfig, setEditingConfig] = useState<string | null>(null);
+  const [editConfigForm, setEditConfigForm] = useState({ config_key: '', config_value: '', config_category: 'general', is_secret: false });
+  const [isAddingConfig, setIsAddingConfig] = useState(false);
+  const [newConfigForm, setNewConfigForm] = useState({ config_key: '', config_value: '', config_category: 'general', is_secret: false });
+  const [configSaving, setConfigSaving] = useState(false);
+  const [deleteConfig, setDeleteConfig] = useState<OrgConfig | null>(null);
 
   // Wizard
   const [wizardOpen, setWizardOpen] = useState(false);
