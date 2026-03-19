@@ -267,14 +267,9 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
             <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" />Franquias & Organizações</CardTitle>
             <CardDescription>Gerencie franquias, integrações e membros</CardDescription>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setEditingOrg(null); setOrgForm({ name: '', slug: '' }); setIsOrgDialogOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" />Organização Simples
-            </Button>
-            <Button onClick={() => setWizardOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />Nova Franquia
-            </Button>
-          </div>
+          <Button onClick={() => setWizardOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />Nova Franquia
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
