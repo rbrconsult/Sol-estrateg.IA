@@ -40,6 +40,7 @@ import SLAMonitor from "./pages/SLAMonitor";
 import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
+import Sanitizacao from "./pages/Sanitizacao";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
