@@ -7,6 +7,7 @@ export interface ComercialRecord {
   telefone: string;
   etapaSM: string;
   responsavel: string;
+  responsavelId: string;
   representante: string;
   etiquetas: string;
   nomeProposta: string;
