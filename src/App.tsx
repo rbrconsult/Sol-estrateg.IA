@@ -144,6 +144,11 @@ const App = () => (
                   <MainLayout><Admin /></MainLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/admin/filial/:orgId" element={
+                <ProtectedRoute>
+                  <MainLayout><OrgConfigPage /></MainLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/ajuda" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
