@@ -298,8 +298,8 @@ export default function Conferencia() {
           </div>
         </header>
 
-        {/* ══════ FLOATING FILTER FAB ══════ */}
-        <FloatingFilter
+        {/* ══════ INLINE FILTERS ══════ */}
+        <InlineFilters
           periodo={periodo} setPeriodo={setPeriodo}
           dateFrom={dateFrom} setDateFrom={setDateFrom}
           dateTo={dateTo} setDateTo={setDateTo}
