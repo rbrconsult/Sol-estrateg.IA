@@ -39,6 +39,7 @@ import NotFound from "./pages/NotFound";
 import SLAMonitor from "./pages/SLAMonitor";
 import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
+import Comissoes from "./pages/Comissoes";
 
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
@@ -192,6 +193,11 @@ const App = () => (
               <Route path="/followup" element={
                 <ProtectedRoute>
                   <MainLayout><AnalistaFollowup /></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/comissoes" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
