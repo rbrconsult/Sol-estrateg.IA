@@ -82,7 +82,11 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     { nome: '', identificador: '' }
   ]);
 
-  // Step 6 - Users
+  // Step 6 - Modules
+  const defaultModules = MODULE_DEFINITIONS.reduce((acc, m) => ({ ...acc, [m.key]: true }), {} as Record<string, boolean>);
+  const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>(defaultModules);
+
+  // Step 7 - Users
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [showNewUser, setShowNewUser] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ email: '', full_name: '', password: '' });
