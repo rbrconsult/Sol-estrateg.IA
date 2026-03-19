@@ -150,6 +150,14 @@ function deriveAlerts(records: MakeRecord[]): Alert[] {
         desc: `${r.nome || r.telefone} respondeu no FUP #${r.followupCount}`,
         severity: "info",
         time: timeSince(r.data_resposta || r.data_envio),
+        leadData: {
+          nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+          telefone: r.telefone,
+          score: parseInt(r.makeScore || "0") || 0,
+          temp: (r.makeTemperatura || "MORNO").toUpperCase(),
+          etapa: getEtapa(r),
+          valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+        },
       });
     }
   });
