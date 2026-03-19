@@ -116,7 +116,7 @@ export function usePageFilters(config?: FilterConfig) {
   return {
     filters, hasFilters, clearFilters,
     setPeriodo, setDateFrom, setDateTo, setCanal, setTemperatura, setSearchTerm,
-    effectiveDateRange, filterRecords,
+    effectiveDateRange, filterRecords, filterProposals,
   };
 }
 
