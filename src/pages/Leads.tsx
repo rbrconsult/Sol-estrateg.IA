@@ -368,6 +368,11 @@ export default function Leads() {
             <p className="text-xs text-muted-foreground mt-0.5">Qualificação, jornada e performance · {filtered.length} leads</p>
           </div>
           <div className="flex items-center gap-5">
+            {orgFilterActive && (
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+                🏢 {selectedOrgName}
+              </Badge>
+            )}
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Dados reais
@@ -381,80 +386,13 @@ export default function Leads() {
           </div>
         </header>
 
-        {/* ══════ FILTROS ══════ */}
-        <section className="mt-4 flex flex-wrap items-center gap-2">
-          <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
-            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="7d">7 dias</SelectItem>
-              <SelectItem value="30d">30 dias</SelectItem>
-              <SelectItem value="90d">90 dias</SelectItem>
-              <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {periodo === "custom" && (
-            <>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yy") : "Início"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateTo ? format(dateTo, "dd/MM/yy") : "Fim"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
-
-          <div className="h-4 w-px bg-border/50 mx-1" />
-
-          <Select value={etapaFilter} onValueChange={setEtapaFilter}>
-            <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue placeholder="Etapa" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as etapas</SelectItem>
-              {etapas.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <Select value={temperaturaFilter} onValueChange={setTemperaturaFilter}>
-            <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Temperatura" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas</SelectItem>
-              <SelectItem value="QUENTE">Quente</SelectItem>
-              <SelectItem value="MORNO">Morno</SelectItem>
-              <SelectItem value="FRIO">Frio</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={responsavelFilter} onValueChange={setResponsavelFilter}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Responsável" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              {responsaveis.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1" onClick={clearFilters}>
-              <X className="h-3 w-3" /> Limpar
-            </Button>
-          )}
-        </section>
+        {/* ══════ FILTRO FLUTUANTE ══════ */}
+        <PageFloatingFilter
+          filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+          setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+        />
 
         {/* ══════ KPIs ══════ */}
         <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 mt-4">
