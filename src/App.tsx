@@ -17,6 +17,7 @@ import Performance from "./pages/Performance";
 
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Selecao from "./pages/Selecao";
 import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
 import Operacoes from "./pages/Operacoes";
