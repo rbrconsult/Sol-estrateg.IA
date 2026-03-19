@@ -368,24 +368,6 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
               />
               <p className="text-xs text-muted-foreground">Identificador único (apenas letras minúsculas, números e hifens)</p>
             </div>
-            <div className="space-y-2">
-              <Label>Google Sheet ID</Label>
-              <Input
-                value={orgForm.googleSheetId}
-                onChange={(e) => setOrgForm({ ...orgForm, googleSheetId: e.target.value.trim() })}
-                placeholder="Ex: 18LfyoHUA7Yk4VBEi-hXHy600pzxBWpqinSvFEIIT1ng"
-              />
-              <p className="text-xs text-muted-foreground">ID da planilha Google Sheets vinculada a esta organização</p>
-            </div>
-            <div className="space-y-2">
-              <Label>URL do Painel de Status</Label>
-              <Input
-                value={orgForm.statusUrl}
-                onChange={(e) => setOrgForm({ ...orgForm, statusUrl: e.target.value.trim() })}
-                placeholder="Ex: https://status.rbrsistemas.com/status/evolve"
-              />
-              <p className="text-xs text-muted-foreground">Link do painel de monitoramento exibido para os usuários desta organização</p>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancelar</Button>
