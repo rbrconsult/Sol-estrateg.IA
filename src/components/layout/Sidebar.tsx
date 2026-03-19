@@ -4,7 +4,8 @@ import {
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
-  ChevronsLeft, ChevronsRight, ChevronDown,
+  ChevronsLeft, ChevronsRight, FileCheck, Handshake, Percent,
+  Activity, RefreshCw, Eraser,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useState } from "react";
 
 interface MenuItem {
   title: string;
@@ -32,9 +32,8 @@ const menuGroups: MenuGroup[] = [
   {
     label: "Pré-venda",
     items: [
-      { title: "Sol Estrateg.IA", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
+      { title: "Dashboard", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
       { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
-      { title: "Forecast", icon: TrendingUp, path: "/forecast", moduleKey: "pipeline" },
       { title: "Leads", icon: Users, path: "/leads" },
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
       { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
@@ -44,8 +43,10 @@ const menuGroups: MenuGroup[] = [
     label: "Comercial",
     items: [
       { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
-      { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
-      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
+      { title: "Propostas", icon: FileCheck, path: "/forecast", moduleKey: "pipeline" },
+      { title: "Contratos", icon: Handshake, path: "/dashboard", moduleKey: "dashboard" },
+      { title: "Vendedores", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
+      { title: "Comissões", icon: Percent, path: "/comissoes" },
     ],
   },
   {
@@ -68,8 +69,10 @@ const menuGroups: MenuGroup[] = [
   {
     label: "Operacional",
     items: [
-      { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
+      { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
+      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento" },
+      { title: "Sanitização", icon: Eraser, path: "/sanitizacao" },
     ],
   },
 ];
@@ -86,23 +89,6 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
   const { signOut, user, userRole } = useAuth();
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
-
-  // Find which groups have the active route to auto-expand
-  const activeGroupIndices = menuGroups.reduce<number[]>((acc, group, idx) => {
-    if (group.items.some((item) => location.pathname === item.path)) acc.push(idx);
-    return acc;
-  }, []);
-
-  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set(activeGroupIndices.length ? activeGroupIndices : [0, 1]));
-
-  const toggleGroup = (idx: number) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -142,76 +128,78 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-1.5 overflow-y-auto space-y-0.5">
-          {menuGroups.map((group, groupIdx) => {
+        {/* Navigation — all groups always visible, no collapse */}
+        <nav className="flex-1 p-1.5 overflow-y-auto space-y-1">
+          {menuGroups.map((group) => {
             const visibleItems = group.items.filter((item) =>
               item.moduleKey ? hasAccess(item.moduleKey) : true
             );
             if (visibleItems.length === 0) return null;
 
-            const isExpanded = expandedGroups.has(groupIdx);
+            return (
+              <div
+                key={group.label}
+                className={cn(
+                  "rounded-lg border border-border/30 bg-muted/20 p-1",
+                  isCollapsed && "border-transparent bg-transparent p-0.5"
+                )}
+              >
+                {/* Group label */}
+                {!isCollapsed && (
+                  <div className="px-2 pt-1 pb-0.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                      {group.label}
+                    </span>
+                  </div>
+                )}
 
-            if (isCollapsed) {
-              // In collapsed mode, show only icons with tooltips, no group labels
-              return visibleItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Tooltip key={item.path}>
-                    <TooltipTrigger asChild>
+                {/* Items */}
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+
+                    if (isCollapsed) {
+                      return (
+                        <Tooltip key={item.path}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to={item.path}
+                              onClick={handleNavClick}
+                              className={cn(
+                                "flex items-center justify-center rounded-md transition-all text-xs px-0 py-2",
+                                isActive
+                                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              )}
+                            >
+                              <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="text-xs">
+                            {item.title}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
+                    return (
                       <Link
+                        key={item.path}
                         to={item.path}
                         onClick={handleNavClick}
                         className={cn(
-                          "flex items-center justify-center rounded-md transition-all text-xs px-0 py-2",
+                          "flex items-center gap-2 rounded-md transition-all text-xs px-2.5 py-1.5",
                           isActive
                             ? "bg-primary text-primary-foreground shadow-sm font-semibold"
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                         )}
                       >
                         <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+                        <span>{item.title}</span>
                       </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="text-xs">
-                      {item.title}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              });
-            }
-
-            return (
-              <div key={group.label} className="mb-1">
-                <button
-                  onClick={() => toggleGroup(groupIdx)}
-                  className="flex items-center justify-between w-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <span>{group.label}</span>
-                  <ChevronDown className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-180")} />
-                </button>
-                {isExpanded && (
-                  <div className="space-y-0.5">
-                    {visibleItems.map((item) => {
-                      const isActive = location.pathname === item.path;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={handleNavClick}
-                          className={cn(
-                            "flex items-center gap-2 rounded-md transition-all text-xs px-2.5 py-1.5",
-                            isActive
-                              ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                          )}
-                        >
-                          <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
-                          <span>{item.title}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
