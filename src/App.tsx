@@ -76,12 +76,12 @@ const App = () => (
                 </ProtectedRoute>
               } />
               {/* Solar Market routes */}
-              <Route path="/solar" element={
+              <Route path="/solarmarket" element={
                 <ProtectedRoute>
                   <SolarLayout><PreVenda /></SolarLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/solar/comercial" element={
+              <Route path="/solarmarket/comercial" element={
                 <ProtectedRoute>
                   <SolarLayout><Comercial /></SolarLayout>
                 </ProtectedRoute>

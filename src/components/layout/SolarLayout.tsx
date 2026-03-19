@@ -2,15 +2,15 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, HandCoins, LogOut, ArrowLeft, Sun, Menu } from "lucide-react";
+import { Search, HandCoins, LogOut, ArrowLeft, Sun, Menu, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const menuItems = [
-  { title: "Pré-venda", icon: Search, path: "/solar" },
-  { title: "Comercial", icon: HandCoins, path: "/solar/comercial" },
+  { title: "Pré-venda", icon: Search, path: "/solarmarket" },
+  { title: "Comercial", icon: HandCoins, path: "/solarmarket/comercial" },
 ];
 
 export function SolarLayout({ children }: { children: ReactNode }) {
@@ -59,6 +59,13 @@ export function SolarLayout({ children }: { children: ReactNode }) {
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Trocar ambiente
+        </button>
+        <button
+          onClick={() => navigate("/conferencia")}
+          className="flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          Quero voltar para a SOL
         </button>
         <div className="flex items-center justify-between px-3">
           <span className="text-xs text-muted-foreground truncate max-w-[140px]">{user?.email}</span>
