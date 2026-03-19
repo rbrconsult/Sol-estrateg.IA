@@ -605,13 +605,16 @@ export default function Conferencia() {
             </div>
           </div>
 
-          {/* SLA + Tempo */}
-          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-around">
-            <SLAGauge pct={sla.pctAbordados5min} />
+          {/* Resumo Operacional Quick */}
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Tempo Médio</p>
-              <p className="text-2xl font-extrabold text-foreground">{sla.tempoMedioRespostaLead}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">resposta do lead</p>
+              <p className="text-3xl font-extrabold text-foreground tabular-nums">{filteredLeads.length}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">leads filtrados</p>
+              <div className="flex gap-2 mt-2 justify-center">
+                <span className="text-[10px] text-destructive font-semibold">{filteredLeads.filter(l => l.temperatura === "QUENTE").length} 🔥</span>
+                <span className="text-[10px] text-warning font-semibold">{filteredLeads.filter(l => l.temperatura === "MORNO").length} 🌡️</span>
+                <span className="text-[10px] text-primary font-semibold">{filteredLeads.filter(l => l.temperatura === "FRIO").length} ❄️</span>
+              </div>
             </div>
           </div>
         </section>
