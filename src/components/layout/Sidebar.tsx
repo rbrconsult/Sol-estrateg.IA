@@ -97,7 +97,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
     onNavigate?.();
   };
 
-  const isCollapsed = !isMobile && collapsed;
+  const isCollapsed = false;
 
   return (
     <TooltipProvider delayDuration={0}>
