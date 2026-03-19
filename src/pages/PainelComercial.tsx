@@ -24,6 +24,7 @@ import { useLead360 } from "@/contexts/Lead360Context";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
 import { getForecastData } from "@/data/dataAdapter";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 /* ── helpers ───────────────────────────────────────────── */
 
