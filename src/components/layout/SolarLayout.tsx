@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const menuItems = [
   { title: "Pré-venda", icon: Search, path: "/solarmarket/prevenda" },
   { title: "Comercial", icon: HandCoins, path: "/solarmarket/comercial" },
+  { title: "Vendedores", icon: Users, path: "/solarmarket/vendedores" },
 ];
 
 export function SolarLayout({ children }: { children: ReactNode }) {
