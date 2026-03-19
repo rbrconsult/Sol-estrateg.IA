@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search, Loader2 } from "lucide-react";
+import { ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
