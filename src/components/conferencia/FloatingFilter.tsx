@@ -53,7 +53,7 @@ export function FloatingFilter({
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "fixed bottom-20 right-5 z-[60] flex items-center gap-2 rounded-full shadow-lg transition-all duration-300",
+          "fixed bottom-20 right-5 z-[9990] flex items-center gap-2 rounded-full shadow-lg transition-all duration-300",
           "bg-primary text-primary-foreground hover:shadow-xl hover:scale-105",
           open ? "px-4 py-3" : "p-3"
         )}
