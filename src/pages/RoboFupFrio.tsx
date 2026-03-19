@@ -161,6 +161,14 @@ export default function RoboFupFrio() {
         </Button>
       </div>
 
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm}
+        canais={canais}
+        config={{ showPeriodo: true, showCanal: true, showSearch: true }}
+      />
+
       {/* BLOCO 1 — KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
