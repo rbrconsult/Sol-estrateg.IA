@@ -473,6 +473,79 @@ export default function PainelComercial() {
           )}
         </TabsContent>
 
+        {/* ── OPORTUNIDADES ─────────────────────── */}
+        <TabsContent value="oportunidades" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Alta Probabilidade */}
+            <Card className="border-chart-3/30">
+              <CardHeader>
+                <CardTitle className="text-chart-3 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Alta Probabilidade (≥70%)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-2">
+                    {!forecastData || forecastData.altaProbabilidade.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8 text-sm">
+                        Nenhuma proposta com alta probabilidade
+                      </p>
+                    ) : (
+                      forecastData.altaProbabilidade.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
+                          <div>
+                            <p className="font-medium text-foreground text-sm">{p.nomeCliente}</p>
+                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.vendedor || '—'}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-chart-3">{formatCurrencyAbbrev(p.valorProposta)}</p>
+                            <p className="text-xs text-muted-foreground">{p.probabilidade}%</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Em Risco */}
+            <Card className="border-destructive/30">
+              <CardHeader>
+                <CardTitle className="text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Propostas em Risco
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-2">
+                    {!forecastData || forecastData.emRisco.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8 text-sm">
+                        Nenhuma proposta em risco identificada
+                      </p>
+                    ) : (
+                      forecastData.emRisco.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg border border-destructive/20 hover:bg-destructive/15 transition-colors">
+                          <div>
+                            <p className="font-medium text-foreground text-sm">{p.nomeCliente}</p>
+                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.tempoNaEtapa} dias parado</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-destructive">{formatCurrencyAbbrev(p.valorProposta)}</p>
+                            <p className="text-xs text-muted-foreground">{p.probabilidade}%</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         {/* ── CENTRAL DE MENSAGENS ────────────────── */}
         <TabsContent value="mensagens" className="mt-4">
           <Card>
