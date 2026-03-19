@@ -86,7 +86,7 @@ export default function Admin() {
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
       toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
-      navigate('/');
+      navigate('/selecao');
     }
   }, [userRole, authLoading, navigate]);
 
