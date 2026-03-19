@@ -264,8 +264,8 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" />Franquias & Organizações</CardTitle>
-            <CardDescription>Gerencie franquias, integrações e membros</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" />Filiais</CardTitle>
+            <CardDescription>Gerencie filiais, integrações e membros</CardDescription>
           </div>
           <Button onClick={() => setWizardOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />Nova Franquia
