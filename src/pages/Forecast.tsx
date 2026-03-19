@@ -112,9 +112,12 @@ export default function Forecast() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-xs font-medium">Leads Abertos</span>
+              <span className="text-xs font-medium">Pipeline Ponderado</span>
             </div>
-            <p className="text-2xl font-bold">{forecastData.leadsAbertos}</p>
+            <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.pipelinePonderado)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Valor ponderado</p>
+          </CardContent>
+        </Card>
             <p className="text-xs text-muted-foreground mt-1">Em prospecção</p>
           </CardContent>
         </Card>
