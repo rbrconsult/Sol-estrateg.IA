@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, ArrowLeft, ArrowRight, Check, Building2, Webhook, Database, Key, Users, UserPlus, UserCheck } from 'lucide-react';
+import { Loader2, Plus, Trash2, ArrowLeft, ArrowRight, Check, Building2, Webhook, Database, Key, Users, UserPlus, UserCheck, LayoutGrid } from 'lucide-react';
+import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
 
 interface UserOption {
   id: string;
@@ -47,6 +49,7 @@ const STEPS = [
   { label: 'Data Stores', icon: Database },
   { label: 'Webhooks', icon: Webhook },
   { label: 'Responsáveis', icon: UserCheck },
+  { label: 'Módulos', icon: LayoutGrid },
   { label: 'Usuários', icon: Users },
 ];
 
@@ -79,7 +82,11 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     { nome: '', identificador: '' }
   ]);
 
-  // Step 6 - Users
+  // Step 6 - Modules
+  const defaultModules = MODULE_DEFINITIONS.reduce((acc, m) => ({ ...acc, [m.key]: true }), {} as Record<string, boolean>);
+  const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>(defaultModules);
+
+  // Step 7 - Users
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [showNewUser, setShowNewUser] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ email: '', full_name: '', password: '' });
@@ -97,6 +104,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
     setDataStores([{ key: '', name: '', datastoreId: '' }]);
     setWebhooks([{ key: '', name: '', url: '', category: 'SDR' }]);
     setResponsaveis([{ nome: '', identificador: '' }]);
+    setEnabledModules(MODULE_DEFINITIONS.reduce((acc, m) => ({ ...acc, [m.key]: true }), {} as Record<string, boolean>));
     setSelectedUserIds([]);
     setShowNewUser(false);
     setNewUserForm({ email: '', full_name: '', password: '' });
@@ -115,6 +123,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
       case 3: return true;
       case 4: return true;
       case 5: return true;
+      case 6: return true;
       default: return false;
     }
   };
@@ -189,7 +198,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
         if (cfgError) throw cfgError;
       }
 
-      // 3. Add members
+      // 3. Add members and set module permissions
       if (selectedUserIds.length > 0) {
         const members = selectedUserIds.map(uid => ({
           organization_id: orgId,
@@ -198,6 +207,17 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
         }));
         const { error: memError } = await supabase.from('organization_members').insert(members);
         if (memError) throw memError;
+
+        // Set module permissions for each user
+        const modulePerms = selectedUserIds.flatMap(uid =>
+          MODULE_DEFINITIONS.map(m => ({
+            user_id: uid,
+            module_key: m.key,
+            enabled: enabledModules[m.key] ?? true,
+          }))
+        );
+        const { error: permError } = await supabase.from('user_module_permissions').upsert(modulePerms, { onConflict: 'user_id,module_key' });
+        if (permError) console.error('Error setting module permissions:', permError);
 
         for (const uid of selectedUserIds) {
           await supabase.from('profiles').update({ organization_id: orgId }).eq('id', uid);
@@ -417,6 +437,32 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
           )}
 
           {step === 5 && (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">Módulos Habilitados</p>
+                <p className="text-xs text-muted-foreground">Selecione quais módulos os usuários desta franquia poderão acessar</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto">
+                {MODULE_DEFINITIONS.map(m => (
+                  <div key={m.key} className="flex items-center justify-between p-2.5 rounded-md border bg-muted/30">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{m.label}</p>
+                      <p className="text-xs text-muted-foreground">{m.description}</p>
+                    </div>
+                    <Switch
+                      checked={enabledModules[m.key] ?? true}
+                      onCheckedChange={(checked) => setEnabledModules(prev => ({ ...prev, [m.key]: checked }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {Object.values(enabledModules).filter(Boolean).length} de {MODULE_DEFINITIONS.length} módulos habilitados
+              </p>
+            </div>
+          )}
+
+          {step === 6 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">Selecione ou crie usuários para esta franquia</p>
