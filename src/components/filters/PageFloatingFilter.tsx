@@ -278,7 +278,7 @@ export function PageFloatingFilter({
           {/* Active chips */}
           {hasFilters && (
             <div className="flex flex-wrap gap-1 pt-1 border-t border-border/30">
-              {filters.periodo !== "30d" && <Badge variant="secondary" className="text-[9px]">{filters.periodo}</Badge>}
+              {filters.periodo !== "all" && <Badge variant="secondary" className="text-[9px]">{filters.periodo}</Badge>}
               {filters.canal !== "todos" && <Badge variant="secondary" className="text-[9px]">{filters.canal}</Badge>}
               {filters.temperatura !== "todas" && <Badge variant="secondary" className="text-[9px]">{filters.temperatura}</Badge>}
               {filters.searchTerm && <Badge variant="secondary" className="text-[9px]">"{filters.searchTerm}"</Badge>}
