@@ -13,8 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2, Webhook, Database, Key, Settings, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2, Webhook, Database, Key, Settings, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import FranchiseWizard from './FranchiseWizard';
+
+const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';
 
 interface Organization {
   id: string;
@@ -102,11 +104,13 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       const cCountMap: Record<string, number> = {};
       configCounts?.forEach(c => { cCountMap[c.organization_id] = (cCountMap[c.organization_id] || 0) + 1; });
 
-      setOrganizations((orgs || []).map(o => ({
-        ...o,
-        member_count: mCountMap[o.id] || 0,
-        config_count: cCountMap[o.id] || 0,
-      })));
+      setOrganizations((orgs || [])
+        .filter(o => o.id !== MATRIZ_ORG_ID)
+        .map(o => ({
+          ...o,
+          member_count: mCountMap[o.id] || 0,
+          config_count: cCountMap[o.id] || 0,
+        })));
     } catch (error) {
       console.error('Error fetching organizations:', error);
       toast.error('Erro ao carregar organizações');
@@ -272,6 +276,10 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
           </Button>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg border border-border bg-muted/50">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span className="text-sm text-muted-foreground">Matriz: <strong className="text-foreground">RBR Consult</strong> — administração global (super admin)</span>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
