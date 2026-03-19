@@ -192,7 +192,7 @@ export default function Sanitizacao() {
     const noPhone: ProjectEntry[] = [];
 
     for (const p of proposals) {
-      const raw = p.cliente_telefone || "";
+      const raw = p.clienteTelefone || "";
       const norm = normalizePhone(raw);
       if (!norm || norm.length < 8) {
         noPhone.push(toEntry(p));
