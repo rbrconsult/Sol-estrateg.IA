@@ -1,0 +1,264 @@
+import { useState, useMemo, useCallback } from "react";
+import { Filter, X, CalendarIcon, Search } from "lucide-react";
+import { format, subDays, startOfMonth, startOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export interface FilterConfig {
+  showPeriodo?: boolean;
+  showCanal?: boolean;
+  showTemperatura?: boolean;
+  showSearch?: boolean;
+  canais?: string[];
+  searchPlaceholder?: string;
+}
+
+export interface FilterState {
+  periodo: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  canal: string;
+  temperatura: string;
+  searchTerm: string;
+}
+
+const defaultState: FilterState = {
+  periodo: "30d",
+  canal: "todos",
+  temperatura: "todas",
+  searchTerm: "",
+};
+
+export function usePageFilters(config?: FilterConfig) {
+  const [filters, setFilters] = useState<FilterState>(defaultState);
+
+  const setPeriodo = useCallback((v: string) => setFilters(f => ({ ...f, periodo: v, dateFrom: undefined, dateTo: undefined })), []);
+  const setDateFrom = useCallback((d: Date | undefined) => setFilters(f => ({ ...f, dateFrom: d })), []);
+  const setDateTo = useCallback((d: Date | undefined) => setFilters(f => ({ ...f, dateTo: d })), []);
+  const setCanal = useCallback((v: string) => setFilters(f => ({ ...f, canal: v })), []);
+  const setTemperatura = useCallback((v: string) => setFilters(f => ({ ...f, temperatura: v })), []);
+  const setSearchTerm = useCallback((v: string) => setFilters(f => ({ ...f, searchTerm: v })), []);
+  const clearFilters = useCallback(() => setFilters(defaultState), []);
+
+  const hasFilters = filters.periodo !== "30d" || !!filters.dateFrom || !!filters.dateTo ||
+    filters.canal !== "todos" || filters.temperatura !== "todas" || !!filters.searchTerm;
+
+  const effectiveDateRange = useMemo(() => {
+    const today = new Date();
+    const p = filters.periodo;
+    if (p === "custom") return { from: filters.dateFrom, to: filters.dateTo };
+    if (p === "hoje") return { from: today, to: today };
+    if (p === "3d") return { from: subDays(today, 3), to: today };
+    if (p === "7d") return { from: subDays(today, 7), to: today };
+    if (p === "30d") return { from: subDays(today, 30), to: today };
+    if (p === "90d") return { from: subDays(today, 90), to: today };
+    if (p === "mes") return { from: startOfMonth(today), to: today };
+    if (p === "ano" || p === "ytd") return { from: startOfYear(today), to: today };
+    return { from: undefined as Date | undefined, to: undefined as Date | undefined };
+  }, [filters.periodo, filters.dateFrom, filters.dateTo]);
+
+  /** Filter records by date, canal, temperatura, search */
+  const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string }>(records: T[]): T[] => {
+    return records.filter(r => {
+      // Date
+      const { from, to } = effectiveDateRange;
+      if (from || to) {
+        const dateStr = r.data_envio;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return false;
+        if (from && d < from) return false;
+        if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
+      }
+      // Canal
+      if (filters.canal !== "todos" && r.cidade !== filters.canal) return false;
+      // Temperatura
+      if (filters.temperatura !== "todas" && (r.makeTemperatura || "").toUpperCase() !== filters.temperatura) return false;
+      // Search
+      if (filters.searchTerm && !(r.nome || "").toLowerCase().includes(filters.searchTerm.toLowerCase())) return false;
+      return true;
+    });
+  }, [effectiveDateRange, filters.canal, filters.temperatura, filters.searchTerm]);
+
+  return {
+    filters, hasFilters, clearFilters,
+    setPeriodo, setDateFrom, setDateTo, setCanal, setTemperatura, setSearchTerm,
+    effectiveDateRange, filterRecords,
+  };
+}
+
+interface PageFloatingFilterProps {
+  filters: FilterState;
+  hasFilters: boolean;
+  clearFilters: () => void;
+  setPeriodo: (v: string) => void;
+  setDateFrom: (d: Date | undefined) => void;
+  setDateTo: (d: Date | undefined) => void;
+  setCanal?: (v: string) => void;
+  setTemperatura?: (v: string) => void;
+  setSearchTerm?: (v: string) => void;
+  canais?: string[];
+  config?: FilterConfig;
+}
+
+export function PageFloatingFilter({
+  filters, hasFilters, clearFilters,
+  setPeriodo, setDateFrom, setDateTo,
+  setCanal, setTemperatura, setSearchTerm,
+  canais = [],
+  config = { showPeriodo: true },
+}: PageFloatingFilterProps) {
+  const [open, setOpen] = useState(false);
+
+  const activeCount = [
+    filters.periodo !== "30d",
+    filters.canal !== "todos",
+    filters.temperatura !== "todas",
+    !!filters.searchTerm,
+  ].filter(Boolean).length;
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "fixed bottom-20 right-5 z-[60] flex items-center gap-2 rounded-full shadow-lg transition-all duration-300",
+          "bg-primary text-primary-foreground hover:shadow-xl hover:scale-105",
+          open ? "px-4 py-3" : "p-3"
+        )}
+      >
+        {open ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+        {!open && activeCount > 0 && (
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+            {activeCount}
+          </span>
+        )}
+        {open && <span className="text-xs font-medium">Fechar</span>}
+      </button>
+
+      {open && (
+        <div className="fixed bottom-36 right-5 z-[60] w-72 rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-2xl p-4 space-y-3 animate-in slide-in-from-bottom-4 fade-in duration-200">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-foreground">Filtros</p>
+            {hasFilters && (
+              <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground" onClick={clearFilters}>
+                Limpar tudo
+              </Button>
+            )}
+          </div>
+
+          {/* Período */}
+          {config.showPeriodo !== false && (
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Período</label>
+              <Select value={filters.periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
+                <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hoje">Hoje</SelectItem>
+                  <SelectItem value="3d">3 dias</SelectItem>
+                  <SelectItem value="7d">7 dias</SelectItem>
+                  <SelectItem value="30d">30 dias</SelectItem>
+                  <SelectItem value="90d">90 dias</SelectItem>
+                  <SelectItem value="mes">Este mês</SelectItem>
+                  <SelectItem value="ano">Este ano</SelectItem>
+                  <SelectItem value="ytd">YTD</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {filters.periodo === "custom" && (
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 h-8 text-xs gap-1", !filters.dateFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3 w-3" />
+                    {filters.dateFrom ? format(filters.dateFrom, "dd/MM/yy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={filters.dateFrom} onSelect={setDateFrom} locale={ptBR} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 h-8 text-xs gap-1", !filters.dateTo && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3 w-3" />
+                    {filters.dateTo ? format(filters.dateTo, "dd/MM/yy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={filters.dateTo} onSelect={setDateTo} locale={ptBR} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+
+          {/* Canal */}
+          {config.showCanal && setCanal && canais.length > 0 && (
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Canal / Origem</label>
+              <Select value={filters.canal} onValueChange={setCanal}>
+                <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {canais.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Temperatura */}
+          {config.showTemperatura && setTemperatura && (
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Temperatura</label>
+              <Select value={filters.temperatura} onValueChange={setTemperatura}>
+                <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="QUENTE">🔥 Quente</SelectItem>
+                  <SelectItem value="MORNO">🌤 Morno</SelectItem>
+                  <SelectItem value="FRIO">❄️ Frio</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Busca */}
+          {config.showSearch && setSearchTerm && (
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Buscar</label>
+              <div className="relative mt-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                <Input
+                  placeholder={config.searchPlaceholder || "Nome do lead..."}
+                  value={filters.searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-8 pl-7 text-xs"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Active chips */}
+          {hasFilters && (
+            <div className="flex flex-wrap gap-1 pt-1 border-t border-border/30">
+              {filters.periodo !== "30d" && <Badge variant="secondary" className="text-[9px]">{filters.periodo}</Badge>}
+              {filters.canal !== "todos" && <Badge variant="secondary" className="text-[9px]">{filters.canal}</Badge>}
+              {filters.temperatura !== "todas" && <Badge variant="secondary" className="text-[9px]">{filters.temperatura}</Badge>}
+              {filters.searchTerm && <Badge variant="secondary" className="text-[9px]">"{filters.searchTerm}"</Badge>}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
