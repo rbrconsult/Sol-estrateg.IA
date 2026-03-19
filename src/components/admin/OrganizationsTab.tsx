@@ -54,6 +54,7 @@ interface UserOption {
 }
 
 export default function OrganizationsTab({ users }: { users: UserOption[] }) {
+  const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
