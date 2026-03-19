@@ -198,7 +198,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
         if (cfgError) throw cfgError;
       }
 
-      // 3. Add members
+      // 3. Add members and set module permissions
       if (selectedUserIds.length > 0) {
         const members = selectedUserIds.map(uid => ({
           organization_id: orgId,
@@ -207,6 +207,17 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
         }));
         const { error: memError } = await supabase.from('organization_members').insert(members);
         if (memError) throw memError;
+
+        // Set module permissions for each user
+        const modulePerms = selectedUserIds.flatMap(uid =>
+          MODULE_DEFINITIONS.map(m => ({
+            user_id: uid,
+            module_key: m.key,
+            enabled: enabledModules[m.key] ?? true,
+          }))
+        );
+        const { error: permError } = await supabase.from('user_module_permissions').upsert(modulePerms, { onConflict: 'user_id,module_key' });
+        if (permError) console.error('Error setting module permissions:', permError);
 
         for (const uid of selectedUserIds) {
           await supabase.from('profiles').update({ organization_id: orgId }).eq('id', uid);
