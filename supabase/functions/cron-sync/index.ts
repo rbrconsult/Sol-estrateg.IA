@@ -1,0 +1,283 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+const MAKE_BASE = "https://us2.make.com/api/v2";
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchWithRetry(url: string, opts: RequestInit, retries = 3): Promise<Response> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(url, opts);
+    if (res.status === 429) {
+      const wait = Math.pow(2, attempt + 1) * 1000;
+      console.log(`429 rate limited, waiting ${wait}ms...`);
+      await delay(wait);
+      continue;
+    }
+    return res;
+  }
+  return fetch(url, opts);
+}
+
+async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number, delayMs = 1500): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < fns.length; i += size) {
+    if (i > 0) await delay(delayMs);
+    const batch = fns.slice(i, i + size);
+    const batchResults = await Promise.all(batch.map((fn) => fn()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
+/** Normalize phone: keep only digits, strip leading 55 if 12+ digits */
+function normalizePhone(phone: string): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length >= 12 && digits.startsWith('55')) {
+    return digits.slice(2);
+  }
+  return digits;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Auth: accept either service_role key or a valid CRON_SECRET
+    const authHeader = req.headers.get("Authorization");
+    const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    // Allow calls from pg_net (which sends the anon key) or service_role
+    const token = authHeader?.replace("Bearer ", "") || "";
+    const isServiceRole = token === expectedKey;
+    const isAnonKey = token === Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!isServiceRole && !isAnonKey) {
+      // If it's a user JWT, verify it's a super_admin
+      const anonClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader! } } }
+      );
+      const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
+      if (authError || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const MAKE_API_KEY = (Deno.env.get("MAKE_API_KEY") || "").trim();
+    const MAKE_DATASTORE_ID = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
+    const MAKE_TEAM_ID = (Deno.env.get("MAKE_TEAM_ID") || "").trim();
+
+    if (!MAKE_API_KEY) throw new Error("MAKE_API_KEY not configured");
+
+    const makeHeaders = {
+      Authorization: `Token ${MAKE_API_KEY}`,
+      "Content-Type": "application/json",
+    };
+
+    const results: Record<string, any> = {};
+
+    // ═══════════════════════════════════════════
+    // 1. SYNC MAKE DATA STORE → leads_consolidados
+    // ═══════════════════════════════════════════
+    if (MAKE_DATASTORE_ID) {
+      console.log("=== Syncing Make Data Store ===");
+      const allRecords: any[] = [];
+      let offset = 0;
+      const limit = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const apiUrl = `${MAKE_BASE}/data-stores/${MAKE_DATASTORE_ID}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+        const makeRes = await fetchWithRetry(apiUrl, { headers: makeHeaders });
+
+        if (!makeRes.ok) {
+          const errorText = await makeRes.text();
+          console.error("Make DS error:", makeRes.status, errorText);
+          results.dataStore = { error: `API error ${makeRes.status}` };
+          break;
+        }
+
+        const makeData = await makeRes.json();
+        const records = makeData?.records || makeData?.data || [];
+        if (Array.isArray(records)) allRecords.push(...records);
+        hasMore = Array.isArray(records) && records.length === limit;
+        offset += limit;
+      }
+
+      console.log(`Make DS: ${allRecords.length} records fetched`);
+
+      // Transform and upsert into leads_consolidados
+      const leadsToUpsert = allRecords.map((r) => {
+        const d = r.data || r;
+        const phone = normalizePhone(String(d.telefone || r.key || ''));
+        const fupCount = parseInt(d.followup_count) || 0;
+        let robo = String(d.robo || d.bot || d.tipo_robo || '').toLowerCase();
+        if (!robo) robo = fupCount >= 1 ? 'fup_frio' : 'sol';
+
+        const hasDataResposta = !!(d.data_resposta || d.response_date);
+        const leadStatus = String(d.status || '').toUpperCase();
+        const isEngaged = leadStatus === 'WHATSAPP' || leadStatus === 'QUALIFICADO';
+        const respondeu = hasDataResposta || isEngaged || !!(d.respondeu || d.replied);
+
+        return {
+          telefone: phone,
+          nome: String(d.nome || d.name || '') || null,
+          email: String(d.email || '') || null,
+          cidade: String(d.Cidade || d.cidade || d.city || '') || null,
+          valor_conta: String(d.valor_conta || '') || null,
+          imovel: String(d.imovel || '') || null,
+          project_id: String(d.projectId || '') || null,
+          canal_origem: String(d.canal_origem || d.campanha || '') || null,
+          campanha: String(d.campanha || '') || null,
+          temperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || null,
+          score: parseInt(d.Score || d.score) || null,
+          status: String(d.status || 'novo').toUpperCase(),
+          codigo_status: String(d.codigo_status || '').toUpperCase() || null,
+          etapa: String(d.etapa || '') || null,
+          responsavel: String(d.responsavel || '') || null,
+          robo,
+          followup_count: fupCount,
+          last_followup_date: d.last_followup_date || null,
+          respondeu,
+          sentimento_resposta: String(d.sentimento_resposta || '') || null,
+          interesse_detectado: String(d.interesse_detectado || '') || null,
+          tempo_resposta_seg: parseInt(d.tempo_resposta_seg) || null,
+          data_entrada: d['Data e Hora | Cadastro do Lead'] || d.data_entrada || null,
+          data_qualificacao: d.data_qualificacao || null,
+          data_agendamento: d.data_agendamento || null,
+          data_proposta: d.data_proposta || null,
+          data_fechamento: d.data_fechamento || null,
+          valor_proposta: parseFloat(d.valor_proposta) || null,
+          organization_id: '00000000-0000-0000-0000-000000000001',
+          synced_at: new Date().toISOString(),
+        };
+      }).filter(l => l.telefone);
+
+      let upsertedLeads = 0;
+      for (let i = 0; i < leadsToUpsert.length; i += 50) {
+        const batch = leadsToUpsert.slice(i, i + 50);
+        const { error } = await supabase
+          .from("leads_consolidados")
+          .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
+        if (error) {
+          console.error("Leads upsert error:", error.message);
+        } else {
+          upsertedLeads += batch.length;
+        }
+      }
+
+      results.dataStore = { fetched: allRecords.length, upserted: upsertedLeads };
+      console.log(`Leads upserted: ${upsertedLeads}`);
+    }
+
+    // ═══════════════════════════════════════════
+    // 2. SYNC MAKE HEARTBEAT
+    // ═══════════════════════════════════════════
+    if (MAKE_TEAM_ID) {
+      console.log("=== Syncing Make Heartbeat ===");
+
+      const scenariosRes = await fetchWithRetry(
+        `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
+        { headers: makeHeaders }
+      );
+
+      if (!scenariosRes.ok) {
+        const errText = await scenariosRes.text();
+        console.error("Scenarios fetch failed:", scenariosRes.status, errText);
+        results.heartbeat = { error: `Scenarios API error ${scenariosRes.status}` };
+      } else {
+        const scenariosData = await scenariosRes.json();
+        const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? []).map(
+          (s: any) => ({ id: s.id, name: s.name })
+        );
+
+        const heartbeatRecords: any[] = [];
+
+        const fetchFns = scenarios.map((scenario) => async () => {
+          try {
+            const res = await fetchWithRetry(
+              `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=50`,
+              { headers: makeHeaders }
+            );
+            if (!res.ok) return [];
+            const data = await res.json();
+            const logs = data.scenarioLogs ?? [];
+
+            return logs.map((item: any) => {
+              let status = "success";
+              if (item.status === 2) status = "error";
+              else if (item.status === 3) status = "warning";
+
+              return {
+                scenario_id: scenario.id,
+                scenario_name: scenario.name,
+                execution_id: String(item.id),
+                status,
+                duration_seconds: item.duration ? Math.round(item.duration / 1000) : null,
+                ops_count: item.operations ?? null,
+                transfer_bytes: item.transfer ?? null,
+                error_message: null,
+                started_at: item.timestamp,
+              };
+            });
+          } catch {
+            return [];
+          }
+        });
+
+        const allResults = await batchedPromises(fetchFns, 2);
+        for (const logs of allResults) heartbeatRecords.push(...logs);
+
+        let upsertedHB = 0;
+        for (let i = 0; i < heartbeatRecords.length; i += 50) {
+          const batch = heartbeatRecords.slice(i, i + 50);
+          const { error } = await supabase
+            .from("make_heartbeat")
+            .upsert(batch, { onConflict: "execution_id", ignoreDuplicates: false });
+          if (error) {
+            console.error("Heartbeat upsert error:", error.message);
+          } else {
+            upsertedHB += batch.length;
+          }
+        }
+
+        results.heartbeat = {
+          scenarios: scenarios.length,
+          records: heartbeatRecords.length,
+          upserted: upsertedHB,
+        };
+        console.log(`Heartbeat: ${scenarios.length} scenarios, ${upsertedHB} upserted`);
+      }
+    }
+
+    results.syncedAt = new Date().toISOString();
+
+    return new Response(JSON.stringify(results), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    console.error("cron-sync error:", error);
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
