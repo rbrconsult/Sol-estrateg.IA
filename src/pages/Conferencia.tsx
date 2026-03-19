@@ -1,20 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X, ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Search, Loader2 } from "lucide-react";
+import { ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 // Mock data removed — using real data only
 import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
-import { SLAMetricsMock } from "@/components/conferencia/SLAMetricsMock";
 import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
+import { FloatingFilter } from "@/components/conferencia/FloatingFilter";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -159,7 +155,7 @@ export default function Conferencia() {
   const [filterResp, setFilterResp] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const hasFilters = periodo !== "30d" || dateFrom || dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || searchTerm;
+  const hasFilters = periodo !== "30d" || !!dateFrom || !!dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || !!searchTerm;
   const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); setFilterEtapa("todas"); setFilterTemp("todas"); setFilterResp("todos"); setSearchTerm(""); };
 
   const effectiveDateRange = useMemo(() => {
@@ -302,81 +298,21 @@ export default function Conferencia() {
           </div>
         </header>
 
-        {/* ══════ FILTROS ══════ */}
-        <section className="mt-3 flex flex-wrap items-center gap-2 mb-5">
-          <Select value={periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
-            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hoje">Hoje</SelectItem>
-              <SelectItem value="3d">3 dias</SelectItem>
-              <SelectItem value="7d">7 dias</SelectItem>
-              <SelectItem value="30d">30 dias</SelectItem>
-              <SelectItem value="90d">90 dias</SelectItem>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
-          {periodo === "custom" && (
-            <>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yy") : "Início"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateTo ? format(dateTo, "dd/MM/yy") : "Fim"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={ptBR} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1" onClick={clearFilters}>
-              <X className="h-3 w-3" /> Limpar
-            </Button>
-          )}
-          </section>
+        {/* ══════ FLOATING FILTER FAB ══════ */}
+        <FloatingFilter
+          periodo={periodo} setPeriodo={setPeriodo}
+          dateFrom={dateFrom} setDateFrom={setDateFrom}
+          dateTo={dateTo} setDateTo={setDateTo}
+          filterEtapa={filterEtapa} setFilterEtapa={setFilterEtapa}
+          filterTemp={filterTemp} setFilterTemp={setFilterTemp}
+          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+          etapasUnicas={etapasUnicas}
+          hasFilters={hasFilters} clearFilters={clearFilters}
+        />
 
-          {/* ══════ FILTROS OPERACIONAIS ══════ */}
-          <section className="flex flex-wrap items-center gap-2 mb-5">
-            <Select value={filterEtapa} onValueChange={setFilterEtapa}>
-              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Etapa" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas Etapas</SelectItem>
-                {etapasUnicas.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterTemp} onValueChange={setFilterTemp}>
-              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Temperatura" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas Temps</SelectItem>
-                <SelectItem value="QUENTE">Quente</SelectItem>
-                <SelectItem value="MORNO">Morno</SelectItem>
-                <SelectItem value="FRIO">Frio</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Buscar lead..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-8 w-[180px] pl-7 text-xs"
-              />
-            </div>
-          </section>
+
+
+
         {/* ══════ ROW 1.5 — SOL HOJE (7 dias) ══════ */}
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
@@ -668,13 +604,16 @@ export default function Conferencia() {
             </div>
           </div>
 
-          {/* SLA + Tempo */}
-          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-around">
-            <SLAGauge pct={sla.pctAbordados5min} />
+          {/* Resumo Operacional Quick */}
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Tempo Médio</p>
-              <p className="text-2xl font-extrabold text-foreground">{sla.tempoMedioRespostaLead}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">resposta do lead</p>
+              <p className="text-3xl font-extrabold text-foreground tabular-nums">{filteredLeads.length}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">leads filtrados</p>
+              <div className="flex gap-2 mt-2 justify-center">
+                <span className="text-[10px] text-destructive font-semibold">{filteredLeads.filter(l => l.temperatura === "QUENTE").length} 🔥</span>
+                <span className="text-[10px] text-warning font-semibold">{filteredLeads.filter(l => l.temperatura === "MORNO").length} 🌡️</span>
+                <span className="text-[10px] text-primary font-semibold">{filteredLeads.filter(l => l.temperatura === "FRIO").length} ❄️</span>
+              </div>
             </div>
           </div>
         </section>
@@ -760,109 +699,60 @@ export default function Conferencia() {
           </div>
         </section>
 
-        {/* ══════ ROW 7 — Tabela de Leads Detalhados ══════ */}
-        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Tabela de Leads Detalhados</p>
-          <div className="overflow-auto max-h-[500px]">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="text-center py-2 px-2 text-[10px] text-muted-foreground font-medium w-10">#</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Cliente</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Etapa</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">Temp</th>
-                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">Score</th>
-                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">SLA (dias)</th>
-                  <th className="text-left py-2 px-2 text-[10px] text-muted-foreground font-medium">FUP</th>
-                  <th className="text-right py-2 px-2 text-[10px] text-muted-foreground font-medium">Valor</th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLeads.map((lead, idx) => (
-                  <>
-                    <tr
-                      key={lead.id}
-                      className={cn(
-                        "border-b border-border/30 hover:bg-muted/30 cursor-pointer transition-colors",
-                        expandedLead === lead.id && "bg-muted/20"
-                      )}
-                      onClick={() => setExpandedLead(expandedLead === lead.id ? null : lead.id)}
-                    >
-                      <td className="py-2 px-2 text-center text-muted-foreground tabular-nums">{idx + 1}</td>
-                      <td className="py-2 px-2 font-medium text-foreground">{lead.nome}</td>
-                      <td className="py-2 px-2 text-muted-foreground">{lead.etapa}</td>
-                      <td className="py-2 px-2"><TempDot t={lead.temperatura} /></td>
-                      <td className="py-2 px-2 text-right tabular-nums font-semibold">{lead.score}</td>
-                      <td className="py-2 px-2 text-right tabular-nums text-muted-foreground">{lead.sla}</td>
-                      <td className="py-2 px-2">
-                        <Badge
-                          variant={
-                            lead.statusFup === "Concluído" ? "default" :
-                            lead.statusFup === "Novo" ? "outline" :
-                            "secondary"
-                          }
-                          className={cn(
-                            "text-[9px] px-1.5 py-0",
-                            lead.statusFup === "FUP Frio" && "bg-blue-500/15 text-blue-500 border-blue-500/30",
-                            lead.statusFup === "Qualificação" && "bg-primary/15 text-primary border-primary/30",
-                            lead.statusFup === "Aguardando" && "bg-warning/15 text-warning border-warning/30",
-                            lead.statusFup === "Concluído" && "bg-success/15 text-success border-success/30",
-                          )}
-                        >
-                          {lead.statusFup}
-                        </Badge>
-                      </td>
-                      <td className="py-2 px-2 text-right tabular-nums text-foreground">
-                        {lead.valor > 0 ? `R$ ${(lead.valor / 1000).toFixed(0)}k` : "—"}
-                      </td>
-                      <td className="py-2 px-1">
-                        {expandedLead === lead.id ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
-                      </td>
-                    </tr>
-                    {expandedLead === lead.id && (
-                      <tr key={`${lead.id}-detail`}>
-                        <td colSpan={8} className="px-4 py-2 bg-muted/10">
-                          <div className="space-y-1.5 pl-4 border-l-2 border-primary/30">
-                            {lead.historico.map((h, hi) => (
-                              <div key={hi} className="flex items-start gap-2">
-                                <Badge variant="secondary" className="text-[8px] px-1 py-0 shrink-0">{h.tipo}</Badge>
-                                <span className="text-[10px] text-muted-foreground shrink-0">{h.data}</span>
-                                <span className="text-[10px] text-foreground">{h.msg}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                ))}
-              </tbody>
-            </table>
+        {/* ══════ ROW 7 — SLA Consolidado ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-border/50 bg-card p-4 flex flex-col items-center justify-center">
+            <SLAGauge pct={sla.pctAbordados5min} />
+            <p className="text-[10px] text-muted-foreground mt-2">Abordados em &lt;5min</p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card p-4 space-y-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Tempo Médio de Resposta</p>
+            <p className="text-3xl font-extrabold text-foreground text-center">{sla.tempoMedioRespostaLead}</p>
+            <p className="text-[10px] text-muted-foreground text-center">resposta do lead</p>
+            <div className="pt-2 border-t border-border/30 space-y-1.5">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">1º Atendimento</span>
+                <span className="font-semibold text-foreground">{slaMockData.primeiroAtendimento.media}min</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">Dentro 24h</span>
+                <span className="font-semibold text-foreground">{slaMockData.primeiroAtendimento.pctDentro24h}%</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-muted-foreground">Proposta (média)</span>
+                <span className="font-semibold text-foreground">{slaMockData.geralProposta.mediaDias}d</span>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-card p-4 space-y-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA por Etapa</p>
+            <div className="space-y-2">
+              {slaMockData.porEtapa.slice(0, 5).map((e: any) => {
+                const pct = e.meta > 0 ? Math.min((e.mediaDias / e.meta) * 100, 100) : 0;
+                const status = pct <= 60 ? "bg-success" : pct <= 85 ? "bg-warning" : "bg-destructive";
+                return (
+                  <div key={e.etapa}>
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-muted-foreground truncate">{e.etapa}</span>
+                      <span className="font-semibold text-foreground tabular-nums">{e.mediaDias}d / {e.meta}d</span>
+                    </div>
+                    <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
+                      <div className={cn("h-full rounded transition-all", status)} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        {/* ══════ ROW 8 — SLA Metrics ══════ */}
-        <SLAMetricsMock data={slaMockData} />
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
         <RobotInsightsMock data={robotInsightsData} />
 
         {/* ══════ ROW 10 — Score por Origem ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <section className="mt-4">
           <ScorePorOrigem data={scorePorOrigemData} />
-          <div className="rounded-lg border border-border/50 bg-card p-4 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Resumo Operacional</p>
-              <p className="text-3xl font-extrabold text-foreground tabular-nums">{filteredLeads.length}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">leads filtrados</p>
-              <div className="flex gap-3 mt-3 justify-center">
-                <span className="text-[10px] text-orange-500 font-semibold">{filteredLeads.filter(l => l.temperatura === "QUENTE").length} quentes</span>
-                <span className="text-[10px] text-amber-400 font-semibold">{filteredLeads.filter(l => l.temperatura === "MORNO").length} mornos</span>
-                <span className="text-[10px] text-blue-400 font-semibold">{filteredLeads.filter(l => l.temperatura === "FRIO").length} frios</span>
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ══════ ROW 11 — Monthly Evolution ══════ */}

@@ -34,6 +34,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Sol Estrateg.IA", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
       { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
+      { title: "Forecast", icon: TrendingUp, path: "/forecast", moduleKey: "pipeline" },
       { title: "Leads", icon: Users, path: "/leads" },
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
       { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
@@ -122,7 +123,7 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
           isMobile
             ? "w-full"
             : "fixed left-0 top-0 z-50",
-          isCollapsed ? "w-16" : "w-60"
+          isCollapsed ? "w-16" : "w-52"
         )}
       >
         {/* Header */}

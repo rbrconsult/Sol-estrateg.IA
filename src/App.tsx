@@ -13,6 +13,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import PipelinePage from "./pages/PipelinePage";
+import Forecast from "./pages/Forecast";
 import Performance from "./pages/Performance";
 
 import Auth from "./pages/Auth";
@@ -100,6 +101,11 @@ const App = () => (
               <Route path="/pipeline" element={
                 <ProtectedRoute>
                   <MainLayout><ModuleGuard moduleKey="pipeline"><PipelinePage /></ModuleGuard></MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/forecast" element={
+                <ProtectedRoute>
+                  <MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout>
                 </ProtectedRoute>
               } />
               <Route path="/performance" element={
