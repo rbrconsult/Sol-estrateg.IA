@@ -63,7 +63,7 @@ export function usePageFilters(config?: FilterConfig) {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
-  /** Filter records by date, canal, temperatura, search */
+  /** Filter MakeRecords by date, canal, temperatura, search */
   const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string }>(records: T[]): T[] => {
     return records.filter(r => {
       // Date
@@ -85,6 +85,33 @@ export function usePageFilters(config?: FilterConfig) {
       return true;
     });
   }, [effectiveDateRange, filters.canal, filters.temperatura, filters.searchTerm]);
+
+  /** Filter Proposals (from dataAdapter) by period, temperatura, search */
+  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string }>(proposals: T[]): T[] => {
+    return proposals.filter(p => {
+      // Date
+      const { from, to } = effectiveDateRange;
+      if (from || to) {
+        const dateStr = p.dataCriacaoProposta;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return false;
+        if (from && d < from) return false;
+        if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
+      }
+      // Temperatura
+      if (filters.temperatura !== "todas" && (p.temperatura || "").toUpperCase() !== filters.temperatura) return false;
+      // Search
+      if (filters.searchTerm) {
+        const term = filters.searchTerm.toLowerCase();
+        const match = (p.nomeCliente || "").toLowerCase().includes(term) ||
+          (p.representante || "").toLowerCase().includes(term) ||
+          (p.responsavel || "").toLowerCase().includes(term);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [effectiveDateRange, filters.temperatura, filters.searchTerm]);
 
   return {
     filters, hasFilters, clearFilters,
