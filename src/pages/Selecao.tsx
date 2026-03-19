@@ -101,85 +101,66 @@ export default function Selecao() {
         </p>
       </div>
 
-      {/* Big Toggle */}
-      <div className="relative z-10 w-full max-w-2xl px-6">
-        <div className="relative flex rounded-2xl border border-border bg-card/80 backdrop-blur-sm overflow-hidden shadow-lg">
-          {/* Active indicator */}
+      {/* Cards separados */}
+      <div className="relative z-10 flex flex-col sm:flex-row gap-6 px-6">
+        {/* SOLAR MARKET */}
+        <button
+          onClick={() => handleSelect("solar")}
+          disabled={animating}
+          className={`relative flex flex-col items-center gap-4 w-72 py-12 px-8 rounded-2xl border bg-card/80 backdrop-blur-sm shadow-lg transition-all duration-500 group ${
+            selected === "solar"
+              ? "border-warning/60 scale-[1.03] shadow-warning/10 shadow-xl"
+              : selected === "sol"
+              ? "opacity-30 scale-95 border-border"
+              : "border-border hover:border-warning/40 hover:shadow-xl hover:shadow-warning/5"
+          }`}
+        >
           <div
-            className="absolute inset-y-1 rounded-xl transition-all duration-500 ease-out"
-            style={{
-              width: "calc(50% - 4px)",
-              left: selected === "sol" ? "calc(50% + 2px)" : "2px",
-              background: selected
-                ? selected === "sol"
-                  ? "hsl(var(--primary) / 0.12)"
-                  : "hsl(45 93% 47% / 0.12)"
-                : "transparent",
-              opacity: selected ? 1 : 0,
-            }}
-          />
-
-          {/* SOLAR MARKET button */}
-          <button
-            onClick={() => handleSelect("solar")}
-            disabled={animating}
-            className={`relative flex-1 flex flex-col items-center gap-3 py-10 px-6 transition-all duration-500 group ${
+            className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
               selected === "solar"
-                ? "scale-[1.02]"
-                : selected === "sol"
-                ? "opacity-40 scale-95"
-                : "hover:bg-muted/30"
+                ? "bg-warning/20 scale-110"
+                : "bg-warning/10 group-hover:bg-warning/15"
             }`}
           >
-            <div
-              className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
-                selected === "solar"
-                  ? "bg-warning/20 scale-110"
-                  : "bg-warning/10 group-hover:bg-warning/15"
-              }`}
-            >
-              <Sun className="h-8 w-8 text-warning" />
-            </div>
-            <span className="text-xl font-bold text-foreground tracking-tight">
-              SOLAR MARKET
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Pré-venda & Comercial
-            </span>
-          </button>
+            <Sun className="h-8 w-8 text-warning" />
+          </div>
+          <span className="text-xl font-bold text-foreground tracking-tight">
+            SOLAR MARKET
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Pré-venda & Comercial
+          </span>
+        </button>
 
-          {/* Divider */}
-          <div className="w-px bg-border self-stretch my-4" />
-
-          {/* SOL.estrategia button */}
-          <button
-            onClick={() => handleSelect("sol")}
-            disabled={animating}
-            className={`relative flex-1 flex flex-col items-center gap-3 py-10 px-6 transition-all duration-500 group ${
+        {/* SOL.estrategia */}
+        <button
+          onClick={() => handleSelect("sol")}
+          disabled={animating}
+          className={`relative flex flex-col items-center gap-4 w-72 py-12 px-8 rounded-2xl border bg-card/80 backdrop-blur-sm shadow-lg transition-all duration-500 group ${
+            selected === "sol"
+              ? "border-primary/60 scale-[1.03] shadow-primary/10 shadow-xl"
+              : selected === "solar"
+              ? "opacity-30 scale-95 border-border"
+              : "border-border hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5"
+          }`}
+        >
+          <div
+            className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
               selected === "sol"
-                ? "scale-[1.02]"
-                : selected === "solar"
-                ? "opacity-40 scale-95"
-                : "hover:bg-muted/30"
+                ? "bg-primary/20 scale-110"
+                : "bg-primary/10 group-hover:bg-primary/15"
             }`}
           >
-            <div
-              className={`flex items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500 ${
-                selected === "sol"
-                  ? "bg-primary/20 scale-110"
-                  : "bg-primary/10 group-hover:bg-primary/15"
-              }`}
-            >
-              <BarChart3 className="h-8 w-8 text-primary" />
-            </div>
-            <span className="text-xl font-bold text-foreground tracking-tight">
-              SOL.estrateg<span className="text-primary">IA</span>
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Inteligência & Operações
-            </span>
-          </button>
-        </div>
+            <BarChart3 className="h-8 w-8 text-primary" />
+          </div>
+          <span className="text-xl font-bold text-foreground tracking-tight">
+            SOL.estrateg<span className="text-primary">IA</span>
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Inteligência & Operações
+          </span>
+        </button>
+      </div>
 
         {/* Animated message */}
         <div
