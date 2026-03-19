@@ -231,7 +231,11 @@ function deriveSolData(records: MakeRecord[]) {
 
 export default function RoboSol() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const records = makeRecords || [];
+  const allRecords = makeRecords || [];
+
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, canais });
+  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
 
