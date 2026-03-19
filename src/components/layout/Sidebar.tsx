@@ -4,7 +4,7 @@ import {
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, Settings, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
-  ChevronsLeft, ChevronsRight,
+  ChevronsLeft, ChevronsRight, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 interface MenuItem {
   title: string;
@@ -22,24 +23,54 @@ interface MenuItem {
   moduleKey?: string;
 }
 
-const menuItems: MenuItem[] = [
-  { title: "Sol Estrateg.IA", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
-  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
-  { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
-  { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
-  { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
-  { title: "Monitor de SLA", icon: Clock, path: "/sla" },
-  { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
-  { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
-  { title: "Analista Follow-up", icon: Target, path: "/followup" },
-  { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "bi" },
-  { title: "Mídia × Receita", icon: DollarSign, path: "/midia" },
-  { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
-  { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "bi" },
-  { title: "Leads", icon: Users, path: "/leads" },
-  { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
-  { title: "Reports", icon: FileText, path: "/reports" },
-  { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
+interface MenuGroup {
+  label: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    label: "Pré-venda",
+    items: [
+      { title: "Sol Estrateg.IA", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
+      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
+      { title: "Leads", icon: Users, path: "/leads" },
+      { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
+      { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
+    ],
+  },
+  {
+    label: "Comercial",
+    items: [
+      { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
+      { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
+      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
+    ],
+  },
+  {
+    label: "Inteligência",
+    items: [
+      { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
+      { title: "Analista Follow-up", icon: Target, path: "/followup" },
+      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "bi" },
+      { title: "Monitor de SLA", icon: Clock, path: "/sla" },
+      { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "bi" },
+      { title: "Mídia × Receita", icon: DollarSign, path: "/midia" },
+    ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { title: "Reports", icon: FileText, path: "/reports" },
+    ],
+  },
+  {
+    label: "Operacional",
+    items: [
+      { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
+      { title: "Operações", icon: Settings, path: "/operacoes", moduleKey: "monitoramento" },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -55,6 +86,23 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
 
+  // Find which groups have the active route to auto-expand
+  const activeGroupIndices = menuGroups.reduce<number[]>((acc, group, idx) => {
+    if (group.items.some((item) => location.pathname === item.path)) acc.push(idx);
+    return acc;
+  }, []);
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set(activeGroupIndices.length ? activeGroupIndices : [0, 1]));
+
+  const toggleGroup = (idx: number) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
   const handleSignOut = async () => {
     await signOut();
     toast.success("Logout realizado com sucesso!");
@@ -63,10 +111,6 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
   const handleNavClick = () => {
     onNavigate?.();
   };
-
-  const visibleItems = menuItems.filter((item) =>
-    item.moduleKey ? hasAccess(item.moduleKey) : true
-  );
 
   const isCollapsed = !isMobile && collapsed;
 
@@ -98,45 +142,82 @@ export function Sidebar({ onResetOnboarding, onNavigate, collapsed = false, onCo
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
-          {visibleItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const link = (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={handleNavClick}
-                className={cn(
-                  "flex items-center gap-2 rounded-md transition-all text-xs",
-                  isCollapsed ? "justify-center px-0 py-2" : "px-2.5 py-1.5",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                )}
-              >
-                <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
-                {!isCollapsed && <span>{item.title}</span>}
-              </Link>
+        <nav className="flex-1 p-1.5 overflow-y-auto space-y-0.5">
+          {menuGroups.map((group, groupIdx) => {
+            const visibleItems = group.items.filter((item) =>
+              item.moduleKey ? hasAccess(item.moduleKey) : true
             );
+            if (visibleItems.length === 0) return null;
+
+            const isExpanded = expandedGroups.has(groupIdx);
 
             if (isCollapsed) {
-              return (
-                <Tooltip key={item.path}>
-                  <TooltipTrigger asChild>{link}</TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">
-                    {item.title}
-                  </TooltipContent>
-                </Tooltip>
-              );
+              // In collapsed mode, show only icons with tooltips, no group labels
+              return visibleItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Tooltip key={item.path}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        onClick={handleNavClick}
+                        className={cn(
+                          "flex items-center justify-center rounded-md transition-all text-xs px-0 py-2",
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        )}
+                      >
+                        <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">
+                      {item.title}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              });
             }
 
-            return link;
+            return (
+              <div key={group.label} className="mb-1">
+                <button
+                  onClick={() => toggleGroup(groupIdx)}
+                  className="flex items-center justify-between w-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-180")} />
+                </button>
+                {isExpanded && (
+                  <div className="space-y-0.5">
+                    {visibleItems.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={handleNavClick}
+                          className={cn(
+                            "flex items-center gap-2 rounded-md transition-all text-xs px-2.5 py-1.5",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          )}
+                        >
+                          <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive && "animate-pulse")} />
+                          <span>{item.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
           })}
         </nav>
 
         {/* Footer */}
         <div className="p-1.5 border-t border-border/50 space-y-1">
-          {/* Collapse toggle (desktop only) */}
           {!isMobile && onCollapsedChange && (
             <Button
               variant="ghost"
