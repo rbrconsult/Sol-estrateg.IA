@@ -46,7 +46,7 @@ export function usePageFilters(config?: FilterConfig) {
   const setSearchTerm = useCallback((v: string) => setFilters(f => ({ ...f, searchTerm: v })), []);
   const clearFilters = useCallback(() => setFilters(defaultState), []);
 
-  const hasFilters = filters.periodo !== "30d" || !!filters.dateFrom || !!filters.dateTo ||
+  const hasFilters = filters.periodo !== "all" || !!filters.dateFrom || !!filters.dateTo ||
     filters.canal !== "todos" || filters.temperatura !== "todas" || !!filters.searchTerm;
 
   const effectiveDateRange = useMemo(() => {
