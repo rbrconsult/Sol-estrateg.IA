@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, HandCoins, LogOut, ArrowLeft, Sun, Menu, BarChart3 } from "lucide-react";
+import { Search, HandCoins, LogOut, ArrowLeft, Sun, Menu, BarChart3, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const menuItems = [
   { title: "Pré-venda", icon: Search, path: "/solarmarket/prevenda" },
   { title: "Comercial", icon: HandCoins, path: "/solarmarket/comercial" },
+  { title: "Vendedores", icon: Users, path: "/solarmarket/vendedores" },
 ];
 
 export function SolarLayout({ children }: { children: ReactNode }) {

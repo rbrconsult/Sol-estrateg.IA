@@ -42,6 +42,7 @@ import AnalistaFollowup from "./pages/AnalistaFollowup";
 // Solar Market
 import PreVenda from "./pages/solar/PreVenda";
 import Comercial from "./pages/solar/Comercial";
+import VendedorPerformance from "./pages/solar/VendedorPerformance";
 import { SolarLayout } from "./components/layout/SolarLayout";
 
 const queryClient = new QueryClient();
@@ -84,6 +85,11 @@ const App = () => (
               <Route path="/solarmarket/comercial" element={
                 <ProtectedRoute>
                   <SolarLayout><Comercial /></SolarLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/solarmarket/vendedores" element={
+                <ProtectedRoute>
+                  <SolarLayout><VendedorPerformance /></SolarLayout>
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={
