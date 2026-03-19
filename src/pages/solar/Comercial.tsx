@@ -44,11 +44,25 @@ export default function Comercial() {
   const { data: records, isLoading, error, refetch, isFetching } = useMakeComercialData();
   const [search, setSearch] = useState("");
   const [filterResp, setFilterResp] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterEtapa, setFilterEtapa] = useState("all");
 
-  // Derive unique responsaveis
+  // Derive unique values for filters
   const responsaveis = useMemo(() => {
     if (!records) return [];
     const set = new Set(records.filter(r => r.responsavel).map(r => r.responsavel));
+    return Array.from(set).sort();
+  }, [records]);
+
+  const statuses = useMemo(() => {
+    if (!records) return [];
+    const set = new Set(records.filter(r => r.statusProposta).map(r => r.statusProposta));
+    return Array.from(set).sort();
+  }, [records]);
+
+  const etapas = useMemo(() => {
+    if (!records) return [];
+    const set = new Set(records.filter(r => r.etapaSM).map(r => r.etapaSM));
     return Array.from(set).sort();
   }, [records]);
 
@@ -57,6 +71,8 @@ export default function Comercial() {
     if (!records) return [];
     return records.filter(r => {
       if (filterResp !== "all" && r.responsavel !== filterResp) return false;
+      if (filterStatus !== "all" && r.statusProposta !== filterStatus) return false;
+      if (filterEtapa !== "all" && r.etapaSM !== filterEtapa) return false;
       if (search) {
         const q = search.toLowerCase();
         return (
@@ -69,7 +85,7 @@ export default function Comercial() {
       }
       return true;
     });
-  }, [records, search, filterResp]);
+  }, [records, search, filterResp, filterStatus, filterEtapa]);
 
   // Group by etapa for Kanban
   const byEtapa = useMemo(() => {
