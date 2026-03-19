@@ -19,7 +19,7 @@ export function ModuleGuard({ moduleKey, children }: ModuleGuardProps) {
   }
 
   if (!hasAccess(moduleKey)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/selecao" replace />;
   }
 
   return <>{children}</>;

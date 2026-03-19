@@ -23,7 +23,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { title: "Sol Estrateg.IA", icon: Presentation, path: "/", moduleKey: "conferencia" },
+  { title: "Sol Estrateg.IA", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
   { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", moduleKey: "dashboard" },
   { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
   { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },

@@ -86,7 +86,7 @@ export default function Admin() {
   useEffect(() => {
     if (!authLoading && userRole !== 'super_admin') {
       toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
-      navigate('/');
+      navigate('/selecao');
     }
   }, [userRole, authLoading, navigate]);
 
@@ -520,7 +520,7 @@ export default function Admin() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/selecao')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

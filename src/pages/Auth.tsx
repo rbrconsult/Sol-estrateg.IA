@@ -120,7 +120,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Login realizado com sucesso!');
-      navigate('/');
+      navigate('/selecao');
     }
   };
 
