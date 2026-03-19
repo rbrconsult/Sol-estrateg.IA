@@ -37,6 +37,7 @@ interface Alert {
   desc: string;
   severity: Severity;
   time: string;
+  leadData?: { nome: string; telefone: string; score: number; temp: string; etapa: string; valor: string };
 }
 
 const severityStyles: Record<Severity, string> = {
