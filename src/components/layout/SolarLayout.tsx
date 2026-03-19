@@ -9,7 +9,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const menuItems = [
-  { title: "Pré-venda", icon: Search, path: "/solarmarket" },
+  { title: "Pré-venda", icon: Search, path: "/solarmarket/prevenda" },
   { title: "Comercial", icon: HandCoins, path: "/solarmarket/comercial" },
 ];
 

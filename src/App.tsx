@@ -76,7 +76,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               {/* Solar Market routes */}
-              <Route path="/solarmarket" element={
+              <Route path="/solarmarket/prevenda" element={
                 <ProtectedRoute>
                   <SolarLayout><PreVenda /></SolarLayout>
                 </ProtectedRoute>

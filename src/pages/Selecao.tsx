@@ -43,7 +43,7 @@ export default function Selecao() {
 
       setTimeout(() => navigate("/conferencia"), 2800);
     } else if (choice === "solar") {
-      setTimeout(() => navigate("/solarmarket"), 2200);
+      setTimeout(() => navigate("/solarmarket/prevenda"), 2200);
     }
   }, [animating, navigate]);
 
