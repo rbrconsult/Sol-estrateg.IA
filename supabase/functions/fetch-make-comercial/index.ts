@@ -161,15 +161,19 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    // Filter by responsavel_id if we have allowed IDs
+    // Filter by responsavel name if we have allowed values
     let filteredRecords = allRecords;
     if (allowedIds.length > 0) {
+      const allowedNormalized = allowedIds.map(id => id.toLowerCase().trim());
       filteredRecords = allRecords.filter((r) => {
         const d = r.data || r;
+        const respName = String(d.responsavel || "").toLowerCase().trim();
         const respId = String(d.responsavel_id || "").trim();
-        return respId && allowedIds.includes(respId);
+        // Match by name OR by ID (future-proof)
+        return (respName && allowedNormalized.includes(respName)) ||
+               (respId && allowedIds.includes(respId));
       });
-      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, ${allowedIds.length} IDs)`);
+      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, ${allowedIds.length} allowed)`);
     } else {
       console.log(`fetch-make-comercial: ${allRecords.length} records (no filter, global/super_admin)`);
     }
