@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, ArrowLeft, ArrowRight, Check, Building2, Webhook, Database, Key, Users, UserPlus, UserCheck } from 'lucide-react';
+import { Loader2, Plus, Trash2, ArrowLeft, ArrowRight, Check, Building2, Webhook, Database, Key, Users, UserPlus, UserCheck, LayoutGrid } from 'lucide-react';
+import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
 
 interface UserOption {
   id: string;
