@@ -43,6 +43,11 @@ export interface Proposal {
   makeRespondeu?: boolean;
   makeDataResposta?: string;
   makeHistorico?: { tipo: string; mensagem: string; data: string }[];
+  makeCidade?: string;
+  makeValorConta?: string;
+  makeEmail?: string;
+  makeImovel?: string;
+  makeNome?: string;
 }
 
 // Etapas reais da planilha SOL Insights
@@ -935,6 +940,11 @@ export function enrichProposalsWithMake(proposals: Proposal[], makeRecords: Make
       makeRespondeu: respondeu,
       makeDataResposta: primary.data_resposta,
       makeHistorico: allHistorico,
+      makeCidade: primary.cidade,
+      makeValorConta: primary.valorConta,
+      makeEmail: primary.email,
+      makeImovel: primary.imovel,
+      makeNome: primary.nome,
     };
   });
 }

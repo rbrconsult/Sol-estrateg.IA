@@ -128,7 +128,7 @@ export function PageFloatingFilter({
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "fixed bottom-20 right-5 z-[60] flex items-center gap-2 rounded-full shadow-lg transition-all duration-300",
+          "fixed bottom-20 right-5 z-[9990] flex items-center gap-2 rounded-full shadow-lg transition-all duration-300",
           "bg-primary text-primary-foreground hover:shadow-xl hover:scale-105",
           open ? "px-4 py-3" : "p-3"
         )}
@@ -143,7 +143,7 @@ export function PageFloatingFilter({
       </button>
 
       {open && (
-        <div className="fixed bottom-36 right-5 z-[60] w-72 rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-2xl p-4 space-y-3 animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="fixed bottom-36 right-5 z-[9990] w-72 rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-2xl p-4 space-y-3 animate-in slide-in-from-bottom-4 fade-in duration-200">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-foreground">Filtros</p>
             {hasFilters && (
