@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { getForecastData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
@@ -7,17 +7,24 @@ import { TrendingUp, Target, Calendar, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
 import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 export default function Forecast() {
-  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
+  const { selectedOrgName } = useOrgFilter();
   const [pipelineMode, setPipelineMode] = useState<"receita" | "potencia" | "ambos">("ambos");
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+
+  const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
 
   const forecastData = useMemo(() => {
-    if (allProposals.length === 0) return null;
-    return getForecastData(allProposals);
-  }, [allProposals]);
+    if (filteredProposals.length === 0) return null;
+    return getForecastData(filteredProposals);
+  }, [filteredProposals]);
 
   if (isLoading) {
     return (
@@ -49,101 +56,119 @@ export default function Forecast() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Forecast</h1>
           <p className="text-xs md:text-sm text-muted-foreground">Previsão de receita e potência baseada em leads em prospecção</p>
         </div>
-        <HelpButton moduleId="forecast" label="Ajuda do Forecast" />
+        <div className="flex items-center gap-2">
+          {orgFilterActive && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+              🏢 {selectedOrgName}
+            </Badge>
+          )}
+          <Badge variant="outline" className="text-xs">
+            {filteredProposals.length} propostas
+          </Badge>
+          <HelpButton moduleId="forecast" label="Ajuda do Forecast" />
+        </div>
       </div>
+
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
+      />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Receita 30 dias</p>
-                <p className="text-2xl font-bold text-foreground">{formatCurrencyAbbrev(forecastData.forecast30)}</p>
-              </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Target className="h-4 w-4" />
+              <span className="text-xs font-medium">Forecast 30d</span>
             </div>
+            <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast30)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia30)} kWp</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-chart-2/10 to-chart-2/5 border-chart-2/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-chart-2/20 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-chart-2" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Receita 90 dias</p>
-                <p className="text-2xl font-bold text-foreground">{formatCurrencyAbbrev(forecastData.forecast90)}</p>
-              </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs font-medium">Forecast 60d</span>
             </div>
+            <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast60)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia60)} kWp</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-chart-3/10 to-chart-3/5 border-chart-3/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-chart-3/20 rounded-lg">
-                <Target className="h-5 w-5 text-chart-3" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Potência 30d</p>
-                <p className="text-2xl font-bold text-foreground">{formatNumber(forecastData.potencia30)} kWp</p>
-              </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Calendar className="h-4 w-4" />
+              <span className="text-xs font-medium">Forecast 90d</span>
             </div>
+            <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast90)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia90)} kWp</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-chart-4/10 to-chart-4/5 border-chart-4/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-chart-4/20 rounded-lg">
-                <Target className="h-5 w-5 text-chart-4" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Potência 90d</p>
-                <p className="text-2xl font-bold text-foreground">{formatNumber(forecastData.potencia90)} kWp</p>
-              </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs font-medium">Leads Abertos</span>
             </div>
+            <p className="text-2xl font-bold">{forecastData.leadsAbertos}</p>
+            <p className="text-xs text-muted-foreground mt-1">Em prospecção</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Row */}
+      {/* Mode selector */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground font-medium">Visualizar:</span>
+        <Tabs value={pipelineMode} onValueChange={(v) => setPipelineMode(v as any)}>
+          <TabsList>
+            <TabsTrigger value="receita">R$ Receita</TabsTrigger>
+            <TabsTrigger value="potencia">kWp Potência</TabsTrigger>
+            <TabsTrigger value="ambos">Ambos</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Linha de Previsão */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Linha de Previsão
-            </CardTitle>
+            <CardTitle>Projeção por Período</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="periodo" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
                 <Tooltip
-                  formatter={(value: number) => [formatCurrencyAbbrev(value), 'Receita']}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                  formatter={(value: number, name: string) => [
+                    name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWp`,
+                    name === 'receita' ? 'Receita' : 'Potência'
+                  ]}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
                 />
-                <Line type="monotone" dataKey="receita" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 6 }} />
-              </LineChart>
+                {(pipelineMode === "receita" || pipelineMode === "ambos") && (
+                  <Bar dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="receita" />
+                )}
+                {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
+                  <Bar dataKey="potencia" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="potencia" />
+                )}
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Distribuição de Probabilidade */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Distribuição por Probabilidade
-            </CardTitle>
+            <CardTitle>Distribuição por Probabilidade</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -155,63 +180,53 @@ export default function Forecast() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ faixa, percent }) => `${faixa}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ faixa, percent }) => `${faixa} ${(percent * 100).toFixed(0)}%`}
                 >
                   {forecastData.distribuicao.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value: number) => [formatCurrencyAbbrev(value), 'Valor']}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                />
                 <Legend />
+                <Tooltip
+                  formatter={(value: number) => formatCurrencyAbbrev(value)}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Pipeline Ponderado with micro-filter */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Pipeline Ponderado
-            </CardTitle>
-            <Tabs value={pipelineMode} onValueChange={(v) => setPipelineMode(v as any)}>
-              <TabsList className="h-8">
-                <TabsTrigger value="ambos" className="text-xs h-6 px-2">R$ + kWp</TabsTrigger>
-                <TabsTrigger value="receita" className="text-xs h-6 px-2">R$</TabsTrigger>
-                <TabsTrigger value="potencia" className="text-xs h-6 px-2">kWp</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="periodo" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => pipelineMode === "potencia" ? `${formatNumber(v)} kWp` : formatCurrencyAbbrev(v)} />
-              <Tooltip
-                formatter={(value: number, name: string) => [
-                  name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWp`,
-                  name === 'receita' ? 'Receita Prevista' : 'Potência Prevista'
-                ]}
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-              />
-              {(pipelineMode === "receita" || pipelineMode === "ambos") && (
-                <Bar dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Receita" />
-              )}
-              {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
-                <Bar dataKey="potencia" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Potência" />
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Trend */}
+      {forecastData.tendencia && forecastData.tendencia.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tendência Mensal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={forecastData.tendencia}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrencyAbbrev(value)}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Line type="monotone" dataKey="valor" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

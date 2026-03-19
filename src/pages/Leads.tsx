@@ -123,26 +123,8 @@ export default function Leads() {
 
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
 
-  /* ── filtered data (using PageFloatingFilter state) ── */
-  const filtered = useMemo(() => {
-    let data = [...proposals];
-
-    // Temperature from floating filter
-    if (pf.filters.temperatura !== "todas") {
-      data = data.filter(p => (p.temperatura || "").toUpperCase() === pf.filters.temperatura);
-    }
-
-    // Search from floating filter
-    if (pf.filters.searchTerm) {
-      const term = pf.filters.searchTerm.toLowerCase();
-      data = data.filter(p =>
-        (p.nomeCliente || "").toLowerCase().includes(term) ||
-        (p.responsavel || "").toLowerCase().includes(term)
-      );
-    }
-
-    return data;
-  }, [proposals, pf.filters.temperatura, pf.filters.searchTerm]);
+  /* ── filtered data (using PageFloatingFilter state including period) ── */
+  const filtered = useMemo(() => pf.filterProposals(proposals), [proposals, pf.filterProposals]);
 
   /* ── filtered Make records (synced with filtered proposals) ── */
   const filteredPhones = useMemo(() => {

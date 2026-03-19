@@ -16,21 +16,8 @@ export default function Vendedores() {
   const { selectedOrgName } = useOrgFilter();
   const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
 
-  // Apply page-level filters to proposals (search by representante name)
-  const filteredProposals = useMemo(() => {
-    let data = [...allProposals];
-    if (pf.filters.searchTerm) {
-      const term = pf.filters.searchTerm.toLowerCase();
-      data = data.filter(p => 
-        (p.representante || "").toLowerCase().includes(term) ||
-        (p.nomeCliente || "").toLowerCase().includes(term)
-      );
-    }
-    if (pf.filters.temperatura !== "todas") {
-      data = data.filter(p => (p.temperatura || "").toUpperCase() === pf.filters.temperatura);
-    }
-    return data;
-  }, [allProposals, pf.filters.searchTerm, pf.filters.temperatura]);
+  // Apply ALL filters (period, temperatura, search) using unified filterProposals
+  const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
 
   const { vendedorPerformance, perdasData } = useMemo(() => {
     if (filteredProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
