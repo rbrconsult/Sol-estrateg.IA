@@ -103,7 +103,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
     }
     setFormLoading(true);
     try {
-      const settings = { google_sheet_id: orgForm.googleSheetId || null, status_url: orgForm.statusUrl || null };
+      const settings = {};
       if (editingOrg) {
         const { error } = await supabase
           .from('organizations')
