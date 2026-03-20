@@ -373,8 +373,8 @@ export default function Leads() {
         <PageFloatingFilter
           filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
           setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-          config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar lead..." }}
         />
 
         {/* ══════ KPIs ══════ */}
