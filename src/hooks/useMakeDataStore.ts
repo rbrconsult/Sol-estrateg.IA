@@ -60,6 +60,11 @@ export function normalizePhone(phone: string): string {
   return digits;
 }
 
+/** Status normalization map — reclassify orphaned/ambiguous statuses */
+const STATUS_NORMALIZATION: Record<string, string> = {
+  'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
+};
+
 /** Parse raw Make Data Store records into typed MakeRecords */
 function parseRecords(raw: any[]): MakeRecord[] {
   return raw.map((r) => {
