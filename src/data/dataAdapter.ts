@@ -1,4 +1,4 @@
-import { Proposal as SheetProposal } from '@/hooks/useGoogleSheetsData';
+import { ComercialRecord } from '@/hooks/useMakeComercialData';
 import { MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 
 export interface Proposal {
