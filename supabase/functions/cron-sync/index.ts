@@ -44,6 +44,11 @@ function normalizePhone(phone: string): string {
   return digits;
 }
 
+/** Status normalization — reclassify orphaned/ambiguous statuses */
+const STATUS_NORMALIZATION: Record<string, string> = {
+  'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
+};
+
 interface OrgCredentials {
   orgId: string;
   orgName: string;
