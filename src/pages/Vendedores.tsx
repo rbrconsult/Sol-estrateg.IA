@@ -9,15 +9,15 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 export default function Vendedores() {
   const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const gf = useGlobalFilters();
 
-  // Apply ALL filters (period, temperatura, search) using unified filterProposals
-  const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
+  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
   const { vendedorPerformance, perdasData } = useMemo(() => {
     if (filteredProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
@@ -53,13 +53,12 @@ export default function Vendedores() {
 
   const conversaoData = vendedorPerformance.slice(0, 10).map(v => ({
     nome: v.nome.split(' ')[0],
-    conversao: v.taxaConversao,
+    conversao: v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0,
     ticketMedio: v.ticketMedio / 1000,
   }));
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Vendedores</h1>
@@ -79,15 +78,14 @@ export default function Vendedores() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar vendedor..." }}
       />
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Receita por Vendedor */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -101,13 +99,9 @@ export default function Vendedores() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
                 <YAxis dataKey="nome" type="category" stroke="hsl(var(--muted-foreground))" width={80} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number, name: string) => [formatCurrencyAbbrev(value), name === 'ganho' ? 'Ganho' : name === 'perdido' ? 'Perdido' : 'Em Aberto']}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                 />
                 <Legend />
                 <Bar dataKey="ganho" stackId="a" fill="hsl(var(--chart-2))" name="Ganho" />
@@ -118,12 +112,11 @@ export default function Vendedores() {
           </CardContent>
         </Card>
 
-        {/* Conversão por Vendedor */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Taxa de Conversão
+              Taxa de Conversão (Fechadas ÷ Enviadas)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -132,13 +125,9 @@ export default function Vendedores() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="nome" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}%`} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => [`${value.toFixed(1)}%`, 'Conversão']}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                 />
                 <Bar dataKey="conversao" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -147,13 +136,14 @@ export default function Vendedores() {
         </Card>
       </div>
 
-      {/* Tabela Detalhada */}
+      {/* Tabela com ganhos, contratos, conversão */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Tabela de Performance
+            Detalhamento por Vendedor
           </CardTitle>
+          <p className="text-xs text-muted-foreground">Ganhos, contratos fechados e taxa de conversão (fechadas ÷ enviadas)</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -162,9 +152,9 @@ export default function Vendedores() {
                 <tr className="border-b border-border">
                   <th className="text-left p-3 font-semibold text-muted-foreground">Vendedor</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Propostas</th>
-                  <th className="text-right p-3 font-semibold text-muted-foreground">Ganhas</th>
+                  <th className="text-right p-3 font-semibold text-muted-foreground">Contratos Fechados</th>
+                  <th className="text-right p-3 font-semibold text-muted-foreground">Valor Ganho</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Perdidas</th>
-                  <th className="text-right p-3 font-semibold text-muted-foreground">Valor Total</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Ticket Médio</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Conversão</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Tempo Resposta</th>
@@ -172,46 +162,50 @@ export default function Vendedores() {
                 </tr>
               </thead>
               <tbody>
-                {vendedorPerformance.map((v, index) => (
-                  <tr key={v.nome} className="border-b border-border/50 hover:bg-secondary/30">
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                          index === 0 ? 'bg-warning text-warning-foreground' :
-                          index === 1 ? 'bg-muted text-muted-foreground' :
-                          index === 2 ? 'bg-orange-600 text-white' :
-                          'bg-secondary text-secondary-foreground'
-                        }`}>
-                          {index + 1}
+                {vendedorPerformance.map((v, index) => {
+                  const taxaConversao = v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0;
+                  return (
+                    <tr key={v.nome} className="border-b border-border/50 hover:bg-secondary/30">
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                            index === 0 ? 'bg-warning text-warning-foreground' :
+                            index === 1 ? 'bg-muted text-muted-foreground' :
+                            index === 2 ? 'bg-orange-600 text-white' :
+                            'bg-secondary text-secondary-foreground'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="font-medium">{v.nome}</span>
                         </div>
-                        <span className="font-medium">{v.nome}</span>
-                      </div>
-                    </td>
-                    <td className="text-right p-3">{v.totalPropostas}</td>
-                    <td className="text-right p-3 text-chart-2">{v.ganhos}</td>
-                    <td className="text-right p-3 text-destructive">{v.perdidos}</td>
-                    <td className="text-right p-3 font-semibold">{formatCurrencyAbbrev(v.valorTotal)}</td>
-                    <td className="text-right p-3">{formatCurrencyAbbrev(v.ticketMedio)}</td>
-                    <td className="text-right p-3">
-                      <Badge variant={v.taxaConversao >= 30 ? "default" : v.taxaConversao >= 15 ? "secondary" : "destructive"}>
-                        {v.taxaConversao.toFixed(1)}%
-                      </Badge>
-                    </td>
-                    <td className="text-right p-3">
-                      {v.tempoMedioResposta > 0 ? `${v.tempoMedioResposta} dias` : '-'}
-                    </td>
-                    <td className="p-3 w-32">
-                      <Progress value={(v.valorTotal / maxValor) * 100} className="h-2" />
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="text-right p-3">{v.totalPropostas}</td>
+                      <td className="text-right p-3">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{v.ganhos}</Badge>
+                      </td>
+                      <td className="text-right p-3 font-semibold text-chart-2">{formatCurrencyAbbrev(v.valorGanho)}</td>
+                      <td className="text-right p-3 text-destructive">{v.perdidos}</td>
+                      <td className="text-right p-3">{formatCurrencyAbbrev(v.ticketMedio)}</td>
+                      <td className="text-right p-3">
+                        <Badge variant={taxaConversao >= 25 ? "default" : taxaConversao >= 15 ? "secondary" : "destructive"}>
+                          {taxaConversao.toFixed(1)}%
+                        </Badge>
+                      </td>
+                      <td className="text-right p-3">
+                        {v.tempoMedioResposta > 0 ? `${v.tempoMedioResposta} dias` : '-'}
+                      </td>
+                      <td className="p-3 w-32">
+                        <Progress value={(v.valorTotal / maxValor) * 100} className="h-2" />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Perdas por Vendedor */}
       {perdasData && (
         <Card>
           <CardHeader>

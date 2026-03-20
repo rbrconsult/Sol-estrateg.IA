@@ -9,7 +9,8 @@ import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
@@ -17,7 +18,7 @@ export default function Forecast() {
   const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
   const [pipelineMode, setPipelineMode] = useState<"receita" | "potencia" | "ambos">("ambos");
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const pf = useGlobalFilters();
 
   const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
 
@@ -72,8 +73,8 @@ export default function Forecast() {
       <PageFloatingFilter
         filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
         setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar vendedor..." }}
       />
 
       {/* KPIs */}

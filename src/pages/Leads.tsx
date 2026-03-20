@@ -8,7 +8,8 @@ import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
 import { useMakeDataStore, buildMakeMap, normalizePhone, type MakeRecord } from "@/hooks/useMakeDataStore";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import {
   adaptSheetData,
   getLeadsKPIs,
@@ -102,7 +103,7 @@ export default function Leads() {
   const { proposals: orgFilteredProposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
   const [searchTerm, setSearchTerm] = useState("");
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const pf = useGlobalFilters();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
@@ -372,8 +373,8 @@ export default function Leads() {
         <PageFloatingFilter
           filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
           setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-          config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar lead..." }}
         />
 
         {/* ══════ KPIs ══════ */}

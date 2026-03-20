@@ -6,35 +6,21 @@ import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
 import { HelpButton } from "@/components/HelpButton";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useMemo } from "react";
 
 const Pipeline = () => {
   const { proposals: allProposals, lastUpdate, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const gf = useGlobalFilters();
 
-  // Apply page-level filters
-  const proposals = useMemo(() => {
-    let data = [...allProposals];
-    if (pf.filters.searchTerm) {
-      const term = pf.filters.searchTerm.toLowerCase();
-      data = data.filter(p =>
-        (p.nomeCliente || "").toLowerCase().includes(term) ||
-        (p.representante || "").toLowerCase().includes(term)
-      );
-    }
-    if (pf.filters.temperatura !== "todas") {
-      data = data.filter(p => (p.temperatura || "").toUpperCase() === pf.filters.temperatura);
-    }
-    return data;
-  }, [allProposals, pf.filters.searchTerm, pf.filters.temperatura]);
+  const proposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
   const hasData = proposals.length > 0;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Page Header */}
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -51,13 +37,7 @@ const Pipeline = () => {
               {proposals.length} propostas
             </Badge>
             <HelpButton moduleId="pipeline" label="Ajuda do Pipeline" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
@@ -66,25 +46,18 @@ const Pipeline = () => {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar lead..." }}
       />
 
-      {/* Error State */}
       {error && (
         <Alert className="border-destructive/50 bg-destructive/10">
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
             <span>Erro ao carregar dados: {error.message}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="ml-4"
-            >
+            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="ml-4">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Tentar novamente
             </Button>
