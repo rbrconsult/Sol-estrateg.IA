@@ -200,7 +200,7 @@ export default function Comissoes() {
                   <TableHead className="text-muted-foreground font-medium">Vendedor</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Propostas</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Fechamentos</TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-right">Valor Ganho</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-right">Valor Total</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center w-24">% Comissão</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-right">Comissão (R$)</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Conversão</TableHead>
