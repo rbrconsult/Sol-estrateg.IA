@@ -45,14 +45,14 @@ export function SetupChecklist() {
   });
 
   const items: CheckItem[] = useMemo(() => {
-    const hasSheetData = !!(sheetsData?.data && sheetsData.data.length > 0);
-    const proposals = hasSheetData ? adaptSheetData(sheetsData!.data) : [];
-    const vendedores = hasSheetData ? extractVendedores(proposals) : [];
+    const hasData = !!(comercialData && comercialData.length > 0);
+    const proposals = hasData ? adaptComercialData(comercialData) : [];
+    const vendedores = hasData ? extractVendedores(proposals) : [];
 
     return [
       {
-        label: "Google Sheet configurado",
-        completed: hasSheetData,
+        label: "Data Store configurado",
+        completed: hasData,
       },
       {
         label: "Vendedores cadastrados",
@@ -71,7 +71,7 @@ export function SetupChecklist() {
         completed: !!statusUrl,
       },
     ];
-  }, [sheetsData, orgMembers, statusUrl]);
+  }, [comercialData, orgMembers, statusUrl]);
 
   const allDone = items.every((i) => i.completed);
   const completedCount = items.filter((i) => i.completed).length;
