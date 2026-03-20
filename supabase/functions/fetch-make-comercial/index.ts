@@ -134,9 +134,11 @@ Deno.serve(async (req) => {
     while (hasMore) {
       const apiUrl = `https://us2.make.com/api/v2/data-stores/${dataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
 
+      // Support both raw key and "Token xxx" format
+      const authValue = makeApiKey.startsWith("Token ") ? makeApiKey : `Token ${makeApiKey}`;
       const makeRes = await fetch(apiUrl, {
         headers: {
-          "Authorization": `Token ${makeApiKey}`,
+          "Authorization": authValue,
           "Content-Type": "application/json",
         },
       });
