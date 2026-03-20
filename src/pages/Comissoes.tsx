@@ -249,7 +249,7 @@ export default function Comissoes() {
                 <TableRow className="border-t-2 border-border bg-muted/30 font-bold">
                   <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
                   <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
-                  <TableCell className="text-center text-foreground">{totals.ganhos}</TableCell>
+                  <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
                   <TableCell className="text-right text-foreground">{formatCurrency(totals.valorBase)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{formatCurrency(totals.comissao)}</TableCell>
