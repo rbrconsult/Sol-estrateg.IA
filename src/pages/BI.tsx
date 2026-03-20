@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DateFilter, DateRange, DateFilterPreset } from "@/components/dashboard/DateFilter";
 import { useBIMakeData } from "@/hooks/useBIMakeData";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const tooltipStyle = {
   background: 'hsl(var(--card))',
@@ -25,8 +26,12 @@ const tooltipStyle = {
 };
 
 export default function BI() {
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const [datePreset, setDatePreset] = useState<DateFilterPreset>("all");
+  const gf = useGlobalFilters();
+  // Use global filter date range for BI data
+  const dateRange = useMemo(() => ({
+    from: gf.effectiveDateRange.from,
+    to: gf.effectiveDateRange.to,
+  }), [gf.effectiveDateRange]);
   const { data, hasData, isLoading } = useBIMakeData(dateRange);
   const [now, setNow] = useState(new Date());
 
@@ -46,14 +51,10 @@ export default function BI() {
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Visão estratégica consolidada • {format(now, "dd MMM yyyy, HH:mm", { locale: ptBR })}
+            {gf.hasFilters && " • Filtros globais ativos"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <DateFilter
-            dateRange={dateRange}
-            preset={datePreset}
-            onDateRangeChange={(range, preset) => { setDateRange(range); setDatePreset(preset); }}
-          />
           {hasData && (
             <Badge variant="outline" className="border-primary/30 text-primary text-[10px] gap-1">
               <Radio className="h-2.5 w-2.5 animate-pulse" />
@@ -62,6 +63,13 @@ export default function BI() {
           )}
         </div>
       </div>
+
+      <PageFloatingFilter
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar lead..." }}
+      />
 
       {/* Loading */}
       {isLoading && !hasData && (

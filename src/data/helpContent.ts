@@ -10,6 +10,12 @@ import {
   Shield,
   Activity as MonitorIcon,
   Rocket,
+  Filter,
+  DollarSign,
+  BarChart3,
+  Percent,
+  Compass,
+  MessageSquare,
 } from "lucide-react";
 
 export interface HelpSection {
@@ -43,39 +49,66 @@ export const helpCategories: HelpCategory[] = [
       {
         title: "Como começar?",
         content:
-          "1. Configure sua planilha Google Sheets com os dados de propostas.\n2. Acesse o painel Admin para conectar a planilha à plataforma.\n3. Cadastre os vendedores e usuários da equipe.\n4. Explore o Dashboard para visualizar os KPIs em tempo real.",
+          "1. Configure sua planilha Google Sheets com os dados de propostas.\n2. Acesse o painel Admin para conectar a planilha à plataforma.\n3. Cadastre os vendedores e usuários da equipe.\n4. Explore o Dashboard para visualizar os KPIs em tempo real.\n5. Use o Tour Interativo (menu lateral) para conhecer cada módulo.",
       },
       {
         title: "Boas práticas",
         content:
-          "• Mantenha a planilha Google Sheets sempre atualizada.\n• Preencha todos os campos obrigatórios (cliente, valor, etapa, status).\n• Revise os dados periodicamente para garantir consistência.\n• Use filtros no Dashboard para análises segmentadas.",
+          "• Mantenha a planilha Google Sheets sempre atualizada.\n• Preencha todos os campos obrigatórios (cliente, valor, etapa, status).\n• Revise os dados periodicamente para garantir consistência.\n• Use os filtros globais para análises segmentadas — eles funcionam em toda a plataforma.",
+      },
+    ],
+  },
+  {
+    id: "filtros-globais",
+    title: "Filtros Globais",
+    icon: Filter,
+    sections: [
+      {
+        title: "O que são os Filtros Globais?",
+        content:
+          "Os filtros globais são um sistema unificado de filtragem que persiste entre todas as páginas da plataforma. Quando você aplica um filtro em qualquer página, ele reflete automaticamente em Dashboard, Pipeline, BI, Comissões, Vendedores e demais telas analíticas.",
+      },
+      {
+        title: "Quais filtros estão disponíveis?",
+        content:
+          "• Período: Hoje, 3 dias, 7 dias, 30 dias, 90 dias, Este mês, Este ano, YTD, Todos ou Personalizado.\n• Etapa: Todas as etapas do processo (Tráfego Pago, Prospecção, Qualificação, Proposta, Negociação, etc.).\n• Temperatura: Quente 🔥, Morno 🌤, Frio ❄️.\n• Busca: Pesquisa textual por nome de cliente, vendedor ou representante.",
+      },
+      {
+        title: "Como usar?",
+        content:
+          "1. Clique no botão flutuante de filtro (ícone de funil) no canto inferior direito.\n2. Selecione os filtros desejados.\n3. Os dados em TODAS as páginas serão atualizados automaticamente.\n4. Navegue entre as páginas — os filtros permanecem ativos.\n5. Clique em 'Limpar tudo' para resetar.",
+      },
+      {
+        title: "Como os filtros impactam os dados?",
+        content:
+          "Os filtros atuam sobre TODOS os KPIs, gráficos e tabelas simultaneamente. Por exemplo:\n• Filtrar por 'QUENTE' mostra apenas leads/propostas quentes em todas as views.\n• Filtrar por 'Negociação' mostra dados exclusivamente dessa etapa.\n• A busca filtra por nome de cliente ou vendedor em todas as telas.\n\nIsso garante consistência de leitura e evita divergência entre painéis.",
       },
     ],
   },
   {
     id: "bi-estrategico",
-    title: "BI Estratégico",
+    title: "Dashboard (BI Estratégico)",
     icon: LayoutDashboard,
     sections: [
       {
         title: "O que é?",
         content:
-          "O módulo de BI Estratégico é o painel principal do Sol Estrateg.IA. Exibe KPIs consolidados, funis de vendas (por valor e potência), ciclo de vida das propostas, ranking de vendedores e tendências mensais.",
+          "O Dashboard é o painel principal do Sol Estrateg.IA. Exibe KPIs consolidados, funis de vendas (por valor e potência), ciclo de vida das propostas, ranking de vendedores e tendências mensais.",
       },
       {
-        title: "Para que serve?",
+        title: "Indicadores principais",
         content:
-          "Permite uma visão executiva do desempenho comercial, facilitando a tomada de decisões rápidas baseadas em dados reais e atualizados.",
+          "• Receita Prevista: soma do valor de todas as propostas abertas × probabilidade.\n• Valor Ganho: total das propostas com status 'Ganho'.\n• Taxa de Conversão: (propostas ganhas ÷ total de propostas) × 100.\n• Ticket Médio: valor médio das propostas ganhas.\n• Health Score: nota de 0-100 baseada em conversão, ciclo, distribuição e fluxo.",
       },
       {
-        title: "Como funciona?",
+        title: "Views disponíveis",
         content:
-          "Os dados são importados automaticamente do Google Sheets a cada 10 minutos. Os KPIs são calculados em tempo real com base nos filtros aplicados (vendedor, pré-vendedor, período).",
+          "• KPIs Executivos: cartões com métricas principais.\n• Resumo Executivo: análise textual do momento comercial.\n• Progresso da Meta: barra de progresso vs meta mensal.\n• Health Score: termômetro da saúde do pipeline.\n• Alertas Estratégicos: situações que requerem atenção.\n• Funil Estratégico: visualização do funil de conversão.",
       },
       {
-        title: "Boas práticas",
+        title: "Filtros que afetam esta página",
         content:
-          "• Use os filtros de data para comparar períodos.\n• Analise o funil estratégico para identificar gargalos.\n• Acompanhe o ranking de vendedores semanalmente.\n• Exporte dados para apresentações executivas.",
+          "Esta página responde aos filtros globais: Período, Etapa, Temperatura e Busca. Todos os KPIs e gráficos são recalculados automaticamente. O filtro de Etapa inclui todas as etapas do processo.",
       },
     ],
   },
@@ -90,19 +123,19 @@ export const helpCategories: HelpCategory[] = [
           "O Pipeline exibe suas propostas em um quadro Kanban visual, organizadas por etapa do processo de vendas (Prospecção, Qualificação, Proposta, Negociação, etc.).",
       },
       {
-        title: "Para que serve?",
+        title: "Indicadores principais",
         content:
-          "Facilita a visualização do estado atual de cada proposta e permite identificar rapidamente quais negócios estão parados ou em risco.",
+          "• Cada coluna mostra: número de propostas, valor total e cards individuais.\n• Cores dos cards indicam prioridade e tempo na etapa.\n• O header mostra o total de propostas filtradas.",
       },
       {
-        title: "Como funciona?",
+        title: "Views disponíveis",
         content:
-          "As colunas do Kanban representam as etapas reais da planilha Google Sheets. Cada card mostra o nome do cliente, valor da proposta e tempo na etapa atual.",
+          "• Kanban Board: visão de colunas por etapa.\n• Cards de proposta: nome do cliente, valor, vendedor, tempo na etapa.\n• Contadores por coluna: quantidade e valor acumulado.",
       },
       {
-        title: "Boas práticas",
+        title: "Filtros que afetam esta página",
         content:
-          "• Revise o Pipeline diariamente.\n• Foque em propostas com mais tempo na mesma etapa.\n• Use as cores dos cards para identificar prioridades.\n• Atualize a etapa no Google Sheets sempre que houver progresso.",
+          "Esta página responde aos filtros globais. Se você filtrar por 'QUENTE' no Dashboard, o Pipeline mostrará apenas propostas quentes. Os filtros de Período e Etapa também se aplicam.",
       },
     ],
   },
@@ -117,46 +150,14 @@ export const helpCategories: HelpCategory[] = [
           "O módulo Forecast apresenta previsões de receita e potência para os próximos 30, 60 e 90 dias, baseadas na probabilidade de fechamento de cada proposta.",
       },
       {
-        title: "Para que serve?",
+        title: "Como interpretar",
         content:
-          "Permite planejar o fluxo de caixa e estimar a capacidade instalada futura com base em dados reais do pipeline.",
+          "• Alta confiança: propostas com probabilidade ≥70%.\n• Média confiança: probabilidade entre 30-69%.\n• Baixa confiança: probabilidade <30%.\n• A receita prevista = valor × probabilidade.",
       },
       {
-        title: "Como funciona?",
+        title: "Filtros que afetam esta página",
         content:
-          "A receita prevista é calculada multiplicando o valor de cada proposta pela sua probabilidade de fechamento. Propostas com probabilidade ≥70% são destacadas como alta confiança.",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Ajuste as probabilidades das propostas regularmente.\n• Compare o forecast com o realizado mensal.\n• Foque nas propostas em risco (baixa probabilidade ou muito tempo paradas).\n• Use o forecast para dimensionar equipe e estoque.",
-      },
-    ],
-  },
-  {
-    id: "atividades",
-    title: "Atividades",
-    icon: Activity,
-    sections: [
-      {
-        title: "O que é?",
-        content:
-          "O módulo de Atividades monitora follow-ups, contatos e tarefas pendentes dos vendedores, identificando leads sem acompanhamento.",
-      },
-      {
-        title: "Para que serve?",
-        content:
-          "Garante que nenhum lead fique sem contato e que os follow-ups sejam feitos no prazo, aumentando a taxa de conversão.",
-      },
-      {
-        title: "Como funciona?",
-        content:
-          "Analisa datas de último contato, próxima atividade e speed-to-lead para gerar alertas automáticos. Clique nos KPIs para ver a lista de leads afetados.",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Verifique diariamente os follow-ups atrasados.\n• Mantenha o speed-to-lead abaixo de 24h.\n• Preencha a data de próxima atividade para cada lead.\n• Use o ranking de atividades para coaching da equipe.",
+          "Responde aos filtros globais de Período, Temperatura e Busca. Use filtros para ver forecast segmentado por vendedor ou por tipo de lead.",
       },
     ],
   },
@@ -168,22 +169,71 @@ export const helpCategories: HelpCategory[] = [
       {
         title: "O que é?",
         content:
-          "Módulo de análise individual de performance dos vendedores, com gráficos de receita, taxa de conversão e tabela comparativa.",
+          "Módulo de análise individual de performance dos vendedores, com gráficos de receita, taxa de conversão e tabela comparativa detalhada.",
       },
       {
-        title: "Para que serve?",
+        title: "Indicadores principais",
         content:
-          "Identifica os melhores performers, detecta oportunidades de coaching e permite comparar métricas entre vendedores.",
+          "• Propostas: total de propostas enviadas pelo vendedor.\n• Contratos Fechados: número de propostas com status 'Ganho'.\n• Valor Ganho: receita total dos contratos fechados.\n• Taxa de Conversão: propostas fechadas ÷ propostas enviadas.\n• Ticket Médio: valor médio das propostas ganhas.",
       },
       {
-        title: "Como funciona?",
+        title: "Views disponíveis",
         content:
-          "Agrega dados de propostas por vendedor/representante, calculando receita ganha, perdida, em aberto, taxa de conversão, ticket médio e tempo de resposta.",
+          "• Receita por Vendedor: gráfico de barras empilhadas (ganho, aberto, perdido).\n• Taxa de Conversão: gráfico de barras com % por vendedor.\n• Tabela de Performance: ranking completo com todas as métricas.\n• Perdas por Vendedor: análise de propostas perdidas por vendedor.",
       },
       {
-        title: "Boas práticas",
+        title: "Filtros que afetam esta página",
         content:
-          "• Compare a taxa de conversão entre vendedores.\n• Identifique vendedores com ticket médio alto mas baixa conversão.\n• Use o tempo de resposta como métrica de qualidade.\n• Realize reuniões de coaching baseadas nos dados.",
+          "Responde aos filtros globais. Filtre por período para ver performance mensal, por temperatura para focar em leads quentes, ou use busca para encontrar um vendedor específico.",
+      },
+    ],
+  },
+  {
+    id: "comissoes",
+    title: "Comissões",
+    icon: Percent,
+    sections: [
+      {
+        title: "O que é?",
+        content:
+          "Módulo de cálculo de comissões baseado em valor fechado por vendedor. Taxa padrão: 2%. Danielle: 3%. As taxas são editáveis por vendedor.",
+      },
+      {
+        title: "Indicadores principais",
+        content:
+          "• Receita Fechada: soma dos valores de propostas com status 'Ganho'.\n• Total Comissões: soma das comissões calculadas.\n• Taxa Média: média ponderada das taxas aplicadas.\n• Vendedores: quantidade de vendedores com propostas.",
+      },
+      {
+        title: "Views disponíveis",
+        content:
+          "• Top 10 Comissão por Vendedor: gráfico com valor de comissão E quantidade de fechamentos (barras duplas).\n• Detalhamento por Vendedor: tabela com propostas enviadas, contratos fechados, valor ganho, % comissão (editável), comissão em R$ e taxa de conversão.\n• Taxa de Conversão = propostas fechadas ÷ propostas enviadas.",
+      },
+      {
+        title: "Filtros que afetam esta página",
+        content:
+          "Responde aos filtros globais. Filtre por período para calcular comissões de um mês específico, ou por vendedor via busca.",
+      },
+    ],
+  },
+  {
+    id: "bi",
+    title: "Business Intelligence",
+    icon: BarChart3,
+    sections: [
+      {
+        title: "O que é?",
+        content:
+          "O módulo BI consolida dados do Make Data Store e propostas enriquecidas em uma visão estratégica com funis, métricas de SLA, temperatura de leads e análises de desqualificação.",
+      },
+      {
+        title: "Indicadores principais",
+        content:
+          "• Receita Fechada e Pipeline Aberto.\n• Funil de Conversão com taxas por etapa.\n• Leads por Cidade e Temperatura.\n• FUP Frio: métricas de reativação de leads frios.\n• Volume & SLA: tempos de primeiro contato e resposta.",
+      },
+      {
+        title: "Filtros que afetam esta página",
+        content:
+          "O BI NÃO possui filtro local próprio. Ele obedece aos filtros globais aplicados em qualquer outra página. Isso garante que os dados do BI estejam sempre no mesmo contexto das demais telas.",
       },
     ],
   },
@@ -198,19 +248,14 @@ export const helpCategories: HelpCategory[] = [
           "Análise detalhada dos motivos, etapas, vendedores e origens associados às propostas perdidas.",
       },
       {
-        title: "Para que serve?",
+        title: "Como interpretar",
         content:
-          "Permite entender por que negócios são perdidos e tomar ações corretivas para melhorar a taxa de conversão.",
+          "• Motivo de perda: razão registrada para a perda.\n• Etapa da perda: em qual fase do funil a proposta foi perdida.\n• Tendência mensal: evolução das perdas ao longo do tempo.",
       },
       {
-        title: "Como funciona?",
+        title: "Filtros que afetam esta página",
         content:
-          "Agrupa propostas com status 'Perdido' por motivo de perda, etapa em que foram perdidas, vendedor responsável e canal de origem.",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Preencha o motivo de perda sempre que uma proposta for perdida.\n• Analise tendências mensais de perdas.\n• Foque nos motivos mais recorrentes.\n• Revise a etapa crítica para melhorar o processo nesse ponto.",
+          "Responde aos filtros globais de Período, Temperatura e Busca.",
       },
     ],
   },
@@ -225,19 +270,14 @@ export const helpCategories: HelpCategory[] = [
           "Módulo de análise dos canais de aquisição de leads, mostrando volume, conversão e valor por origem.",
       },
       {
-        title: "Para que serve?",
+        title: "Indicadores principais",
         content:
-          "Identifica quais canais geram mais leads e quais convertem melhor, otimizando o investimento em marketing.",
+          "• Volume de leads por canal.\n• Taxa de conversão por canal.\n• Valor total por canal.\n• ROI estimado por origem.",
       },
       {
-        title: "Como funciona?",
+        title: "Filtros que afetam esta página",
         content:
-          "Agrupa propostas pela coluna 'Origem do Lead' do Google Sheets, calculando métricas de conversão, valor e tempo de fechamento por canal.",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Configure a coluna 'Origem do Lead' no Google Sheets.\n• Compare o custo de aquisição por canal com o ticket médio.\n• Invista mais nos canais com melhor ROI.\n• Monitore o tempo de fechamento por origem.",
+          "Responde aos filtros globais. Use o filtro de período para comparar canais em diferentes janelas temporais.",
       },
     ],
   },
@@ -252,19 +292,14 @@ export const helpCategories: HelpCategory[] = [
           "Sistema de chamados (tickets de suporte) com SLA configurável, categorias, prioridades e comunicação integrada.",
       },
       {
-        title: "Para que serve?",
+        title: "Como usar",
         content:
-          "Centraliza as solicitações de suporte, garante cumprimento de SLA e fornece métricas de qualidade do atendimento.",
+          "1. Clique em 'Novo Chamado'.\n2. Preencha título, descrição, categoria e prioridade.\n3. O sistema calcula o prazo de SLA automaticamente.\n4. Acompanhe o status e troque mensagens no chamado.\n5. Anexe prints ou arquivos quando necessário.",
       },
       {
-        title: "Como funciona?",
+        title: "Indicadores",
         content:
-          "Abra um chamado com título, descrição, categoria e prioridade. O sistema calcula o prazo de SLA automaticamente. Acompanhe o status e troque mensagens diretamente no chamado.",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Descreva o problema com detalhes.\n• Anexe prints ou arquivos quando necessário.\n• Priorize chamados críticos corretamente.\n• Responda dentro do prazo de SLA.",
+          "• SLA Timer: conta regressiva até o prazo.\n• Status: Aberto, Em Andamento, Aguardando Usuário, Resolvido, Fechado.\n• Prioridade: Baixa, Média, Alta, Crítica.",
       },
     ],
   },
@@ -279,19 +314,9 @@ export const helpCategories: HelpCategory[] = [
           "Painel administrativo para gerenciar organizações, usuários, roles e configurações da plataforma. Acessível apenas para Super Admins.",
       },
       {
-        title: "Para que serve?",
+        title: "Funcionalidades",
         content:
-          "Permite configurar a conexão com Google Sheets, gerenciar membros da equipe e definir permissões de acesso.",
-      },
-      {
-        title: "Como funciona?",
-        content:
-          "Acesse a aba Admin no menu lateral. Configure o ID da planilha Google Sheets, adicione ou remova usuários e defina roles (admin, user).",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Mantenha poucos Super Admins.\n• Revise permissões periodicamente.\n• Configure a URL de monitoramento para cada organização.\n• Documente as configurações da planilha.",
+          "• Gerenciar Filiais: criar, editar, configurar credenciais por filial.\n• Gerenciar Usuários: adicionar, remover, alterar roles.\n• Módulos: habilitar/desabilitar módulos por usuário.\n• Logs de Acesso: monitorar atividade de login.",
       },
     ],
   },
@@ -303,22 +328,29 @@ export const helpCategories: HelpCategory[] = [
       {
         title: "O que é?",
         content:
-          "Módulo que exibe o status de disponibilidade dos sistemas e serviços da plataforma.",
+          "Módulo que exibe o status de disponibilidade dos sistemas, heartbeat dos fluxos Make e erros de execução.",
       },
       {
-        title: "Para que serve?",
+        title: "Views disponíveis",
         content:
-          "Permite verificar rapidamente se todos os serviços estão operacionais e acessar o painel de status externo.",
+          "• Heartbeat Grid: status de cada cenário Make.\n• Erros: dashboard de erros com filtros por tipo e status.\n• Reprocessamento: fila de itens para reprocessar.",
+      },
+    ],
+  },
+  {
+    id: "navegacao",
+    title: "Navegação entre Views",
+    icon: Compass,
+    sections: [
+      {
+        title: "Menu Lateral",
+        content:
+          "O menu lateral está organizado em 5 blocos:\n• PRÉ-VENDA: Dashboard, Pipeline, Leads, Robô SOL, FUP Frio, Forecast.\n• COMERCIAL: Painel Comercial, Propostas, Contratos, Vendedores, Comissões.\n• INTELIGÊNCIA: BI, Analista Follow-up, Jornada Lead, Monitor SLA, Ads, Mídia × Receita.\n• INSIGHTS: Reports.\n• OPERACIONAL: Monitor, Chamados, Reprocessar, Sanitização.",
       },
       {
-        title: "Como funciona?",
+        title: "Compartilhamento de filtros",
         content:
-          "Exibe indicadores de status de servidores, conectividade e uptime. Se configurado, redireciona para um painel de status externo (ex: UptimeRobot).",
-      },
-      {
-        title: "Boas práticas",
-        content:
-          "• Configure a URL do painel de status no Admin.\n• Verifique o monitoramento diariamente.\n• Configure alertas de downtime no serviço externo.",
+          "Todas as páginas analíticas compartilham o mesmo contexto de filtros. Se você selecionar 'Último mês' no Dashboard, o Pipeline, BI, Comissões e Vendedores exibirão dados do mesmo período automaticamente.",
       },
     ],
   },
