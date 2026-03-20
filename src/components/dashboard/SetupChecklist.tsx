@@ -15,7 +15,7 @@ interface CheckItem {
 
 export function SetupChecklist() {
   const { organizationId } = useAuth();
-  const { data: sheetsData } = useGoogleSheetsData();
+  const { data: comercialData } = useMakeComercialData();
 
   const { data: orgMembers } = useQuery({
     queryKey: ["org-members-count", organizationId],

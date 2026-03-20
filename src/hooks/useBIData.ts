@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useGoogleSheetsData, Proposal } from '@/hooks/useGoogleSheetsData';
+import { useEnrichedProposals } from '@/hooks/useEnrichedProposals';
 import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
-import { adaptSheetData, getVendedorPerformance, getKPIs } from '@/data/dataAdapter';
+import { getVendedorPerformance, getKPIs, Proposal } from '@/data/dataAdapter';
 import type { DateRange } from '@/components/dashboard/DateFilter';
 
 // ─── Helpers ───
@@ -11,11 +11,6 @@ function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
   if (n.includes('MORNO')) return 'MORNO';
   if (n.includes('FRIO')) return 'FRIO';
   return '';
-}
-
-function isSolQualificado(p: Proposal): boolean {
-  const v = (p.sol_qualificado || '').toLowerCase().trim();
-  return v === 'sim' || v === 'yes' || v === 'true' || v === '1' || v === 'qualificado';
 }
 
 function extractOrigem(etiquetas: string): string {
@@ -74,27 +69,21 @@ function getSolStage(etapa: string, status: string): string {
 
 // ─── Main Hook ───
 export function useBIData(dateRange?: DateRange) {
-  const { data: sheetsData, isLoading: sheetsLoading, error: sheetsError } = useGoogleSheetsData();
+  const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useEnrichedProposals();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
-
-  const proposals = useMemo(() => sheetsData?.data || [], [sheetsData]);
-  const adaptedProposals = useMemo(() => {
-    if (!sheetsData?.data) return [];
-    return adaptSheetData(sheetsData.data as any);
-  }, [sheetsData]);
 
   // Filter by date range
   const filteredProposals = useMemo(() => {
-    if (!dateRange?.from) return proposals;
+    if (!dateRange?.from) return enrichedProposals;
     const from = dateRange.from.getTime();
     const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
-    return proposals.filter(p => {
-      const d = safeDate(p.data_criacao_projeto || p.data_criacao_proposta);
-      if (!d) return true; // keep records without dates
+    return enrichedProposals.filter(p => {
+      const d = safeDate(p.dataCriacaoProjeto || p.dataCriacaoProposta);
+      if (!d) return true;
       const t = d.getTime();
       return t >= from && t <= to;
     });
-  }, [proposals, dateRange]);
+  }, [enrichedProposals, dateRange]);
 
   const filteredMakeRecords = useMemo(() => {
     const records = makeRecords || [];
@@ -109,39 +98,20 @@ export function useBIData(dateRange?: DateRange) {
     });
   }, [makeRecords, dateRange]);
 
-  const filteredAdaptedProposals = useMemo(() => {
-    if (!dateRange?.from) return adaptedProposals;
-    const from = dateRange.from.getTime();
-    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
-    return adaptedProposals.filter(p => {
-      const d = safeDate(p.dataCriacaoProjeto || p.dataCriacaoProposta);
-      if (!d) return true;
-      const t = d.getTime();
-      return t >= from && t <= to;
-    });
-  }, [adaptedProposals, dateRange]);
-
-  const makeMap = useMemo(() => {
-    if (!filteredMakeRecords) return new Map<string, MakeRecord[]>();
-    return buildMakeMap(filteredMakeRecords);
-  }, [filteredMakeRecords]);
-
   const allMakeRecords = filteredMakeRecords;
 
   // ═══ SOL SDR (V5-V8) ═══
   const solSDR = useMemo(() => {
-    const total = allMakeRecords.length;
     const solRecords = allMakeRecords.filter(r => r.robo === 'sol');
-    const fupRecords = allMakeRecords.filter(r => r.robo === 'fup_frio');
 
     // V5: Funil real-time
     const responderam = solRecords.filter(r => r.status_resposta === 'respondeu');
-    const qualificados = filteredProposals.filter(p => isSolQualificado(p));
+    const qualificados = filteredProposals.filter(p => p.solQualificado);
     const closers = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
-    const fechados = filteredProposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const fechados = filteredProposals.filter(p => p.status === 'Ganho');
 
     const funil = [
       { etapa: 'Leads Recebidos', valor: solRecords.length, icon: '📥' },
@@ -152,10 +122,10 @@ export function useBIData(dateRange?: DateRange) {
     ];
 
     // V6: Motivos de desqualificação
-    const desqualificados = filteredProposals.filter(p => !isSolQualificado(p) && p.nota_completa);
+    const desqualificados = filteredProposals.filter(p => !p.solQualificado && p.notaCompleta);
     const motivosMap: Record<string, number> = {};
     desqualificados.forEach(p => {
-      const nota = (p.nota_completa || '').toLowerCase();
+      const nota = (p.notaCompleta || '').toLowerCase();
       let motivo = 'Outros';
       if (nota.includes('consumo') || nota.includes('kwh') || nota.includes('baixo')) motivo = 'Consumo baixo';
       else if (nota.includes('financ') || nota.includes('crédito')) motivo = 'Sem crédito';
@@ -196,13 +166,13 @@ export function useBIData(dateRange?: DateRange) {
       const stage = getSolStage(p.etapa, p.status);
       return stage !== 'Robô SOL';
     });
-    const leadsComScore = leadsEntregues.filter(p => parseFloat(p.sol_score) > 0);
+    const leadsComScore = leadsEntregues.filter(p => p.solScore > 0);
     const scoreMedio = leadsComScore.length > 0
-      ? leadsComScore.reduce((acc, p) => acc + parseFloat(p.sol_score), 0) / leadsComScore.length
+      ? leadsComScore.reduce((acc, p) => acc + p.solScore, 0) / leadsComScore.length
       : 0;
-    const quentes = leadsEntregues.filter(p => parseTemp(p.temperatura) === 'QUENTE').length;
-    const mornos = leadsEntregues.filter(p => parseTemp(p.temperatura) === 'MORNO').length;
-    const frios = leadsEntregues.filter(p => parseTemp(p.temperatura) === 'FRIO').length;
+    const quentes = leadsEntregues.filter(p => p.temperatura === 'QUENTE').length;
+    const mornos = leadsEntregues.filter(p => p.temperatura === 'MORNO').length;
+    const frios = leadsEntregues.filter(p => p.temperatura === 'FRIO').length;
 
     const qualidadeLead = {
       totalEntregues: leadsEntregues.length,
@@ -229,21 +199,20 @@ export function useBIData(dateRange?: DateRange) {
     // Cross-reference with proposals to find rescued leads
     const fupPhones = new Set(fupRecords.map(r => r.telefone));
     const leadsResgatados = filteredProposals.filter(p => {
-      const phone = normalizePhone(p.cliente_telefone || '');
+      const phone = normalizePhone(p.clienteTelefone || '');
       if (!fupPhones.has(phone)) return false;
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Qualificado' || stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
     const leadsFechados = filteredProposals.filter(p => {
-      const phone = normalizePhone(p.cliente_telefone || '');
+      const phone = normalizePhone(p.clienteTelefone || '');
       if (!fupPhones.has(phone)) return false;
-      return (p.status || '').toLowerCase().includes('ganho');
+      return p.status === 'Ganho';
     });
 
-    const valorResgatado = leadsResgatados.reduce((acc, p) => acc + (p.valor_proposta || 0), 0);
-    const valorFechado = leadsFechados.reduce((acc, p) => acc + (p.valor_proposta || 0), 0);
+    const valorResgatado = leadsResgatados.reduce((acc, p) => acc + (p.valorProposta || 0), 0);
+    const valorFechado = leadsFechados.reduce((acc, p) => acc + (p.valorProposta || 0), 0);
 
-    // Funil
     const funil = [
       { etapa: 'Leads no FUP', valor: totalFup, icon: '🧊' },
       { etapa: 'Responderam', valor: responderam.length, icon: '💬' },
@@ -251,7 +220,6 @@ export function useBIData(dateRange?: DateRange) {
       { etapa: 'Fechados', valor: leadsFechados.length, icon: '🏆' },
     ];
 
-    // Taxa de resgate
     const taxaResposta = totalFup > 0 ? Math.round((responderam.length / totalFup) * 100) : 0;
     const taxaResgate = totalFup > 0 ? Math.round((leadsResgatados.length / totalFup) * 100) : 0;
     const taxaFechamento = leadsResgatados.length > 0 ? Math.round((leadsFechados.length / leadsResgatados.length) * 100) : 0;
@@ -266,7 +234,6 @@ export function useBIData(dateRange?: DateRange) {
       totalFechados: leadsFechados.length,
     };
 
-    // Tentativas × Conversão: analyze historico length as proxy for attempts
     const tentativasMap: Record<string, { total: number; responderam: number; resgatados: number }> = {};
     fupRecords.forEach(r => {
       const attempts = r.historico.filter(h => h.tipo === 'enviada').length;
@@ -275,7 +242,7 @@ export function useBIData(dateRange?: DateRange) {
       tentativasMap[faixa].total++;
       if (r.status_resposta === 'respondeu') tentativasMap[faixa].responderam++;
       const phone = r.telefone;
-      const rescued = leadsResgatados.some(p => normalizePhone(p.cliente_telefone || '') === phone);
+      const rescued = leadsResgatados.some(p => normalizePhone(p.clienteTelefone || '') === phone);
       if (rescued) tentativasMap[faixa].resgatados++;
     });
 
@@ -291,7 +258,6 @@ export function useBIData(dateRange?: DateRange) {
         taxaResgate: tentativasMap[faixa].total > 0 ? Math.round((tentativasMap[faixa].resgatados / tentativasMap[faixa].total) * 100) : 0,
       }));
 
-    // Performance por turno
     const turnos = { 'Manhã': { total: 0, responderam: 0 }, 'Tarde': { total: 0, responderam: 0 }, 'Noite': { total: 0, responderam: 0 } };
     fupRecords.forEach(r => {
       const d = safeDate(r.data_envio);
@@ -307,7 +273,6 @@ export function useBIData(dateRange?: DateRange) {
       taxa: v.total > 0 ? Math.round((v.responderam / v.total) * 100) : 0,
     }));
 
-    // Alertas
     const alertas: { tipo: 'danger' | 'warning' | 'success' | 'info'; titulo: string; desc: string }[] = [];
     if (taxaResposta > 20) alertas.push({ tipo: 'success', titulo: `Taxa de resposta ${taxaResposta}%`, desc: 'FUP Frio está gerando engajamento acima da média' });
     if (aguardando.length > totalFup * 0.5) alertas.push({ tipo: 'warning', titulo: `${aguardando.length} leads sem resposta`, desc: 'Mais da metade dos leads de FUP ainda não responderam' });
@@ -320,8 +285,7 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ SolarMarket (V9-V11) ═══
   const solarMarket = useMemo(() => {
-    const adapted = filteredAdaptedProposals;
-    if (adapted.length === 0) return null;
+    if (filteredProposals.length === 0) return null;
 
     // V9: Funil comercial
     const etapasOrder = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO'];
@@ -330,13 +294,13 @@ export function useBIData(dateRange?: DateRange) {
       return { etapa, valor: count };
     }).filter(e => e.valor > 0);
 
-    // V10: Performance por vendedor (reuse adapter)
-    const vendedores = getVendedorPerformance(adapted);
+    // V10: Performance por vendedor
+    const vendedores = getVendedorPerformance(filteredProposals);
 
     // V11: Inteligência de proposta
-    const kpis = getKPIs(adapted);
-    const ganhos = adapted.filter(p => p.status === 'Ganho');
-    const abertos = adapted.filter(p => p.status === 'Aberto');
+    const kpis = getKPIs(filteredProposals);
+    const ganhos = filteredProposals.filter(p => p.status === 'Ganho');
+    const abertos = filteredProposals.filter(p => p.status === 'Aberto');
 
     const inteligenciaProposta = {
       ticketMedio: kpis.ticketMedio,
@@ -349,19 +313,19 @@ export function useBIData(dateRange?: DateRange) {
     };
 
     return { funilComercial, vendedores, inteligenciaProposta };
-  }, [filteredAdaptedProposals, filteredProposals]);
+  }, [filteredProposals]);
 
   // ═══ Cruzamentos Grupo B (SDR × SolarMarket) ═══
   const cruzamentosB = useMemo(() => {
     if (filteredProposals.length === 0 || allMakeRecords.length === 0) return null;
 
     // C4: Aproveitamento do lead qualificado
-    const qualificadosSol = filteredProposals.filter(p => isSolQualificado(p));
+    const qualificadosSol = filteredProposals.filter(p => p.solQualificado);
     const qualificadosQueAvancaram = qualificadosSol.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
       return stage === 'Closer' || stage === 'Proposta' || stage === 'Fechado';
     });
-    const qualificadosQueFecharam = qualificadosSol.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const qualificadosQueFecharam = qualificadosSol.filter(p => p.status === 'Ganho');
 
     const aproveitamento = {
       totalQualificados: qualificadosSol.length,
@@ -376,13 +340,13 @@ export function useBIData(dateRange?: DateRange) {
     };
 
     // C5: Perfil do lead que fecha
-    const fechados = filteredProposals.filter(p => (p.status || '').toLowerCase().includes('ganho'));
+    const fechados = filteredProposals.filter(p => p.status === 'Ganho');
     const perfilMap: Record<string, { count: number; valorTotal: number }> = {};
     fechados.forEach(p => {
       const origem = extractOrigem(p.etiquetas);
       if (!perfilMap[origem]) perfilMap[origem] = { count: 0, valorTotal: 0 };
       perfilMap[origem].count++;
-      perfilMap[origem].valorTotal += p.valor_proposta || 0;
+      perfilMap[origem].valorTotal += p.valorProposta || 0;
     });
     const perfil = Object.entries(perfilMap).map(([origem, v]) => ({
       origem,
@@ -393,13 +357,13 @@ export function useBIData(dateRange?: DateRange) {
 
     // C6: Velocidade × Conversão
     const velocidade = filteredProposals
-      .filter(p => p.data_criacao_projeto && p.data_criacao_proposta)
+      .filter(p => p.dataCriacaoProjeto && p.dataCriacaoProposta)
       .map(p => {
-        const d1 = safeDate(p.data_criacao_projeto);
-        const d2 = safeDate(p.data_criacao_proposta);
+        const d1 = safeDate(p.dataCriacaoProjeto);
+        const d2 = safeDate(p.dataCriacaoProposta);
         if (!d1 || !d2) return null;
         const dias = Math.max(0, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
-        const ganho = (p.status || '').toLowerCase().includes('ganho');
+        const ganho = p.status === 'Ganho';
         return { dias, ganho };
       })
       .filter(Boolean) as { dias: number; ganho: boolean }[];
@@ -429,26 +393,23 @@ export function useBIData(dateRange?: DateRange) {
     if (filteredProposals.length === 0) return [];
     return filteredProposals
       .filter(p => {
-        const status = (p.status || '').toLowerCase();
-        if (status.includes('ganho') || status.includes('perdido')) return false;
-        const tempoEtapa = parseInt(p.tempo_na_etapa) || 0;
-        const temp = parseTemp(p.temperatura);
-        return tempoEtapa > 7 || temp === 'FRIO';
+        if (p.status === 'Ganho' || p.status === 'Perdido') return false;
+        return p.tempoNaEtapa > 7 || p.temperatura === 'FRIO';
       })
       .map(p => ({
-        nome: p.nome_cliente,
+        nome: p.nomeCliente,
         etapa: p.etapa,
         temperatura: parseTemp(p.temperatura),
-        tempoNaEtapa: parseInt(p.tempo_na_etapa) || 0,
-        valor: p.valor_proposta,
-        score: parseFloat(p.sol_score) || 0,
+        tempoNaEtapa: p.tempoNaEtapa,
+        valor: p.valorProposta,
+        score: p.solScore,
       }))
       .sort((a, b) => b.tempoNaEtapa - a.tempoNaEtapa)
       .slice(0, 20);
   }, [filteredProposals]);
 
   const hasData = filteredProposals.length > 0 || allMakeRecords.length > 0;
-  const isLoading = sheetsLoading || makeLoading;
+  const isLoading = proposalsLoading || makeLoading;
 
   return {
     solSDR,
@@ -458,6 +419,6 @@ export function useBIData(dateRange?: DateRange) {
     leadsEmRisco,
     hasData,
     isLoading,
-    error: sheetsError,
+    error: proposalsError,
   };
 }
