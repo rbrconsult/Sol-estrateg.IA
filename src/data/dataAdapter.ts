@@ -125,59 +125,67 @@ function calcularTempoNaEtapa(ultimaAtualizacao: string): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export function adaptSheetData(sheetData: SheetProposal[]): Proposal[] {
-  return sheetData.map((item, index) => {
-    const status = mapStatus(item.status);
-    const etapa = item.etapa?.trim() || 'TRAFEGO PAGO';
-    const ultimaAtualizacao = parseDate(item.ultima_atualizacao) || new Date().toISOString().split('T')[0];
-    
-    const solQualificado = (item.sol_qualificado || '').toLowerCase().trim() === 'sim';
-    const solScore = parseFloat(item.sol_score) || 0;
-    const tempRaw = (item.temperatura || '').toUpperCase().trim();
-    const temperatura = (['QUENTE', 'MORNO', 'FRIO'].includes(tempRaw) ? tempRaw : '') as Proposal['temperatura'];
-    const solSdr = (item.sol_sdr || '').toLowerCase().trim() === 'sim';
-    const tempoNaEtapa = parseInt(item.tempo_na_etapa) || calcularTempoNaEtapa(ultimaAtualizacao);
+export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
+  return records.map((item, index) => {
+    const status = mapStatus(item.statusProposta);
+    const etapa = item.etapaSM?.trim() || 'TRAFEGO PAGO';
+    const ultimaAtualizacao = parseDate(item.tsProposta) || new Date().toISOString().split('T')[0];
+    const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao);
     const etiquetas = (item.etiquetas || '').trim();
-    
-    // Probabilidade derivada de score + temperatura
+
+    // Probabilidade derivada de status
     let probabilidade = status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : 50;
-    if (status === 'Aberto') {
-      if (solScore > 0) probabilidade = Math.min(100, solScore * 10);
-      if (temperatura === 'QUENTE') probabilidade = Math.max(probabilidade, 70);
-      else if (temperatura === 'FRIO') probabilidade = Math.min(probabilidade, 30);
-    }
-    
+
     return {
-      id: item.projeto_id || `PROP-${String(index).padStart(4, '0')}`,
+      id: item.projetoId || `PROP-${String(index).padStart(4, '0')}`,
       etapa,
-      projetoId: item.projeto_id || `PROJ-${String(index).padStart(4, '0')}`,
-      nomeCliente: item.nome_cliente || 'Cliente Desconhecido',
-      clienteTelefone: item.cliente_telefone || '',
-      clienteEmail: item.cliente_email || '',
+      projetoId: item.projetoId || `PROJ-${String(index).padStart(4, '0')}`,
+      nomeCliente: item.nomeProposta || 'Cliente Desconhecido',
+      clienteTelefone: item.telefone || '',
+      clienteEmail: '',
       status,
       responsavel: item.responsavel || '',
       representante: item.representante || '',
-      valorProposta: item.valor_proposta || 0,
-      potenciaSistema: parseFloat(item.potencia_sistema) || 0,
-      nomeProposta: item.nome_proposta || 'Proposta',
-      dataCriacaoProjeto: parseDate(item.data_criacao_projeto) || '',
-      dataCriacaoProposta: parseDate(item.data_criacao_proposta) || '',
-      slaProposta: parseInt(item.sla_proposta) || 48,
+      valorProposta: item.valorProposta || 0,
+      potenciaSistema: item.potenciaSistema || 0,
+      nomeProposta: item.nomeProposta || 'Proposta',
+      dataCriacaoProjeto: parseDate(item.tsProposta) || '',
+      dataCriacaoProposta: parseDate(item.tsProposta) || '',
+      slaProposta: 48,
       ultimaAtualizacao,
-      solQualificado,
-      solScore,
-      temperatura,
-      dataQualificacaoSol: parseDate(item.data_qualificacao_sol) || '',
-      notaCompleta: item.nota_completa || '',
+      solQualificado: false,
+      solScore: 0,
+      temperatura: '' as Proposal['temperatura'],
+      dataQualificacaoSol: '',
+      notaCompleta: '',
       tempoNaEtapa,
-      solSdr,
-      tempoSolSdr: parseInt(item.tempo_sol_sdr) || 0,
+      solSdr: false,
+      tempoSolSdr: 0,
       etiquetas,
       origemLead: etiquetas,
       probabilidade,
       motivoPerda: '',
     };
   });
+}
+
+/** @deprecated Use adaptComercialData instead */
+export function adaptSheetData(sheetData: any[]): Proposal[] {
+  return adaptComercialData(sheetData.map((item: any) => ({
+    projetoId: item.projeto_id || '',
+    telefone: item.cliente_telefone || '',
+    etapaSM: item.etapa || '',
+    responsavel: item.responsavel || '',
+    responsavelId: '',
+    representante: item.representante || '',
+    etiquetas: item.etiquetas || '',
+    nomeProposta: item.nome_cliente || item.nome_proposta || '',
+    valorProposta: item.valor_proposta || 0,
+    potenciaSistema: parseFloat(item.potencia_sistema) || 0,
+    tsProposta: item.data_criacao_proposta || item.data_criacao_projeto || '',
+    statusProposta: item.status || '',
+    tsSync: '',
+  })));
 }
 
 export function extractVendedores(proposals: Proposal[]): string[] {
