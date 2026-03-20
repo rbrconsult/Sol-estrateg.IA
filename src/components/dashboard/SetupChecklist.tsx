@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Circle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
