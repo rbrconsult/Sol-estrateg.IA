@@ -141,7 +141,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       campanha: String(d.campanha || '') || null,
       temperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || null,
       score: parseInt(d.Score || d.score) || null,
-      status: String(d.status || 'novo').toUpperCase(),
+      status: STATUS_NORMALIZATION[String(d.status || 'novo').toUpperCase()] || String(d.status || 'novo').toUpperCase(),
       codigo_status: String(d.codigo_status || '').toUpperCase() || null,
       etapa: String(d.etapa || '') || null,
       responsavel: String(d.responsavel || '') || null,
