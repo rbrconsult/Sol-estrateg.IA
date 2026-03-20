@@ -98,7 +98,7 @@ function KPICard({ label, value, suffix, isDecimal }: { label: string; value: nu
 /* ═══════════════════ MAIN ═══════════════════ */
 export default function Leads() {
   const queryClient = useQueryClient();
-  const { data: sheetsData, isLoading, error, refetch } = useGoogleSheetsData();
+  const { data: comercialData, isLoading, error, refetch } = useMakeComercialData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
   const { proposals: orgFilteredProposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
@@ -106,7 +106,7 @@ export default function Leads() {
   const pf = useGlobalFilters();
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
+    queryClient.invalidateQueries({ queryKey: ['make-comercial-data'] });
     queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
   };
 
