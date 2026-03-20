@@ -2,11 +2,11 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Circle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { adaptSheetData, extractVendedores } from "@/data/dataAdapter";
+import { adaptComercialData, extractVendedores } from "@/data/dataAdapter";
 
 interface CheckItem {
   label: string;
@@ -15,7 +15,7 @@ interface CheckItem {
 
 export function SetupChecklist() {
   const { organizationId } = useAuth();
-  const { data: sheetsData } = useGoogleSheetsData();
+  const { data: comercialData } = useMakeComercialData();
 
   const { data: orgMembers } = useQuery({
     queryKey: ["org-members-count", organizationId],
@@ -45,14 +45,14 @@ export function SetupChecklist() {
   });
 
   const items: CheckItem[] = useMemo(() => {
-    const hasSheetData = !!(sheetsData?.data && sheetsData.data.length > 0);
-    const proposals = hasSheetData ? adaptSheetData(sheetsData!.data) : [];
-    const vendedores = hasSheetData ? extractVendedores(proposals) : [];
+    const hasData = !!(comercialData && comercialData.length > 0);
+    const proposals = hasData ? adaptComercialData(comercialData) : [];
+    const vendedores = hasData ? extractVendedores(proposals) : [];
 
     return [
       {
-        label: "Google Sheet configurado",
-        completed: hasSheetData,
+        label: "Data Store configurado",
+        completed: hasData,
       },
       {
         label: "Vendedores cadastrados",
@@ -71,7 +71,7 @@ export function SetupChecklist() {
         completed: !!statusUrl,
       },
     ];
-  }, [sheetsData, orgMembers, statusUrl]);
+  }, [comercialData, orgMembers, statusUrl]);
 
   const allDone = items.every((i) => i.completed);
   const completedCount = items.filter((i) => i.completed).length;

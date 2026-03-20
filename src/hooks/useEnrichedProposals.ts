@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useGoogleSheetsData } from '@/hooks/useGoogleSheetsData';
+import { useMakeComercialData } from '@/hooks/useMakeComercialData';
 import { useMakeDataStore } from '@/hooks/useMakeDataStore';
-import { adaptSheetData, enrichProposalsWithMake, Proposal } from '@/data/dataAdapter';
+import { adaptComercialData, enrichProposalsWithMake, Proposal } from '@/data/dataAdapter';
 
 export interface EnrichedData {
   proposals: Proposal[];
@@ -18,12 +18,12 @@ export interface EnrichedData {
 
 export function useEnrichedProposals(): EnrichedData {
   const {
-    data: sheetsData,
-    isLoading: sheetsLoading,
-    error: sheetsError,
+    data: comercialRecords,
+    isLoading: comercialLoading,
+    error: comercialError,
     refetch,
     isFetching,
-  } = useGoogleSheetsData();
+  } = useMakeComercialData();
 
   const {
     data: makeRecords,
@@ -32,24 +32,22 @@ export function useEnrichedProposals(): EnrichedData {
   } = useMakeDataStore();
 
   const result = useMemo(() => {
-    if (!sheetsData?.data || sheetsData.data.length === 0) {
+    if (!comercialRecords || comercialRecords.length === 0) {
       return { proposals: [], enrichedCount: 0 };
     }
 
-    const adapted = adaptSheetData(sheetsData.data);
+    const adapted = adaptComercialData(comercialRecords);
     const enriched = enrichProposalsWithMake(adapted, makeRecords || []);
     const enrichedCount = enriched.filter(p => p.makeStatus || p.makeRobo).length;
 
     return { proposals: enriched, enrichedCount };
-  }, [sheetsData, makeRecords]);
+  }, [comercialRecords, makeRecords]);
 
   return {
     proposals: result.proposals,
-    lastUpdate: sheetsData?.lastUpdate
-      ? new Date(sheetsData.lastUpdate).toLocaleString('pt-BR')
-      : new Date().toLocaleString('pt-BR'),
-    isLoading: sheetsLoading,
-    error: sheetsError as Error | null,
+    lastUpdate: new Date().toLocaleString('pt-BR'),
+    isLoading: comercialLoading,
+    error: comercialError as Error | null,
     isFetching,
     refetch,
     enrichedCount: result.enrichedCount,

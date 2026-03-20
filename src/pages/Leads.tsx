@@ -4,14 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useGoogleSheetsData } from "@/hooks/useGoogleSheetsData";
+import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import { useMakeDataStore, buildMakeMap, normalizePhone, type MakeRecord } from "@/hooks/useMakeDataStore";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import {
-  adaptSheetData,
   getLeadsKPIs,
   getLeadsByEtapa,
   getTemperaturaPorEtapa,
@@ -98,7 +97,7 @@ function KPICard({ label, value, suffix, isDecimal }: { label: string; value: nu
 /* ═══════════════════ MAIN ═══════════════════ */
 export default function Leads() {
   const queryClient = useQueryClient();
-  const { data: sheetsData, isLoading, error, refetch } = useGoogleSheetsData();
+  const { data: comercialData, isLoading, error, refetch } = useMakeComercialData();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
   const { proposals: orgFilteredProposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
@@ -106,7 +105,7 @@ export default function Leads() {
   const pf = useGlobalFilters();
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
+    queryClient.invalidateQueries({ queryKey: ['make-comercial-data'] });
     queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
   };
 
