@@ -64,7 +64,7 @@ export default function Comissoes() {
   }, [vendedorPerf, rateOverrides]);
 
   const totals = useMemo(() => ({
-    valorGanho: comissoes.reduce((s, c) => s + c.valorGanho, 0),
+    valorBase: comissoes.reduce((s, c) => s + c.valorBase, 0),
     comissao: comissoes.reduce((s, c) => s + c.comissao, 0),
     ganhos: comissoes.reduce((s, c) => s + c.ganhos, 0),
     totalPropostas: comissoes.reduce((s, c) => s + c.totalPropostas, 0),
