@@ -43,6 +43,7 @@ export interface TempEtapa {
 export interface TabelaLead {
   id: number; nome: string; etapa: string; temperatura: string; score: number;
   sla: number; statusFup: string; valor: number; dataCriacao?: string;
+  makeStatus?: string;
   historico: { data: string; tipo: string; msg: string }[];
 }
 export interface SLAMock {
@@ -383,6 +384,7 @@ export function useConferenciaData() {
         statusFup,
         valor,
         dataCriacao: r.data_envio || undefined,
+        makeStatus: (r.makeStatus || '').toUpperCase(),
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });

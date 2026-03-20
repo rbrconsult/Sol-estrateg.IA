@@ -208,7 +208,11 @@ export default function Conferencia() {
 
     // When filtering, derive from filteredLeads
     const total = filteredLeads.length;
-    const qualificados = filteredLeads.filter(l => l.etapa !== 'Robô SOL');
+    // MQL = leads que passaram da etapa inicial (Robô SOL) E não foram desqualificados
+    const qualificados = filteredLeads.filter(l => {
+      const etapa = (l.etapa || '').toLowerCase();
+      return etapa !== 'robô sol' && etapa !== '' && l.makeStatus !== 'DESQUALIFICADO';
+    });
     const mqlCount = qualificados.length;
     const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
     const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
@@ -335,8 +339,9 @@ export default function Conferencia() {
               const totalMornos = filteredTemperatura.reduce((s, t) => s + t.morno, 0);
               const totalFrios = filteredTemperatura.reduce((s, t) => s + t.frio, 0);
 
-              // Abandono = leads that didn't respond (total - responderam)
-              const abandono = Math.max(0, leadsVal - mqlVal - fupVal);
+              // Abandono = leads desqualificados (status DESQUALIFICADO), não o total residual
+              const desqualificadosCount = filteredLeads.filter(l => l.makeStatus === 'DESQUALIFICADO').length;
+              const abandono = desqualificadosCount;
               const qualifFup = fupVal;
 
               return [
