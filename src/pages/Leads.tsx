@@ -11,7 +11,6 @@ import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import {
-  adaptSheetData,
   getLeadsKPIs,
   getLeadsByEtapa,
   getTemperaturaPorEtapa,
