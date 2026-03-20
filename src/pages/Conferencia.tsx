@@ -211,7 +211,7 @@ export default function Conferencia() {
     // MQL = leads que passaram da etapa inicial (Robô SOL) E não foram desqualificados
     const qualificados = filteredLeads.filter(l => {
       const etapa = (l.etapa || '').toLowerCase();
-      return etapa !== 'robô sol' && etapa !== '' && l.status !== 'DESQUALIFICADO';
+      return etapa !== 'robô sol' && etapa !== '' && l.makeStatus !== 'DESQUALIFICADO';
     });
     const mqlCount = qualificados.length;
     const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
