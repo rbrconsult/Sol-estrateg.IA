@@ -18,7 +18,7 @@ export default function Forecast() {
   const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
   const [pipelineMode, setPipelineMode] = useState<"receita" | "potencia" | "ambos">("ambos");
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const pf = useGlobalFilters();
 
   const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
 

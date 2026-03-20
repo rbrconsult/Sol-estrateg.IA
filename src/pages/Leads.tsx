@@ -103,7 +103,7 @@ export default function Leads() {
   const { proposals: orgFilteredProposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
   const [searchTerm, setSearchTerm] = useState("");
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const pf = useGlobalFilters();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['google-sheets-data'] });
