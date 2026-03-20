@@ -46,7 +46,7 @@ export default function Comissoes() {
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
       const rate = getRate(v.nome, rateOverrides);
-      const valorGanho = v.valorTotal;
+      const valorGanho = v.valorGanho; // Only won deals, not total
       const comissao = valorGanho * (rate / 100);
       return {
         nome: v.nome,
@@ -175,10 +175,10 @@ export default function Comissoes() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="nome" tick={{ fill: "hsl(var(--foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis yAxisId="left" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyAbbrev(v)} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: 'Fechamentos', angle: 90, position: 'insideRight', style: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' } }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar yAxisId="left" dataKey="comissao" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Comissão (R$)" />
-                <Bar yAxisId="right" dataKey="fechamentos" fill="hsl(var(--chart-2))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Fechamentos" />
+                <Bar yAxisId="left" dataKey="comissao" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Comissão (R$)" label={{ position: 'top', fontSize: 9, fill: 'hsl(var(--muted-foreground))', formatter: (v: number) => v > 0 ? formatCurrencyAbbrev(v) : '' }} />
+                <Bar yAxisId="right" dataKey="fechamentos" fill="hsl(var(--chart-2))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Fechamentos" label={{ position: 'top', fontSize: 10, fill: 'hsl(var(--chart-2))', formatter: (v: number) => v > 0 ? v : '' }} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

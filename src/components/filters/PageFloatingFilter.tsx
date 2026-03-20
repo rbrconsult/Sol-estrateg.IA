@@ -40,19 +40,18 @@ const defaultState: FilterState = {
 };
 
 const ALL_ETAPAS = [
-  'TRAFEGO PAGO',
-  'PROSPECÇÃO',
-  'QUALIFICAÇÃO',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO',
+  'Tráfego Pago',
   'Prospecção',
+  'Qualificação',
+  'Qualificado',
+  'Contato Realizado',
   'Diagnóstico',
   'Proposta Enviada',
   'Negociação',
   'Aprovação Financeira',
   'Fechamento',
+  'Ganho',
+  'Perdido',
 ];
 
 export function usePageFilters(config?: FilterConfig) {
