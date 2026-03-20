@@ -15,7 +15,9 @@ export interface FilterConfig {
   showCanal?: boolean;
   showTemperatura?: boolean;
   showSearch?: boolean;
+  showEtapa?: boolean;
   canais?: string[];
+  etapas?: string[];
   searchPlaceholder?: string;
 }
 
@@ -26,6 +28,7 @@ export interface FilterState {
   canal: string;
   temperatura: string;
   searchTerm: string;
+  etapa: string;
 }
 
 const defaultState: FilterState = {
@@ -33,7 +36,24 @@ const defaultState: FilterState = {
   canal: "todos",
   temperatura: "todas",
   searchTerm: "",
+  etapa: "todas",
 };
+
+const ALL_ETAPAS = [
+  'TRAFEGO PAGO',
+  'PROSPECÇÃO',
+  'QUALIFICAÇÃO',
+  'QUALIFICADO',
+  'CONTATO REALIZADO',
+  'PROPOSTA',
+  'NEGOCIAÇÃO',
+  'Prospecção',
+  'Diagnóstico',
+  'Proposta Enviada',
+  'Negociação',
+  'Aprovação Financeira',
+  'Fechamento',
+];
 
 export function usePageFilters(config?: FilterConfig) {
   const [filters, setFilters] = useState<FilterState>(defaultState);
@@ -44,10 +64,11 @@ export function usePageFilters(config?: FilterConfig) {
   const setCanal = useCallback((v: string) => setFilters(f => ({ ...f, canal: v })), []);
   const setTemperatura = useCallback((v: string) => setFilters(f => ({ ...f, temperatura: v })), []);
   const setSearchTerm = useCallback((v: string) => setFilters(f => ({ ...f, searchTerm: v })), []);
+  const setEtapa = useCallback((v: string) => setFilters(f => ({ ...f, etapa: v })), []);
   const clearFilters = useCallback(() => setFilters(defaultState), []);
 
   const hasFilters = filters.periodo !== "all" || !!filters.dateFrom || !!filters.dateTo ||
-    filters.canal !== "todos" || filters.temperatura !== "todas" || !!filters.searchTerm;
+    filters.canal !== "todos" || filters.temperatura !== "todas" || !!filters.searchTerm || filters.etapa !== "todas";
 
   const effectiveDateRange = useMemo(() => {
     const today = new Date();
@@ -63,10 +84,8 @@ export function usePageFilters(config?: FilterConfig) {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
-  /** Filter MakeRecords by date, canal, temperatura, search */
   const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string }>(records: T[]): T[] => {
     return records.filter(r => {
-      // Date
       const { from, to } = effectiveDateRange;
       if (from || to) {
         const dateStr = r.data_envio;
@@ -76,20 +95,15 @@ export function usePageFilters(config?: FilterConfig) {
         if (from && d < from) return false;
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
-      // Canal
       if (filters.canal !== "todos" && r.cidade !== filters.canal) return false;
-      // Temperatura
       if (filters.temperatura !== "todas" && (r.makeTemperatura || "").toUpperCase() !== filters.temperatura) return false;
-      // Search
       if (filters.searchTerm && !(r.nome || "").toLowerCase().includes(filters.searchTerm.toLowerCase())) return false;
       return true;
     });
   }, [effectiveDateRange, filters.canal, filters.temperatura, filters.searchTerm]);
 
-  /** Filter Proposals (from dataAdapter) by period, temperatura, search */
-  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string }>(proposals: T[]): T[] => {
+  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string; etapa?: string }>(proposals: T[]): T[] => {
     return proposals.filter(p => {
-      // Date
       const { from, to } = effectiveDateRange;
       if (from || to) {
         const dateStr = p.dataCriacaoProposta;
@@ -99,9 +113,8 @@ export function usePageFilters(config?: FilterConfig) {
         if (from && d < from) return false;
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
-      // Temperatura
       if (filters.temperatura !== "todas" && (p.temperatura || "").toUpperCase() !== filters.temperatura) return false;
-      // Search
+      if (filters.etapa !== "todas" && (p.etapa || "").toUpperCase() !== filters.etapa.toUpperCase()) return false;
       if (filters.searchTerm) {
         const term = filters.searchTerm.toLowerCase();
         const match = (p.nomeCliente || "").toLowerCase().includes(term) ||
@@ -111,11 +124,11 @@ export function usePageFilters(config?: FilterConfig) {
       }
       return true;
     });
-  }, [effectiveDateRange, filters.temperatura, filters.searchTerm]);
+  }, [effectiveDateRange, filters.temperatura, filters.searchTerm, filters.etapa]);
 
   return {
     filters, hasFilters, clearFilters,
-    setPeriodo, setDateFrom, setDateTo, setCanal, setTemperatura, setSearchTerm,
+    setPeriodo, setDateFrom, setDateTo, setCanal, setTemperatura, setSearchTerm, setEtapa,
     effectiveDateRange, filterRecords, filterProposals,
   };
 }
@@ -130,6 +143,7 @@ interface PageFloatingFilterProps {
   setCanal?: (v: string) => void;
   setTemperatura?: (v: string) => void;
   setSearchTerm?: (v: string) => void;
+  setEtapa?: (v: string) => void;
   canais?: string[];
   config?: FilterConfig;
 }
@@ -137,7 +151,7 @@ interface PageFloatingFilterProps {
 export function PageFloatingFilter({
   filters, hasFilters, clearFilters,
   setPeriodo, setDateFrom, setDateTo,
-  setCanal, setTemperatura, setSearchTerm,
+  setCanal, setTemperatura, setSearchTerm, setEtapa,
   canais = [],
   config = { showPeriodo: true },
 }: PageFloatingFilterProps) {
@@ -148,6 +162,7 @@ export function PageFloatingFilter({
     filters.canal !== "todos",
     filters.temperatura !== "todas",
     !!filters.searchTerm,
+    filters.etapa !== "todas",
   ].filter(Boolean).length;
 
   return (
@@ -170,9 +185,9 @@ export function PageFloatingFilter({
       </button>
 
       {open && (
-        <div className="fixed bottom-36 right-5 z-[9990] w-72 rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-2xl p-4 space-y-3 animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="fixed bottom-36 right-5 z-[9990] w-72 rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-2xl p-4 space-y-3 animate-in slide-in-from-bottom-4 fade-in duration-200 max-h-[70vh] overflow-y-auto">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-foreground">Filtros</p>
+            <p className="text-xs font-semibold text-foreground">Filtros Globais</p>
             {hasFilters && (
               <Button variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground" onClick={clearFilters}>
                 Limpar tudo
@@ -229,6 +244,20 @@ export function PageFloatingFilter({
             </div>
           )}
 
+          {/* Etapa */}
+          {config.showEtapa && setEtapa && (
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Etapa</label>
+              <Select value={filters.etapa} onValueChange={setEtapa}>
+                <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as Etapas</SelectItem>
+                  {(config.etapas || ALL_ETAPAS).map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Canal */}
           {config.showCanal && setCanal && canais.length > 0 && (
             <div>
@@ -279,6 +308,7 @@ export function PageFloatingFilter({
           {hasFilters && (
             <div className="flex flex-wrap gap-1 pt-1 border-t border-border/30">
               {filters.periodo !== "all" && <Badge variant="secondary" className="text-[9px]">{filters.periodo}</Badge>}
+              {filters.etapa !== "todas" && <Badge variant="secondary" className="text-[9px]">📋 {filters.etapa}</Badge>}
               {filters.canal !== "todos" && <Badge variant="secondary" className="text-[9px]">{filters.canal}</Badge>}
               {filters.temperatura !== "todas" && <Badge variant="secondary" className="text-[9px]">{filters.temperatura}</Badge>}
               {filters.searchTerm && <Badge variant="secondary" className="text-[9px]">"{filters.searchTerm}"</Badge>}

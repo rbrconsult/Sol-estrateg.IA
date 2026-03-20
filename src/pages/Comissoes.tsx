@@ -11,19 +11,32 @@ import { getVendedorPerformance } from "@/data/dataAdapter";
 import { DollarSign, Percent, Users, TrendingUp, RefreshCcw } from "lucide-react";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
-const COMMISSION_RATES: Record<string, number> = {};
-const DEFAULT_RATE = 3;
+// Comissão padrão 2%, Danielle 3%
+const COMMISSION_RATES: Record<string, number> = {
+  "Danielle": 3,
+};
+const DEFAULT_RATE = 2;
+
+function getRate(nome: string, overrides: Record<string, string>): number {
+  const overrideStr = overrides[nome];
+  if (overrideStr !== undefined && overrideStr !== "") return parseFloat(overrideStr) || 0;
+  // Check if any key in COMMISSION_RATES matches (first name match)
+  for (const [key, rate] of Object.entries(COMMISSION_RATES)) {
+    if (nome.toLowerCase().includes(key.toLowerCase())) return rate;
+  }
+  return DEFAULT_RATE;
+}
 
 export default function Comissoes() {
   const { proposals, isLoading, refetch, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const gf = useGlobalFilters();
 
-  // Apply ALL page-level filters (period, temperatura, search) using filterProposals
-  const filteredProposals = useMemo(() => pf.filterProposals(proposals), [proposals, pf.filterProposals]);
+  const filteredProposals = useMemo(() => gf.filterProposals(proposals), [proposals, gf.filterProposals]);
 
   const vendedorPerf = useMemo(() => {
     if (!filteredProposals.length) return [];
@@ -32,10 +45,7 @@ export default function Comissoes() {
 
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
-      const overrideStr = rateOverrides[v.nome];
-      const rate = overrideStr !== undefined && overrideStr !== ""
-        ? parseFloat(overrideStr) || 0
-        : (COMMISSION_RATES[v.nome] ?? DEFAULT_RATE);
+      const rate = getRate(v.nome, rateOverrides);
       const valorGanho = v.valorTotal;
       const comissao = valorGanho * (rate / 100);
       return {
@@ -47,7 +57,8 @@ export default function Comissoes() {
         valorGanho,
         rate,
         comissao,
-        taxaConversao: v.taxaConversao,
+        // Taxa de conversão = propostas fechadas / propostas enviadas
+        taxaConversao: v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0,
       };
     }).sort((a, b) => b.comissao - a.comissao);
   }, [vendedorPerf, rateOverrides]);
@@ -56,6 +67,7 @@ export default function Comissoes() {
     valorGanho: comissoes.reduce((s, c) => s + c.valorGanho, 0),
     comissao: comissoes.reduce((s, c) => s + c.comissao, 0),
     ganhos: comissoes.reduce((s, c) => s + c.ganhos, 0),
+    totalPropostas: comissoes.reduce((s, c) => s + c.totalPropostas, 0),
   }), [comissoes]);
 
   const chartData = useMemo(() =>
@@ -63,6 +75,7 @@ export default function Comissoes() {
       nome: c.nome.split(" ")[0],
       comissao: c.comissao,
       valorGanho: c.valorGanho,
+      fechamentos: c.ganhos,
     })),
   [comissoes]);
 
@@ -71,11 +84,13 @@ export default function Comissoes() {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
+    const data = payload[0]?.payload;
     return (
       <div className="rounded-lg border border-border bg-card p-3 shadow-lg text-sm">
         <p className="font-medium text-foreground">{label}</p>
-        <p className="text-success">Comissão: {formatCurrency(payload[0]?.value || 0)}</p>
-        <p className="text-muted-foreground">Valor Fechado: {formatCurrency(payload[0]?.payload?.valorGanho || 0)}</p>
+        <p className="text-primary">Comissão: {formatCurrency(data?.comissao || 0)}</p>
+        <p className="text-muted-foreground">Valor Fechado: {formatCurrency(data?.valorGanho || 0)}</p>
+        <p className="text-muted-foreground">Fechamentos: {data?.fechamentos || 0}</p>
       </div>
     );
   };
@@ -94,11 +109,10 @@ export default function Comissoes() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Comissões</h1>
-          <p className="text-sm text-muted-foreground">Comissão calculada sobre valor fechado por vendedor</p>
+          <p className="text-sm text-muted-foreground">Padrão: 2% · Danielle: 3% · Editável por vendedor</p>
         </div>
         <div className="flex items-center gap-2">
           {orgFilterActive && (
@@ -116,10 +130,10 @@ export default function Comissoes() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor..." }}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar vendedor..." }}
       />
 
       {/* KPIs */}
@@ -148,30 +162,34 @@ export default function Comissoes() {
         })}
       </div>
 
-      {/* Chart */}
+      {/* Chart - Top 10 com valor e fechamentos */}
       {chartData.length > 0 && (
         <Card className="opacity-0 animate-fade-up" style={{ animationDelay: "350ms", animationFillMode: "forwards" }}>
           <CardHeader>
             <CardTitle className="text-lg">Top 10 — Comissão por Vendedor</CardTitle>
+            <p className="text-xs text-muted-foreground">Valor de comissão e quantidade de fechamentos</p>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="nome" tick={{ fill: "hsl(var(--foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                <YAxis yAxisId="left" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="comissao" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                <Bar yAxisId="left" dataKey="comissao" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Comissão (R$)" />
+                <Bar yAxisId="right" dataKey="fechamentos" fill="hsl(var(--chart-2))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Fechamentos" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
 
-      {/* Table */}
+      {/* Table - Detalhamento */}
       <Card className="opacity-0 animate-fade-up" style={{ animationDelay: "450ms", animationFillMode: "forwards" }}>
         <CardHeader>
           <CardTitle className="text-lg">Detalhamento por Vendedor</CardTitle>
+          <p className="text-xs text-muted-foreground">Ganhos, contratos fechados e taxa de conversão (fechadas ÷ enviadas)</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -180,8 +198,9 @@ export default function Comissoes() {
                 <TableRow className="hover:bg-transparent border-border">
                   <TableHead className="text-muted-foreground font-medium">#</TableHead>
                   <TableHead className="text-muted-foreground font-medium">Vendedor</TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-center">Ganhos</TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-right">Valor Fechado</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-center">Propostas</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-center">Fechamentos</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-right">Valor Ganho</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center w-24">% Comissão</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-right">Comissão (R$)</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Conversão</TableHead>
@@ -200,8 +219,9 @@ export default function Comissoes() {
                       </span>
                     </TableCell>
                     <TableCell className="font-medium text-foreground">{c.nome}</TableCell>
+                    <TableCell className="text-center text-muted-foreground">{c.totalPropostas}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-success/10 text-success border-success/20">{c.ganhos}</Badge>
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorGanho)}</TableCell>
                     <TableCell className="text-center">
@@ -218,7 +238,7 @@ export default function Comissoes() {
                     <TableCell className="text-right font-bold text-primary">{formatCurrency(c.comissao)}</TableCell>
                     <TableCell className="text-center">
                       <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${
-                        c.taxaConversao >= 25 ? "bg-success/10 text-success" :
+                        c.taxaConversao >= 25 ? "bg-primary/10 text-primary" :
                         c.taxaConversao >= 15 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       }`}>
                         {c.taxaConversao.toFixed(1)}%
@@ -228,11 +248,14 @@ export default function Comissoes() {
                 ))}
                 <TableRow className="border-t-2 border-border bg-muted/30 font-bold">
                   <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
+                  <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
                   <TableCell className="text-center text-foreground">{totals.ganhos}</TableCell>
                   <TableCell className="text-right text-foreground">{formatCurrency(totals.valorGanho)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{formatCurrency(totals.comissao)}</TableCell>
-                  <TableCell />
+                  <TableCell className="text-center text-foreground">
+                    {totals.totalPropostas > 0 ? ((totals.ganhos / totals.totalPropostas) * 100).toFixed(1) : 0}%
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
