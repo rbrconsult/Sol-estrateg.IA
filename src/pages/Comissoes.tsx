@@ -74,7 +74,7 @@ export default function Comissoes() {
     comissoes.slice(0, 10).map(c => ({
       nome: c.nome.split(" ")[0],
       comissao: c.comissao,
-      valorGanho: c.valorGanho,
+      valorBase: c.valorBase,
       fechamentos: c.ganhos,
     })),
   [comissoes]);
@@ -89,7 +89,7 @@ export default function Comissoes() {
       <div className="rounded-lg border border-border bg-card p-3 shadow-lg text-sm">
         <p className="font-medium text-foreground">{label}</p>
         <p className="text-primary">Comissão: {formatCurrency(data?.comissao || 0)}</p>
-        <p className="text-muted-foreground">Valor Fechado: {formatCurrency(data?.valorGanho || 0)}</p>
+        <p className="text-muted-foreground">Valor Total: {formatCurrency(data?.valorBase || 0)}</p>
         <p className="text-muted-foreground">Fechamentos: {data?.fechamentos || 0}</p>
       </div>
     );
@@ -139,7 +139,7 @@ export default function Comissoes() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Receita Fechada", value: formatCurrencyAbbrev(totals.valorGanho), icon: DollarSign, sub: `${totals.ganhos} negócios ganhos` },
+          { label: "Receita Total", value: formatCurrencyAbbrev(totals.valorBase), icon: DollarSign, sub: `${totals.ganhos} propostas` },
           { label: "Total Comissões", value: formatCurrencyAbbrev(totals.comissao), icon: Percent, sub: "A pagar" },
           { label: "Vendedores", value: comissoes.length.toString(), icon: Users, sub: "Com propostas" },
           { label: "% Médio", value: `${comissoes.length > 0 ? (comissoes.reduce((s, c) => s + c.rate, 0) / comissoes.length).toFixed(1) : 0}%`, icon: TrendingUp, sub: "Taxa média de comissão" },
@@ -223,7 +223,7 @@ export default function Comissoes() {
                     <TableCell className="text-center">
                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorGanho)}</TableCell>
+                    <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorBase)}</TableCell>
                     <TableCell className="text-center">
                       <Input
                         type="number"
@@ -250,7 +250,7 @@ export default function Comissoes() {
                   <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
                   <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
                   <TableCell className="text-center text-foreground">{totals.ganhos}</TableCell>
-                  <TableCell className="text-right text-foreground">{formatCurrency(totals.valorGanho)}</TableCell>
+                  <TableCell className="text-right text-foreground">{formatCurrency(totals.valorBase)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{formatCurrency(totals.comissao)}</TableCell>
                   <TableCell className="text-center text-foreground">
