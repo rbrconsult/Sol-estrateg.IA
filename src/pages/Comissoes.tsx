@@ -75,7 +75,7 @@ export default function Comissoes() {
       nome: c.nome.split(" ")[0],
       comissao: c.comissao,
       valorBase: c.valorBase,
-      fechamentos: c.ganhos,
+      fechamentos: c.totalPropostas,
     })),
   [comissoes]);
 
