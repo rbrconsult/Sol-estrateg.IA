@@ -9,7 +9,8 @@ import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
