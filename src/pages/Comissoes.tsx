@@ -46,7 +46,7 @@ export default function Comissoes() {
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
       const rate = getRate(v.nome, rateOverrides);
-      const valorGanho = v.valorTotal;
+      const valorGanho = v.valorGanho; // Only won deals, not total
       const comissao = valorGanho * (rate / 100);
       return {
         nome: v.nome,
