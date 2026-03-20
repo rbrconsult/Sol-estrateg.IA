@@ -6,7 +6,7 @@ import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { adaptSheetData, extractVendedores } from "@/data/dataAdapter";
+import { adaptComercialData, extractVendedores } from "@/data/dataAdapter";
 
 interface CheckItem {
   label: string;
