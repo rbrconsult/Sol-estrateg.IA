@@ -46,18 +46,18 @@ export default function Comissoes() {
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
       const rate = getRate(v.nome, rateOverrides);
-      const valorGanho = v.valorGanho; // Only won deals, not total
-      const comissao = valorGanho * (rate / 100);
+      // Use valorTotal (all proposals) as commission base — data doesn't track "Ganho" status separately
+      const valorBase = v.valorTotal;
+      const comissao = valorBase * (rate / 100);
       return {
         nome: v.nome,
         totalPropostas: v.totalPropostas,
         ganhos: v.ganhos,
         perdidos: v.perdidos,
         abertos: v.abertos,
-        valorGanho,
+        valorBase,
         rate,
         comissao,
-        // Taxa de conversão = propostas fechadas / propostas enviadas
         taxaConversao: v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0,
       };
     }).sort((a, b) => b.comissao - a.comissao);
