@@ -75,7 +75,7 @@ export default function Comissoes() {
       nome: c.nome.split(" ")[0],
       comissao: c.comissao,
       valorBase: c.valorBase,
-      fechamentos: c.ganhos,
+      fechamentos: c.totalPropostas,
     })),
   [comissoes]);
 
@@ -139,7 +139,7 @@ export default function Comissoes() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Receita Total", value: formatCurrencyAbbrev(totals.valorBase), icon: DollarSign, sub: `${totals.ganhos} propostas` },
+          { label: "Receita Total", value: formatCurrencyAbbrev(totals.valorBase), icon: DollarSign, sub: `${totals.totalPropostas} propostas` },
           { label: "Total Comissões", value: formatCurrencyAbbrev(totals.comissao), icon: Percent, sub: "A pagar" },
           { label: "Vendedores", value: comissoes.length.toString(), icon: Users, sub: "Com propostas" },
           { label: "% Médio", value: `${comissoes.length > 0 ? (comissoes.reduce((s, c) => s + c.rate, 0) / comissoes.length).toFixed(1) : 0}%`, icon: TrendingUp, sub: "Taxa média de comissão" },
@@ -221,7 +221,7 @@ export default function Comissoes() {
                     <TableCell className="font-medium text-foreground">{c.nome}</TableCell>
                     <TableCell className="text-center text-muted-foreground">{c.totalPropostas}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.totalPropostas}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorBase)}</TableCell>
                     <TableCell className="text-center">
@@ -249,7 +249,7 @@ export default function Comissoes() {
                 <TableRow className="border-t-2 border-border bg-muted/30 font-bold">
                   <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
                   <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
-                  <TableCell className="text-center text-foreground">{totals.ganhos}</TableCell>
+                  <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
                   <TableCell className="text-right text-foreground">{formatCurrency(totals.valorBase)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{formatCurrency(totals.comissao)}</TableCell>
