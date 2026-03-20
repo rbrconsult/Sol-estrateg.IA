@@ -19,16 +19,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpButton } from "@/components/HelpButton";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { Badge } from "@/components/ui/badge";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const STORAGE_KEY = "sol_insights_meta";
 
 const Index = () => {
   const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
+  const gf = useGlobalFilters();
 
-  const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
+  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
   const lastUpdate = useMemo(() => new Date().toLocaleString('pt-BR'), []);
 
@@ -98,10 +99,10 @@ const Index = () => {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar vendedor ou cliente..." }}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar vendedor ou cliente..." }}
       />
 
       {/* Status bar */}
