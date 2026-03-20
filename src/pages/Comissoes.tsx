@@ -221,7 +221,7 @@ export default function Comissoes() {
                     <TableCell className="font-medium text-foreground">{c.nome}</TableCell>
                     <TableCell className="text-center text-muted-foreground">{c.totalPropostas}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.totalPropostas}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorBase)}</TableCell>
                     <TableCell className="text-center">
