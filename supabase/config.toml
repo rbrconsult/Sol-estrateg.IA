@@ -9,8 +9,6 @@ project_id = "xffzjdulkdgyicsllznp"
     verify_jwt = false
   [functions.fetch-make-heartbeat]
     verify_jwt = false
-  [functions.fetch-sheets]
-    verify_jwt = false
   [functions.impersonate-user]
     verify_jwt = false
   [functions.make-action]
