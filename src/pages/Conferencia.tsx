@@ -340,7 +340,7 @@ export default function Conferencia() {
               const totalFrios = filteredTemperatura.reduce((s, t) => s + t.frio, 0);
 
               // Abandono = leads desqualificados (status DESQUALIFICADO), não o total residual
-              const desqualificadosCount = filteredLeads.filter(l => l.status === 'DESQUALIFICADO').length;
+              const desqualificadosCount = filteredLeads.filter(l => l.makeStatus === 'DESQUALIFICADO').length;
               const abandono = desqualificadosCount;
               const qualifFup = fupVal;
 
