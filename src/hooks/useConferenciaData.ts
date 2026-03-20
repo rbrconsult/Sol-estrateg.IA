@@ -384,6 +384,7 @@ export function useConferenciaData() {
         statusFup,
         valor,
         dataCriacao: r.data_envio || undefined,
+        makeStatus: (r.makeStatus || '').toUpperCase(),
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
