@@ -5,7 +5,7 @@ import {
   BarChart3, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
-  Activity, RefreshCw, Eraser, Building2, Globe,
+  Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
       { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento" },
       { title: "Sanitização", icon: Eraser, path: "/sanitizacao" },
+      { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
     ],
   },
 ];
