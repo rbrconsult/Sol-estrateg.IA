@@ -5,7 +5,7 @@ import {
   BarChart3, TrendingUp, Megaphone, Bot, Repeat, Route,
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
-  Activity, RefreshCw, Eraser, Building2, Globe,
+  Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
