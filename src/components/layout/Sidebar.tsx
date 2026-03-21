@@ -74,6 +74,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
       { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento" },
       { title: "Sanitização", icon: Eraser, path: "/sanitizacao" },
+      { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
     ],
   },
 ];
