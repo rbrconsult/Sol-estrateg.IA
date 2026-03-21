@@ -6,6 +6,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchWithRetry(url: string, opts: RequestInit, retries = 3): Promise<Response> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(url, opts);
+    if (res.status === 429) {
+      const wait = Math.pow(2, attempt + 1) * 1000;
+      console.log(`429 rate limited, waiting ${wait}ms (attempt ${attempt + 1}/${retries})...`);
+      await delay(wait);
+      continue;
+    }
+    return res;
+  }
+  return fetch(url, opts);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -58,7 +74,7 @@ Deno.serve(async (req) => {
       const apiUrl = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
       console.log(`Fetching: ${apiUrl}`);
 
-      const makeRes = await fetch(apiUrl, {
+      const makeRes = await fetchWithRetry(apiUrl, {
         headers: {
           "Authorization": `Token ${makeApiKey}`,
           "Content-Type": "application/json",
