@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       const apiUrl = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
       console.log(`Fetching: ${apiUrl}`);
 
-      const makeRes = await fetch(apiUrl, {
+      const makeRes = await fetchWithRetry(apiUrl, {
         headers: {
           "Authorization": `Token ${makeApiKey}`,
           "Content-Type": "application/json",
