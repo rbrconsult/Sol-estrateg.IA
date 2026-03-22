@@ -98,6 +98,9 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
   const { data: orgs } = await supabase.from('organizations').select('id, name');
   if (!orgs?.length) return [];
 
+  // Skip matriz — only sync tenant orgs
+  const tenantOrgs = orgs.filter((o: any) => o.id !== MATRIZ_ORG_ID);
+
   const { data: allConfigs } = await supabase
     .from('organization_configs')
     .select('organization_id, config_key, config_value')
