@@ -83,6 +83,8 @@ const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
 };
 
+const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';
+
 interface OrgCredentials {
   orgId: string;
   orgName: string;
