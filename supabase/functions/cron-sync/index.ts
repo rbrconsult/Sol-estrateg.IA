@@ -250,24 +250,34 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "").trim() || "";
+    // Auth: accept service role key, anon key, or valid JWT
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
     const serviceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "").trim();
     const anonKey = (Deno.env.get("SUPABASE_ANON_KEY") || "").trim();
 
-    const isServiceRole = token === serviceRoleKey;
-    const isAnonKey = token === anonKey;
+    console.log(`Auth check: token length=${token.length}, srk length=${serviceRoleKey.length}, anon length=${anonKey.length}, match_srk=${token === serviceRoleKey}, match_anon=${token === anonKey}`);
 
-    if (!isServiceRole && !isAnonKey) {
-      // Try JWT validation for authenticated users
-      const anonClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        anonKey,
-        { global: { headers: { Authorization: authHeader! } } }
-      );
-      const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
-      if (authError || !user) {
-        console.error("cron-sync auth failed:", authError?.message);
+    const isAuthorized = token === serviceRoleKey || token === anonKey;
+
+    if (!isAuthorized) {
+      // Try JWT auth for regular users
+      try {
+        const anonClient = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          anonKey,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+        if (authError || !user) {
+          console.error("cron-sync auth failed:", authError?.message);
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch (e) {
+        console.error("cron-sync auth exception:", e);
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
