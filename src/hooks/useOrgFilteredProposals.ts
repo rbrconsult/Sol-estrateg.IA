@@ -48,6 +48,10 @@ export function useOrgFilteredProposals(): EnrichedData & { orgFilterActive: boo
     }
 
     return enriched.proposals.filter((p) => {
+      const respId = (p.responsavelId || "").trim();
+      // Primary: match by SM numeric ID
+      if (respId && orgResponsaveis.includes(respId)) return true;
+      // Fallback: match by name (backward compat)
       const rep = (p.representante || "").trim().toLowerCase();
       const resp = (p.responsavel || "").trim().toLowerCase();
       return orgResponsaveis.some(

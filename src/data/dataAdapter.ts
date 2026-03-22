@@ -10,6 +10,7 @@ export interface Proposal {
   clienteEmail: string;
   status: 'Aberto' | 'Ganho' | 'Perdido';
   responsavel: string;
+  responsavelId: string;
   representante: string;
   valorProposta: number;
   potenciaSistema: number;
@@ -145,6 +146,7 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
       clienteEmail: '',
       status,
       responsavel: item.responsavel || '',
+      responsavelId: item.responsavelId || '',
       representante: item.representante || '',
       valorProposta: item.valorProposta || 0,
       potenciaSistema: item.potenciaSistema || 0,
