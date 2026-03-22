@@ -44,6 +44,40 @@ function normalizePhone(phone: string): string {
   return digits;
 }
 
+/** Parse various date formats into ISO string or null */
+function parseDate(value: any): string | null {
+  if (!value) return null;
+  const str = String(value).trim();
+  if (!str || str === 'N/A' || str === 'null' || str === 'undefined' || str === '-') return null;
+
+  // Excel serial number (e.g. "46008,38325" or "46008.38325")
+  const excelMatch = str.match(/^(\d{4,5})[,.](\d+)$/);
+  if (excelMatch) {
+    const serial = parseFloat(str.replace(',', '.'));
+    if (serial > 1000 && serial < 100000) {
+      const epoch = new Date((serial - 25569) * 86400 * 1000);
+      if (!isNaN(epoch.getTime())) return epoch.toISOString();
+    }
+    return null;
+  }
+
+  // BR format: DD/MM/YYYY HH:mm:ss or DD/MM/YYYY
+  const brMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
+  if (brMatch) {
+    const [, dd, mm, yyyy, hh, mi, ss] = brMatch;
+    const iso = `${yyyy}-${mm}-${dd}T${hh || '00'}:${mi || '00'}:${ss || '00'}-03:00`;
+    const d = new Date(iso);
+    if (!isNaN(d.getTime())) return d.toISOString();
+    return null;
+  }
+
+  // Already ISO or other parseable format
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) return d.toISOString();
+
+  return null;
+}
+
 /** Status normalization — reclassify orphaned/ambiguous statuses */
 const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
