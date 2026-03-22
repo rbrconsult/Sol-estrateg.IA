@@ -265,9 +265,16 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   const allResults = await batchedPromises(fetchFns, 2);
   for (const logs of allResults) heartbeatRecords.push(...logs);
 
+  // Deduplicate by execution_id to avoid "ON CONFLICT DO UPDATE cannot affect row a second time"
+  const dedupMap = new Map<string, any>();
+  for (const r of heartbeatRecords) {
+    dedupMap.set(r.execution_id, r);
+  }
+  const dedupRecords = Array.from(dedupMap.values());
+
   let upsertedHB = 0;
-  for (let i = 0; i < heartbeatRecords.length; i += 50) {
-    const batch = heartbeatRecords.slice(i, i + 50);
+  for (let i = 0; i < dedupRecords.length; i += 50) {
+    const batch = dedupRecords.slice(i, i + 50);
     const { error } = await supabase
       .from("make_heartbeat")
       .upsert(batch, { onConflict: "execution_id", ignoreDuplicates: false });
@@ -275,7 +282,7 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
     else upsertedHB += batch.length;
   }
 
-  return { scenarios: scenarios.length, records: heartbeatRecords.length, upserted: upsertedHB };
+  return { scenarios: scenarios.length, records: dedupRecords.length, upserted: upsertedHB };
 }
 
 Deno.serve(async (req) => {
