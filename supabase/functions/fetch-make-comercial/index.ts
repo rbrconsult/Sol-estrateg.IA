@@ -73,18 +73,31 @@ Deno.serve(async (req) => {
       targetOrgId = orgId;
     }
 
-    // Get allowed responsavel IDs if filtering by org
+    // Get allowed responsavel names/IDs if filtering by org
+    let allowedNames: string[] = [];
     let allowedIds: string[] = [];
     if (targetOrgId) {
       const { data: configs } = await adminClient
         .from("organization_configs")
-        .select("config_value")
+        .select("config_key, config_value")
         .eq("organization_id", targetOrgId)
         .eq("config_category", "responsavel");
 
-      allowedIds = (configs || [])
-        .map((c: any) => String(c.config_value).trim())
-        .filter(Boolean);
+      for (const c of configs || []) {
+        const id = String(c.config_value).trim();
+        if (id) allowedIds.push(id);
+      }
+
+      // Fetch display names for matching (category: responsavel_nome)
+      const { data: nameConfigs } = await adminClient
+        .from("organization_configs")
+        .select("config_key, config_value")
+        .eq("organization_id", targetOrgId)
+        .eq("config_category", "responsavel_nome");
+
+      if (nameConfigs && nameConfigs.length > 0) {
+        allowedNames = nameConfigs.map((c: any) => String(c.config_value).trim().toLowerCase());
+      }
 
       // Security: non-admin with no responsaveis configured = empty result
       if (allowedIds.length === 0 && !isSuperAdmin) {
