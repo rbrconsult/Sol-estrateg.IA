@@ -184,8 +184,9 @@ export function useMakeDataStore() {
   return useQuery({
     queryKey: ['make-data-store'],
     queryFn: fetchMakeData,
-    staleTime: 1000 * 60 * 5,
-    refetchInterval: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 min cache
+    gcTime: 1000 * 60 * 30, // keep in memory 30 min
+    refetchOnWindowFocus: false,
     retry: 1,
     enabled: !!user,
   });

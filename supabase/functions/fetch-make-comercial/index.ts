@@ -73,18 +73,31 @@ Deno.serve(async (req) => {
       targetOrgId = orgId;
     }
 
-    // Get allowed responsavel IDs if filtering by org
+    // Get allowed responsavel names/IDs if filtering by org
+    let allowedNames: string[] = [];
     let allowedIds: string[] = [];
     if (targetOrgId) {
       const { data: configs } = await adminClient
         .from("organization_configs")
-        .select("config_value")
+        .select("config_key, config_value")
         .eq("organization_id", targetOrgId)
         .eq("config_category", "responsavel");
 
-      allowedIds = (configs || [])
-        .map((c: any) => String(c.config_value).trim())
-        .filter(Boolean);
+      for (const c of configs || []) {
+        const id = String(c.config_value).trim();
+        if (id) allowedIds.push(id);
+      }
+
+      // Fetch display names for matching (category: responsavel_nome)
+      const { data: nameConfigs } = await adminClient
+        .from("organization_configs")
+        .select("config_key, config_value")
+        .eq("organization_id", targetOrgId)
+        .eq("config_category", "responsavel_nome");
+
+      if (nameConfigs && nameConfigs.length > 0) {
+        allowedNames = nameConfigs.map((c: any) => String(c.config_value).trim().toLowerCase());
+      }
 
       // Security: non-admin with no responsaveis configured = empty result
       if (allowedIds.length === 0 && !isSuperAdmin) {
@@ -117,6 +130,7 @@ Deno.serve(async (req) => {
     // Fallback to global secrets
     if (!makeApiKey) makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
     if (!dataStoreId) dataStoreId = (Deno.env.get("MAKE_COMERCIAL_DATASTORE_ID") || "").trim();
+    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1437295").trim();
 
     if (!makeApiKey || !dataStoreId) {
       return new Response(
@@ -132,7 +146,7 @@ Deno.serve(async (req) => {
     let hasMore = true;
 
     while (hasMore) {
-      const apiUrl = `https://us2.make.com/api/v2/data-stores/${dataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+      const apiUrl = `https://us2.make.com/api/v2/data-stores/${dataStoreId}/data?teamId=${makeTeamId}&pg[limit]=${limit}&pg[offset]=${offset}`;
 
       // Support both raw key and "Token xxx" format
       const authValue = makeApiKey.startsWith("Token ") ? makeApiKey : `Token ${makeApiKey}`;
@@ -162,19 +176,29 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    // Filter by responsavel name if we have allowed values
+    // Filter by responsavel name/ID
     let filteredRecords = allRecords;
-    if (allowedIds.length > 0) {
-      const allowedNormalized = allowedIds.map(id => id.toLowerCase().trim());
+    if (allowedIds.length > 0 || allowedNames.length > 0) {
       filteredRecords = allRecords.filter((r) => {
         const d = r.data || r;
         const respName = String(d.responsavel || "").toLowerCase().trim();
-        const respId = String(d.responsavel_id || "").trim();
-        // Match by name OR by ID (future-proof)
-        return (respName && allowedNormalized.includes(respName)) ||
-               (respId && allowedIds.includes(respId));
+        const respId = String(d.responsavel_id || d.representante_id || "").trim();
+        const representante = String(d.representante || "").toLowerCase().trim();
+        // Match by name (from responsavel_nome configs or DS field)
+        if (allowedNames.length > 0) {
+          if (respName && allowedNames.includes(respName)) return true;
+          if (representante && allowedNames.includes(representante)) return true;
+        }
+        // Match by numeric ID
+        if (respId && allowedIds.includes(respId)) return true;
+        // Fallback: match responsavel name against known name patterns from config_key
+        // e.g. "Gabriel Ferrari" matches if any allowedName contains it
+        if (allowedNames.length > 0 && respName) {
+          if (allowedNames.some(n => n.includes(respName) || respName.includes(n))) return true;
+        }
+        return false;
       });
-      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, ${allowedIds.length} allowed)`);
+      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, names: ${allowedNames.length}, ids: ${allowedIds.length})`);
     } else {
       console.log(`fetch-make-comercial: ${allRecords.length} records (no filter, global/super_admin)`);
     }

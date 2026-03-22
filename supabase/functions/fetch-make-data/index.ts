@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     let hasMore = true;
 
     while (hasMore) {
-      const apiUrl = `https://us2.make.com/api/v2/data-store-data?dataStoreId=${makeDataStoreId}&teamId=${makeTeamId}&pg[limit]=${limit}&pg[offset]=${offset}`;
+      const apiUrl = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?teamId=${makeTeamId}&pg[limit]=${limit}&pg[offset]=${offset}`;
       console.log(`Fetching: ${apiUrl}`);
 
       const makeRes = await fetchWithRetry(apiUrl, {
