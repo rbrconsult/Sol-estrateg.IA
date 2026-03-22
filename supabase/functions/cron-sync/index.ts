@@ -83,6 +83,8 @@ const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
 };
 
+const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';
+
 interface OrgCredentials {
   orgId: string;
   orgName: string;
@@ -95,6 +97,9 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
   // Fetch all organizations with their configs
   const { data: orgs } = await supabase.from('organizations').select('id, name');
   if (!orgs?.length) return [];
+
+  // Skip matriz — only sync tenant orgs
+  const tenantOrgs = orgs.filter((o: any) => o.id !== MATRIZ_ORG_ID);
 
   const { data: allConfigs } = await supabase
     .from('organization_configs')
@@ -113,7 +118,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
   const globalDsId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
   const globalTeamId = (Deno.env.get("MAKE_TEAM_ID") || "").trim();
 
-  return orgs.map((org: any) => {
+  return tenantOrgs.map((org: any) => {
     const cfg = configMap[org.id] || {};
     return {
       orgId: org.id,
@@ -122,7 +127,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       makeDatastoreId: cfg.ds_leads_site_geral || cfg.ds_thread_id || globalDsId,
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
-  }).filter((o: OrgCredentials) => o.makeApiKey); // Only orgs with valid API keys
+  }).filter((o: OrgCredentials) => o.makeApiKey);
 }
 
 async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any> {
