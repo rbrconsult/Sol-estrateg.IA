@@ -118,7 +118,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
   const globalDsId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
   const globalTeamId = (Deno.env.get("MAKE_TEAM_ID") || "").trim();
 
-  return orgs.map((org: any) => {
+  return tenantOrgs.map((org: any) => {
     const cfg = configMap[org.id] || {};
     return {
       orgId: org.id,
@@ -127,7 +127,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       makeDatastoreId: cfg.ds_leads_site_geral || cfg.ds_thread_id || globalDsId,
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
-  }).filter((o: OrgCredentials) => o.makeApiKey); // Only orgs with valid API keys
+  }).filter((o: OrgCredentials) => o.makeApiKey);
 }
 
 async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any> {
