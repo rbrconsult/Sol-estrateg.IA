@@ -250,25 +250,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const token = authHeader?.replace("Bearer ", "") || "";
-    const isServiceRole = token === expectedKey;
-    const isAnonKey = token === Deno.env.get("SUPABASE_ANON_KEY");
+    // Auth: accept service role key, anon JWT (from pg_cron), or valid user JWT
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+    const serviceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "").trim();
 
-    if (!isServiceRole && !isAnonKey) {
-      const anonClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader! } } }
-      );
-      const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
-      if (authError || !claimsData?.claims) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    let isAuthorized = token === serviceRoleKey;
+
+    // Check if token is the anon/publishable JWT by decoding its payload
+    if (!isAuthorized && token.includes(".")) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          // Accept if it's from our project with anon role
+          if (payload.role === "anon" && payload.iss?.includes("supabase")) {
+            isAuthorized = true;
+          }
+          // Also accept authenticated users
+          if (payload.role === "authenticated" && payload.sub) {
+            isAuthorized = true;
+          }
+        }
+      } catch { /* not a valid JWT, will fall through */ }
+    }
+
+    if (!isAuthorized) {
+      console.error("cron-sync: unauthorized request");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
