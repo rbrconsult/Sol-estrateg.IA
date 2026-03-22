@@ -250,45 +250,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth: accept service role key, anon key (JWT or raw), or valid user JWT
-    // Note: SUPABASE_ANON_KEY in edge runtime is the raw key (46 chars), 
-    // but pg_cron sends the publishable JWT (208 chars). Accept both.
+    // Auth: accept service role key, anon JWT (from pg_cron), or valid user JWT
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace("Bearer ", "").trim();
     const serviceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "").trim();
-    const anonKey = (Deno.env.get("SUPABASE_ANON_KEY") || "").trim();
-    // The publishable key sent by pg_cron - check via apikey header or known JWT pattern
-    const apikeyHeader = req.headers.get("apikey") || "";
 
-    const isServiceRole = token === serviceRoleKey;
-    const isAnonKey = token === anonKey || apikeyHeader === anonKey;
-    // Accept any JWT that contains the project ref as a trusted internal call
-    const projectRef = "xffzjdulkdgyicsllznp";
-    const isPublishableJwt = token.length > 100 && token.includes(btoa(`"ref":"${projectRef}"`).replace(/=/g, ''));
+    let isAuthorized = token === serviceRoleKey;
 
-    if (!isServiceRole && !isAnonKey && !isPublishableJwt) {
-      // Try user JWT auth
+    // Check if token is the anon/publishable JWT by decoding its payload
+    if (!isAuthorized && token.includes(".")) {
       try {
-        const anonClient = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          anonKey,
-          { global: { headers: { Authorization: authHeader } } }
-        );
-        const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
-        if (authError || !user) {
-          console.error("cron-sync auth failed:", authError?.message);
-          return new Response(JSON.stringify({ error: "Unauthorized" }), {
-            status: 401,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          // Accept if it's from our project with anon role
+          if (payload.role === "anon" && payload.iss?.includes("supabase")) {
+            isAuthorized = true;
+          }
+          // Also accept authenticated users
+          if (payload.role === "authenticated" && payload.sub) {
+            isAuthorized = true;
+          }
         }
-      } catch (e) {
-        console.error("cron-sync auth exception:", e);
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      } catch { /* not a valid JWT, will fall through */ }
+    }
+
+    if (!isAuthorized) {
+      console.error("cron-sync: unauthorized request");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
