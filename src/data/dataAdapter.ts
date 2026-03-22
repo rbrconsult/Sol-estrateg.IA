@@ -146,6 +146,7 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
       clienteEmail: '',
       status,
       responsavel: item.responsavel || '',
+      responsavelId: item.responsavelId || '',
       representante: item.representante || '',
       valorProposta: item.valorProposta || 0,
       potenciaSistema: item.potenciaSistema || 0,
