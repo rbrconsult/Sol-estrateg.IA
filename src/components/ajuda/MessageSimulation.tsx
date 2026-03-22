@@ -25,7 +25,7 @@ export function MessageSimulation() {
     {
       id: "welcome",
       role: "bot",
-      content: "Olá! 👋 Sou a SOL, assistente virtual da RBR Energy. Como posso ajudar você hoje?",
+      content: "Olá! 👋 Sou a SOL, assistente virtual da RBR Consult. Como posso ajudar você hoje?",
       timestamp: new Date(),
     },
   ]);
@@ -101,7 +101,7 @@ export function MessageSimulation() {
       {
         id: "welcome",
         role: "bot",
-        content: "Olá! 👋 Sou a SOL, assistente virtual da RBR Energy. Como posso ajudar você hoje?",
+        content: "Olá! 👋 Sou a SOL, assistente virtual da RBR Consult. Como posso ajudar você hoje?",
         timestamp: new Date(),
       },
     ]);
