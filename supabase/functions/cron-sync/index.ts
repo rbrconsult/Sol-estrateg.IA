@@ -186,14 +186,15 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       sentimento_resposta: String(d.sentimento_resposta || '') || null,
       interesse_detectado: String(d.interesse_detectado || '') || null,
       tempo_resposta_seg: parseInt(d.tempo_resposta_seg) || null,
-      data_entrada: d['Data e Hora | Cadastro do Lead'] || d.data_entrada || null,
-      data_qualificacao: d.data_qualificacao || null,
-      data_agendamento: d.data_agendamento || null,
-      data_proposta: d.data_proposta || null,
-      data_fechamento: d.data_fechamento || null,
+      data_entrada: parseDate(d['Data e Hora | Cadastro do Lead'] || d.data_entrada),
+      data_qualificacao: parseDate(d.data_qualificacao),
+      data_agendamento: parseDate(d.data_agendamento),
+      data_proposta: parseDate(d.data_proposta),
+      data_fechamento: parseDate(d.data_fechamento),
       valor_proposta: parseFloat(d.valor_proposta) || null,
       organization_id: creds.orgId,
       synced_at: new Date().toISOString(),
+      last_followup_date: parseDate(d.last_followup_date),
     };
   }).filter(l => l.telefone);
 
