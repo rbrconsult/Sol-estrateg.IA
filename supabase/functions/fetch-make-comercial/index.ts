@@ -176,19 +176,29 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    // Filter by responsavel name if we have allowed values
+    // Filter by responsavel name/ID
     let filteredRecords = allRecords;
-    if (allowedIds.length > 0) {
-      const allowedNormalized = allowedIds.map(id => id.toLowerCase().trim());
+    if (allowedIds.length > 0 || allowedNames.length > 0) {
       filteredRecords = allRecords.filter((r) => {
         const d = r.data || r;
         const respName = String(d.responsavel || "").toLowerCase().trim();
-        const respId = String(d.responsavel_id || "").trim();
-        // Match by name OR by ID (future-proof)
-        return (respName && allowedNormalized.includes(respName)) ||
-               (respId && allowedIds.includes(respId));
+        const respId = String(d.responsavel_id || d.representante_id || "").trim();
+        const representante = String(d.representante || "").toLowerCase().trim();
+        // Match by name (from responsavel_nome configs or DS field)
+        if (allowedNames.length > 0) {
+          if (respName && allowedNames.includes(respName)) return true;
+          if (representante && allowedNames.includes(representante)) return true;
+        }
+        // Match by numeric ID
+        if (respId && allowedIds.includes(respId)) return true;
+        // Fallback: match responsavel name against known name patterns from config_key
+        // e.g. "Gabriel Ferrari" matches if any allowedName contains it
+        if (allowedNames.length > 0 && respName) {
+          if (allowedNames.some(n => n.includes(respName) || respName.includes(n))) return true;
+        }
+        return false;
       });
-      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, ${allowedIds.length} allowed)`);
+      console.log(`fetch-make-comercial: ${allRecords.length} total → ${filteredRecords.length} filtered (org: ${targetOrgId}, names: ${allowedNames.length}, ids: ${allowedIds.length})`);
     } else {
       console.log(`fetch-make-comercial: ${allRecords.length} records (no filter, global/super_admin)`);
     }
