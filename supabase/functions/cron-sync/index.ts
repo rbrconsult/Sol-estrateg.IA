@@ -181,7 +181,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       responsavel: String(d.responsavel || '') || null,
       robo,
       followup_count: fupCount,
-      last_followup_date: d.last_followup_date || null,
+      last_followup_date: parseDate(d.last_followup_date),
       respondeu,
       sentimento_resposta: String(d.sentimento_resposta || '') || null,
       interesse_detectado: String(d.interesse_detectado || '') || null,
@@ -194,7 +194,6 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       valor_proposta: parseFloat(d.valor_proposta) || null,
       organization_id: creds.orgId,
       synced_at: new Date().toISOString(),
-      last_followup_date: parseDate(d.last_followup_date),
     };
   }).filter(l => l.telefone);
 
