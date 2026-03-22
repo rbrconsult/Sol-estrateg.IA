@@ -44,6 +44,40 @@ function normalizePhone(phone: string): string {
   return digits;
 }
 
+/** Parse various date formats into ISO string or null */
+function parseDate(value: any): string | null {
+  if (!value) return null;
+  const str = String(value).trim();
+  if (!str || str === 'N/A' || str === 'null' || str === 'undefined' || str === '-') return null;
+
+  // Excel serial number (e.g. "46008,38325" or "46008.38325")
+  const excelMatch = str.match(/^(\d{4,5})[,.](\d+)$/);
+  if (excelMatch) {
+    const serial = parseFloat(str.replace(',', '.'));
+    if (serial > 1000 && serial < 100000) {
+      const epoch = new Date((serial - 25569) * 86400 * 1000);
+      if (!isNaN(epoch.getTime())) return epoch.toISOString();
+    }
+    return null;
+  }
+
+  // BR format: DD/MM/YYYY HH:mm:ss or DD/MM/YYYY
+  const brMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
+  if (brMatch) {
+    const [, dd, mm, yyyy, hh, mi, ss] = brMatch;
+    const iso = `${yyyy}-${mm}-${dd}T${hh || '00'}:${mi || '00'}:${ss || '00'}-03:00`;
+    const d = new Date(iso);
+    if (!isNaN(d.getTime())) return d.toISOString();
+    return null;
+  }
+
+  // Already ISO or other parseable format
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) return d.toISOString();
+
+  return null;
+}
+
 /** Status normalization — reclassify orphaned/ambiguous statuses */
 const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
@@ -147,16 +181,16 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       responsavel: String(d.responsavel || '') || null,
       robo,
       followup_count: fupCount,
-      last_followup_date: d.last_followup_date || null,
+      last_followup_date: parseDate(d.last_followup_date),
       respondeu,
       sentimento_resposta: String(d.sentimento_resposta || '') || null,
       interesse_detectado: String(d.interesse_detectado || '') || null,
       tempo_resposta_seg: parseInt(d.tempo_resposta_seg) || null,
-      data_entrada: d['Data e Hora | Cadastro do Lead'] || d.data_entrada || null,
-      data_qualificacao: d.data_qualificacao || null,
-      data_agendamento: d.data_agendamento || null,
-      data_proposta: d.data_proposta || null,
-      data_fechamento: d.data_fechamento || null,
+      data_entrada: parseDate(d['Data e Hora | Cadastro do Lead'] || d.data_entrada),
+      data_qualificacao: parseDate(d.data_qualificacao),
+      data_agendamento: parseDate(d.data_agendamento),
+      data_proposta: parseDate(d.data_proposta),
+      data_fechamento: parseDate(d.data_fechamento),
       valor_proposta: parseFloat(d.valor_proposta) || null,
       organization_id: creds.orgId,
       synced_at: new Date().toISOString(),
@@ -231,9 +265,16 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   const allResults = await batchedPromises(fetchFns, 2);
   for (const logs of allResults) heartbeatRecords.push(...logs);
 
+  // Deduplicate by execution_id to avoid "ON CONFLICT DO UPDATE cannot affect row a second time"
+  const dedupMap = new Map<string, any>();
+  for (const r of heartbeatRecords) {
+    dedupMap.set(r.execution_id, r);
+  }
+  const dedupRecords = Array.from(dedupMap.values());
+
   let upsertedHB = 0;
-  for (let i = 0; i < heartbeatRecords.length; i += 50) {
-    const batch = heartbeatRecords.slice(i, i + 50);
+  for (let i = 0; i < dedupRecords.length; i += 50) {
+    const batch = dedupRecords.slice(i, i + 50);
     const { error } = await supabase
       .from("make_heartbeat")
       .upsert(batch, { onConflict: "execution_id", ignoreDuplicates: false });
@@ -241,7 +282,7 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
     else upsertedHB += batch.length;
   }
 
-  return { scenarios: scenarios.length, records: heartbeatRecords.length, upserted: upsertedHB };
+  return { scenarios: scenarios.length, records: dedupRecords.length, upserted: upsertedHB };
 }
 
 Deno.serve(async (req) => {
