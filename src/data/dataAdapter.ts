@@ -10,6 +10,7 @@ export interface Proposal {
   clienteEmail: string;
   status: 'Aberto' | 'Ganho' | 'Perdido';
   responsavel: string;
+  responsavelId: string;
   representante: string;
   valorProposta: number;
   potenciaSistema: number;
