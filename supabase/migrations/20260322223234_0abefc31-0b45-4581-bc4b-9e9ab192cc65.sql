@@ -1,0 +1,2 @@
+UPDATE organizations SET name = 'RBR Scale' WHERE id = '00000000-0000-0000-0000-000000000001';
+UPDATE organizations SET name = 'Evolve - Filial Olímpia', slug = 'evolve-olimpia' WHERE id = '57fd98ab-f49c-4fe7-b413-7ab2f2a3e891';
