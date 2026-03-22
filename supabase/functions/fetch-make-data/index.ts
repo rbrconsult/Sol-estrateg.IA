@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
 
     const makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
     const makeDataStoreId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
+    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1437295").trim();
 
     if (!makeApiKey || !makeDataStoreId) {
       console.error("Missing MAKE_API_KEY or MAKE_DATASTORE_ID");
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
     let hasMore = true;
 
     while (hasMore) {
-      const apiUrl = `https://us2.make.com/api/v2/data-stores/${makeDataStoreId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+      const apiUrl = `https://us2.make.com/api/v2/data-store-data?dataStoreId=${makeDataStoreId}&teamId=${makeTeamId}&pg[limit]=${limit}&pg[offset]=${offset}`;
       console.log(`Fetching: ${apiUrl}`);
 
       const makeRes = await fetchWithRetry(apiUrl, {
