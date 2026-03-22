@@ -251,19 +251,23 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const token = authHeader?.replace("Bearer ", "") || "";
-    const isServiceRole = token === expectedKey;
-    const isAnonKey = token === Deno.env.get("SUPABASE_ANON_KEY");
+    const token = authHeader?.replace("Bearer ", "").trim() || "";
+    const serviceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "").trim();
+    const anonKey = (Deno.env.get("SUPABASE_ANON_KEY") || "").trim();
+
+    const isServiceRole = token === serviceRoleKey;
+    const isAnonKey = token === anonKey;
 
     if (!isServiceRole && !isAnonKey) {
+      // Try JWT validation for authenticated users
       const anonClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
+        anonKey,
         { global: { headers: { Authorization: authHeader! } } }
       );
-      const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
-      if (authError || !claimsData?.claims) {
+      const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+      if (authError || !user) {
+        console.error("cron-sync auth failed:", authError?.message);
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
