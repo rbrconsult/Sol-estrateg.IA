@@ -17,13 +17,13 @@ import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 // Comissão padrão 2%, Danielle 3%
 const COMMISSION_RATES: Record<string, number> = {
   "Danielle": 3,
+  "DANIELI": 3,
 };
 const DEFAULT_RATE = 2;
 
 function getRate(nome: string, overrides: Record<string, string>): number {
   const overrideStr = overrides[nome];
   if (overrideStr !== undefined && overrideStr !== "") return parseFloat(overrideStr) || 0;
-  // Check if any key in COMMISSION_RATES matches (first name match)
   for (const [key, rate] of Object.entries(COMMISSION_RATES)) {
     if (nome.toLowerCase().includes(key.toLowerCase())) return rate;
   }
@@ -46,16 +46,17 @@ export default function Comissoes() {
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
       const rate = getRate(v.nome, rateOverrides);
-      // Use valorTotal (all proposals) as commission base — data doesn't track "Ganho" status separately
-      const valorBase = v.valorTotal;
+      // Base de comissão = apenas propostas GANHAS (fechadas)
+      const valorBase = v.valorGanho;
       const comissao = valorBase * (rate / 100);
       return {
         nome: v.nome,
         totalPropostas: v.totalPropostas,
-        ganhos: v.ganhos,
+        ganhos: v.ganhos,           // contratos fechados
         perdidos: v.perdidos,
         abertos: v.abertos,
-        valorBase,
+        valorBase,                  // só valor ganho
+        valorTotal: v.valorTotal,   // total para referência
         rate,
         comissao,
         taxaConversao: v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0,
@@ -70,12 +71,13 @@ export default function Comissoes() {
     totalPropostas: comissoes.reduce((s, c) => s + c.totalPropostas, 0),
   }), [comissoes]);
 
+  // Chart usa ganhos (fechamentos reais), não totalPropostas
   const chartData = useMemo(() =>
     comissoes.slice(0, 10).map(c => ({
       nome: c.nome.split(" ")[0],
       comissao: c.comissao,
       valorBase: c.valorBase,
-      fechamentos: c.totalPropostas,
+      fechamentos: c.ganhos,  // ← CORRIGIDO: usa ganhos
     })),
   [comissoes]);
 
@@ -89,7 +91,7 @@ export default function Comissoes() {
       <div className="rounded-lg border border-border bg-card p-3 shadow-lg text-sm">
         <p className="font-medium text-foreground">{label}</p>
         <p className="text-primary">Comissão: {formatCurrency(data?.comissao || 0)}</p>
-        <p className="text-muted-foreground">Valor Total: {formatCurrency(data?.valorBase || 0)}</p>
+        <p className="text-muted-foreground">Valor Fechado: {formatCurrency(data?.valorBase || 0)}</p>
         <p className="text-muted-foreground">Fechamentos: {data?.fechamentos || 0}</p>
       </div>
     );
@@ -112,7 +114,7 @@ export default function Comissoes() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Comissões</h1>
-          <p className="text-sm text-muted-foreground">Padrão: 2% · Danielle: 3% · Editável por vendedor</p>
+          <p className="text-sm text-muted-foreground">Padrão: 2% · Danielle: 3% · Editável por vendedor · Base: propostas fechadas</p>
         </div>
         <div className="flex items-center gap-2">
           {orgFilterActive && (
@@ -139,7 +141,7 @@ export default function Comissoes() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Receita Total", value: formatCurrencyAbbrev(totals.valorBase), icon: DollarSign, sub: `${totals.totalPropostas} propostas` },
+          { label: "Receita Fechada", value: formatCurrencyAbbrev(totals.valorBase), icon: DollarSign, sub: `${totals.ganhos} contratos fechados` },
           { label: "Total Comissões", value: formatCurrencyAbbrev(totals.comissao), icon: Percent, sub: "A pagar" },
           { label: "Vendedores", value: comissoes.length.toString(), icon: Users, sub: "Com propostas" },
           { label: "% Médio", value: `${comissoes.length > 0 ? (comissoes.reduce((s, c) => s + c.rate, 0) / comissoes.length).toFixed(1) : 0}%`, icon: TrendingUp, sub: "Taxa média de comissão" },
@@ -162,7 +164,7 @@ export default function Comissoes() {
         })}
       </div>
 
-      {/* Chart - Top 10 com valor e fechamentos */}
+      {/* Chart */}
       {chartData.length > 0 && (
         <Card className="opacity-0 animate-fade-up" style={{ animationDelay: "350ms", animationFillMode: "forwards" }}>
           <CardHeader>
@@ -175,7 +177,7 @@ export default function Comissoes() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="nome" tick={{ fill: "hsl(var(--foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis yAxisId="left" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatCurrencyAbbrev(v)} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: 'Fechamentos', angle: 90, position: 'insideRight', style: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' } }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar yAxisId="left" dataKey="comissao" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Comissão (R$)" label={{ position: 'top', fontSize: 9, fill: 'hsl(var(--muted-foreground))', formatter: (v: number) => v > 0 ? formatCurrencyAbbrev(v) : '' }} />
                 <Bar yAxisId="right" dataKey="fechamentos" fill="hsl(var(--chart-2))" radius={[6, 6, 0, 0]} maxBarSize={35} name="Fechamentos" label={{ position: 'top', fontSize: 10, fill: 'hsl(var(--chart-2))', formatter: (v: number) => v > 0 ? v : '' }} />
@@ -185,11 +187,11 @@ export default function Comissoes() {
         </Card>
       )}
 
-      {/* Table - Detalhamento */}
+      {/* Table */}
       <Card className="opacity-0 animate-fade-up" style={{ animationDelay: "450ms", animationFillMode: "forwards" }}>
         <CardHeader>
           <CardTitle className="text-lg">Detalhamento por Vendedor</CardTitle>
-          <p className="text-xs text-muted-foreground">Ganhos, contratos fechados e taxa de conversão (fechadas ÷ enviadas)</p>
+          <p className="text-xs text-muted-foreground">Base de comissão = propostas fechadas (Ganho) · Conversão = fechadas ÷ enviadas</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -200,7 +202,7 @@ export default function Comissoes() {
                   <TableHead className="text-muted-foreground font-medium">Vendedor</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Propostas</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Fechamentos</TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-right">Valor Total</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-right">Valor Fechado</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center w-24">% Comissão</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-right">Comissão (R$)</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Conversão</TableHead>
@@ -221,7 +223,8 @@ export default function Comissoes() {
                     <TableCell className="font-medium text-foreground">{c.nome}</TableCell>
                     <TableCell className="text-center text-muted-foreground">{c.totalPropostas}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.totalPropostas}</Badge>
+                      {/* CORRIGIDO: usa c.ganhos não c.totalPropostas */}
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorBase)}</TableCell>
                     <TableCell className="text-center">
@@ -249,7 +252,10 @@ export default function Comissoes() {
                 <TableRow className="border-t-2 border-border bg-muted/30 font-bold">
                   <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
                   <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
-                  <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
+                  <TableCell className="text-center text-foreground">
+                    {/* CORRIGIDO: usa totals.ganhos */}
+                    {totals.ganhos}
+                  </TableCell>
                   <TableCell className="text-right text-foreground">{formatCurrency(totals.valorBase)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{formatCurrency(totals.comissao)}</TableCell>
