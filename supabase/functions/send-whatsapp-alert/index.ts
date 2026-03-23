@@ -1,12 +1,13 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const KROLIC_SEND_URL = "https://api.camkrolik.com.br/core/v2/api/chats/send-text";
 
-// Scaffold — will be fully implemented later
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -22,14 +23,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const anonClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
-    if (authError || !claimsData?.claims) {
+    const { data: userData, error: authError } = await anonClient.auth.getUser(token);
+    if (authError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -38,10 +38,47 @@ Deno.serve(async (req) => {
 
     const { phone, message, errorId } = await req.json();
 
-    console.log(`[send-whatsapp-alert] Scaffold called for error ${errorId}, phone ${phone}`);
+    // Read Krolic API key from settings
+    const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: settings } = await supabaseAdmin
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["evolution_api_key"]);
+
+    const apiKey = settings?.find((s: any) => s.key === "evolution_api_key")?.value;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "Krolic API key not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Normalize phone
+    const cleanPhone = phone.replace(/\D/g, "");
+    const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+
+    console.log(`[send-whatsapp-alert] Sending to ${phoneWithCountry} for error ${errorId}`);
+
+    const response = await fetch(KROLIC_SEND_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        number: phoneWithCountry,
+        message,
+        forceSend: true,
+        verifyContact: true,
+        linkPreview: true,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(`[send-whatsapp-alert] Krolic response: ${response.status}`);
 
     return new Response(
-      JSON.stringify({ success: true, queued: true }),
+      JSON.stringify({ success: response.ok, status: response.status, data }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

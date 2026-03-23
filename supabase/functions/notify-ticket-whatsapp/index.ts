@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const KROLIC_SEND_URL = "https://api.camkrolik.com.br/core/v2/api/chats/send-text";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,8 +28,8 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
-    if (authError || !claimsData?.claims) {
+    const { data: userData, error: authError } = await anonClient.auth.getUser(token);
+    if (authError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -43,14 +45,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Fetch Evolution API settings
+    // Fetch Krolic API settings
     const { data: settings, error: settingsError } = await supabaseAdmin
       .from("app_settings")
       .select("key, value")
       .in("key", [
-        "evolution_api_url",
         "evolution_api_key",
-        "evolution_instance_name",
         "central_whatsapp_number",
       ]);
 
@@ -67,19 +67,17 @@ Deno.serve(async (req) => {
       config[s.key] = s.value;
     }
 
-    const apiUrl = config.evolution_api_url;
     const apiKey = config.evolution_api_key;
-    const instanceName = config.evolution_instance_name;
     const centralNumber = config.central_whatsapp_number;
 
-    if (!apiUrl || !apiKey || !instanceName) {
+    if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "Evolution API not fully configured" }),
+        JSON.stringify({ error: "Krolic API key not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Helper: get org members' phones (excluding a specific phone to avoid duplicates)
+    // Helper: get org members' phones
     const getOrgMemberPhones = async (organizationId: string, excludePhones: string[] = []): Promise<string[]> => {
       if (!organizationId) return [];
       const { data: members } = await supabaseAdmin
@@ -108,23 +106,28 @@ Deno.serve(async (req) => {
     };
 
     const sendMessage = async (number: string, text: string) => {
-      const url = `${apiUrl}/message/sendText/${encodeURIComponent(instanceName)}`;
-      const response = await fetch(url, {
+      const response = await fetch(KROLIC_SEND_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: apiKey,
+          "Authorization": `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({ number, text }),
+        body: JSON.stringify({
+          number,
+          message: text,
+          forceSend: true,
+          verifyContact: true,
+          linkPreview: true,
+        }),
       });
       const data = await response.json();
+      console.log(`[krolic] sendMessage to ${number}: ${response.status}`);
       return { status: response.status, data };
     };
 
     const results: Record<string, unknown> = {};
 
     if (type === "return") {
-      // Handle ticket return notification
       const { ticketId, titulo, reason, userPhone, userName, organizationId } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
@@ -139,7 +142,6 @@ Por favor, acesse o painel e responda com as informações solicitadas para que 
 
 RBR Consult`;
 
-      // Collect phones to notify: notification_phone + org members
       const sentPhones: string[] = [];
       if (userPhone) {
         const cleanPhone = userPhone.replace(/\D/g, "");
@@ -155,7 +157,6 @@ RBR Consult`;
         }
       }
 
-      // Notify org members
       if (organizationId) {
         const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
         for (let i = 0; i < orgPhones.length; i++) {
@@ -167,7 +168,6 @@ RBR Consult`;
         }
       }
 
-      // Notify central
       if (centralNumber) {
         const centralMsg = `*CHAMADO DEVOLVIDO #${shortId}*\n\nTítulo: ${titulo}\nDevolvido para: ${userName || "N/A"}\nMotivo: ${reason}`;
         try {
@@ -274,7 +274,6 @@ RBR Consult`;
         }
       }
     } else if (type === "forward") {
-      // Handle forwarding ticket to a specific person
       const { ticketId, titulo, descricao, categoria, prioridade, fluxo, targetPhone, targetName } = body;
       const shortId = body.ticketNumero || (ticketId ? ticketId.substring(0, 8).toUpperCase() : "N/A");
 
@@ -311,7 +310,6 @@ RBR Consult`;
         }
       }
 
-      // Notify central
       if (centralNumber) {
         const centralMsg = `*CHAMADO ENCAMINHADO #${shortId}*\n\nTítulo: ${titulo}\nEncaminhado para: ${targetName || targetPhone || "N/A"}`;
         try {
@@ -322,7 +320,7 @@ RBR Consult`;
         }
       }
     } else {
-      // Handle new ticket notification (existing logic)
+      // Handle new ticket notification
       const {
         ticketId, ticketNumero, titulo, fluxo, plataforma,
         clienteNome, clienteTelefone, categoria, prioridade,
@@ -378,7 +376,6 @@ Descrição: ${descricao}`;
         }
       }
 
-      // Notify org members
       if (organizationId) {
         const orgPhones = await getOrgMemberPhones(organizationId, sentPhones);
         for (let i = 0; i < orgPhones.length; i++) {
