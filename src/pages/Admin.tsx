@@ -15,13 +15,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
 import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
 import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSettings';
 import { TimeComercialTab } from '@/components/admin/TimeComercialTab';
+import SkillsTab from '@/components/admin/SkillsTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -602,6 +603,10 @@ export default function Admin() {
               <Users className="h-3.5 w-3.5" />
               Time Comercial
             </TabsTrigger>
+            <TabsTrigger value="skills" className="flex items-center gap-1">
+              <Zap className="h-3.5 w-3.5" />
+              Skills / Edges
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -814,6 +819,10 @@ export default function Admin() {
 
           <TabsContent value="time-comercial">
             <TimeComercialTab />
+          </TabsContent>
+
+          <TabsContent value="skills">
+            <SkillsTab />
           </TabsContent>
         </Tabs>
 
