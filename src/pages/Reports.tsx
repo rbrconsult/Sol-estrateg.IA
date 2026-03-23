@@ -1,275 +1,245 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Sun, Users, Bot, Megaphone } from "lucide-react";
-
-/* ── Template data with placeholders filled ── */
-
-const templates = {
-  executivo: {
-    titulo: "Relatório Executivo Diário",
-    icon: "☀️",
-    destinatario: "Diretoria",
-    periodicidade: "Diária — 07:00",
-    preview: `☀️ *RELATÓRIO EXECUTIVO DIÁRIO*
-📅 16/03/2026
-
-📊 *RESUMO DO DIA*
-• Leads gerados: 14
-• Leads qualificados: 5 (35,7%)
-• Oportunidades criadas: 3
-• Vendas realizadas: 1
-• Faturamento: R$ 18.400
-
-👥 *PERFORMANCE COMERCIAL*
-• Conversão geral: 29,6%
-• Melhor closer do dia: Fernanda Dias
-• Taxa média de resposta: 58,8%
-
-🤖 *ROBÔS*
-• Conversas iniciadas: 8
-• Leads gerados: 5
-• Taxa de qualificação: 29,6%
-• Falhas/desvios: 0
-
-💡 *INSIGHTS*
-• Lead quente Carlos Oliveira (Score 87) sem agendamento há 2 dias
-• FUP Frio reativou Ana Costa no D+7 — encaminhar ao closer
-• Meta Ads gerando 67% dos leads com CPL R$ 98
-
-🎯 *RECOMENDAÇÃO*
-Priorizar contato com 3 leads quentes sem agendamento. Fernanda Dias com melhor taxa — redistribuir carga.
-
-_Sol Estrateg.IA — 07:00_`,
-  },
-  closer: {
-    titulo: "Performance por Closer",
-    icon: "📊",
-    destinatario: "Gerente Comercial",
-    periodicidade: "Diária — 07:05",
-    preview: `📊 *PERFORMANCE POR CLOSER*
-📅 16/03/2026
-
-*Visão geral*
-• Leads distribuídos: 9
-• Reuniões agendadas: 3
-• Propostas enviadas: 2
-• Vendas fechadas: 1
-
-👤 *Ricardo Lima*
-• Leads: 3 | Reuniões: 1
-• Propostas: 1 | Vendas: 0
-• Conversão: 34% | Ticket: R$ 14.200
-• SLA médio: 47min
-
-👤 *Fernanda Dias*
-• Leads: 2 | Reuniões: 1
-• Propostas: 1 | Vendas: 1
-• Conversão: 41% | Ticket: R$ 18.800
-• SLA médio: 32min
-
-👤 *Bruno Costa*
-• Leads: 4 | Reuniões: 1
-• Propostas: 0 | Vendas: 0
-• Conversão: 28% | Ticket: R$ 11.900
-• SLA médio: 58min
-
-🏆 *DESTAQUES*
-• Melhor conversão: Fernanda Dias (41%)
-• Maior volume: Bruno Costa (4 leads)
-
-⚠️ *ATENÇÃO*
-• Bruno Costa com SLA acima de 50min — verificar gargalo
-
-🎯 *AÇÃO GERENCIAL*
-Redistribuir carga de Bruno Costa. Replicar abordagem de Fernanda para leads quentes.
-
-_Sol Estrateg.IA — 07:05_`,
-  },
-  robos: {
-    titulo: "Relatório dos Robôs",
-    icon: "🤖",
-    destinatario: "Gerente Comercial + Diretor",
-    periodicidade: "Diária — 07:10",
-    preview: `🤖 *RELATÓRIO DOS ROBÔS*
-📅 16/03/2026
-
-*Resumo geral*
-• Conversas totais: 318
-• Taxa de resposta: 58,8%
-• Leads gerados: 187
-• Oportunidades: 94
-• Handoff humano: 29,6%
-• Falhas: 0
-
-☀️ *ROBÔ SOL (SDR IA)*
-• Conversas: 270
-• Qualificados: 94 (34,8%)
-• Score médio: 62,4
-• Temperatura: MORNO
-• Tempo médio qual.: 8min 42s
-• Erros/falhas: 0
-
-❄️ *ROBÔ FUP FRIO*
-• Disparos: 124
-• Respostas: 86 (69,4%)
-• Reativados: 31
-• Melhor etapa: D+7
-
-⚙️ *SAÚDE DOS CENÁRIOS*
-• Sol SDR: ✅ Operacional
-• FUP Frio: ✅ Operacional
-• Meta Sync: ✅ Operacional
-• Google Sync: ✅ Operacional
-
-💡 *INSIGHTS*
-• Taxa de qualificação estável em ~30% — dentro do esperado
-• FUP D+7 com pico de reativação (22,4%) — manter cadência
-
-🔧 *AJUSTE RECOMENDADO*
-Aumentar agressividade do FUP D+3 (prova social) — taxa subiu para 17,9%.
-
-_Sol Estrateg.IA — 07:10_`,
-  },
-  campanha: {
-    titulo: "Campanha + Insights de Leads",
-    icon: "📣",
-    destinatario: "Diretoria + Gerente MKT",
-    periodicidade: "Semanal — Segunda 08:00",
-    preview: `📣 *RELATÓRIO DE CAMPANHA + INSIGHTS*
-📅 Semana 10/03 a 16/03/2026
-
-*Resultado da campanha*
-• Investimento: R$ 29.600
-• Leads gerados: 276
-• CPL: R$ 107,25
-• Leads qualificados: 75 (27,2%)
-• Oportunidades: 31
-• Vendas: 8
-• CAC: R$ 3.700
-• ROI: 4,8×
-
-*Qualidade dos leads*
-• Perfil predominante: Residencial 300-600kWh
-• Principal origem: Meta Ads (67%)
-• Intenção mais comum: Redução de conta
-• Objeção mais comum: Valor do investimento
-
-🏆 *TOP CAMPANHAS*
-1. Solar Residencial SP — 112 leads | CPL R$ 89 | 31% qual.
-2. Energia Limpa Interior — 87 leads | CPL R$ 102 | 26% qual.
-3. Google Search Brand — 42 leads | CPL R$ 118 | 28% qual.
-
-💡 *INSIGHTS*
-• Meta Ads supera Google em volume mas Google tem CTR 2x maior
-• Leads de Google convertem 12% mais rápido no closer
-• Criativo "Economia Real" com melhor Hook Rate (8,2%)
-
-🎯 *PRÓXIMAS AÇÕES*
-Escalar campanha Solar Residencial SP. Testar novo criativo de prova social no Google.
-
-_Sol Estrateg.IA × RBR Consult_`,
-  },
-};
-
-const tabConfig = [
-  { key: "executivo", label: "Executivo", icon: Sun },
-  { key: "closer", label: "Closer", icon: Users },
-  { key: "robos", label: "Robôs", icon: Bot },
-  { key: "campanha", label: "Campanha", icon: Megaphone },
-] as const;
+import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { FileText, Plus, Pencil, Trash2, Clock, Users, Send } from "lucide-react";
+import { useReportTemplates, type ReportTemplate } from "@/hooks/useReportTemplates";
+import { ReportEditorDialog } from "@/components/reports/ReportEditorDialog";
 
 export default function Reports() {
-  const [activeTab, setActiveTab] = useState("executivo");
+  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive } = useReportTemplates();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<ReportTemplate | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const selected = templates.find(t => t.id === selectedId) || templates[0] || null;
+
+  const handleEdit = (tmpl: ReportTemplate) => {
+    setEditingTemplate(tmpl);
+    setEditorOpen(true);
+  };
+
+  const handleNew = () => {
+    setEditingTemplate(null);
+    setEditorOpen(true);
+  };
+
+  const handleSave = (data: Partial<ReportTemplate>) => {
+    upsertTemplate.mutate(data as any, {
+      onSuccess: () => setEditorOpen(false),
+    });
+  };
+
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteTemplate.mutate(deleteId, {
+        onSuccess: () => {
+          setDeleteId(null);
+          if (selectedId === deleteId) setSelectedId(null);
+        },
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+          <Skeleton className="h-96" />
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
-          Reports Programados
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Templates dos relatórios WhatsApp enviados automaticamente pelo Make
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" />
+            Reports Programados
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure e gerencie os templates de relatórios automáticos
+          </p>
+        </div>
+        <Button onClick={handleNew} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Novo Template
+        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
-          {tabConfig.map((t) => (
-            <TabsTrigger key={t.key} value={t.key} className="text-xs">
-              <t.icon className="h-4 w-4 mr-1" />
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {tabConfig.map((t) => {
-          const tmpl = templates[t.key];
-          return (
-            <TabsContent key={t.key} value={t.key} className="mt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Meta info */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Configuração</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Relatório</p>
-                      <p className="text-sm font-medium text-foreground">{tmpl.icon} {tmpl.titulo}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+        {/* Sidebar - Lista de templates */}
+        <div className="space-y-2">
+          {templates.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              onClick={() => setSelectedId(tmpl.id)}
+              className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
+                selected?.id === tmpl.id
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border/50 hover:border-border hover:bg-muted/50"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-lg shrink-0">{tmpl.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{tmpl.titulo}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {tmpl.periodicidade}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Destinatário</p>
-                      <p className="text-sm text-foreground">{tmpl.destinatario}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Periodicidade</p>
-                      <p className="text-sm text-foreground">{tmpl.periodicidade}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Canal</p>
-                      <Badge variant="outline" className="text-xs">WhatsApp</Badge>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Responsável envio</p>
-                      <Badge variant="secondary" className="text-xs">Make (Schedule)</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Preview */}
-                <Card className="lg:col-span-2">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">Preview da Mensagem</CardTitle>
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">
-                        Dados mock
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[500px]">
-                      <div className="rounded-xl bg-[#0b141a] border border-border/30 p-4">
-                        <div className="bg-[#005c4b] rounded-lg p-3 max-w-[90%] ml-auto">
-                          <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">
-                            {tmpl.preview}
-                          </pre>
-                          <div className="text-right mt-1">
-                            <span className="text-[9px] text-white/50">07:00 ✓✓</span>
-                          </div>
-                        </div>
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Badge
+                    variant={tmpl.ativo ? "default" : "secondary"}
+                    className={`text-[9px] px-1.5 ${tmpl.ativo ? "bg-green-500/20 text-green-500 border-green-500/30" : ""}`}
+                  >
+                    {tmpl.ativo ? "Ativo" : "Inativo"}
+                  </Badge>
+                </div>
               </div>
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+            </button>
+          ))}
+
+          {templates.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Nenhum template criado</p>
+              <Button variant="link" onClick={handleNew} className="mt-1 text-xs">
+                Criar primeiro template
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Main content - Detalhes do template */}
+        {selected ? (
+          <div className="space-y-4">
+            {/* Config card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <span className="text-xl">{selected.icon}</span>
+                    {selected.titulo}
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={selected.ativo}
+                      onCheckedChange={(ativo) => toggleActive.mutate({ id: selected.id, ativo })}
+                    />
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(selected)}>
+                      <Pencil className="h-3 w-3 mr-1" /> Editar
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(selected.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Destinatário</p>
+                    <p className="text-sm text-foreground flex items-center gap-1">
+                      <Users className="h-3 w-3 text-muted-foreground" />
+                      {selected.destinatario}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Periodicidade</p>
+                    <p className="text-sm text-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      {selected.periodicidade}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Canal</p>
+                    <Badge variant="outline" className="text-xs">{selected.canal}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Envio</p>
+                    <Badge variant="secondary" className="text-xs flex items-center gap-1 w-fit">
+                      <Send className="h-3 w-3" /> Make (Schedule)
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Preview da Mensagem</CardTitle>
+                  <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
+                    Com variáveis
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="rounded-xl bg-[#0b141a] border border-border/30 p-4">
+                    <div className="bg-[#005c4b] rounded-lg p-3 max-w-[90%] ml-auto">
+                      <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">
+                        {selected.conteudo}
+                      </pre>
+                      <div className="text-right mt-1">
+                        <span className="text-[9px] text-white/50">07:00 ✓✓</span>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <Card className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">Selecione um template para visualizar</p>
+            </div>
+          </Card>
+        )}
+      </div>
+
+      <ReportEditorDialog
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        template={editingTemplate}
+        onSave={handleSave}
+        isSaving={upsertTemplate.isPending}
+      />
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O template será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

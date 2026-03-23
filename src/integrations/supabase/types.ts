@@ -471,6 +471,62 @@ export type Database = {
           },
         ]
       }
+      report_templates: {
+        Row: {
+          ativo: boolean
+          canal: string
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          destinatario: string
+          icon: string
+          id: string
+          ordem: number
+          organization_id: string | null
+          periodicidade: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          destinatario?: string
+          icon?: string
+          id?: string
+          ordem?: number
+          organization_id?: string | null
+          periodicidade?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          destinatario?: string
+          icon?: string
+          id?: string
+          ordem?: number
+          organization_id?: string | null
+          periodicidade?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
