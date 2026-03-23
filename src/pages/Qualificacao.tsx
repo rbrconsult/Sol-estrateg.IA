@@ -243,19 +243,19 @@ export default function Qualificacao() {
                     {/* Action */}
                     <Button
                       size="sm"
-                      variant={isSent ? "secondary" : "default"}
-                      disabled={isSending || isSent}
+                      variant={isSent ? "outline" : "default"}
+                      disabled={isSending}
                       onClick={() => sendToWebhook(lead)}
                       className="shrink-0 gap-1.5"
                     >
                       {isSending ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : isSent ? (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <Send className="h-3.5 w-3.5" />
                       ) : (
                         <Send className="h-3.5 w-3.5" />
                       )}
-                      {isSent ? "Enviado" : "Qualificar"}
+                      {isSent ? "Re-qualificar" : "Qualificar"}
                     </Button>
                   </div>
                 );
