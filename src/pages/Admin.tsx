@@ -598,6 +598,10 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
+            <TabsTrigger value="time-comercial" className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              Time Comercial
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
