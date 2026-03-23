@@ -48,16 +48,23 @@ export default function Reports() {
     }
   };
 
-  const handleSendNow = (tmpl: ReportTemplate) => {
+  const handleSendNow = async (tmpl: ReportTemplate) => {
     const phones = [tmpl.destinatario_telefone, (tmpl as any).copia_telefone].filter(Boolean);
     if (phones.length === 0) {
       toast.error("Nenhum telefone configurado. Edite o template para adicionar.");
       return;
     }
-    sendNow.mutate({
-      phones,
-      message: tmpl.conteudo,
-    });
+    setIsSending(true);
+    try {
+      toast.info("Gerando relatório com dados reais e IA...");
+      const filledContent = await generateReport.mutateAsync(tmpl);
+      toast.info("Enviando via WhatsApp...");
+      await sendNow.mutateAsync({ phones, message: filledContent });
+    } catch (err: any) {
+      // errors already handled by mutation callbacks
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (isLoading) {
