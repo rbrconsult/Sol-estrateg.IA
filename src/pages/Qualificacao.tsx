@@ -70,6 +70,12 @@ export default function Qualificacao() {
           (r.cidade || "").toLowerCase().includes(q)
       );
     }
+    // Sort by data_envio descending (most recent first)
+    result = [...result].sort((a, b) => {
+      const dateA = new Date(a.data_envio || 0).getTime();
+      const dateB = new Date(b.data_envio || 0).getTime();
+      return dateB - dateA;
+    });
     return result;
   }, [leads, etapaFilter, search]);
 
