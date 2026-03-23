@@ -7,9 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
-import { Loader2, User, Building2, LayoutGrid, MessageSquare, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader2, User, Building2, LayoutGrid, MessageSquare, CheckCircle2, ArrowRight, ArrowLeft, ChevronRight } from 'lucide-react';
 import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
+
+const MODULE_GROUPS = [
+  { label: 'Pré-venda', icon: '📥', keys: ['conferencia', 'leads', 'robo-sol', 'robo-fup-frio'] },
+  { label: 'Comercial', icon: '💼', keys: ['pipeline', 'painel-comercial', 'forecast', 'vendedores', 'comissoes'] },
+  { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'jornada-lead', 'sla-monitor', 'ads-performance', 'midia-receita'] },
+  { label: 'Insights', icon: '📝', keys: ['reports'] },
+  { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda'] },
+  { label: 'Admin', icon: '🔒', keys: ['time-comercial'] },
+];
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
