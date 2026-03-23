@@ -24,6 +24,9 @@ export default function Qualificacao() {
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualSending, setManualSending] = useState(false);
 
   const leads = useMemo(() => {
     if (!records) return [];
