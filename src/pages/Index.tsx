@@ -63,24 +63,30 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
 
-  // ── KPIs from DS Thread (MQL, SQL) ──
-  const threadKpis = useMemo(() => {
-    if (!makeRecords?.length) return { mql: 0, sql: 0 };
-    const mql = makeRecords.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
-    const sql = makeRecords.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
-    return { mql, sql };
-  }, [makeRecords]);
+  // ── KPIs from DS Thread (MQL, SQL) — filtered by period ──
+  const filteredThreadRecords = useMemo(() => {
+    if (!makeRecords?.length) return [];
+    return gf.filterRecords ? gf.filterRecords(makeRecords) : makeRecords;
+  }, [makeRecords, gf.filterRecords]);
 
-  // ── KPIs from DS Comercial (Agendamentos, Fechados) ──
+  const threadKpis = useMemo(() => {
+    if (!filteredThreadRecords.length) return { mql: 0, sql: 0 };
+    const mql = filteredThreadRecords.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
+    const sql = filteredThreadRecords.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
+    return { mql, sql };
+  }, [filteredThreadRecords]);
+
+  // ── KPIs from DS Comercial (Agendamentos, Fechados) — ALL 124 records, no date filter ──
   const comercialKpis = useMemo(() => {
-    const agendamentos = filteredProposals.filter(p => 
-      p.etapa?.toUpperCase() === 'CONTATO REALIZADO'
+    if (!comercialRecords?.length) return { agendamentos: 0, fechados: 0 };
+    const agendamentos = comercialRecords.filter(r =>
+      r.etapaSM?.toUpperCase() === 'CONTATO REALIZADO'
     ).length;
-    const fechados = filteredProposals.filter(p => 
-      FECHADOS_ETAPAS.includes(p.etapa?.toUpperCase() || '')
+    const fechados = comercialRecords.filter(r =>
+      FECHADOS_ETAPAS.includes(r.etapaSM?.toUpperCase() || '')
     ).length;
     return { agendamentos, fechados };
-  }, [filteredProposals]);
+  }, [comercialRecords]);
 
   // ── Funnel data in journey order (merge DS Thread + DS Comercial) ──
   const journeyFunnel = useMemo(() => {
