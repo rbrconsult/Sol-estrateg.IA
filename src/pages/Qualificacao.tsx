@@ -16,7 +16,7 @@ import {
 
 const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
 
-const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP"];
+const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP", "FUP FRIO", "ROBO"];
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
