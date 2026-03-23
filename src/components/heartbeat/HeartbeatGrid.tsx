@@ -16,17 +16,17 @@ interface Props {
 /** Map scenario names to Make.com folder groups */
 function detectFolder(name: string): string {
   const n = name.toLowerCase();
-  if (n.includes("robo sdr") || n.includes("qualificar lead") || n.includes("reativacao") || n.includes("fup frio") || n.includes("desqualificar")) return "🤖 SDR / Qualificação";
   if (n.includes("captura de leads") || n.includes("fluxo 1") || n.includes("fluxo 2")) return "📥 Captura de Leads";
+  if (n.includes("robo sdr") || n.includes("qualificar lead") || n.includes("reativacao") || n.includes("fup frio") || n.includes("desqualificar")) return "🤖 SDR / Qualificação";
   if (n.includes("meta ads") || n.includes("google ads") || n.includes("meta capi") || n.includes("coletor openai")) return "📊 Ads & Marketing";
   if (n.includes("sol comercial") || n.includes("webhook") || n.includes("contrato") || n.includes("perdido") || n.includes("proposta")) return "💼 Comercial / CRM";
-  if (n.includes("sync") || n.includes("auth") || n.includes("integration") || n.includes("ocr") || n.includes("lista de projetos | solar")) return "🔄 Integrações / Sync";
+  if (n.includes("sync") || n.includes("auth") || n.includes("graphql") || n.includes("integration") || n.includes("ocr") || n.includes("lista de projetos | solar")) return "🔄 Integrações / Sync";
   return "⚙️ Outros";
 }
 
 const FOLDER_ORDER = [
-  "🤖 SDR / Qualificação",
   "📥 Captura de Leads",
+  "🤖 SDR / Qualificação",
   "📊 Ads & Marketing",
   "💼 Comercial / CRM",
   "🔄 Integrações / Sync",

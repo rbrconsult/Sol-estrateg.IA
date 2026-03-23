@@ -101,19 +101,21 @@ function computeHealth(entries: HeartbeatEntry[], monitoredIds: Set<number>, mon
     });
   }
 
-  // Only keep principal scenarios with recent activity (48h)
+  // Show ALL scenarios with recent activity (48h), not just monitored ones
   const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
   const active = result.filter((s) => {
-    if (!monitoredIds.has(s.scenario_id)) return false;
     const lastExec = s.lastSuccess || s.lastError;
     return lastExec && new Date(lastExec).getTime() >= cutoff48h;
   });
 
-  // Sort by configured order
+  // Sort: monitored first (in configured order), then others alphabetically
   return active.sort((a, b) => {
     const ai = monitoredOrder.indexOf(a.scenario_id);
     const bi = monitoredOrder.indexOf(b.scenario_id);
-    return ai - bi;
+    const aIdx = ai >= 0 ? ai : 9999;
+    const bIdx = bi >= 0 ? bi : 9999;
+    if (aIdx !== bIdx) return aIdx - bIdx;
+    return a.scenario_name.localeCompare(b.scenario_name);
   });
 }
 
