@@ -44,6 +44,12 @@ export interface MakeRecord {
   etapaFunil?: string;
   /** closer_atribuido from DS Thread */
   closerAtribuido?: string;
+  /** canal_origem from DS Thread (meta_ads, site, whatsapp) */
+  canalOrigem?: string;
+  /** franquia_id from DS Thread */
+  franquiaId?: string;
+  /** campanha_nome from DS Thread */
+  campanhaNome?: string;
 }
 
 interface MakeResponse {
@@ -159,6 +165,9 @@ function parseRecords(raw: any[]): MakeRecord[] {
       codigoStatus: codigoStatus,
       etapaFunil,
       closerAtribuido,
+      canalOrigem: String(d.canal_origem || d.canalOrigem || '').toLowerCase() || undefined,
+      franquiaId: String(d.franquia_id || '') || undefined,
+      campanhaNome: String(d.campanha_nome || '') || undefined,
     };
   });
 }
