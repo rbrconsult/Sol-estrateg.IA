@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Save } from "lucide-react";
+import { Eye, Save, Phone } from "lucide-react";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
@@ -38,6 +38,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     titulo: "",
     icon: "📊",
     destinatario: "",
+    destinatario_telefone: "",
     periodicidade: "Diária — 07:00",
     canal: "WhatsApp",
     conteudo: "",
@@ -50,6 +51,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         titulo: template.titulo,
         icon: template.icon,
         destinatario: template.destinatario,
+        destinatario_telefone: template.destinatario_telefone || "",
         periodicidade: template.periodicidade,
         canal: template.canal,
         conteudo: template.conteudo,
@@ -59,6 +61,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         titulo: "",
         icon: "📊",
         destinatario: "",
+        destinatario_telefone: "",
         periodicidade: "Diária — 07:00",
         canal: "WhatsApp",
         conteudo: "",
@@ -111,11 +114,26 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Destinatário</Label>
+                <Label>Destinatário (nome/cargo)</Label>
                 <Input value={form.destinatario} onChange={(e) => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: Diretoria" />
               </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" /> Telefone do Destinatário
+                </Label>
+                <Input
+                  value={form.destinatario_telefone}
+                  onChange={(e) => setForm(f => ({ ...f, destinatario_telefone: e.target.value }))}
+                  placeholder="5511999999999"
+                  type="tel"
+                />
+                <p className="text-[10px] text-muted-foreground">Número WhatsApp com DDD (usado no envio)</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Periodicidade</Label>
                 <Select value={form.periodicidade} onValueChange={(v) => setForm(f => ({ ...f, periodicidade: v }))}>
@@ -138,6 +156,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </SelectContent>
                 </Select>
               </div>
+              <div />
             </div>
 
             <div className="space-y-2">
@@ -149,7 +168,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                 value={form.conteudo}
                 onChange={(e) => setForm(f => ({ ...f, conteudo: e.target.value }))}
                 placeholder="Escreva o template da mensagem..."
-                className="min-h-[250px] font-mono text-xs"
+                className="min-h-[220px] font-mono text-xs"
               />
             </div>
 
