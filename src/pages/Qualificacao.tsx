@@ -152,7 +152,7 @@ export default function Qualificacao() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-            Qualificação de Leads
+            Qualificação de Leads — Robô &amp; Fup Frio
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">
             Leads nas etapas SOL SDR e Follow Up prontos para qualificação via Make.com
