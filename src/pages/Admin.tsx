@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, MessageSquare } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
@@ -598,7 +598,10 @@ export default function Admin() {
               Segurança & Logs
             </TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
-            <TabsTrigger value="settings">Configurações</TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1">
+              <MessageSquare className="h-3.5 w-3.5" />
+              WhatsApp
+            </TabsTrigger>
             <TabsTrigger value="time-comercial" className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               Time Comercial
