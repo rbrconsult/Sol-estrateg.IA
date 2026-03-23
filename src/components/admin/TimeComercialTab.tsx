@@ -167,6 +167,7 @@ export function TimeComercialTab() {
           franquia_id: member.franquia_id,
           nome: member.nome,
           ativo: member.ativo,
+          krolic: member.krolic,
           sm_id: member.sm_id,
           krolik_id: member.krolik_id,
           krolik_setor_id: member.krolik_setor_id,
