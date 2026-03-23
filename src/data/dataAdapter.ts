@@ -1,4 +1,4 @@
-import { ComercialRecord } from '@/hooks/useMakeComercialData';
+import { ComercialRecord, mapStatusProposta } from '@/hooks/useMakeComercialData';
 import { MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 
 export interface Proposal {
