@@ -96,7 +96,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
         if (from && d < from) return false;
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
-      if (filters.canal !== "todos" && r.cidade !== filters.canal) return false;
+      if (filters.canal !== "todos" && r.canalOrigem !== filters.canal) return false;
       if (filters.temperatura !== "todas" && (r.makeTemperatura || "").toUpperCase() !== filters.temperatura) return false;
       if (filters.searchTerm && !(r.nome || "").toLowerCase().includes(filters.searchTerm.toLowerCase())) return false;
       return true;
