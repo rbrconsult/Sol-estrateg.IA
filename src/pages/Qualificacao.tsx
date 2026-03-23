@@ -24,6 +24,9 @@ export default function Qualificacao() {
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualSending, setManualSending] = useState(false);
 
   const leads = useMemo(() => {
     if (!records) return [];
@@ -82,6 +85,42 @@ export default function Qualificacao() {
       toast.error(`Erro ao enviar: ${err.message}`);
     } finally {
       setSendingMap((m) => ({ ...m, [key]: false }));
+    }
+  };
+
+  const sendManual = async () => {
+    const cleaned = manualPhone.replace(/\D/g, "");
+    if (!cleaned || cleaned.length < 10) {
+      toast.error("Informe um número válido com DDD (mínimo 10 dígitos)");
+      return;
+    }
+    const telefoneFormatado = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+    setManualSending(true);
+    try {
+      const payload = {
+        telefone: telefoneFormatado,
+        nome: manualName.trim() || "",
+        etapa_funil: "MANUAL",
+        cidade: "",
+        email: "",
+        valor_conta: "",
+        score: "",
+        temperatura: "",
+        canal_origem: "manual",
+      };
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success(`Número ${telefoneFormatado} enviado para qualificação!`);
+      setManualPhone("");
+      setManualName("");
+    } catch (err: any) {
+      toast.error(`Erro ao enviar: ${err.message}`);
+    } finally {
+      setManualSending(false);
     }
   };
 
@@ -173,6 +212,44 @@ export default function Qualificacao() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Envio Manual */}
+      <Card className="border-dashed border-primary/30">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Número (com DDD)</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="5514996703996"
+                  value={manualPhone}
+                  onChange={(e) => setManualPhone(e.target.value)}
+                  className="pl-9"
+                  disabled={manualSending}
+                />
+              </div>
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
+              <Input
+                placeholder="Nome do lead"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                disabled={manualSending}
+              />
+            </div>
+            <Button
+              onClick={sendManual}
+              disabled={manualSending || !manualPhone.trim()}
+              className="shrink-0 gap-1.5"
+            >
+              {manualSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Qualificar Manual
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Lead List */}
       <Card>
