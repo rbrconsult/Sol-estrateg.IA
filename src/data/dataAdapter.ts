@@ -349,7 +349,11 @@ export function getFunnelData(proposals: Proposal[]) {
 }
 
 export function getVendedorPerformance(proposals: Proposal[]) {
-  const getVendedor = (p: Proposal) => p.representante || p.responsavel || '';
+  const CLOSERS_OLIMPIA = new Set(['Vitoria Coelho', 'Danieli Nicasso', 'DANIELI NICASSO', 'Devisson Apolinário', 'Gabriel Ferrari', 'Vinicius Selane']);
+  const getVendedor = (p: Proposal) => {
+    const v = p.representante || p.responsavel || '';
+    return CLOSERS_OLIMPIA.has(v) ? v : '';
+  };
   
   const vendedoresUnicos = [...new Set(proposals.map(getVendedor).filter(Boolean))];
   
