@@ -161,18 +161,59 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label>Periodicidade</Label>
-                <Select value={form.periodicidade} onValueChange={(v) => setForm(f => ({ ...f, periodicidade: v }))}>
+                <Label>Frequência</Label>
+                <Select value={parsed.freq} onValueChange={(v) => updatePeriod("freq", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {PERIODICIDADES.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    {FREQUENCIAS.map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {(parsed.freq === "Semanal" || parsed.freq === "Quinzenal") && (
+                <div className="space-y-2">
+                  <Label>Dia da Semana</Label>
+                  <Select value={parsed.dia} onValueChange={(v) => updatePeriod("dia", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {DIAS_SEMANA.map((d) => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {parsed.freq === "Mensal" && (
+                <div className="space-y-2">
+                  <Label>Dia do Mês</Label>
+                  <Select value={parsed.dia} onValueChange={(v) => updatePeriod("dia", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {DIAS_MES.map((d) => (
+                        <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Horário</Label>
+                <Select value={parsed.horario} onValueChange={(v) => updatePeriod("horario", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {HORARIOS.map((h) => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label>Canal</Label>
                 <Select value={form.canal} onValueChange={(v) => setForm(f => ({ ...f, canal: v }))}>
@@ -184,7 +225,6 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </SelectContent>
                 </Select>
               </div>
-              <div />
             </div>
 
             <div className="space-y-2">
