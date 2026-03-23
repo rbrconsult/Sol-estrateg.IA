@@ -40,6 +40,7 @@ import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
+import Qualificacao from "./pages/Qualificacao";
 import Reprocessamento from "./pages/Reprocessamento";
 import OrgConfigPage from "./pages/admin/OrgConfigPage";
 import PreVenda from "./pages/solar/PreVenda";
