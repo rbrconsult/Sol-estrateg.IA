@@ -782,11 +782,7 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4 max-w-lg">
                     <div className="space-y-2">
-                      <Label>URL da API</Label>
-                      <Input value={evolutionUrl} onChange={(e) => setEvolutionUrl(e.target.value)} placeholder="https://api.exemplo.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>API Key</Label>
+                      <Label>API Key (Token)</Label>
                       <div className="flex gap-2">
                         <Input
                           type={showApiKey ? "text" : "password"}
