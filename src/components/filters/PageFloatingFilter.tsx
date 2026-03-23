@@ -90,7 +90,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
       const { from, to } = effectiveDateRange;
       if (from || to) {
         const dateStr = r.data_envio;
-        if (!dateStr) return false;
+        if (!dateStr) return true; // sem data → inclui sempre
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;
         if (from && d < from) return false;
@@ -108,7 +108,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
       const { from, to } = effectiveDateRange;
       if (from || to) {
         const dateStr = p.dataCriacaoProposta;
-        if (!dateStr) return false;
+        if (!dateStr) return true; // sem data → inclui sempre
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;
         if (from && d < from) return false;
