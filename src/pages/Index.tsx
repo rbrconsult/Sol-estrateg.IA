@@ -52,6 +52,7 @@ const FUNNEL_JOURNEY_ORDER = [
 const Index = () => {
   const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
   const { data: makeRecords } = useMakeDataStore();
+  const { data: comercialRecords } = useMakeComercialData();
   const { selectedOrgName } = useOrgFilter();
   const gf = useGlobalFilters();
 
