@@ -113,37 +113,7 @@ export default function Qualificacao() {
     }
   };
 
-  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string }) => {
-    const key = lead.telefone;
-    setSendingMap((m) => ({ ...m, [key]: true }));
-    try {
-      const rawPhone = (lead.telefone || "").replace(/\D/g, "");
-      const telefoneFormatado = rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`;
-      const payload = {
-        telefone: telefoneFormatado,
-        nome: lead.nome || "",
-        etapa_funil: lead.etapaFunil || "",
-        cidade: lead.cidade || "",
-        email: lead.email || "",
-        valor_conta: lead.valorConta || "",
-        score: lead.makeScore || "",
-        temperatura: lead.makeTemperatura || "",
-        canal_origem: lead.canalOrigem || "",
-      };
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setSentMap((m) => ({ ...m, [key]: true }));
-      toast.success(`Lead ${lead.nome || lead.telefone} enviado para ${actionLabel.toLowerCase()}!`);
-    } catch (err: any) {
-      toast.error(`Erro ao enviar: ${err.message}`);
-    } finally {
-      setSendingMap((m) => ({ ...m, [key]: false }));
-    }
-  };
+  const webhookUrl = viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_DESQUALIFICAR;
 
   const sendManual = async () => {
     const cleaned = manualPhone.replace(/\D/g, "");
