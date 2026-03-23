@@ -144,7 +144,7 @@ function parseRecords(raw: any[]): MakeRecord[] {
       telefone: phone,
       robo,
       ultima_mensagem: String(d.ultima_mensagem || d.last_message || d.mensagem || ''),
-      data_envio: String(d['Data e Hora | Cadastro do Lead'] || d.ultima_mensagem || d.data_envio || d.sent_at || ''),
+      data_envio: String(d.data_hora_cadastro || d['Data e Hora | Cadastro do Lead'] || d.ultima_mensagem || d.data_envio || d.sent_at || ''),
       status_resposta: statusResposta as any,
       data_resposta: d.data_resposta || d.response_date || undefined,
       historico: parsedHistorico,
