@@ -23,6 +23,7 @@ import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
 import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSettings';
 import { TimeComercialTab } from '@/components/admin/TimeComercialTab';
 import SkillsTab from '@/components/admin/SkillsTab';
+import { UserCreationWizard } from '@/components/admin/UserCreationWizard';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
