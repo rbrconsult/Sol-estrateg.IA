@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Search, Send, CheckCircle2, Loader2, Users, Filter,
-  Phone, MapPin, Thermometer, Target, RefreshCw,
+  Phone, MapPin, Thermometer, Target, RefreshCw, XCircle,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
+const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
+const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/1rxirj4qss3mglk6lqcf1bswxyvkk3wq";
 
 /** Classify lead by followup_count: >=1 → FUP FRIO, else → SOL SDR */
 function classifyLead(r: MakeRecord): string {
@@ -22,6 +24,8 @@ function classifyLead(r: MakeRecord): string {
 }
 
 const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FUP FRIO"];
+
+type ViewMode = "qualificar" | "desqualificar";
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
@@ -32,17 +36,25 @@ export default function Qualificacao() {
   const [manualPhone, setManualPhone] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualSending, setManualSending] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("qualificar");
 
-  const leads = useMemo(() => {
+  // Leads ativos (não desqualificados) — para a aba Qualificar
+  const leadsAtivos = useMemo(() => {
     if (!records) return [];
     return records
-      .filter((r) => {
-        const status = (r.makeStatus || "").toUpperCase();
-        if (status === "DESQUALIFICADO") return false;
-        return true;
-      })
+      .filter((r) => (r.makeStatus || "").toUpperCase() !== "DESQUALIFICADO")
       .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
   }, [records]);
+
+  // Leads desqualificados — para a aba Desqualificar
+  const leadsDesqualificados = useMemo(() => {
+    if (!records) return [];
+    return records
+      .filter((r) => (r.makeStatus || "").toUpperCase() === "DESQUALIFICADO")
+      .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
+  }, [records]);
+
+  const leads = viewMode === "qualificar" ? leadsAtivos : leadsDesqualificados;
 
   const filtered = useMemo(() => {
     let result = leads;
@@ -61,7 +73,11 @@ export default function Qualificacao() {
     return result;
   }, [leads, etapaFilter, search]);
 
-  const sendToWebhook = async (lead: MakeRecord) => {
+  const webhookUrl = viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_DESQUALIFICAR;
+  const actionLabel = viewMode === "qualificar" ? "Qualificar" : "Desqualificar";
+  const reActionLabel = viewMode === "qualificar" ? "Re-qualificar" : "Re-desqualificar";
+
+  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string }) => {
     const key = lead.telefone;
     setSendingMap((m) => ({ ...m, [key]: true }));
     try {
@@ -78,14 +94,14 @@ export default function Qualificacao() {
         temperatura: lead.makeTemperatura || "",
         canal_origem: lead.canalOrigem || "",
       };
-      const res = await fetch(WEBHOOK_URL, {
+      const res = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSentMap((m) => ({ ...m, [key]: true }));
-      toast.success(`Lead ${lead.nome || lead.telefone} enviado para qualificação!`);
+      toast.success(`Lead ${lead.nome || lead.telefone} enviado para ${actionLabel.toLowerCase()}!`);
     } catch (err: any) {
       toast.error(`Erro ao enviar: ${err.message}`);
     } finally {
@@ -113,13 +129,13 @@ export default function Qualificacao() {
         temperatura: "",
         canal_origem: "manual",
       };
-      const res = await fetch(WEBHOOK_URL, {
+      const res = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success(`Número ${telefoneFormatado} enviado para qualificação!`);
+      toast.success(`Número ${telefoneFormatado} enviado para ${actionLabel.toLowerCase()}!`);
       setManualPhone("");
       setManualName("");
     } catch (err: any) {
@@ -154,13 +170,13 @@ export default function Qualificacao() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              Qualificação de Leads — SOL SDR &amp; Fup Frio
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              Leads nas etapas SOL SDR e Fup Frio prontos para qualificação via Make.com
-            </p>
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+            Qualificação de Leads
+          </h1>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Qualifique ou desqualifique leads via Make.com
+          </p>
         </div>
         <Button
           variant="outline"
@@ -173,6 +189,20 @@ export default function Qualificacao() {
           Atualizar
         </Button>
       </div>
+
+      {/* Tabs */}
+      <Tabs value={viewMode} onValueChange={(v) => { setViewMode(v as ViewMode); setSentMap({}); }}>
+        <TabsList>
+          <TabsTrigger value="qualificar" className="gap-1.5">
+            <CheckCircle2 className="h-4 w-4" />
+            Qualificar ({leadsAtivos.length})
+          </TabsTrigger>
+          <TabsTrigger value="desqualificar" className="gap-1.5">
+            <XCircle className="h-4 w-4" />
+            Desqualificados ({leadsDesqualificados.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -259,9 +289,10 @@ export default function Qualificacao() {
               onClick={sendManual}
               disabled={manualSending || !manualPhone.trim()}
               className="shrink-0 gap-1.5"
+              variant={viewMode === "desqualificar" ? "destructive" : "default"}
             >
               {manualSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Qualificar Manual
+              {actionLabel} Manual
             </Button>
           </div>
         </CardContent>
@@ -271,7 +302,7 @@ export default function Qualificacao() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
-            {filtered.length} leads para qualificação
+            {filtered.length} leads {viewMode === "qualificar" ? "para qualificação" : "desqualificados"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -281,8 +312,8 @@ export default function Qualificacao() {
             </p>
           ) : (
             <div className="space-y-2">
-              {filtered.map((lead) => {
-                const key = lead.telefone;
+              {filtered.map((lead, idx) => {
+                const key = lead.telefone || `lead-${idx}`;
                 const isSending = sendingMap[key];
                 const isSent = sentMap[key];
 
@@ -291,7 +322,6 @@ export default function Qualificacao() {
                     key={key}
                     className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-colors"
                   >
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm truncate">
@@ -300,6 +330,11 @@ export default function Qualificacao() {
                         <Badge variant="outline" className="text-[10px] shrink-0">
                           {lead._classificacao}
                         </Badge>
+                        {viewMode === "desqualificar" && (
+                          <Badge variant="destructive" className="text-[10px] shrink-0">
+                            DESQUALIFICADO
+                          </Badge>
+                        )}
                         {lead.makeTemperatura && (
                           <Badge
                             variant="secondary"
@@ -333,22 +368,19 @@ export default function Qualificacao() {
                       </div>
                     </div>
 
-                    {/* Action */}
                     <Button
                       size="sm"
-                      variant={isSent ? "outline" : "default"}
+                      variant={isSent ? "outline" : viewMode === "desqualificar" ? "destructive" : "default"}
                       disabled={isSending}
                       onClick={() => sendToWebhook(lead)}
                       className="shrink-0 gap-1.5"
                     >
                       {isSending ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : isSent ? (
-                        <Send className="h-3.5 w-3.5" />
                       ) : (
                         <Send className="h-3.5 w-3.5" />
                       )}
-                      {isSent ? "Re-qualificar" : "Qualificar"}
+                      {isSent ? reActionLabel : actionLabel}
                     </Button>
                   </div>
                 );
