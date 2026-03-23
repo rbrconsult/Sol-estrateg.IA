@@ -106,23 +106,30 @@ Deno.serve(async (req) => {
     };
 
     const sendMessage = async (number: string, text: string) => {
-      const response = await fetch(KROLIC_SEND_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "access-token": apiKey,
-        },
-        body: JSON.stringify({
-          number,
-          message: text,
-          forceSend: true,
-          verifyContact: true,
-          linkPreview: true,
-        }),
-      });
-      const data = await response.json();
-      console.log(`[krolic] sendMessage to ${number}: ${response.status}`);
-      return { status: response.status, data };
+      try {
+        const response = await fetch(KROLIC_SEND_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "access-token": apiKey,
+          },
+          body: JSON.stringify({
+            number,
+            message: text,
+            forceSend: true,
+            verifyContact: true,
+            linkPreview: true,
+          }),
+        });
+        const rawBody = await response.text();
+        console.log(`[krolic] sendMessage to ${number}: ${response.status} — ${rawBody.slice(0, 200)}`);
+        let data: unknown;
+        try { data = JSON.parse(rawBody); } catch { data = rawBody; }
+        return { status: response.status, data };
+      } catch (fetchErr) {
+        console.error(`[krolic] Network error sending to ${number}:`, fetchErr);
+        return { status: 0, error: String(fetchErr) };
+      }
     };
 
     const results: Record<string, unknown> = {};
