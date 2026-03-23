@@ -603,6 +603,10 @@ export default function Admin() {
               <Users className="h-3.5 w-3.5" />
               Time Comercial
             </TabsTrigger>
+            <TabsTrigger value="skills" className="flex items-center gap-1">
+              <Zap className="h-3.5 w-3.5" />
+              Skills / Edges
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
