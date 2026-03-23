@@ -235,7 +235,7 @@ const Index = () => {
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            {filteredProposals.length} propostas • {enrichedCount} enriquecidas
+            Leads no Período: {filteredThreadRecords.length} · Comercial: {comercialRecords?.length || 0}
           </span>
           <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
