@@ -12,8 +12,9 @@ import { ReportEditorDialog } from "@/components/reports/ReportEditorDialog";
 import { toast } from "sonner";
 
 export default function Reports() {
-  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, sendNow } = useReportTemplates();
+  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, generateReport, sendNow } = useReportTemplates();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ReportTemplate | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -47,16 +48,23 @@ export default function Reports() {
     }
   };
 
-  const handleSendNow = (tmpl: ReportTemplate) => {
+  const handleSendNow = async (tmpl: ReportTemplate) => {
     const phones = [tmpl.destinatario_telefone, (tmpl as any).copia_telefone].filter(Boolean);
     if (phones.length === 0) {
       toast.error("Nenhum telefone configurado. Edite o template para adicionar.");
       return;
     }
-    sendNow.mutate({
-      phones,
-      message: tmpl.conteudo,
-    });
+    setIsSending(true);
+    try {
+      toast.info("Gerando relatório com dados reais e IA...");
+      const filledContent = await generateReport.mutateAsync(tmpl);
+      toast.info("Enviando via WhatsApp...");
+      await sendNow.mutateAsync({ phones, message: filledContent });
+    } catch (err: any) {
+      // errors already handled by mutation callbacks
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (isLoading) {
@@ -158,10 +166,10 @@ export default function Reports() {
                       size="sm"
                       className="gap-1"
                       onClick={() => handleSendNow(selected)}
-                      disabled={sendNow.isPending}
+                      disabled={isSending}
                     >
                       <Send className="h-3 w-3" />
-                      {sendNow.isPending ? "Enviando..." : "Enviar Agora"}
+                      {isSending ? "Gerando..." : "Enviar Agora"}
                     </Button>
                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(selected.id)}>
                       <Trash2 className="h-3 w-3" />
