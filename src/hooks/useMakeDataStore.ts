@@ -195,6 +195,7 @@ export function useMakeDataStore() {
     queryFn: fetchMakeData,
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
+    refetchInterval: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     retry: 1,
     enabled: !!user,
