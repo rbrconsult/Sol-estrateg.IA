@@ -17,6 +17,8 @@ export const MODULE_DEFINITIONS = [
   { key: 'make-errors', label: 'Erros Make', description: 'Monitor Automações', path: '/make-errors' },
   { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
   { key: 'bi', label: 'BI', description: 'Centro de Inteligência', path: '/bi' },
+  { key: 'insights', label: 'Insights', description: 'Relatórios Automatizados', path: '/insights' },
+  { key: 'reports', label: 'Reports', description: 'Relatórios Estratégicos', path: '/reports' },
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
 ] as const;
 
