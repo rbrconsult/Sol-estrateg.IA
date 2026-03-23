@@ -7,9 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
-import { Loader2, User, Building2, LayoutGrid, MessageSquare, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader2, User, Building2, LayoutGrid, MessageSquare, CheckCircle2, ArrowRight, ArrowLeft, ChevronRight } from 'lucide-react';
 import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
+
+const MODULE_GROUPS = [
+  { label: 'Pré-venda', icon: '📥', keys: ['conferencia', 'leads', 'robo-sol', 'robo-fup-frio'] },
+  { label: 'Comercial', icon: '💼', keys: ['pipeline', 'painel-comercial', 'forecast', 'vendedores', 'comissoes'] },
+  { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'jornada-lead', 'sla-monitor', 'ads-performance', 'midia-receita'] },
+  { label: 'Insights', icon: '📝', keys: ['reports'] },
+  { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda'] },
+  { label: 'Admin', icon: '🔒', keys: ['time-comercial'] },
+];
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -174,6 +184,14 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
     setModuleAccess(next);
   };
 
+  const toggleGroupModules = (keys: string[], enabled: boolean) => {
+    setModuleAccess(prev => {
+      const next = { ...prev };
+      keys.forEach(k => { next[k] = enabled; });
+      return next;
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -298,19 +316,51 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
-              {MODULE_DEFINITIONS.map(m => (
-                <div key={m.key} className="flex items-center justify-between py-1.5 px-3 rounded-md hover:bg-muted/50">
-                  <div>
-                    <span className="text-sm font-medium">{m.label}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{m.description}</span>
-                  </div>
-                  <Switch
-                    checked={moduleAccess[m.key] ?? true}
-                    onCheckedChange={checked => setModuleAccess(prev => ({ ...prev, [m.key]: checked }))}
-                  />
-                </div>
-              ))}
+            <div className="max-h-72 overflow-y-auto pr-1 space-y-1">
+              {MODULE_GROUPS.map(group => {
+                const groupKeys = group.keys;
+                const allEnabled = groupKeys.every(k => moduleAccess[k] ?? true);
+                const someEnabled = groupKeys.some(k => moduleAccess[k] ?? true);
+                return (
+                  <Collapsible key={group.label} defaultOpen>
+                    <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-1.5">
+                      <CollapsibleTrigger className="flex items-center gap-2 text-sm font-semibold hover:text-primary transition-colors">
+                        <ChevronRight className="h-3.5 w-3.5 transition-transform data-[state=open]:rotate-90" />
+                        {group.icon} {group.label}
+                      </CollapsibleTrigger>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost" size="sm" className="text-[10px] h-6 px-2"
+                          onClick={() => toggleGroupModules(groupKeys, !allEnabled)}
+                        >
+                          {allEnabled ? 'Restringir' : 'Liberar'}
+                        </Button>
+                        <div className={`h-2 w-2 rounded-full ${allEnabled ? 'bg-emerald-500' : someEnabled ? 'bg-amber-500' : 'bg-destructive'}`} />
+                      </div>
+                    </div>
+                    <CollapsibleContent>
+                      <div className="pl-6 space-y-0.5 mt-0.5">
+                        {groupKeys.map(key => {
+                          const m = MODULE_DEFINITIONS.find(md => md.key === key);
+                          if (!m) return null;
+                          return (
+                            <div key={m.key} className="flex items-center justify-between py-1 px-3 rounded-md hover:bg-muted/50">
+                              <div>
+                                <span className="text-sm">{m.label}</span>
+                                <span className="text-xs text-muted-foreground ml-2">{m.description}</span>
+                              </div>
+                              <Switch
+                                checked={moduleAccess[m.key] ?? true}
+                                onCheckedChange={checked => setModuleAccess(prev => ({ ...prev, [m.key]: checked }))}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
           </div>
         )}
