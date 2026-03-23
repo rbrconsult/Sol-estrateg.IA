@@ -59,26 +59,43 @@ Deno.serve(async (req) => {
 
     console.log(`[send-whatsapp-alert] Sending to ${phoneWithCountry} for error ${errorId}`);
 
-    const response = await fetch(KROLIC_SEND_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "access-token": apiKey,
-      },
-      body: JSON.stringify({
-        number: phoneWithCountry,
-        message,
-        forceSend: true,
-        verifyContact: true,
-        linkPreview: true,
-      }),
-    });
+    let responseData: unknown = null;
+    let statusCode = 0;
+    try {
+      const response = await fetch(KROLIC_SEND_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "access-token": apiKey,
+        },
+        body: JSON.stringify({
+          number: phoneWithCountry,
+          message,
+          forceSend: true,
+          verifyContact: true,
+          linkPreview: true,
+        }),
+      });
+      statusCode = response.status;
+      try {
+        const rawBody = await response.text();
+        try { responseData = JSON.parse(rawBody); } catch { responseData = rawBody; }
+      } catch {
+        console.warn(`[send-whatsapp-alert] Body read error (status ${statusCode}), treating as sent`);
+        responseData = { note: "body_read_error", statusCode };
+      }
+    } catch (fetchErr) {
+      console.error(`[send-whatsapp-alert] Network error:`, fetchErr);
+      return new Response(
+        JSON.stringify({ success: false, error: String(fetchErr) }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    const data = await response.json();
-    console.log(`[send-whatsapp-alert] Krolic response: ${response.status}`);
+    console.log(`[send-whatsapp-alert] Krolic response: ${statusCode}`);
 
     return new Response(
-      JSON.stringify({ success: response.ok, status: response.status, data }),
+      JSON.stringify({ success: statusCode >= 200 && statusCode < 300, status: statusCode, data: responseData }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
