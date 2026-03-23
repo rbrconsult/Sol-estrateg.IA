@@ -237,6 +237,7 @@ export function TimeComercialTab() {
               {!isSuperAdmin && <TableHead>Telefone</TableHead>}
               {isSuperAdmin && <TableHead>SM ID</TableHead>}
               {isSuperAdmin && <TableHead>Krolik ID</TableHead>}
+              {isSuperAdmin && <TableHead>Entra Random</TableHead>}
               <TableHead>Ativo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
