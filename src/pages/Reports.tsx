@@ -48,12 +48,13 @@ export default function Reports() {
   };
 
   const handleSendNow = (tmpl: ReportTemplate) => {
-    if (!tmpl.destinatario_telefone) {
-      toast.error("Telefone do destinatário não configurado. Edite o template para adicionar.");
+    const phones = [tmpl.destinatario_telefone, (tmpl as any).copia_telefone].filter(Boolean);
+    if (phones.length === 0) {
+      toast.error("Nenhum telefone configurado. Edite o template para adicionar.");
       return;
     }
     sendNow.mutate({
-      phone: tmpl.destinatario_telefone,
+      phones,
       message: tmpl.conteudo,
     });
   };

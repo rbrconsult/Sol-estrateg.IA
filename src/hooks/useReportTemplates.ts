@@ -8,6 +8,7 @@ export interface ReportTemplate {
   icon: string;
   destinatario: string;
   destinatario_telefone: string;
+  copia_telefone: string;
   periodicidade: string;
   canal: string;
   conteudo: string;
@@ -78,13 +79,18 @@ export function useReportTemplates() {
   });
 
   const sendNow = useMutation({
-    mutationFn: async ({ phone, message }: { phone: string; message: string }) => {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp-alert', {
-        body: { phone, message },
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Falha no envio');
-      return data;
+    mutationFn: async ({ phones, message }: { phones: string[]; message: string }) => {
+      const results = [];
+      for (const phone of phones) {
+        if (!phone.trim()) continue;
+        const { data, error } = await supabase.functions.invoke('send-whatsapp-alert', {
+          body: { phone: phone.trim(), message },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Falha no envio');
+        results.push(data);
+      }
+      return results;
     },
     onSuccess: () => toast.success('Relatório enviado via WhatsApp!'),
     onError: (err: Error) => toast.error(`Erro ao enviar: ${err.message}`),
