@@ -154,7 +154,7 @@ export default function AnalistaFollowup() {
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.cidade).filter(Boolean) as string[])].sort(), [allRecords]);
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
   const pf = usePageFilters({ showPeriodo: true, showCanal: true, canais });
   const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
 
