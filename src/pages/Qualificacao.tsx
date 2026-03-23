@@ -70,15 +70,19 @@ export default function Qualificacao() {
           (r.cidade || "").toLowerCase().includes(q)
       );
     }
+    // Sort by data_envio descending (most recent first)
+    result = [...result].sort((a, b) => {
+      const dateA = new Date(a.data_envio || 0).getTime();
+      const dateB = new Date(b.data_envio || 0).getTime();
+      return dateB - dateA;
+    });
     return result;
   }, [leads, etapaFilter, search]);
 
-  const webhookUrl = viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_DESQUALIFICAR;
-  const actionLabel = viewMode === "qualificar" ? "Qualificar" : "Desqualificar";
-  const reActionLabel = viewMode === "qualificar" ? "Re-qualificar" : "Re-desqualificar";
+  const actionLabel = viewMode === "qualificar" ? "Qualificar" : "Re-qualificar";
 
-  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string }) => {
-    const key = lead.telefone;
+  const sendToWebhookWithUrl = async (lead: MakeRecord & { _classificacao: string }, webhookUrl: string, label: string) => {
+    const key = `${lead.telefone}-${label}`;
     setSendingMap((m) => ({ ...m, [key]: true }));
     try {
       const rawPhone = (lead.telefone || "").replace(/\D/g, "");
@@ -101,13 +105,15 @@ export default function Qualificacao() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSentMap((m) => ({ ...m, [key]: true }));
-      toast.success(`Lead ${lead.nome || lead.telefone} enviado para ${actionLabel.toLowerCase()}!`);
+      toast.success(`Lead ${lead.nome || lead.telefone} enviado para ${label.toLowerCase()}!`);
     } catch (err: any) {
       toast.error(`Erro ao enviar: ${err.message}`);
     } finally {
       setSendingMap((m) => ({ ...m, [key]: false }));
     }
   };
+
+  const webhookUrl = viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_DESQUALIFICAR;
 
   const sendManual = async () => {
     const cleaned = manualPhone.replace(/\D/g, "");
@@ -314,8 +320,6 @@ export default function Qualificacao() {
             <div className="space-y-2">
               {filtered.map((lead, idx) => {
                 const key = lead.telefone || `lead-${idx}`;
-                const isSending = sendingMap[key];
-                const isSent = sentMap[key];
 
                 return (
                   <div
@@ -368,20 +372,38 @@ export default function Qualificacao() {
                       </div>
                     </div>
 
-                    <Button
-                      size="sm"
-                      variant={isSent ? "outline" : viewMode === "desqualificar" ? "destructive" : "default"}
-                      disabled={isSending}
-                      onClick={() => sendToWebhook(lead)}
-                      className="shrink-0 gap-1.5"
-                    >
-                      {isSending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Send className="h-3.5 w-3.5" />
+                    <div className="flex gap-1.5 shrink-0">
+                      {viewMode === "qualificar" && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={!!sendingMap[`${key}-Desqualificar`]}
+                          onClick={() => sendToWebhookWithUrl(lead, WEBHOOK_DESQUALIFICAR, "Desqualificar")}
+                          className="gap-1"
+                        >
+                          {sendingMap[`${key}-Desqualificar`] ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5" />
+                          )}
+                          Desqualificar
+                        </Button>
                       )}
-                      {isSent ? reActionLabel : actionLabel}
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant={sentMap[`${key}-${actionLabel}`] ? "outline" : "default"}
+                        disabled={!!sendingMap[`${key}-${actionLabel}`]}
+                        onClick={() => sendToWebhookWithUrl(lead, viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_QUALIFICAR, actionLabel)}
+                        className="gap-1"
+                      >
+                        {sendingMap[`${key}-${actionLabel}`] ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Send className="h-3.5 w-3.5" />
+                        )}
+                        {actionLabel}
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
