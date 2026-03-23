@@ -764,9 +764,9 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
-                  Configurações da Evolution API (WhatsApp)
+                   Configurações da Krolic API (WhatsApp)
                 </CardTitle>
-                <CardDescription>Configure as credenciais para envio de notificações via WhatsApp</CardDescription>
+                <CardDescription>Configure as credenciais da Krolic para envio de notificações via WhatsApp</CardDescription>
               </CardHeader>
               <CardContent>
                 {settingsLoading ? (
