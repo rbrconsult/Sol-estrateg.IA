@@ -26,7 +26,7 @@ interface TeamMember {
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
-  entra_random: boolean;
+  krolic: boolean;
   created_at: string;
 }
 
@@ -37,7 +37,7 @@ const EMPTY_FORM = {
   email: "",
   franquia_id: "",
   ativo: true,
-  entra_random: true,
+  krolic: true,
   sm_id: "",
   krolik_id: "",
   krolik_setor_id: "",
@@ -88,7 +88,7 @@ export function TimeComercialTab() {
       email: m.email || "",
       franquia_id: m.franquia_id,
       ativo: m.ativo,
-      entra_random: m.entra_random,
+      krolic: m.krolic,
       sm_id: m.sm_id?.toString() || "",
       krolik_id: m.krolik_id || "",
       krolik_setor_id: m.krolik_setor_id || "",
@@ -109,7 +109,7 @@ export function TimeComercialTab() {
       email: form.email || null,
       franquia_id: form.franquia_id,
       ativo: form.ativo,
-      entra_random: form.entra_random,
+      krolic: form.krolic,
       sm_id: form.sm_id ? parseInt(form.sm_id) : null,
       krolik_id: form.krolik_id || null,
       krolik_setor_id: form.krolik_setor_id || null,
@@ -264,16 +264,16 @@ export function TimeComercialTab() {
                 {isSuperAdmin && (
                   <TableCell>
                     <Switch
-                      checked={m.entra_random}
+                      checked={m.krolic}
                       onCheckedChange={async () => {
-                        const newVal = !m.entra_random;
+                        const newVal = !m.krolic;
                         const { error } = await supabase
                           .from("time_comercial" as any)
-                          .update({ entra_random: newVal })
+                          .update({ krolic: newVal })
                           .eq("id", m.id);
                         if (error) { toast.error("Erro ao atualizar"); return; }
                         toast.success(newVal ? "Krolic ativado" : "Krolic desativado");
-                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, entra_random: newVal } : x));
+                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, krolic: newVal } : x));
                       }}
                     />
                   </TableCell>
@@ -362,7 +362,7 @@ export function TimeComercialTab() {
                 <Label>Ativo</Label>
               </div>
               <div className="flex items-center gap-2">
-                <Switch checked={form.entra_random} onCheckedChange={v => setForm(f => ({ ...f, entra_random: v }))} />
+                <Switch checked={form.krolic} onCheckedChange={v => setForm(f => ({ ...f, krolic: v }))} />
                 <Label>Krolic</Label>
               </div>
             </div>

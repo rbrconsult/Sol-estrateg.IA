@@ -1,0 +1,1 @@
+ALTER TABLE public.time_comercial RENAME COLUMN entra_random TO krolic;
