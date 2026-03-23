@@ -16,12 +16,12 @@ import {
 
 const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
 
-/** Classify lead by followup_count: >=1 → FUP FRIO, else → ROBÔ SDR */
+/** Classify lead by followup_count: >=1 → FUP FRIO, else → SOL SDR */
 function classifyLead(r: MakeRecord): string {
-  return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "ROBÔ SDR";
+  return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
 }
 
-const ETAPAS_QUALIFICAVEIS = ["ROBÔ SDR", "FUP FRIO"];
+const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FUP FRIO"];
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
@@ -154,13 +154,13 @@ export default function Qualificacao() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-            Qualificação de Leads — Robô &amp; Fup Frio
-          </h1>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            Leads nas etapas Robô e Fup Frio prontos para qualificação via Make.com
-          </p>
+            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              Qualificação de Leads — SOL SDR &amp; Fup Frio
+            </h1>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Leads nas etapas SOL SDR e Fup Frio prontos para qualificação via Make.com
+            </p>
         </div>
         <Button
           variant="outline"
