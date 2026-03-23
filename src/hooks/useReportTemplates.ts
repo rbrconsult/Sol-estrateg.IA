@@ -8,6 +8,7 @@ export interface ReportTemplate {
   icon: string;
   destinatario: string;
   destinatario_telefone: string;
+  copia_telefone: string;
   periodicidade: string;
   canal: string;
   conteudo: string;
