@@ -840,9 +840,9 @@ export default function Admin() {
                     <div>
                       <p className="text-sm font-medium">2. Endpoint de envio correto</p>
                       <p className="text-xs text-muted-foreground">
-                        <code>POST {'{api_url}'}/message/sendText/{'{instance_name}'}</code><br/>
-                        Header: <code>apikey: {'{api_key}'}</code><br/>
-                        Body: <code>{`{ "number": "5517...", "text": "..." }`}</code>
+                        <code>POST https://api.camkrolik.com.br/core/v2/api/chats/send-text</code><br/>
+                        Header: <code>access-token: {'{api_key}'}</code><br/>
+                        Body: <code>{`{ "number": "5517...", "message": "...", "forceSend": true, "verifyContact": true }`}</code>
                       </p>
                     </div>
                   </div>
