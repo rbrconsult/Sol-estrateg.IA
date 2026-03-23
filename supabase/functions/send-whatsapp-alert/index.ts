@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[send-whatsapp-alert] Krolic response: ${statusCode}`);
+    console.log(`[send-whatsapp-alert] Krolic response: ${statusCode}`, JSON.stringify(responseData));
 
     return new Response(
       JSON.stringify({ success: statusCode >= 200 && statusCode < 300, status: statusCode, data: responseData }),
