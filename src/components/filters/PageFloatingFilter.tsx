@@ -200,18 +200,14 @@ export function PageFloatingFilter({
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Período</label>
               <Select value={filters.periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
                 <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hoje">Hoje</SelectItem>
-                  <SelectItem value="3d">3 dias</SelectItem>
-                  <SelectItem value="7d">7 dias</SelectItem>
-                  <SelectItem value="30d">30 dias</SelectItem>
-                  <SelectItem value="90d">90 dias</SelectItem>
-                  <SelectItem value="mes">Este mês</SelectItem>
-                  <SelectItem value="ano">Este ano</SelectItem>
-                  <SelectItem value="ytd">YTD</SelectItem>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="custom">Personalizado</SelectItem>
-                </SelectContent>
+                 <SelectContent>
+                   <SelectItem value="hoje">Hoje</SelectItem>
+                   <SelectItem value="7d">7 dias</SelectItem>
+                   <SelectItem value="mes">Este mês</SelectItem>
+                   <SelectItem value="mesAnterior">Mês anterior</SelectItem>
+                   <SelectItem value="all">Todos</SelectItem>
+                   <SelectItem value="custom">Personalizado</SelectItem>
+                 </SelectContent>
               </Select>
             </div>
           )}
