@@ -298,7 +298,7 @@ export default function Qualificacao() {
                           {lead.nome || "Sem nome"}
                         </span>
                         <Badge variant="outline" className="text-[10px] shrink-0">
-                          {lead.etapaFunil || "—"}
+                          {lead._classificacao}
                         </Badge>
                         {lead.makeTemperatura && (
                           <Badge
