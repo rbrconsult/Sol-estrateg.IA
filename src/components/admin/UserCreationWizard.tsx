@@ -298,19 +298,51 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
-              {MODULE_DEFINITIONS.map(m => (
-                <div key={m.key} className="flex items-center justify-between py-1.5 px-3 rounded-md hover:bg-muted/50">
-                  <div>
-                    <span className="text-sm font-medium">{m.label}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{m.description}</span>
-                  </div>
-                  <Switch
-                    checked={moduleAccess[m.key] ?? true}
-                    onCheckedChange={checked => setModuleAccess(prev => ({ ...prev, [m.key]: checked }))}
-                  />
-                </div>
-              ))}
+            <div className="max-h-72 overflow-y-auto pr-1 space-y-1">
+              {MODULE_GROUPS.map(group => {
+                const groupKeys = group.keys;
+                const allEnabled = groupKeys.every(k => moduleAccess[k] ?? true);
+                const someEnabled = groupKeys.some(k => moduleAccess[k] ?? true);
+                return (
+                  <Collapsible key={group.label} defaultOpen>
+                    <div className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-1.5">
+                      <CollapsibleTrigger className="flex items-center gap-2 text-sm font-semibold hover:text-primary transition-colors">
+                        <ChevronRight className="h-3.5 w-3.5 transition-transform data-[state=open]:rotate-90" />
+                        {group.icon} {group.label}
+                      </CollapsibleTrigger>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost" size="sm" className="text-[10px] h-6 px-2"
+                          onClick={() => toggleGroupModules(groupKeys, !allEnabled)}
+                        >
+                          {allEnabled ? 'Restringir' : 'Liberar'}
+                        </Button>
+                        <div className={`h-2 w-2 rounded-full ${allEnabled ? 'bg-emerald-500' : someEnabled ? 'bg-amber-500' : 'bg-destructive'}`} />
+                      </div>
+                    </div>
+                    <CollapsibleContent>
+                      <div className="pl-6 space-y-0.5 mt-0.5">
+                        {groupKeys.map(key => {
+                          const m = MODULE_DEFINITIONS.find(md => md.key === key);
+                          if (!m) return null;
+                          return (
+                            <div key={m.key} className="flex items-center justify-between py-1 px-3 rounded-md hover:bg-muted/50">
+                              <div>
+                                <span className="text-sm">{m.label}</span>
+                                <span className="text-xs text-muted-foreground ml-2">{m.description}</span>
+                              </div>
+                              <Switch
+                                checked={moduleAccess[m.key] ?? true}
+                                onCheckedChange={checked => setModuleAccess(prev => ({ ...prev, [m.key]: checked }))}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
           </div>
         )}
