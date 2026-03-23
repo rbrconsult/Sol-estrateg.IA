@@ -40,6 +40,7 @@ import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
+import Qualificacao from "./pages/Qualificacao";
 import Reprocessamento from "./pages/Reprocessamento";
 import OrgConfigPage from "./pages/admin/OrgConfigPage";
 import PreVenda from "./pages/solar/PreVenda";
@@ -110,6 +111,7 @@ const App = () => (
               <Route path="/followup" element={<ProtectedRoute><MainLayout><AnalistaFollowup /></MainLayout></ProtectedRoute>} />
               <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
