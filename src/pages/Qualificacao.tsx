@@ -16,7 +16,7 @@ import {
 
 const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
 
-const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP"];
+const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP", "FUP FRIO", "ROBO"];
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
@@ -152,10 +152,10 @@ export default function Qualificacao() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-            Qualificação de Leads
+            Qualificação de Leads — Robô &amp; Fup Frio
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">
-            Leads nas etapas SOL SDR e Follow Up prontos para qualificação via Make.com
+            Leads nas etapas Robô e Fup Frio prontos para qualificação via Make.com
           </p>
         </div>
         <Button
