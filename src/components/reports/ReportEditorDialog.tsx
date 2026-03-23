@@ -1,0 +1,194 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Save } from "lucide-react";
+import type { ReportTemplate } from "@/hooks/useReportTemplates";
+
+const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
+const PERIODICIDADES = [
+  "Diária — 07:00",
+  "Diária — 07:05",
+  "Diária — 07:10",
+  "Diária — 08:00",
+  "Diária — 12:00",
+  "Diária — 18:00",
+  "Semanal — Segunda 08:00",
+  "Semanal — Sexta 17:00",
+  "Mensal — Dia 1 08:00",
+  "Quinzenal — 08:00",
+];
+
+interface ReportEditorDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  template: ReportTemplate | null;
+  onSave: (data: Partial<ReportTemplate>) => void;
+  isSaving: boolean;
+}
+
+export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSaving }: ReportEditorDialogProps) {
+  const [form, setForm] = useState({
+    titulo: "",
+    icon: "📊",
+    destinatario: "",
+    periodicidade: "Diária — 07:00",
+    canal: "WhatsApp",
+    conteudo: "",
+  });
+  const [tab, setTab] = useState("editor");
+
+  useEffect(() => {
+    if (template) {
+      setForm({
+        titulo: template.titulo,
+        icon: template.icon,
+        destinatario: template.destinatario,
+        periodicidade: template.periodicidade,
+        canal: template.canal,
+        conteudo: template.conteudo,
+      });
+    } else {
+      setForm({
+        titulo: "",
+        icon: "📊",
+        destinatario: "",
+        periodicidade: "Diária — 07:00",
+        canal: "WhatsApp",
+        conteudo: "",
+      });
+    }
+    setTab("editor");
+  }, [template, open]);
+
+  const handleSave = () => {
+    onSave({
+      ...(template ? { id: template.id } : {}),
+      ...form,
+      ordem: template?.ordem ?? 99,
+    });
+  };
+
+  const variables = form.conteudo.match(/\{\{[a-z_]+\}\}/g) || [];
+  const uniqueVars = [...new Set(variables)];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{template ? "Editar Template" : "Novo Template"}</DialogTitle>
+        </DialogHeader>
+
+        <Tabs value={tab} onValueChange={setTab} className="flex-1 min-h-0">
+          <TabsList className="grid grid-cols-2 w-full max-w-xs">
+            <TabsTrigger value="editor">Configurar</TabsTrigger>
+            <TabsTrigger value="preview" className="gap-1">
+              <Eye className="h-3 w-3" /> Preview
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="editor" className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Título</Label>
+                <Input value={form.titulo} onChange={(e) => setForm(f => ({ ...f, titulo: e.target.value }))} placeholder="Nome do relatório" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ícone</Label>
+                <div className="flex gap-1 flex-wrap">
+                  {ICONS.map((ic) => (
+                    <button key={ic} onClick={() => setForm(f => ({ ...f, icon: ic }))} className={`text-lg p-1.5 rounded-md border transition-all ${form.icon === ic ? "border-primary bg-primary/10 scale-110" : "border-transparent hover:bg-muted"}`}>
+                      {ic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Destinatário</Label>
+                <Input value={form.destinatario} onChange={(e) => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: Diretoria" />
+              </div>
+              <div className="space-y-2">
+                <Label>Periodicidade</Label>
+                <Select value={form.periodicidade} onValueChange={(v) => setForm(f => ({ ...f, periodicidade: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PERIODICIDADES.map((p) => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Canal</Label>
+                <Select value={form.canal} onValueChange={(v) => setForm(f => ({ ...f, canal: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                    <SelectItem value="Email">Email</SelectItem>
+                    <SelectItem value="Slack">Slack</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Conteúdo do Template</Label>
+                <p className="text-[10px] text-muted-foreground">Use {"{{variavel}}"} para dados dinâmicos</p>
+              </div>
+              <Textarea
+                value={form.conteudo}
+                onChange={(e) => setForm(f => ({ ...f, conteudo: e.target.value }))}
+                placeholder="Escreva o template da mensagem..."
+                className="min-h-[250px] font-mono text-xs"
+              />
+            </div>
+
+            {uniqueVars.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Variáveis detectadas ({uniqueVars.length})</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueVars.map((v) => (
+                    <Badge key={v} variant="secondary" className="text-xs font-mono">{v}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="preview" className="mt-4">
+            <ScrollArea className="h-[450px]">
+              <div className="rounded-xl bg-[#0b141a] border border-border/30 p-4">
+                <div className="bg-[#005c4b] rounded-lg p-3 max-w-[90%] ml-auto">
+                  <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">
+                    {form.conteudo || "Sem conteúdo para preview"}
+                  </pre>
+                  <div className="text-right mt-1">
+                    <span className="text-[9px] text-white/50">07:00 ✓✓</span>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={!form.titulo.trim() || !form.conteudo.trim() || isSaving}>
+            <Save className="h-4 w-4 mr-1" />
+            {isSaving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
