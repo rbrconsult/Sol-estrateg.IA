@@ -55,11 +55,13 @@ export interface Proposal {
 export const etapasReais = [
   'TRAFEGO PAGO',
   'PROSPECÇÃO',
+  'FOLLOW UP',
   'QUALIFICAÇÃO',
   'QUALIFICADO',
   'CONTATO REALIZADO',
   'PROPOSTA',
-  'NEGOCIAÇÃO'
+  'NEGOCIAÇÃO',
+  'CONTRATO ASSINADO',
 ];
 
 // Etapas do Pipeline Pipedrive-style
