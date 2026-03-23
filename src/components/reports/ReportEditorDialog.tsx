@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,18 +12,33 @@ import { Eye, Save, Phone } from "lucide-react";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
-const PERIODICIDADES = [
-  "Diária — 07:00",
-  "Diária — 07:05",
-  "Diária — 07:10",
-  "Diária — 08:00",
-  "Diária — 12:00",
-  "Diária — 18:00",
-  "Semanal — Segunda 08:00",
-  "Semanal — Sexta 17:00",
-  "Mensal — Dia 1 08:00",
-  "Quinzenal — 08:00",
-];
+
+const FREQUENCIAS = ["Diária", "Semanal", "Quinzenal", "Mensal"] as const;
+const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const DIAS_MES = Array.from({ length: 28 }, (_, i) => i + 1);
+const HORARIOS = ["06:00", "06:30", "07:00", "07:05", "07:10", "07:30", "08:00", "08:30", "09:00", "10:00", "12:00", "14:00", "17:00", "18:00"];
+
+function parsePeriodicidade(p: string) {
+  const parts = p.split(" — ");
+  const freq = parts[0] || "Diária";
+  const rest = parts[1] || "07:00";
+
+  if (freq === "Semanal" || freq === "Quinzenal") {
+    const match = rest.match(/^(\S+)\s+(.+)$/);
+    return { freq, dia: match?.[1] || "Segunda", horario: match?.[2] || "08:00" };
+  }
+  if (freq === "Mensal") {
+    const match = rest.match(/^Dia\s+(\d+)\s+(.+)$/);
+    return { freq, dia: match?.[1] || "1", horario: match?.[2] || "08:00" };
+  }
+  return { freq: "Diária", dia: "", horario: rest };
+}
+
+function buildPeriodicidade(freq: string, dia: string, horario: string) {
+  if (freq === "Semanal" || freq === "Quinzenal") return `${freq} — ${dia} ${horario}`;
+  if (freq === "Mensal") return `${freq} — Dia ${dia} ${horario}`;
+  return `Diária — ${horario}`;
+}
 
 interface ReportEditorDialogProps {
   open: boolean;
@@ -44,6 +59,19 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     conteudo: "",
   });
   const [tab, setTab] = useState("editor");
+
+  const parsed = useMemo(() => parsePeriodicidade(form.periodicidade), [form.periodicidade]);
+
+  const updatePeriod = (field: "freq" | "dia" | "horario", value: string) => {
+    const next = { ...parsed, [field]: value };
+    // Set defaults when switching frequency
+    if (field === "freq") {
+      if (value === "Semanal" || value === "Quinzenal") next.dia = next.dia || "Segunda";
+      if (value === "Mensal") next.dia = next.dia || "1";
+      if (!next.horario) next.horario = "08:00";
+    }
+    setForm(f => ({ ...f, periodicidade: buildPeriodicidade(next.freq, next.dia, next.horario) }));
+  };
 
   useEffect(() => {
     if (template) {
@@ -133,18 +161,59 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label>Periodicidade</Label>
-                <Select value={form.periodicidade} onValueChange={(v) => setForm(f => ({ ...f, periodicidade: v }))}>
+                <Label>Frequência</Label>
+                <Select value={parsed.freq} onValueChange={(v) => updatePeriod("freq", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {PERIODICIDADES.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    {FREQUENCIAS.map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {(parsed.freq === "Semanal" || parsed.freq === "Quinzenal") && (
+                <div className="space-y-2">
+                  <Label>Dia da Semana</Label>
+                  <Select value={parsed.dia} onValueChange={(v) => updatePeriod("dia", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {DIAS_SEMANA.map((d) => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {parsed.freq === "Mensal" && (
+                <div className="space-y-2">
+                  <Label>Dia do Mês</Label>
+                  <Select value={parsed.dia} onValueChange={(v) => updatePeriod("dia", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {DIAS_MES.map((d) => (
+                        <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Horário</Label>
+                <Select value={parsed.horario} onValueChange={(v) => updatePeriod("horario", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {HORARIOS.map((h) => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label>Canal</Label>
                 <Select value={form.canal} onValueChange={(v) => setForm(f => ({ ...f, canal: v }))}>
@@ -156,7 +225,6 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </SelectContent>
                 </Select>
               </div>
-              <div />
             </div>
 
             <div className="space-y-2">
