@@ -88,7 +88,7 @@ export function TimeComercialTab() {
       email: m.email || "",
       franquia_id: m.franquia_id,
       ativo: m.ativo,
-      entra_random: m.entra_random,
+      krolic: m.krolic,
       sm_id: m.sm_id?.toString() || "",
       krolik_id: m.krolik_id || "",
       krolik_setor_id: m.krolik_setor_id || "",
