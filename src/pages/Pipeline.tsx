@@ -85,13 +85,16 @@ const Pipeline = () => {
     const items: UnifiedItem[] = [];
 
     // DS Thread → etapas pré-venda
+    const IGNORAR_STATUS = ['DESQUALIFICADO', 'DECLINIO', 'DECLÍNIO', 'SOL SDR'];
     for (const r of makeRecords || []) {
+      const statusUpper = (r.makeStatus || '').toUpperCase().trim();
+      if (IGNORAR_STATUS.includes(statusUpper)) continue;
+
       const etapa = (r.etapaFunil || 'TRAFEGO PAGO').toUpperCase();
-      // Normaliza etapas com acento
       let stage = etapa;
       if (etapa === 'PROSPECAO') stage = 'PROSPECÇÃO';
       if (etapa === 'QUALIFICACAO') stage = 'QUALIFICAÇÃO';
-      if (etapa === 'DECLINIO' || etapa === 'DECLÍNIO') continue; // ignora declínio
+      if (etapa === 'DECLINIO' || etapa === 'DECLÍNIO') continue;
       if (!PIPELINE_STAGES.includes(stage)) stage = 'TRAFEGO PAGO';
 
       items.push({
