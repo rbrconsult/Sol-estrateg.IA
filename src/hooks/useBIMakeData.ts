@@ -6,6 +6,10 @@ import type { DateRange } from '@/components/dashboard/DateFilter';
 // ─── Helpers ───
 function safeDate(str: string | undefined | null): Date | null {
   if (!str) return null;
+  const brMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+  if (brMatch) {
+    return new Date(parseInt(brMatch[3]), parseInt(brMatch[2])-1, parseInt(brMatch[1]), parseInt(brMatch[4]), parseInt(brMatch[5]));
+  }
   const d = new Date(str);
   return isNaN(d.getTime()) ? null : d;
 }
