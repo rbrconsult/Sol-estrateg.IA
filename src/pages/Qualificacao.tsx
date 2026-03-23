@@ -132,8 +132,7 @@ export default function Qualificacao() {
   const countByEtapa = useMemo(() => {
     const map: Record<string, number> = {};
     for (const l of leads) {
-      const e = (l.etapaFunil || "").toUpperCase();
-      map[e] = (map[e] || 0) + 1;
+      map[l._classificacao] = (map[l._classificacao] || 0) + 1;
     }
     return map;
   }, [leads]);
