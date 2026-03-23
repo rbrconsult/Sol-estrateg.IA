@@ -3,22 +3,34 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export const MODULE_DEFINITIONS = [
-  { key: 'conferencia', label: 'Sol Estrateg.IA', description: 'Painel SOL SDR', path: '/' },
+  // Pré-venda
+  { key: 'conferencia', label: 'Dashboard SOL', description: 'Painel SOL SDR', path: '/conferencia' },
   { key: 'leads', label: 'Leads', description: 'Captação & Robô', path: '/leads' },
-  { key: 'dashboard', label: 'Dashboard', description: 'Painel Executivo', path: '/dashboard' },
+  { key: 'robo-sol', label: 'Robô SOL', description: 'IA de Qualificação', path: '/robo-sol' },
+  { key: 'robo-fup-frio', label: 'FUP Frio', description: 'Follow-up Automático', path: '/robo-fup-frio' },
+  // Comercial
   { key: 'pipeline', label: 'Pipeline', description: 'Kanban Visual', path: '/pipeline' },
-  { key: 'forecast', label: 'Forecast', description: 'Previsão de Receita', path: '/forecast' },
-  { key: 'atividades', label: 'Atividades', description: 'Follow-ups', path: '/atividades' },
+  { key: 'painel-comercial', label: 'Painel Comercial', description: 'Visão Comercial', path: '/painel-comercial' },
+  { key: 'forecast', label: 'Propostas', description: 'Previsão de Receita', path: '/forecast' },
   { key: 'vendedores', label: 'Vendedores', description: 'Performance', path: '/vendedores' },
-  { key: 'perdas', label: 'Perdas', description: 'Análise de Perdas', path: '/perdas' },
-  { key: 'origens', label: 'Origens', description: 'Origem dos Leads', path: '/origens' },
-  { key: 'chamados', label: 'Chamados', description: 'Suporte & SLA', path: '/chamados' },
-  { key: 'monitoramento', label: 'Monitoramento', description: 'Status do Sistema', path: '/monitoramento' },
-  { key: 'make-errors', label: 'Erros Make', description: 'Monitor Automações', path: '/make-errors' },
-  { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
+  { key: 'comissoes', label: 'Comissões', description: 'Gestão de Comissões', path: '/comissoes' },
+  // Inteligência
   { key: 'bi', label: 'BI', description: 'Centro de Inteligência', path: '/bi' },
-  { key: 'insights', label: 'Insights', description: 'Relatórios Automatizados', path: '/insights' },
+  { key: 'followup', label: 'Analista Follow-up', description: 'Análise de Cadência', path: '/followup' },
+  { key: 'jornada-lead', label: 'Jornada Lead', description: 'Timeline do Lead', path: '/jornada-lead' },
+  { key: 'sla-monitor', label: 'Monitor de SLA', description: 'Tempo de Resposta', path: '/sla' },
+  { key: 'ads-performance', label: 'Ads Performance', description: 'Meta & Google Ads', path: '/ads-performance' },
+  { key: 'midia-receita', label: 'Mídia × Receita', description: 'ROI por Canal', path: '/midia' },
+  // Insights
   { key: 'reports', label: 'Reports', description: 'Relatórios Estratégicos', path: '/reports' },
+  // Operacional
+  { key: 'chamados', label: 'Chamados', description: 'Suporte & SLA', path: '/chamados' },
+  { key: 'monitoramento', label: 'Monitor', description: 'Status do Sistema', path: '/operacoes' },
+  { key: 'reprocessamento', label: 'Reprocessar', description: 'Reprocessar Dados', path: '/reprocessamento' },
+  { key: 'qualificacao', label: 'Qualificação', description: 'Qualificação Manual', path: '/qualificacao' },
+  { key: 'sanitizacao', label: 'Sanitização', description: 'Limpeza de Dados', path: '/sanitizacao' },
+  { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
+  // Admin
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
 ] as const;
 
