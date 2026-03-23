@@ -476,6 +476,7 @@ export type Database = {
           ativo: boolean
           canal: string
           conteudo: string
+          copia_telefone: string | null
           created_at: string
           created_by: string | null
           destinatario: string
@@ -492,6 +493,7 @@ export type Database = {
           ativo?: boolean
           canal?: string
           conteudo?: string
+          copia_telefone?: string | null
           created_at?: string
           created_by?: string | null
           destinatario?: string
@@ -508,6 +510,7 @@ export type Database = {
           ativo?: boolean
           canal?: string
           conteudo?: string
+          copia_telefone?: string | null
           created_at?: string
           created_by?: string | null
           destinatario?: string

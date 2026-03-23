@@ -54,6 +54,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     icon: "📊",
     destinatario: "",
     destinatario_telefone: "",
+    copia_telefone: "",
     periodicidade: "Diária — 07:00",
     canal: "WhatsApp",
     conteudo: "",
