@@ -48,8 +48,8 @@ function deriveAttribution(records: MakeRecord[]) {
     } else if (cidade.includes('google')) {
       canal = 'Google Ads';
     } else if (r.makeScore && parseInt(r.makeScore) > 0) {
-      const hash = r.telefone.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-      canal = hash % 100 < 60 ? 'Meta Ads' : hash % 100 < 85 ? 'Google Ads' : 'Direto';
+      
+      canal = r.canalOrigem === 'meta_ads' ? 'Meta Ads' : r.canalOrigem === 'google_ads' ? 'Google Ads' : r.canalOrigem === 'site' ? 'Site' : 'Direto';
     }
 
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0 };
