@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,18 +12,33 @@ import { Eye, Save, Phone } from "lucide-react";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
-const PERIODICIDADES = [
-  "Diária — 07:00",
-  "Diária — 07:05",
-  "Diária — 07:10",
-  "Diária — 08:00",
-  "Diária — 12:00",
-  "Diária — 18:00",
-  "Semanal — Segunda 08:00",
-  "Semanal — Sexta 17:00",
-  "Mensal — Dia 1 08:00",
-  "Quinzenal — 08:00",
-];
+
+const FREQUENCIAS = ["Diária", "Semanal", "Quinzenal", "Mensal"] as const;
+const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const DIAS_MES = Array.from({ length: 28 }, (_, i) => i + 1);
+const HORARIOS = ["06:00", "06:30", "07:00", "07:05", "07:10", "07:30", "08:00", "08:30", "09:00", "10:00", "12:00", "14:00", "17:00", "18:00"];
+
+function parsePeriodicidade(p: string) {
+  const parts = p.split(" — ");
+  const freq = parts[0] || "Diária";
+  const rest = parts[1] || "07:00";
+
+  if (freq === "Semanal" || freq === "Quinzenal") {
+    const match = rest.match(/^(\S+)\s+(.+)$/);
+    return { freq, dia: match?.[1] || "Segunda", horario: match?.[2] || "08:00" };
+  }
+  if (freq === "Mensal") {
+    const match = rest.match(/^Dia\s+(\d+)\s+(.+)$/);
+    return { freq, dia: match?.[1] || "1", horario: match?.[2] || "08:00" };
+  }
+  return { freq: "Diária", dia: "", horario: rest };
+}
+
+function buildPeriodicidade(freq: string, dia: string, horario: string) {
+  if (freq === "Semanal" || freq === "Quinzenal") return `${freq} — ${dia} ${horario}`;
+  if (freq === "Mensal") return `${freq} — Dia ${dia} ${horario}`;
+  return `Diária — ${horario}`;
+}
 
 interface ReportEditorDialogProps {
   open: boolean;
