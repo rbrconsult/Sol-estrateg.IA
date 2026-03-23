@@ -57,8 +57,10 @@ export default function Qualificacao() {
     const key = lead.telefone;
     setSendingMap((m) => ({ ...m, [key]: true }));
     try {
+      const rawPhone = (lead.telefone || "").replace(/\D/g, "");
+      const telefoneFormatado = rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`;
       const payload = {
-        telefone: lead.telefone,
+        telefone: telefoneFormatado,
         nome: lead.nome || "",
         etapa_funil: lead.etapaFunil || "",
         cidade: lead.cidade || "",
