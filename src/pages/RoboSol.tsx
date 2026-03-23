@@ -156,7 +156,7 @@ function deriveSolData(records: MakeRecord[]) {
   const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
   solRecords.forEach(r => {
     try {
-      const d = new Date(r.data_envio);
+      const raw = r.data_envio || ""; const parts = raw.match(/\d+/g); const d = parts && parts.length >= 5 ? new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]), parseInt(parts[3]), parseInt(parts[4])) : new Date(raw);
       if (isNaN(d.getTime())) return;
       const day = d.getDay(); // 0=Sun
       const hour = d.getHours();
