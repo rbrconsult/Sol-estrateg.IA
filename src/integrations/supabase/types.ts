@@ -645,6 +645,7 @@ export type Database = {
           cargo: string | null
           created_at: string | null
           email: string | null
+          entra_random: boolean | null
           franquia_id: string
           id: string
           krolik_id: string | null
@@ -659,6 +660,7 @@ export type Database = {
           cargo?: string | null
           created_at?: string | null
           email?: string | null
+          entra_random?: boolean | null
           franquia_id: string
           id?: string
           krolik_id?: string | null
@@ -673,6 +675,7 @@ export type Database = {
           cargo?: string | null
           created_at?: string | null
           email?: string | null
+          entra_random?: boolean | null
           franquia_id?: string
           id?: string
           krolik_id?: string | null
