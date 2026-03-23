@@ -452,7 +452,7 @@ export default function BI() {
                             </Badge>
                           </td>
                           <td className="text-right py-2 px-2 tabular-nums text-muted-foreground text-xs">
-                            {l.data ? format(new Date(l.data), "dd/MM HH:mm", { locale: ptBR }) : '—'}
+                            {(() => { const d = new Date(l.data); return l.data && !isNaN(d.getTime()) ? format(d, "dd/MM HH:mm", { locale: ptBR }) : '—'; })()}
                           </td>
                         </tr>
                       ))}

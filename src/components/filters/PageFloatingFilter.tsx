@@ -85,7 +85,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
-  const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string }>(records: T[]): T[] => {
+  const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string; canalOrigem?: string }>(records: T[]): T[] => {
     return records.filter(r => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
@@ -96,7 +96,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
         if (from && d < from) return false;
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
-      if (filters.canal !== "todos" && r.canalOrigem !== filters.canal) return false;
+      if (filters.canal !== "todos" && (r as any).canalOrigem !== filters.canal) return false;
       if (filters.temperatura !== "todas" && (r.makeTemperatura || "").toUpperCase() !== filters.temperatura) return false;
       if (filters.searchTerm && !(r.nome || "").toLowerCase().includes(filters.searchTerm.toLowerCase())) return false;
       return true;
