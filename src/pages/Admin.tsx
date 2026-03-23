@@ -811,6 +811,10 @@ export default function Admin() {
             </Card>
             <MonitoredScenariosSettings />
           </TabsContent>
+
+          <TabsContent value="time-comercial">
+            <TimeComercialTab />
+          </TabsContent>
         </Tabs>
 
         {/* Create User Dialog */}
