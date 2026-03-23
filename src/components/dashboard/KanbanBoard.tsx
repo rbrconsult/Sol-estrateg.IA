@@ -12,21 +12,25 @@ interface KanbanBoardProps {
 const KANBAN_COLUMNS = [
   'TRAFEGO PAGO',
   'PROSPECÇÃO',
+  'FOLLOW UP',
   'QUALIFICAÇÃO',
   'QUALIFICADO',
   'CONTATO REALIZADO',
   'PROPOSTA',
-  'NEGOCIAÇÃO'
+  'NEGOCIAÇÃO',
+  'CONTRATO ASSINADO',
 ];
 
 const columnColors: Record<string, string> = {
   'TRAFEGO PAGO': 'bg-blue-500/20 border-blue-500/50',
   'PROSPECÇÃO': 'bg-indigo-500/20 border-indigo-500/50',
+  'FOLLOW UP': 'bg-violet-500/20 border-violet-500/50',
   'QUALIFICAÇÃO': 'bg-cyan-500/20 border-cyan-500/50',
   'QUALIFICADO': 'bg-teal-500/20 border-teal-500/50',
   'CONTATO REALIZADO': 'bg-emerald-500/20 border-emerald-500/50',
   'PROPOSTA': 'bg-green-500/20 border-green-500/50',
-  'NEGOCIAÇÃO': 'bg-lime-500/20 border-lime-500/50'
+  'NEGOCIAÇÃO': 'bg-lime-500/20 border-lime-500/50',
+  'CONTRATO ASSINADO': 'bg-amber-500/20 border-amber-500/50',
 };
 
 export function KanbanBoard({ proposals }: KanbanBoardProps) {

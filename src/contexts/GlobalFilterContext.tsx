@@ -20,7 +20,8 @@ interface GlobalFilterContextType {
 const GlobalFilterContext = createContext<GlobalFilterContextType | undefined>(undefined);
 
 export function GlobalFilterProvider({ children }: { children: ReactNode }) {
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true });
+  // Default to current month instead of "all"
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true }, "mes");
 
   return (
     <GlobalFilterContext.Provider value={pf}>

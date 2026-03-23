@@ -40,6 +40,10 @@ export interface MakeRecord {
   lastFollowupDate?: string;
   /** codigo_status from Make (NAO_RESPONDEU, etc.) */
   codigoStatus?: string;
+  /** etapa_funil from DS Thread */
+  etapaFunil?: string;
+  /** closer_atribuido from DS Thread */
+  closerAtribuido?: string;
 }
 
 interface MakeResponse {
@@ -53,14 +57,13 @@ interface MakeResponse {
 export function normalizePhone(phone: string): string {
   if (!phone) return '';
   const digits = phone.replace(/\D/g, '');
-  // Brazilian numbers: if starts with 55 and has 12-13 digits, strip country code
   if (digits.length >= 12 && digits.startsWith('55')) {
     return digits.slice(2);
   }
   return digits;
 }
 
-/** Status normalization map — reclassify orphaned/ambiguous statuses */
+/** Status normalization map */
 const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
 };
@@ -71,8 +74,6 @@ function parseRecords(raw: any[]): MakeRecord[] {
     const d = r.data || r;
     const phone = normalizePhone(String(d.telefone || r.key || ''));
     
-    // Determine robot type from available fields
-    // Regra simples: followup_count >= 1 → FUP Frio, senão → SOL SDR
     const fupCount = parseInt(d.followup_count) || 0;
     
     let robo = String(d.robo || d.bot || d.tipo_robo || '').toLowerCase();
@@ -80,13 +81,9 @@ function parseRecords(raw: any[]): MakeRecord[] {
       robo = fupCount >= 1 ? 'fup_frio' : 'sol';
     }
 
-    // Determine status from available data with heuristics
     let statusResposta = String(d.status_resposta || d.response_status || '').toLowerCase();
-    
-    // Don't use d.status for response detection — it's a lead status (DESQUALIFICADO, WHATSAPP, etc.)
     const codigoStatus = String(d.codigo_status || '').toUpperCase();
 
-    // Heuristic: detect "respondeu" from multiple signals
     const hasDataResposta = !!(d.data_resposta || d.response_date) && String(d.data_resposta || d.response_date || '').trim() !== '';
     const hasRepliedFlag = !!(d.respondeu || d.replied || d.response);
     const historico = d.historico || d.history;
@@ -95,7 +92,6 @@ function parseRecords(raw: any[]): MakeRecord[] {
       return tipo === 'recebida' || tipo === 'received' || tipo === 'inbound';
     });
     const statusContainsReply = statusResposta.includes('respond') || statusResposta.includes('replied') || statusResposta === 'respondeu';
-    // Lead status like WHATSAPP or QUALIFICADO can indicate engagement
     const leadStatus = String(d.status || '').toUpperCase();
     const isEngaged = leadStatus === 'WHATSAPP' || leadStatus === 'QUALIFICADO';
 
@@ -107,7 +103,6 @@ function parseRecords(raw: any[]): MakeRecord[] {
       statusResposta = 'aguardando';
     }
 
-    // Build historico: if empty, synthesize from available data
     let parsedHistorico: MakeInteraction[] = [];
     if (Array.isArray(d.historico || d.history)) {
       parsedHistorico = (d.historico || d.history).map((h: any) => ({
@@ -117,7 +112,6 @@ function parseRecords(raw: any[]): MakeRecord[] {
       }));
     }
     
-    // If no historico but we have data, synthesize entries
     if (parsedHistorico.length === 0) {
       const cadastroDate = d['Data e Hora | Cadastro do Lead'] || d.data_envio || d.sent_at || '';
       if (cadastroDate) {
@@ -135,6 +129,10 @@ function parseRecords(raw: any[]): MakeRecord[] {
         parsedHistorico.push({ tipo: 'recebida', mensagem: 'Resposta do lead', data: d.data_resposta || d.response_date || '' });
       }
     }
+
+    // Extract etapa_funil
+    const etapaFunil = String(d.etapa_funil || d.etapaFunil || '').toUpperCase().trim() || undefined;
+    const closerAtribuido = String(d.closer_atribuido || d.closerAtribuido || '').trim() || undefined;
 
     return {
       telefone: phone,
@@ -159,6 +157,8 @@ function parseRecords(raw: any[]): MakeRecord[] {
       followupCount: fupCount,
       lastFollowupDate: String(d.last_followup_date || ''),
       codigoStatus: codigoStatus,
+      etapaFunil,
+      closerAtribuido,
     };
   });
 }
@@ -184,8 +184,8 @@ export function useMakeDataStore() {
   return useQuery({
     queryKey: ['make-data-store'],
     queryFn: fetchMakeData,
-    staleTime: 1000 * 60 * 10, // 10 min cache
-    gcTime: 1000 * 60 * 30, // keep in memory 30 min
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
     retry: 1,
     enabled: !!user,

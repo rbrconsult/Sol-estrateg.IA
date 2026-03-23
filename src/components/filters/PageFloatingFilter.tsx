@@ -40,22 +40,19 @@ const defaultState: FilterState = {
 };
 
 const ALL_ETAPAS = [
-  'Tráfego Pago',
-  'Prospecção',
-  'Qualificação',
-  'Qualificado',
-  'Contato Realizado',
-  'Diagnóstico',
-  'Proposta Enviada',
-  'Negociação',
-  'Aprovação Financeira',
-  'Fechamento',
-  'Ganho',
-  'Perdido',
+  'TRAFEGO PAGO',
+  'PROSPECÇÃO',
+  'FOLLOW UP',
+  'QUALIFICAÇÃO',
+  'QUALIFICADO',
+  'CONTATO REALIZADO',
+  'PROPOSTA',
+  'NEGOCIAÇÃO',
+  'CONTRATO ASSINADO',
 ];
 
-export function usePageFilters(config?: FilterConfig) {
-  const [filters, setFilters] = useState<FilterState>(defaultState);
+export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
+  const [filters, setFilters] = useState<FilterState>({ ...defaultState, periodo: defaultPeriodo || "all" });
 
   const setPeriodo = useCallback((v: string) => setFilters(f => ({ ...f, periodo: v, dateFrom: undefined, dateTo: undefined })), []);
   const setDateFrom = useCallback((d: Date | undefined) => setFilters(f => ({ ...f, dateFrom: d })), []);
@@ -79,6 +76,11 @@ export function usePageFilters(config?: FilterConfig) {
     if (p === "30d") return { from: subDays(today, 30), to: today };
     if (p === "90d") return { from: subDays(today, 90), to: today };
     if (p === "mes") return { from: startOfMonth(today), to: today };
+    if (p === "mesAnterior") {
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: lastMonth, to: lastMonthEnd };
+    }
     if (p === "ano" || p === "ytd") return { from: startOfYear(today), to: today };
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
@@ -200,18 +202,14 @@ export function PageFloatingFilter({
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Período</label>
               <Select value={filters.periodo} onValueChange={(v) => { setPeriodo(v); setDateFrom(undefined); setDateTo(undefined); }}>
                 <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hoje">Hoje</SelectItem>
-                  <SelectItem value="3d">3 dias</SelectItem>
-                  <SelectItem value="7d">7 dias</SelectItem>
-                  <SelectItem value="30d">30 dias</SelectItem>
-                  <SelectItem value="90d">90 dias</SelectItem>
-                  <SelectItem value="mes">Este mês</SelectItem>
-                  <SelectItem value="ano">Este ano</SelectItem>
-                  <SelectItem value="ytd">YTD</SelectItem>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="custom">Personalizado</SelectItem>
-                </SelectContent>
+                 <SelectContent>
+                   <SelectItem value="hoje">Hoje</SelectItem>
+                   <SelectItem value="7d">7 dias</SelectItem>
+                   <SelectItem value="mes">Este mês</SelectItem>
+                   <SelectItem value="mesAnterior">Mês anterior</SelectItem>
+                   <SelectItem value="all">Todos</SelectItem>
+                   <SelectItem value="custom">Personalizado</SelectItem>
+                 </SelectContent>
               </Select>
             </div>
           )}
