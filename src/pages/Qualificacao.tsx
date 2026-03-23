@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Search, Send, CheckCircle2, Loader2, Users, Filter,
-  Phone, MapPin, Thermometer, Target,
+  Phone, MapPin, Thermometer, Target, RefreshCw,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -19,7 +19,7 @@ const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql"
 const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP"];
 
 export default function Qualificacao() {
-  const { data: records, isLoading } = useMakeDataStore();
+  const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
@@ -148,14 +148,26 @@ export default function Qualificacao() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-          <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-          Qualificação de Leads
-        </h1>
-        <p className="text-xs md:text-sm text-muted-foreground">
-          Leads nas etapas SOL SDR e Follow Up prontos para qualificação via Make.com
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+            Qualificação de Leads
+          </h1>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Leads nas etapas SOL SDR e Follow Up prontos para qualificação via Make.com
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="shrink-0 gap-1.5"
+        >
+          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
       </div>
 
       {/* KPIs */}
