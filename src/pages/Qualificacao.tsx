@@ -213,6 +213,44 @@ export default function Qualificacao() {
         </Select>
       </div>
 
+      {/* Envio Manual */}
+      <Card className="border-dashed border-primary/30">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Número (com DDD)</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="5514996703996"
+                  value={manualPhone}
+                  onChange={(e) => setManualPhone(e.target.value)}
+                  className="pl-9"
+                  disabled={manualSending}
+                />
+              </div>
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
+              <Input
+                placeholder="Nome do lead"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                disabled={manualSending}
+              />
+            </div>
+            <Button
+              onClick={sendManual}
+              disabled={manualSending || !manualPhone.trim()}
+              className="shrink-0 gap-1.5"
+            >
+              {manualSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Qualificar Manual
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Lead List */}
       <Card>
         <CardHeader className="pb-3">
