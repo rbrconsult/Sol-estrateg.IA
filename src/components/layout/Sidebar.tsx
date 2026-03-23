@@ -34,7 +34,6 @@ const menuGroups: MenuGroup[] = [
     label: "Pré-venda",
     items: [
       { title: "Dashboard", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
-      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
       { title: "Leads", icon: Users, path: "/leads" },
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "bi" },
       { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "bi" },
@@ -43,6 +42,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: "Comercial",
     items: [
+      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
       { title: "Painel Comercial", icon: Zap, path: "/painel-comercial" },
       { title: "Propostas", icon: FileCheck, path: "/forecast", moduleKey: "pipeline" },
       { title: "Contratos", icon: Handshake, path: "/dashboard", moduleKey: "dashboard" },
