@@ -54,8 +54,8 @@ const ALL_ETAPAS = [
   'Perdido',
 ];
 
-export function usePageFilters(config?: FilterConfig) {
-  const [filters, setFilters] = useState<FilterState>(defaultState);
+export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
+  const [filters, setFilters] = useState<FilterState>({ ...defaultState, periodo: defaultPeriodo || "all" });
 
   const setPeriodo = useCallback((v: string) => setFilters(f => ({ ...f, periodo: v, dateFrom: undefined, dateTo: undefined })), []);
   const setDateFrom = useCallback((d: Date | undefined) => setFilters(f => ({ ...f, dateFrom: d })), []);
