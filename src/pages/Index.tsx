@@ -157,7 +157,7 @@ const Index = () => {
       if (conv < worstConv) { worstConv = conv; worstIdx = i; }
     }
     return `${combinedFunnelData[worstIdx - 1]?.etapa || ""} → ${combinedFunnelData[worstIdx]?.etapa || ""} (${worstConv.toFixed(0)}%)`;
-  }, [funnelData]);
+  }, [combinedFunnelData]);
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
