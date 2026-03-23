@@ -231,7 +231,7 @@ export default function Leads() {
         <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div>
             <h1 className="text-lg font-bold tracking-tight text-foreground">Dashboard de Leads</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Todos os registros DS Thread · {filtered.length} de {allRecords.length} leads</p>
+            <p className="text-xs text-muted-foreground mt-0.5">DS Thread · {filtered.length} de {(makeRecords || []).length} leads</p>
           </div>
           <div className="flex items-center gap-5">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
