@@ -362,7 +362,7 @@ export function TimeComercialTab() {
                 <Label>Ativo</Label>
               </div>
               <div className="flex items-center gap-2">
-                <Switch checked={form.entra_random} onCheckedChange={v => setForm(f => ({ ...f, entra_random: v }))} />
+                <Switch checked={form.krolic} onCheckedChange={v => setForm(f => ({ ...f, krolic: v }))} />
                 <Label>Krolic</Label>
               </div>
             </div>
