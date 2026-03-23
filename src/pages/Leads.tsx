@@ -99,31 +99,34 @@ export default function Leads() {
     return () => clearInterval(id);
   }, []);
 
-  /* ── All records from DS Thread (905) — NO closer filter ── */
-  const allRecords = useMemo(() => makeRecords || [], [makeRecords]);
+  /* ── All records from DS Thread (905) — apply period filter from global filters ── */
+  const periodFiltered = useMemo(() => {
+    const records = makeRecords || [];
+    return pf.filterRecords ? pf.filterRecords(records) : records;
+  }, [makeRecords, pf.filterRecords]);
 
   /* ── Extract unique values for filters ── */
   const etapas = useMemo(() => {
     const set = new Set<string>();
-    allRecords.forEach(r => { if (r.etapaFunil) set.add(r.etapaFunil); });
+    periodFiltered.forEach(r => { if (r.etapaFunil) set.add(r.etapaFunil); });
     return Array.from(set).sort();
-  }, [allRecords]);
+  }, [periodFiltered]);
 
   const closers = useMemo(() => {
     const set = new Set<string>();
-    allRecords.forEach(r => { if (r.closerAtribuido) set.add(r.closerAtribuido); });
+    periodFiltered.forEach(r => { if (r.closerAtribuido) set.add(r.closerAtribuido); });
     return Array.from(set).sort();
-  }, [allRecords]);
+  }, [periodFiltered]);
 
   const statuses = useMemo(() => {
     const set = new Set<string>();
-    allRecords.forEach(r => { if (r.makeStatus) set.add(r.makeStatus); });
+    periodFiltered.forEach(r => { if (r.makeStatus) set.add(r.makeStatus); });
     return Array.from(set).sort();
-  }, [allRecords]);
+  }, [periodFiltered]);
 
-  /* ── Filtered records ── */
+  /* ── Filtered records (search + inline filters on top of period) ── */
   const filtered = useMemo(() => {
-    return allRecords.filter(r => {
+    return periodFiltered.filter(r => {
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         const match = (r.nome || "").toLowerCase().includes(term) ||
@@ -136,7 +139,7 @@ export default function Leads() {
       if (filterCloser !== "todos" && r.closerAtribuido !== filterCloser) return false;
       return true;
     });
-  }, [allRecords, searchTerm, filterEtapa, filterStatus, filterCloser]);
+  }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser]);
 
   /* ── KPIs ── */
   const kpis = useMemo(() => {
