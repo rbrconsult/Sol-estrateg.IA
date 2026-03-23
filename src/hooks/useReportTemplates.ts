@@ -78,6 +78,17 @@ export function useReportTemplates() {
     },
   });
 
+  const generateReport = useMutation({
+    mutationFn: async (template: ReportTemplate) => {
+      const { data, error } = await supabase.functions.invoke('generate-report', {
+        body: { templateContent: template.conteudo, templateTitle: template.titulo },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Falha ao gerar relatório');
+      return data.content as string;
+    },
+  });
+
   const sendNow = useMutation({
     mutationFn: async ({ phones, message }: { phones: string[]; message: string }) => {
       const results = [];
@@ -96,5 +107,5 @@ export function useReportTemplates() {
     onError: (err: Error) => toast.error(`Erro ao enviar: ${err.message}`),
   });
 
-  return { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, sendNow };
+  return { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, generateReport, sendNow };
 }
