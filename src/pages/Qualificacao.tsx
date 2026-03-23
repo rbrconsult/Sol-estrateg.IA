@@ -155,7 +155,7 @@ export default function Qualificacao() {
             Qualificação de Leads — Robô &amp; Fup Frio
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">
-            Leads nas etapas SOL SDR e Follow Up prontos para qualificação via Make.com
+            Leads nas etapas Robô e Fup Frio prontos para qualificação via Make.com
           </p>
         </div>
         <Button
