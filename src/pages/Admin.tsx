@@ -830,8 +830,8 @@ export default function Admin() {
                     <div>
                       <p className="text-sm font-medium">1. Krolic API configurada</p>
                       <p className="text-xs text-muted-foreground">
-                        Acima: URL da API, API Key e Nome da Instância preenchidos.
-                        Atual: <code>app_settings</code> → evolution_api_url, evolution_api_key, evolution_instance_name
+                        API Key, Nome da Instância e Número Central preenchidos acima.<br/>
+                        Endpoint fixo: <code>https://api.camkrolik.com.br/core/v2/api/chats/send-text</code>
                       </p>
                     </div>
                   </div>
