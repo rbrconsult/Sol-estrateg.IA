@@ -67,7 +67,7 @@ function CRMSection() {
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
             <Zap className="h-3.5 w-3.5" /> Potência
           </div>
-          <p className="text-lg font-bold text-foreground">{p.potenciaSistema.toFixed(2)} kWp</p>
+          <p className="text-lg font-bold text-foreground">{(p.potenciaSistema || 0).toFixed(2)} kWp</p>
         </div>
       </div>
 
