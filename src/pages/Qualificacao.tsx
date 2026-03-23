@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Search, Send, CheckCircle2, Loader2, Users, Filter,
-  Phone, MapPin, Thermometer, Target, RefreshCw, XCircle,
+  Phone, MapPin, Thermometer, Target, RefreshCw, XCircle, Shuffle, UserCheck,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -18,7 +19,6 @@ import {
 const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
 const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/1rxirj4qss3mglk6lqcf1bswxyvkk3wq";
 
-/** Classify lead by followup_count: >=1 → FUP FRIO, else → SOL SDR */
 function classifyLead(r: MakeRecord): string {
   return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
 }
@@ -26,6 +26,13 @@ function classifyLead(r: MakeRecord): string {
 const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FUP FRIO"];
 
 type ViewMode = "qualificar" | "desqualificar";
+
+interface KrolicMember {
+  id: string;
+  nome: string;
+  sm_id: number | null;
+  krolik_id: string | null;
+}
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
@@ -38,7 +45,37 @@ export default function Qualificacao() {
   const [manualSending, setManualSending] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("qualificar");
 
-  // Leads ativos (não desqualificados) — para a aba Qualificar
+  // Krolic members
+  const [krolicMembers, setKrolicMembers] = useState<KrolicMember[]>([]);
+  // Per-lead vendor selection: key = lead phone, value = member id or "roleta"
+  const [vendorMap, setVendorMap] = useState<Record<string, string>>({});
+  // Global vendor for manual send
+  const [manualVendor, setManualVendor] = useState<string>("roleta");
+
+  useEffect(() => {
+    const fetchKrolic = async () => {
+      const { data } = await supabase
+        .from("time_comercial")
+        .select("id, nome, sm_id, krolik_id")
+        .eq("ativo", true)
+        .eq("krolic", true);
+      if (data) setKrolicMembers(data);
+    };
+    fetchKrolic();
+  }, []);
+
+  const resolveVendor = (selectedValue: string): { nome: string; sm_id: number | null; krolik_id: string | null } => {
+    if (selectedValue === "roleta" || !selectedValue) {
+      if (krolicMembers.length === 0) return { nome: "Roleta", sm_id: null, krolik_id: null };
+      const pick = krolicMembers[Math.floor(Math.random() * krolicMembers.length)];
+      return { nome: pick.nome, sm_id: pick.sm_id, krolik_id: pick.krolik_id };
+    }
+    const member = krolicMembers.find((m) => m.id === selectedValue);
+    return member
+      ? { nome: member.nome, sm_id: member.sm_id, krolik_id: member.krolik_id }
+      : { nome: "", sm_id: null, krolik_id: null };
+  };
+
   const leadsAtivos = useMemo(() => {
     if (!records) return [];
     return records
@@ -46,7 +83,6 @@ export default function Qualificacao() {
       .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
   }, [records]);
 
-  // Leads desqualificados — para a aba Desqualificar
   const leadsDesqualificados = useMemo(() => {
     if (!records) return [];
     return records
@@ -70,7 +106,6 @@ export default function Qualificacao() {
           (r.cidade || "").toLowerCase().includes(q)
       );
     }
-    // Sort by most recent message (last historico entry, lastFollowupDate, or data_envio)
     result = [...result].sort((a, b) => {
       const getLatest = (r: typeof a) => {
         const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
@@ -86,6 +121,9 @@ export default function Qualificacao() {
 
   const sendToWebhookWithUrl = async (lead: MakeRecord & { _classificacao: string }, webhookUrl: string, label: string) => {
     const key = `${lead.telefone}-${label}`;
+    const vendorSelection = vendorMap[lead.telefone || ""] || "roleta";
+    const vendor = resolveVendor(vendorSelection);
+
     setSendingMap((m) => ({ ...m, [key]: true }));
     try {
       const rawPhone = (lead.telefone || "").replace(/\D/g, "");
@@ -100,6 +138,9 @@ export default function Qualificacao() {
         score: lead.makeScore || "",
         temperatura: lead.makeTemperatura || "",
         canal_origem: lead.canalOrigem || "",
+        vendedor: vendor.nome,
+        vendedor_sm_id: vendor.sm_id,
+        vendedor_krolik_id: vendor.krolik_id,
       };
       const res = await fetch(webhookUrl, {
         method: "POST",
@@ -108,7 +149,7 @@ export default function Qualificacao() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSentMap((m) => ({ ...m, [key]: true }));
-      toast.success(`Lead ${lead.nome || lead.telefone} enviado para ${label.toLowerCase()}!`);
+      toast.success(`Lead ${lead.nome || lead.telefone} → ${vendor.nome} (${label.toLowerCase()})`);
     } catch (err: any) {
       toast.error(`Erro ao enviar: ${err.message}`);
     } finally {
@@ -125,6 +166,7 @@ export default function Qualificacao() {
       return;
     }
     const telefoneFormatado = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+    const vendor = resolveVendor(manualVendor);
     setManualSending(true);
     try {
       const payload = {
@@ -137,6 +179,9 @@ export default function Qualificacao() {
         score: "",
         temperatura: "",
         canal_origem: "manual",
+        vendedor: vendor.nome,
+        vendedor_sm_id: vendor.sm_id,
+        vendedor_krolik_id: vendor.krolik_id,
       };
       const res = await fetch(webhookUrl, {
         method: "POST",
@@ -144,7 +189,7 @@ export default function Qualificacao() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success(`Número ${telefoneFormatado} enviado para ${actionLabel.toLowerCase()}!`);
+      toast.success(`${telefoneFormatado} → ${vendor.nome} (${actionLabel.toLowerCase()})`);
       setManualPhone("");
       setManualName("");
     } catch (err: any) {
@@ -243,6 +288,26 @@ export default function Qualificacao() {
         </Card>
       </div>
 
+      {/* Krolic Members Info */}
+      {krolicMembers.length > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
+              <Shuffle className="h-3.5 w-3.5 text-primary" />
+              <span className="font-medium">Vendedores Krolic ativos na roleta:</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {krolicMembers.map((m) => (
+                <Badge key={m.id} variant="secondary" className="text-[11px]">
+                  <UserCheck className="h-3 w-3 mr-1" />
+                  {m.nome}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -294,6 +359,21 @@ export default function Qualificacao() {
                 disabled={manualSending}
               />
             </div>
+            <div className="w-48 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Vendedor</label>
+              <Select value={manualVendor} onValueChange={setManualVendor}>
+                <SelectTrigger>
+                  <Shuffle className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="roleta">🎰 Roleta</SelectItem>
+                  {krolicMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               onClick={sendManual}
               disabled={manualSending || !manualPhone.trim()}
@@ -323,6 +403,7 @@ export default function Qualificacao() {
             <div className="space-y-2">
               {filtered.map((lead, idx) => {
                 const key = lead.telefone || `lead-${idx}`;
+                const selectedVendor = vendorMap[key] || "roleta";
 
                 return (
                   <div
@@ -374,6 +455,22 @@ export default function Qualificacao() {
                         )}
                       </div>
                     </div>
+
+                    {/* Vendor selector per lead */}
+                    <Select
+                      value={selectedVendor}
+                      onValueChange={(v) => setVendorMap((m) => ({ ...m, [key]: v }))}
+                    >
+                      <SelectTrigger className="w-40 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="roleta">🎰 Roleta</SelectItem>
+                        {krolicMembers.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
                     <div className="flex gap-1.5 shrink-0">
                       {viewMode === "qualificar" && (
