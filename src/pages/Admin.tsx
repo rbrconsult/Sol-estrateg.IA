@@ -21,6 +21,7 @@ import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
 import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
 import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSettings';
+import { TimeComercialTab } from '@/components/admin/TimeComercialTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -597,6 +598,10 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
+            <TabsTrigger value="time-comercial" className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              Time Comercial
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -805,6 +810,10 @@ export default function Admin() {
               </CardContent>
             </Card>
             <MonitoredScenariosSettings />
+          </TabsContent>
+
+          <TabsContent value="time-comercial">
+            <TimeComercialTab />
           </TabsContent>
         </Tabs>
 
