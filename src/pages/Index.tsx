@@ -7,6 +7,7 @@ import { StrategicAlerts } from "@/components/dashboard/StrategicAlerts";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useMakeDataStore, type MakeRecord } from "@/hooks/useMakeDataStore";
+import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import {
   getKPIs,
   getFunnelData,
@@ -51,6 +52,7 @@ const FUNNEL_JOURNEY_ORDER = [
 const Index = () => {
   const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
   const { data: makeRecords } = useMakeDataStore();
+  const { data: comercialRecords } = useMakeComercialData();
   const { selectedOrgName } = useOrgFilter();
   const gf = useGlobalFilters();
 
@@ -61,47 +63,52 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
 
-  // ── KPIs from DS Thread (MQL, SQL) ──
-  const threadKpis = useMemo(() => {
-    if (!makeRecords?.length) return { mql: 0, sql: 0 };
-    const mql = makeRecords.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
-    const sql = makeRecords.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
-    return { mql, sql };
-  }, [makeRecords]);
+  // ── KPIs from DS Thread (MQL, SQL) — filtered by period ──
+  const filteredThreadRecords = useMemo(() => {
+    if (!makeRecords?.length) return [];
+    return gf.filterRecords ? gf.filterRecords(makeRecords) : makeRecords;
+  }, [makeRecords, gf.filterRecords]);
 
-  // ── KPIs from DS Comercial (Agendamentos, Fechados) ──
+  const threadKpis = useMemo(() => {
+    if (!filteredThreadRecords.length) return { mql: 0, sql: 0 };
+    const mql = filteredThreadRecords.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
+    const sql = filteredThreadRecords.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
+    return { mql, sql };
+  }, [filteredThreadRecords]);
+
+  // ── KPIs from DS Comercial (Agendamentos, Fechados) — ALL 124 records, no date filter ──
   const comercialKpis = useMemo(() => {
-    const agendamentos = filteredProposals.filter(p => 
-      p.etapa?.toUpperCase() === 'CONTATO REALIZADO'
+    if (!comercialRecords?.length) return { agendamentos: 0, fechados: 0 };
+    const agendamentos = comercialRecords.filter(r =>
+      r.etapaSM?.toUpperCase() === 'CONTATO REALIZADO'
     ).length;
-    const fechados = filteredProposals.filter(p => 
-      FECHADOS_ETAPAS.includes(p.etapa?.toUpperCase() || '')
+    const fechados = comercialRecords.filter(r =>
+      FECHADOS_ETAPAS.includes(r.etapaSM?.toUpperCase() || '')
     ).length;
     return { agendamentos, fechados };
-  }, [filteredProposals]);
+  }, [comercialRecords]);
 
-  // ── Funnel data in journey order (merge DS Thread + DS Comercial) ──
+  // ── Funnel data in journey order (merge DS Thread filtered + DS Comercial all) ──
   const journeyFunnel = useMemo(() => {
-    // Count from DS Thread (etapa_funil)
+    // Count from DS Thread filtered by period
     const threadCounts: Record<string, { quantidade: number; valor: number }> = {};
-    if (makeRecords?.length) {
-      for (const r of makeRecords) {
-        const etapa = r.etapaFunil || 'TRAFEGO PAGO';
-        if (!threadCounts[etapa]) threadCounts[etapa] = { quantidade: 0, valor: 0 };
-        threadCounts[etapa].quantidade++;
+    for (const r of filteredThreadRecords) {
+      const etapa = r.etapaFunil || 'TRAFEGO PAGO';
+      if (!threadCounts[etapa]) threadCounts[etapa] = { quantidade: 0, valor: 0 };
+      threadCounts[etapa].quantidade++;
+    }
+
+    // Count from DS Comercial (ALL records, no date filter)
+    const comercialCounts: Record<string, { quantidade: number; valor: number }> = {};
+    if (comercialRecords?.length) {
+      for (const r of comercialRecords) {
+        const etapa = r.etapaSM?.toUpperCase() || '';
+        if (!comercialCounts[etapa]) comercialCounts[etapa] = { quantidade: 0, valor: 0 };
+        comercialCounts[etapa].quantidade++;
+        comercialCounts[etapa].valor += r.valorProposta || 0;
       }
     }
 
-    // Count from DS Comercial (etapa_sm)  
-    const comercialCounts: Record<string, { quantidade: number; valor: number }> = {};
-    for (const p of filteredProposals) {
-      const etapa = p.etapa?.toUpperCase() || '';
-      if (!comercialCounts[etapa]) comercialCounts[etapa] = { quantidade: 0, valor: 0 };
-      comercialCounts[etapa].quantidade++;
-      comercialCounts[etapa].valor += p.valorProposta;
-    }
-
-    // Merge: Thread stages use thread data, Comercial stages use comercial data
     const THREAD_STAGES = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO'];
     const COMERCIAL_STAGES = ['PROPOSTA', 'NEGOCIAÇÃO', 'CONTRATO ASSINADO'];
 
@@ -110,7 +117,6 @@ const Index = () => {
       let valor = 0;
       
       if (THREAD_STAGES.includes(etapa)) {
-        // Also try without accent
         const variants = [etapa, etapa.replace('Ã', 'A').replace('Ç', 'C')];
         for (const v of variants) {
           if (threadCounts[v]) {
@@ -122,15 +128,13 @@ const Index = () => {
       
       if (COMERCIAL_STAGES.includes(etapa)) {
         if (etapa === 'CONTRATO ASSINADO') {
-          // Aggregate all "fechados" etapas
           for (const fe of FECHADOS_ETAPAS) {
             if (comercialCounts[fe]) {
               quantidade += comercialCounts[fe].quantidade;
               valor += comercialCounts[fe].valor;
             }
           }
-          // Also include exact match
-          if (comercialCounts['CONTRATO ASSINADO']) {
+          if (comercialCounts['CONTRATO ASSINADO'] && !FECHADOS_ETAPAS.includes('CONTRATO ASSINADO')) {
             quantidade += comercialCounts['CONTRATO ASSINADO'].quantidade;
             valor += comercialCounts['CONTRATO ASSINADO'].valor;
           }
@@ -142,15 +146,9 @@ const Index = () => {
         }
       }
 
-      const totalValue = filteredProposals.reduce((acc, p) => acc + p.valorProposta, 0);
-      return {
-        etapa,
-        quantidade,
-        valor,
-        taxaConversao: totalValue > 0 ? (valor / totalValue) * 100 : 0,
-      };
+      return { etapa, quantidade, valor, taxaConversao: 0 };
     });
-  }, [makeRecords, filteredProposals]);
+  }, [filteredThreadRecords, comercialRecords]);
 
   const meta = useMemo(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -237,7 +235,7 @@ const Index = () => {
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            {filteredProposals.length} propostas • {enrichedCount} enriquecidas
+            Leads no Período: {filteredThreadRecords.length} · Comercial: {comercialRecords?.length || 0}
           </span>
           <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />

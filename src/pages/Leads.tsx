@@ -99,31 +99,34 @@ export default function Leads() {
     return () => clearInterval(id);
   }, []);
 
-  /* ── All records from DS Thread (905) — NO closer filter ── */
-  const allRecords = useMemo(() => makeRecords || [], [makeRecords]);
+  /* ── All records from DS Thread (905) — apply period filter from global filters ── */
+  const periodFiltered = useMemo(() => {
+    const records = makeRecords || [];
+    return pf.filterRecords ? pf.filterRecords(records) : records;
+  }, [makeRecords, pf.filterRecords]);
 
   /* ── Extract unique values for filters ── */
   const etapas = useMemo(() => {
     const set = new Set<string>();
-    allRecords.forEach(r => { if (r.etapaFunil) set.add(r.etapaFunil); });
+    periodFiltered.forEach(r => { if (r.etapaFunil) set.add(r.etapaFunil); });
     return Array.from(set).sort();
-  }, [allRecords]);
+  }, [periodFiltered]);
 
   const closers = useMemo(() => {
     const set = new Set<string>();
-    allRecords.forEach(r => { if (r.closerAtribuido) set.add(r.closerAtribuido); });
+    periodFiltered.forEach(r => { if (r.closerAtribuido) set.add(r.closerAtribuido); });
     return Array.from(set).sort();
-  }, [allRecords]);
+  }, [periodFiltered]);
 
   const statuses = useMemo(() => {
     const set = new Set<string>();
-    allRecords.forEach(r => { if (r.makeStatus) set.add(r.makeStatus); });
+    periodFiltered.forEach(r => { if (r.makeStatus) set.add(r.makeStatus); });
     return Array.from(set).sort();
-  }, [allRecords]);
+  }, [periodFiltered]);
 
-  /* ── Filtered records ── */
+  /* ── Filtered records (search + inline filters on top of period) ── */
   const filtered = useMemo(() => {
-    return allRecords.filter(r => {
+    return periodFiltered.filter(r => {
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         const match = (r.nome || "").toLowerCase().includes(term) ||
@@ -136,7 +139,7 @@ export default function Leads() {
       if (filterCloser !== "todos" && r.closerAtribuido !== filterCloser) return false;
       return true;
     });
-  }, [allRecords, searchTerm, filterEtapa, filterStatus, filterCloser]);
+  }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser]);
 
   /* ── KPIs ── */
   const kpis = useMemo(() => {
@@ -224,11 +227,17 @@ export default function Leads() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-[1400px] mx-auto px-6 pb-16">
 
+        <PageFloatingFilter
+          filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+          setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: false, showEtapa: false, searchPlaceholder: "Buscar lead..." }}
+        />
         {/* ══════ HEADER ══════ */}
         <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div>
             <h1 className="text-lg font-bold tracking-tight text-foreground">Dashboard de Leads</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Todos os registros DS Thread · {filtered.length} de {allRecords.length} leads</p>
+            <p className="text-xs text-muted-foreground mt-0.5">DS Thread · {filtered.length} de {(makeRecords || []).length} leads</p>
           </div>
           <div className="flex items-center gap-5">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
