@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { franquia_id, nome, ativo, sm_id, krolik_id, krolik_setor_id } = body;
+    const { franquia_id, nome, ativo, krolic, sm_id, krolik_id, krolik_setor_id } = body;
 
     // Get DS ID from app_settings or env
     const adminClient = createClient(
