@@ -16,7 +16,12 @@ import {
 
 const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
 
-const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP", "FUP FRIO", "ROBO"];
+/** Classify lead by followup_count: >=1 → FUP FRIO, else → ROBÔ SDR */
+function classifyLead(r: MakeRecord): string {
+  return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "ROBÔ SDR";
+}
+
+const ETAPAS_QUALIFICAVEIS = ["ROBÔ SDR", "FUP FRIO"];
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
