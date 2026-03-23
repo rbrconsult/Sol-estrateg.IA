@@ -77,7 +77,6 @@ const App = () => (
               <Route path="/conferencia" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Dashboard principal */}
-              <Route path="/dashboard" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="dashboard"><Index /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Pipeline unificado DS Thread + DS Comercial */}
               <Route path="/pipeline" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Pipeline /></ModuleGuard></MainLayout></ProtectedRoute>} />
