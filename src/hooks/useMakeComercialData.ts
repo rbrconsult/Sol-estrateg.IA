@@ -7,6 +7,7 @@ export interface ComercialRecord {
   projetoId: string;
   telefone: string;
   etapaSM: string;
+  faseSM: string;
   responsavel: string;
   responsavelId: string;
   representante: string;
@@ -16,6 +17,8 @@ export interface ComercialRecord {
   potenciaSistema: number;
   tsProposta: string;
   statusProposta: string;
+  /** Status mapeado: 'Aberto' | 'Ganho' | 'Perdido' */
+  status: 'Aberto' | 'Ganho' | 'Perdido';
   tsSync: string;
 }
 
@@ -26,13 +29,31 @@ interface MakeResponse {
   error?: string;
 }
 
+/** Mapeia status_proposta numérico para status legível
+ * "1"=Rascunho → Aberto
+ * "2"=Enviada/Aberta → Aberto
+ * "3"=Perdida → Perdido
+ * "4"=Cancelada → Perdido
+ * "5"=Aceita/Ganha → Ganho
+ * fase_sm OPERACIONAL → Ganho (pós-venda)
+ */
+export function mapStatusProposta(statusProposta: string, faseSM?: string): 'Aberto' | 'Ganho' | 'Perdido' {
+  if (statusProposta === '5') return 'Ganho';
+  if (statusProposta === '3' || statusProposta === '4') return 'Perdido';
+  if ((faseSM || '').toUpperCase() === 'OPERACIONAL') return 'Ganho';
+  return 'Aberto';
+}
+
 function parseRecords(raw: any[]): ComercialRecord[] {
   return raw.map((r) => {
     const d = r.data || r;
+    const statusProposta = String(d.status_proposta || '');
+    const faseSM = String(d.fase_sm || '');
     return {
       projetoId: String(d.projeto_id || r.key || ''),
       telefone: String(d.telefone || ''),
       etapaSM: String(d.etapa_sm || ''),
+      faseSM,
       responsavel: String(d.responsavel || ''),
       responsavelId: String(d.responsavel_id || ''),
       representante: String(d.representante || ''),
@@ -41,7 +62,8 @@ function parseRecords(raw: any[]): ComercialRecord[] {
       valorProposta: Number(d.valor_proposta) || 0,
       potenciaSistema: parseFloat(String(d.potencia_sistema || '0').replace(',', '.')) || 0,
       tsProposta: String(d.ts_proposta || ''),
-      statusProposta: String(d.status_proposta || ''),
+      statusProposta,
+      status: mapStatusProposta(statusProposta, faseSM),
       tsSync: String(d.ts_sync || ''),
     };
   });
@@ -80,8 +102,8 @@ export function useMakeComercialData() {
   return useQuery({
     queryKey: ['make-comercial-data', selectedOrgId],
     queryFn: () => fetchComercialData(selectedOrgId),
-    staleTime: 1000 * 60 * 10, // 10 min cache
-    gcTime: 1000 * 60 * 30, // keep in memory 30 min
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
     retry: 1,
     enabled: !!user,

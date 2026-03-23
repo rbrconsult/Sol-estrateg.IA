@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
-import { RefreshCw, AlertCircle, Users, UserCheck, CalendarCheck, Trophy } from "lucide-react";
+import { useMemo } from "react";
+import { RefreshCw, AlertCircle } from "lucide-react";
+import { ExecutiveKPIs } from "@/components/dashboard/ExecutiveKPIs";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { GoalProgress } from "@/components/dashboard/GoalProgress";
 import { HealthScore } from "@/components/dashboard/HealthScore";
 import { StrategicAlerts } from "@/components/dashboard/StrategicAlerts";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { useMakeDataStore, type MakeRecord } from "@/hooks/useMakeDataStore";
+import { useMakeDataStore } from "@/hooks/useMakeDataStore";
 import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import {
   getKPIs,
@@ -20,33 +21,21 @@ import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
-import { formatCurrencyAbbrev } from "@/lib/formatters";
 
 const STORAGE_KEY = "sol_insights_meta";
 
-/** Etapas MQL no DS Thread */
-const MQL_ETAPAS = ['SOL SDR', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICACAO'];
-/** Etapas SQL no DS Thread */
+// Etapas DS Thread que classificam como MQL (qualificado pelo robô)
+const MQL_ETAPAS = ['SOL SDR', 'FOLLOW UP', 'QUALIFICAÇÃO'];
+// Etapas DS Thread que classificam como SQL (qualificado para closer)
 const SQL_ETAPAS = ['QUALIFICADO', 'CONTATO REALIZADO'];
-/** Etapas "Fechados" no DS Comercial */
-const FECHADOS_ETAPAS = [
-  'CONTRATO ASSINADO', 'COBRANÇA', 'COBRANCA', 'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
+// Etapas DS Comercial que são pós-venda (Ganho)
+const FECHADOS_ETAPAS_SM = [
+  'CONTRATO ASSINADO', 'COBRANÇA', 'COBRANCA',
+  'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
   'APROVAÇÃO DE FINANCIAMENTO', 'APROVACAO DE FINANCIAMENTO',
   'ELABORAÇÃO DE CONTRATO', 'ELABORACAO DE CONTRATO',
   'CONTRATO ENVIADO', 'AGUARDANDO DOCUMENTOS',
-];
-
-/** Ordem obrigatória do funil por jornada */
-const FUNNEL_JOURNEY_ORDER = [
-  'TRAFEGO PAGO',
-  'PROSPECÇÃO',
-  'FOLLOW UP',
-  'QUALIFICAÇÃO',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO',
-  'CONTRATO ASSINADO',
+  'RECEBIMENTO DO CLIENTE (F)',
 ];
 
 const Index = () => {
@@ -61,101 +50,40 @@ const Index = () => {
   const lastUpdate = useMemo(() => new Date().toLocaleString('pt-BR'), []);
 
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
+  const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
 
-  // ── KPIs from DS Thread (MQL, SQL) — filtered by period ──
-  const filteredThreadRecords = useMemo(() => {
-    if (!makeRecords?.length) return [];
-    return gf.filterRecords ? gf.filterRecords(makeRecords) : makeRecords;
-  }, [makeRecords, gf.filterRecords]);
-
+  // ── KPIs do DS Thread (MQL, SQL) ──
   const threadKpis = useMemo(() => {
-    if (!filteredThreadRecords.length) return { mql: 0, sql: 0 };
-    const mql = filteredThreadRecords.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
-    const sql = filteredThreadRecords.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
-    return { mql, sql };
-  }, [filteredThreadRecords]);
+    const records = makeRecords || [];
+    const mql = records.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
+    const sql = records.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
+    return { mql, sql, total: records.length };
+  }, [makeRecords]);
 
-  // ── KPIs from DS Comercial (Agendamentos, Fechados) — ALL 124 records, no date filter ──
+  // ── KPIs do DS Comercial (Agendamentos, Fechados) ──
   const comercialKpis = useMemo(() => {
-    if (!comercialRecords?.length) return { agendamentos: 0, fechados: 0 };
-    const agendamentos = comercialRecords.filter(r =>
-      r.etapaSM?.toUpperCase() === 'CONTATO REALIZADO'
+    const records = comercialRecords || [];
+    const agendamentos = records.filter(r =>
+      ['CONTATO REALIZADO', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'PROPOSTA'].includes(r.etapaSM?.toUpperCase())
     ).length;
-    const fechados = comercialRecords.filter(r =>
-      FECHADOS_ETAPAS.includes(r.etapaSM?.toUpperCase() || '')
+    const fechados = records.filter(r =>
+      r.status === 'Ganho' ||
+      FECHADOS_ETAPAS_SM.includes(r.etapaSM?.toUpperCase()) ||
+      r.faseSM?.toUpperCase() === 'OPERACIONAL'
     ).length;
-    return { agendamentos, fechados };
+    const valorFechado = records
+      .filter(r => r.status === 'Ganho' || r.faseSM?.toUpperCase() === 'OPERACIONAL')
+      .reduce((acc, r) => acc + r.valorProposta, 0);
+    return { agendamentos, fechados, valorFechado };
   }, [comercialRecords]);
-
-  // ── Funnel data in journey order (merge DS Thread filtered + DS Comercial all) ──
-  const journeyFunnel = useMemo(() => {
-    // Count from DS Thread filtered by period
-    const threadCounts: Record<string, { quantidade: number; valor: number }> = {};
-    for (const r of filteredThreadRecords) {
-      const etapa = r.etapaFunil || 'TRAFEGO PAGO';
-      if (!threadCounts[etapa]) threadCounts[etapa] = { quantidade: 0, valor: 0 };
-      threadCounts[etapa].quantidade++;
-    }
-
-    // Count from DS Comercial (ALL records, no date filter)
-    const comercialCounts: Record<string, { quantidade: number; valor: number }> = {};
-    if (comercialRecords?.length) {
-      for (const r of comercialRecords) {
-        const etapa = r.etapaSM?.toUpperCase() || '';
-        if (!comercialCounts[etapa]) comercialCounts[etapa] = { quantidade: 0, valor: 0 };
-        comercialCounts[etapa].quantidade++;
-        comercialCounts[etapa].valor += r.valorProposta || 0;
-      }
-    }
-
-    const THREAD_STAGES = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO'];
-    const COMERCIAL_STAGES = ['PROPOSTA', 'NEGOCIAÇÃO', 'CONTRATO ASSINADO'];
-
-    return FUNNEL_JOURNEY_ORDER.map(etapa => {
-      let quantidade = 0;
-      let valor = 0;
-      
-      if (THREAD_STAGES.includes(etapa)) {
-        const variants = [etapa, etapa.replace('Ã', 'A').replace('Ç', 'C')];
-        for (const v of variants) {
-          if (threadCounts[v]) {
-            quantidade += threadCounts[v].quantidade;
-            valor += threadCounts[v].valor;
-          }
-        }
-      }
-      
-      if (COMERCIAL_STAGES.includes(etapa)) {
-        if (etapa === 'CONTRATO ASSINADO') {
-          for (const fe of FECHADOS_ETAPAS) {
-            if (comercialCounts[fe]) {
-              quantidade += comercialCounts[fe].quantidade;
-              valor += comercialCounts[fe].valor;
-            }
-          }
-          if (comercialCounts['CONTRATO ASSINADO'] && !FECHADOS_ETAPAS.includes('CONTRATO ASSINADO')) {
-            quantidade += comercialCounts['CONTRATO ASSINADO'].quantidade;
-            valor += comercialCounts['CONTRATO ASSINADO'].valor;
-          }
-        } else {
-          if (comercialCounts[etapa]) {
-            quantidade = comercialCounts[etapa].quantidade;
-            valor = comercialCounts[etapa].valor;
-          }
-        }
-      }
-
-      return { etapa, quantidade, valor, taxaConversao: 0 };
-    });
-  }, [filteredThreadRecords, comercialRecords]);
 
   const meta = useMemo(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? Number(saved) : 5_000_000;
   }, []);
 
-  const hasData = allProposals.length > 0;
+  const hasData = allProposals.length > 0 || (makeRecords?.length ?? 0) > 0;
 
   const topVendedor = useMemo(() => {
     if (vendedorPerformance.length === 0) return "N/A";
@@ -180,17 +108,17 @@ const Index = () => {
   }, [kpis, vendedorPerformance, filteredProposals]);
 
   const funnelBottleneck = useMemo(() => {
-    if (journeyFunnel.length < 2) return "Dados insuficientes";
+    if (funnelData.length < 2) return "Dados insuficientes";
     let worstIdx = 0;
     let worstConv = 100;
-    for (let i = 1; i < journeyFunnel.length; i++) {
-      const prev = journeyFunnel[i - 1].quantidade;
-      const curr = journeyFunnel[i].quantidade;
+    for (let i = 1; i < funnelData.length; i++) {
+      const prev = funnelData[i - 1].quantidade;
+      const curr = funnelData[i].quantidade;
       const conv = prev > 0 ? (curr / prev) * 100 : 100;
       if (conv < worstConv) { worstConv = conv; worstIdx = i; }
     }
-    return `${journeyFunnel[worstIdx - 1]?.etapa || ""} → ${journeyFunnel[worstIdx]?.etapa || ""} (${worstConv.toFixed(0)}%)`;
-  }, [journeyFunnel]);
+    return `${funnelData[worstIdx - 1]?.etapa || ""} → ${funnelData[worstIdx]?.etapa || ""} (${worstConv.toFixed(0)}%)`;
+  }, [funnelData]);
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
@@ -235,7 +163,7 @@ const Index = () => {
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            Leads no Período: {filteredThreadRecords.length} · Comercial: {comercialRecords?.length || 0}
+            {threadKpis.total} leads DS Thread • {comercialRecords?.length || 0} DS Comercial
           </span>
           <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
@@ -251,62 +179,35 @@ const Index = () => {
         </div>
       )}
 
-      {!isLoading && !hasData && !error && (
-        <Alert className="border-warning/50 bg-warning/10">
-          <AlertCircle className="h-4 w-4 text-warning" />
-          <AlertDescription>
-            Nenhum dado encontrado. Verifique se a planilha contém dados.
-          </AlertDescription>
-        </Alert>
-      )}
-
+      {/* ── KPIs principais ── */}
       {hasData && (
         <>
-          {/* ── KPIs: MQL, SQL, Agendamentos, Fechados ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 opacity-0 animate-fade-up" style={{ animationFillMode: "forwards" }}>
+          {/* KPIs do robô (DS Thread) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "MQL", value: threadKpis.mql, icon: Users, subtitle: "SOL SDR + Follow Up + Qualificação", color: "text-blue-500" },
-              { label: "SQL", value: threadKpis.sql, icon: UserCheck, subtitle: "Qualificado + Contato Realizado", color: "text-emerald-500" },
-              { label: "Agendamentos", value: comercialKpis.agendamentos, icon: CalendarCheck, subtitle: "Contato Realizado (Comercial)", color: "text-amber-500" },
-              { label: "Fechados", value: comercialKpis.fechados, icon: Trophy, subtitle: "Contrato Assinado + Pós-venda", color: "text-primary" },
-            ].map((card, i) => {
-              const Icon = card.icon;
-              return (
-                <div
-                  key={card.label}
-                  className="rounded-xl border border-border bg-card p-5 shadow-sm opacity-0 animate-fade-up"
-                  style={{ animationDelay: `${i * 80}ms`, animationFillMode: "forwards" }}
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-secondary`}>
-                      <Icon className={`h-4 w-4 ${card.color}`} />
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      {card.label}
-                    </span>
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">{card.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
-                </div>
-              );
-            })}
+              { label: "MQL", value: threadKpis.mql, sub: "SOL SDR + FUP + Qualificação", color: "text-blue-400" },
+              { label: "SQL", value: threadKpis.sql, sub: "Qualificado + Contato Realizado", color: "text-emerald-400" },
+              { label: "Agendamentos", value: comercialKpis.agendamentos, sub: "Contato / Proposta / Neg.", color: "text-amber-400" },
+              { label: "Fechados", value: comercialKpis.fechados, sub: "Contratos + Pós-venda", color: "text-primary" },
+            ].map((k) => (
+              <div key={k.label} className="rounded-lg border border-border bg-card p-4 space-y-1">
+                <p className="text-xs text-muted-foreground">{k.label}</p>
+                <p className={`text-3xl font-bold ${k.color}`}>{k.value}</p>
+                <p className="text-xs text-muted-foreground">{k.sub}</p>
+              </div>
+            ))}
           </div>
 
-          {/* ── Secondary metrics ── */}
-          <div className="flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-              Pipeline: {formatCurrencyAbbrev(kpis.valorPipeline)}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-              Conversão: {kpis.taxaConversao.toFixed(1)}%
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-              Ticket Médio: {formatCurrencyAbbrev(kpis.ticketMedio)}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-              Receita Fechada: {formatCurrencyAbbrev(kpis.valorGanho)}
-            </span>
-          </div>
+          <ExecutiveKPIs
+            receitaPrevista={kpis.receitaPrevista}
+            valorGanho={comercialKpis.valorFechado || kpis.valorGanho}
+            taxaConversao={kpis.taxaConversao}
+            ticketMedio={kpis.ticketMedio}
+            totalPropostas={kpis.totalNegocios}
+            negociosAbertos={kpis.negociosAbertos}
+            valorPipeline={kpis.valorPipeline}
+            negociosGanhos={comercialKpis.fechados || kpis.negociosGanhos}
+          />
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-4">
@@ -317,7 +218,7 @@ const Index = () => {
                 topVendedor={topVendedor}
                 funnelBottleneck={funnelBottleneck}
               />
-              <GoalProgress valorFechado={kpis.valorGanho} receitaPrevista={kpis.receitaPrevista} />
+              <GoalProgress valorFechado={comercialKpis.valorFechado || kpis.valorGanho} receitaPrevista={kpis.receitaPrevista} />
             </div>
             <HealthScore proposals={filteredProposals} kpis={kpis} vendedorPerformance={vendedorPerformance} />
           </div>
@@ -329,13 +230,22 @@ const Index = () => {
               vendedorPerformance={vendedorPerformance}
               meta={meta}
             />
-            <StrategicFunnel data={journeyFunnel} proposals={filteredProposals} />
+            <StrategicFunnel data={funnelData} proposals={filteredProposals} />
           </div>
 
           <footer className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
-            © 2024 Sol Estrateg.IA — Raio-X Executivo
+            © 2026 Sol Estrateg.IA — Inteligência Comercial
           </footer>
         </>
+      )}
+
+      {!isLoading && !hasData && !error && (
+        <Alert className="border-warning/50 bg-warning/10">
+          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertDescription>
+            Nenhum dado encontrado. Verifique a conexão com os Data Stores.
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
