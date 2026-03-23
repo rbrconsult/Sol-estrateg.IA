@@ -264,16 +264,16 @@ export function TimeComercialTab() {
                 {isSuperAdmin && (
                   <TableCell>
                     <Switch
-                      checked={m.entra_random}
+                      checked={m.krolic}
                       onCheckedChange={async () => {
-                        const newVal = !m.entra_random;
+                        const newVal = !m.krolic;
                         const { error } = await supabase
                           .from("time_comercial" as any)
-                          .update({ entra_random: newVal })
+                          .update({ krolic: newVal })
                           .eq("id", m.id);
                         if (error) { toast.error("Erro ao atualizar"); return; }
                         toast.success(newVal ? "Krolic ativado" : "Krolic desativado");
-                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, entra_random: newVal } : x));
+                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, krolic: newVal } : x));
                       }}
                     />
                   </TableCell>
