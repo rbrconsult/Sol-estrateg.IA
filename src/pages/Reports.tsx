@@ -166,10 +166,10 @@ export default function Reports() {
                       size="sm"
                       className="gap-1"
                       onClick={() => handleSendNow(selected)}
-                      disabled={sendNow.isPending}
+                      disabled={isSending}
                     >
                       <Send className="h-3 w-3" />
-                      {sendNow.isPending ? "Enviando..." : "Enviar Agora"}
+                      {isSending ? "Gerando..." : "Enviar Agora"}
                     </Button>
                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(selected.id)}>
                       <Trash2 className="h-3 w-3" />
