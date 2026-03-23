@@ -820,6 +820,10 @@ export default function Admin() {
           <TabsContent value="time-comercial">
             <TimeComercialTab />
           </TabsContent>
+
+          <TabsContent value="skills">
+            <SkillsTab />
+          </TabsContent>
         </Tabs>
 
         {/* Create User Dialog */}
