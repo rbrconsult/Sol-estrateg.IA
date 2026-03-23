@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
         franquia_id,
         nome,
         ativo: ativo ?? true,
+        krolic: krolic ?? true,
         sm_id: sm_id ?? null,
         krolik_id: krolik_id ?? null,
         krolik_setor_id: krolik_setor_id ?? null,
