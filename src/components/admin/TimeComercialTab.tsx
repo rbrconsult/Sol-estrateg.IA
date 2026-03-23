@@ -109,7 +109,7 @@ export function TimeComercialTab() {
       email: form.email || null,
       franquia_id: form.franquia_id,
       ativo: form.ativo,
-      entra_random: form.entra_random,
+      krolic: form.krolic,
       sm_id: form.sm_id ? parseInt(form.sm_id) : null,
       krolik_id: form.krolik_id || null,
       krolik_setor_id: form.krolik_setor_id || null,
