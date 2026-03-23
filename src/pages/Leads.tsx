@@ -227,6 +227,13 @@ export default function Leads() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-[1400px] mx-auto px-6 pb-16">
 
+        <PageFloatingFilter
+          filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+          setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: false, showEtapa: false }}
+        />
+
         <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div>
             <h1 className="text-lg font-bold tracking-tight text-foreground">Dashboard de Leads</h1>
