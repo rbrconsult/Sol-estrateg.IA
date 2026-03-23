@@ -374,20 +374,38 @@ export default function Qualificacao() {
                       </div>
                     </div>
 
-                    <Button
-                      size="sm"
-                      variant={isSent ? "outline" : viewMode === "desqualificar" ? "destructive" : "default"}
-                      disabled={isSending}
-                      onClick={() => sendToWebhook(lead)}
-                      className="shrink-0 gap-1.5"
-                    >
-                      {isSending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Send className="h-3.5 w-3.5" />
+                    <div className="flex gap-1.5 shrink-0">
+                      {viewMode === "qualificar" && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={!!sendingMap[`${key}-Desqualificar`]}
+                          onClick={() => sendToWebhookWithUrl(lead, WEBHOOK_DESQUALIFICAR, "Desqualificar")}
+                          className="gap-1"
+                        >
+                          {sendingMap[`${key}-Desqualificar`] ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5" />
+                          )}
+                          Desqualificar
+                        </Button>
                       )}
-                      {isSent ? reActionLabel : actionLabel}
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant={sentMap[`${key}-${actionLabel}`] ? "outline" : "default"}
+                        disabled={!!sendingMap[`${key}-${actionLabel}`]}
+                        onClick={() => sendToWebhookWithUrl(lead, viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_QUALIFICAR, actionLabel)}
+                        className="gap-1"
+                      >
+                        {sendingMap[`${key}-${actionLabel}`] ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Send className="h-3.5 w-3.5" />
+                        )}
+                        {actionLabel}
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
