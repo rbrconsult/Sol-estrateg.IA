@@ -60,6 +60,19 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
   });
   const [tab, setTab] = useState("editor");
 
+  const parsed = useMemo(() => parsePeriodicidade(form.periodicidade), [form.periodicidade]);
+
+  const updatePeriod = (field: "freq" | "dia" | "horario", value: string) => {
+    const next = { ...parsed, [field]: value };
+    // Set defaults when switching frequency
+    if (field === "freq") {
+      if (value === "Semanal" || value === "Quinzenal") next.dia = next.dia || "Segunda";
+      if (value === "Mensal") next.dia = next.dia || "1";
+      if (!next.horario) next.horario = "08:00";
+    }
+    setForm(f => ({ ...f, periodicidade: buildPeriodicidade(next.freq, next.dia, next.horario) }));
+  };
+
   useEffect(() => {
     if (template) {
       setForm({
