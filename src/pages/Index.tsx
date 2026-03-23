@@ -7,6 +7,7 @@ import { StrategicAlerts } from "@/components/dashboard/StrategicAlerts";
 import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useMakeDataStore, type MakeRecord } from "@/hooks/useMakeDataStore";
+import { useMakeComercialData } from "@/hooks/useMakeComercialData";
 import {
   getKPIs,
   getFunnelData,
