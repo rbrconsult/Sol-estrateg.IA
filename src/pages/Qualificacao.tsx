@@ -88,6 +88,42 @@ export default function Qualificacao() {
     }
   };
 
+  const sendManual = async () => {
+    const cleaned = manualPhone.replace(/\D/g, "");
+    if (!cleaned || cleaned.length < 10) {
+      toast.error("Informe um número válido com DDD (mínimo 10 dígitos)");
+      return;
+    }
+    const telefoneFormatado = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+    setManualSending(true);
+    try {
+      const payload = {
+        telefone: telefoneFormatado,
+        nome: manualName.trim() || "",
+        etapa_funil: "MANUAL",
+        cidade: "",
+        email: "",
+        valor_conta: "",
+        score: "",
+        temperatura: "",
+        canal_origem: "manual",
+      };
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success(`Número ${telefoneFormatado} enviado para qualificação!`);
+      setManualPhone("");
+      setManualName("");
+    } catch (err: any) {
+      toast.error(`Erro ao enviar: ${err.message}`);
+    } finally {
+      setManualSending(false);
+    }
+  };
+
   const countByEtapa = useMemo(() => {
     const map: Record<string, number> = {};
     for (const l of leads) {
