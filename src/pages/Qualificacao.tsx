@@ -35,19 +35,19 @@ export default function Qualificacao() {
 
   const leads = useMemo(() => {
     if (!records) return [];
-    return records.filter((r) => {
-      const etapa = (r.etapaFunil || "").toUpperCase();
-      if (!ETAPAS_QUALIFICAVEIS.includes(etapa)) return false;
-      const status = (r.makeStatus || "").toUpperCase();
-      if (status === "DESQUALIFICADO") return false;
-      return true;
-    });
+    return records
+      .filter((r) => {
+        const status = (r.makeStatus || "").toUpperCase();
+        if (status === "DESQUALIFICADO") return false;
+        return true;
+      })
+      .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
   }, [records]);
 
   const filtered = useMemo(() => {
     let result = leads;
     if (etapaFilter !== "all") {
-      result = result.filter((r) => (r.etapaFunil || "").toUpperCase() === etapaFilter);
+      result = result.filter((r) => r._classificacao === etapaFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
