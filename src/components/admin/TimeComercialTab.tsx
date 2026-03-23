@@ -237,7 +237,7 @@ export function TimeComercialTab() {
               {!isSuperAdmin && <TableHead>Telefone</TableHead>}
               {isSuperAdmin && <TableHead>SM ID</TableHead>}
               {isSuperAdmin && <TableHead>Krolik ID</TableHead>}
-              {isSuperAdmin && <TableHead>Entra Random</TableHead>}
+              {isSuperAdmin && <TableHead>Krolic</TableHead>}
               <TableHead>Ativo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -272,7 +272,7 @@ export function TimeComercialTab() {
                           .update({ entra_random: newVal })
                           .eq("id", m.id);
                         if (error) { toast.error("Erro ao atualizar"); return; }
-                        toast.success(newVal ? "Entra no random" : "Removido do random");
+                        toast.success(newVal ? "Krolic ativado" : "Krolic desativado");
                         setMembers(prev => prev.map(x => x.id === m.id ? { ...x, entra_random: newVal } : x));
                       }}
                     />
@@ -363,7 +363,7 @@ export function TimeComercialTab() {
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.entra_random} onCheckedChange={v => setForm(f => ({ ...f, entra_random: v }))} />
-                <Label>Entra no Random</Label>
+                <Label>Krolic</Label>
               </div>
             </div>
           </div>
