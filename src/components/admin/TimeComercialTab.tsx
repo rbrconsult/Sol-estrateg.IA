@@ -356,9 +356,15 @@ export function TimeComercialTab() {
                 <Input value={form.krolik_setor_id} onChange={e => setForm(f => ({ ...f, krolik_setor_id: e.target.value }))} />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} />
-              <Label>Ativo</Label>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} />
+                <Label>Ativo</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.entra_random} onCheckedChange={v => setForm(f => ({ ...f, entra_random: v }))} />
+                <Label>Entra no Random</Label>
+              </div>
             </div>
           </div>
           <DialogFooter>

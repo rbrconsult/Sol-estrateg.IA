@@ -62,46 +62,45 @@ Deno.serve(async (req) => {
     let targetOrgId: string | null = null;
 
     if (isSuperAdmin && orgOverride) {
-      // Super admin chose a specific filial
       targetOrgId = orgOverride;
     } else if (isSuperAdmin && !orgOverride) {
-      // Super admin in Global mode — no filter
       targetOrgId = null;
     } else {
-      // Regular user — use their own org
       const { data: orgId } = await adminClient.rpc("get_user_org", { p_user_id: userId });
       targetOrgId = orgId;
     }
 
-    // Get allowed responsavel names/IDs if filtering by org
+    // ── Get allowed responsavel names/IDs from time_comercial ──
     let allowedNames: string[] = [];
     let allowedIds: string[] = [];
+
     if (targetOrgId) {
-      const { data: configs } = await adminClient
-        .from("organization_configs")
-        .select("config_key, config_value")
-        .eq("organization_id", targetOrgId)
-        .eq("config_category", "responsavel");
+      // Get the org slug from organizations table
+      const { data: orgData } = await adminClient
+        .from("organizations")
+        .select("slug")
+        .eq("id", targetOrgId)
+        .single();
 
-      for (const c of configs || []) {
-        const id = String(c.config_value).trim();
-        if (id) allowedIds.push(id);
-      }
+      const orgSlug = orgData?.slug;
 
-      // Fetch display names for matching (category: responsavel_nome)
-      const { data: nameConfigs } = await adminClient
-        .from("organization_configs")
-        .select("config_key, config_value")
-        .eq("organization_id", targetOrgId)
-        .eq("config_category", "responsavel_nome");
+      if (orgSlug) {
+        // Query time_comercial by franquia_id (slug) — only active members
+        const { data: teamMembers } = await adminClient
+          .from("time_comercial")
+          .select("nome, sm_id, krolik_id")
+          .eq("franquia_id", orgSlug)
+          .eq("ativo", true);
 
-      if (nameConfigs && nameConfigs.length > 0) {
-        allowedNames = nameConfigs.map((c: any) => String(c.config_value).trim().toLowerCase());
+        for (const m of teamMembers || []) {
+          if (m.sm_id) allowedIds.push(String(m.sm_id));
+          if (m.nome) allowedNames.push(m.nome.trim().toLowerCase());
+        }
       }
 
       // Security: non-admin with no responsaveis configured = empty result
-      if (allowedIds.length === 0 && !isSuperAdmin) {
-        console.log(`fetch-make-comercial: no responsaveis for org ${targetOrgId}, returning empty`);
+      if (allowedIds.length === 0 && allowedNames.length === 0 && !isSuperAdmin) {
+        console.log(`fetch-make-comercial: no team members for org ${targetOrgId} (slug: ${orgData?.slug}), returning empty`);
         return new Response(
           JSON.stringify({ data: [], count: 0, lastUpdate: new Date().toISOString() }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -148,7 +147,6 @@ Deno.serve(async (req) => {
     while (hasMore) {
       const apiUrl = `https://us2.make.com/api/v2/data-stores/${dataStoreId}/data?teamId=${makeTeamId}&pg[limit]=${limit}&pg[offset]=${offset}`;
 
-      // Support both raw key and "Token xxx" format
       const authValue = makeApiKey.startsWith("Token ") ? makeApiKey : `Token ${makeApiKey}`;
       const makeRes = await fetch(apiUrl, {
         headers: {
@@ -176,7 +174,7 @@ Deno.serve(async (req) => {
       offset += limit;
     }
 
-    // Filter by responsavel name/ID
+    // Filter by responsavel name/ID from time_comercial
     let filteredRecords = allRecords;
     if (allowedIds.length > 0 || allowedNames.length > 0) {
       filteredRecords = allRecords.filter((r) => {
@@ -184,15 +182,14 @@ Deno.serve(async (req) => {
         const respName = String(d.responsavel || "").toLowerCase().trim();
         const respId = String(d.responsavel_id || d.representante_id || "").trim();
         const representante = String(d.representante || "").toLowerCase().trim();
-        // Match by name (from responsavel_nome configs or DS field)
+        // Match by name
         if (allowedNames.length > 0) {
           if (respName && allowedNames.includes(respName)) return true;
           if (representante && allowedNames.includes(representante)) return true;
         }
-        // Match by numeric ID
+        // Match by numeric ID (sm_id)
         if (respId && allowedIds.includes(respId)) return true;
-        // Fallback: match responsavel name against known name patterns from config_key
-        // e.g. "Gabriel Ferrari" matches if any allowedName contains it
+        // Fuzzy fallback
         if (allowedNames.length > 0 && respName) {
           if (allowedNames.some(n => n.includes(respName) || respName.includes(n))) return true;
         }
