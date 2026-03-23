@@ -37,6 +37,7 @@ const EMPTY_FORM = {
   email: "",
   franquia_id: "",
   ativo: true,
+  entra_random: true,
   sm_id: "",
   krolik_id: "",
   krolik_setor_id: "",
