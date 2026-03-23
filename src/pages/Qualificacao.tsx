@@ -70,11 +70,14 @@ export default function Qualificacao() {
           (r.cidade || "").toLowerCase().includes(q)
       );
     }
-    // Sort by data_envio descending (most recent first)
+    // Sort by most recent message (last historico entry, lastFollowupDate, or data_envio)
     result = [...result].sort((a, b) => {
-      const dateA = new Date(a.data_envio || 0).getTime();
-      const dateB = new Date(b.data_envio || 0).getTime();
-      return dateB - dateA;
+      const getLatest = (r: typeof a) => {
+        const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
+        const candidate = lastHist || r.lastFollowupDate || r.data_envio || '';
+        return new Date(candidate).getTime() || 0;
+      };
+      return getLatest(b) - getLatest(a);
     });
     return result;
   }, [leads, etapaFilter, search]);
