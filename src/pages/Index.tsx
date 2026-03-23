@@ -88,28 +88,27 @@ const Index = () => {
     return { agendamentos, fechados };
   }, [comercialRecords]);
 
-  // ── Funnel data in journey order (merge DS Thread + DS Comercial) ──
+  // ── Funnel data in journey order (merge DS Thread filtered + DS Comercial all) ──
   const journeyFunnel = useMemo(() => {
-    // Count from DS Thread (etapa_funil)
+    // Count from DS Thread filtered by period
     const threadCounts: Record<string, { quantidade: number; valor: number }> = {};
-    if (makeRecords?.length) {
-      for (const r of makeRecords) {
-        const etapa = r.etapaFunil || 'TRAFEGO PAGO';
-        if (!threadCounts[etapa]) threadCounts[etapa] = { quantidade: 0, valor: 0 };
-        threadCounts[etapa].quantidade++;
+    for (const r of filteredThreadRecords) {
+      const etapa = r.etapaFunil || 'TRAFEGO PAGO';
+      if (!threadCounts[etapa]) threadCounts[etapa] = { quantidade: 0, valor: 0 };
+      threadCounts[etapa].quantidade++;
+    }
+
+    // Count from DS Comercial (ALL records, no date filter)
+    const comercialCounts: Record<string, { quantidade: number; valor: number }> = {};
+    if (comercialRecords?.length) {
+      for (const r of comercialRecords) {
+        const etapa = r.etapaSM?.toUpperCase() || '';
+        if (!comercialCounts[etapa]) comercialCounts[etapa] = { quantidade: 0, valor: 0 };
+        comercialCounts[etapa].quantidade++;
+        comercialCounts[etapa].valor += r.valorProposta || 0;
       }
     }
 
-    // Count from DS Comercial (etapa_sm)  
-    const comercialCounts: Record<string, { quantidade: number; valor: number }> = {};
-    for (const p of filteredProposals) {
-      const etapa = p.etapa?.toUpperCase() || '';
-      if (!comercialCounts[etapa]) comercialCounts[etapa] = { quantidade: 0, valor: 0 };
-      comercialCounts[etapa].quantidade++;
-      comercialCounts[etapa].valor += p.valorProposta;
-    }
-
-    // Merge: Thread stages use thread data, Comercial stages use comercial data
     const THREAD_STAGES = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO'];
     const COMERCIAL_STAGES = ['PROPOSTA', 'NEGOCIAÇÃO', 'CONTRATO ASSINADO'];
 
@@ -118,7 +117,6 @@ const Index = () => {
       let valor = 0;
       
       if (THREAD_STAGES.includes(etapa)) {
-        // Also try without accent
         const variants = [etapa, etapa.replace('Ã', 'A').replace('Ç', 'C')];
         for (const v of variants) {
           if (threadCounts[v]) {
@@ -130,15 +128,13 @@ const Index = () => {
       
       if (COMERCIAL_STAGES.includes(etapa)) {
         if (etapa === 'CONTRATO ASSINADO') {
-          // Aggregate all "fechados" etapas
           for (const fe of FECHADOS_ETAPAS) {
             if (comercialCounts[fe]) {
               quantidade += comercialCounts[fe].quantidade;
               valor += comercialCounts[fe].valor;
             }
           }
-          // Also include exact match
-          if (comercialCounts['CONTRATO ASSINADO']) {
+          if (comercialCounts['CONTRATO ASSINADO'] && !FECHADOS_ETAPAS.includes('CONTRATO ASSINADO')) {
             quantidade += comercialCounts['CONTRATO ASSINADO'].quantidade;
             valor += comercialCounts['CONTRATO ASSINADO'].valor;
           }
@@ -150,15 +146,9 @@ const Index = () => {
         }
       }
 
-      const totalValue = filteredProposals.reduce((acc, p) => acc + p.valorProposta, 0);
-      return {
-        etapa,
-        quantidade,
-        valor,
-        taxaConversao: totalValue > 0 ? (valor / totalValue) * 100 : 0,
-      };
+      return { etapa, quantidade, valor, taxaConversao: 0 };
     });
-  }, [makeRecords, filteredProposals]);
+  }, [filteredThreadRecords, comercialRecords]);
 
   const meta = useMemo(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
