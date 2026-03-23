@@ -79,6 +79,11 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     if (p === "30d") return { from: subDays(today, 30), to: today };
     if (p === "90d") return { from: subDays(today, 90), to: today };
     if (p === "mes") return { from: startOfMonth(today), to: today };
+    if (p === "mesAnterior") {
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: lastMonth, to: lastMonthEnd };
+    }
     if (p === "ano" || p === "ytd") return { from: startOfYear(today), to: today };
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
