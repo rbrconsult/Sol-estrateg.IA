@@ -7,6 +7,7 @@ export interface ReportTemplate {
   titulo: string;
   icon: string;
   destinatario: string;
+  destinatario_telefone: string;
   periodicidade: string;
   canal: string;
   conteudo: string;
@@ -76,5 +77,18 @@ export function useReportTemplates() {
     },
   });
 
-  return { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive };
+  const sendNow = useMutation({
+    mutationFn: async ({ phone, message }: { phone: string; message: string }) => {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-alert', {
+        body: { phone, message },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Falha no envio');
+      return data;
+    },
+    onSuccess: () => toast.success('Relatório enviado via WhatsApp!'),
+    onError: (err: Error) => toast.error(`Erro ao enviar: ${err.message}`),
+  });
+
+  return { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, sendNow };
 }

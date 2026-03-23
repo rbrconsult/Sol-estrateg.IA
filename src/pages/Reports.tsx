@@ -6,12 +6,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FileText, Plus, Pencil, Trash2, Clock, Users, Send } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, Clock, Users, Send, Phone } from "lucide-react";
 import { useReportTemplates, type ReportTemplate } from "@/hooks/useReportTemplates";
 import { ReportEditorDialog } from "@/components/reports/ReportEditorDialog";
+import { toast } from "sonner";
 
 export default function Reports() {
-  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive } = useReportTemplates();
+  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, sendNow } = useReportTemplates();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ReportTemplate | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -46,6 +47,17 @@ export default function Reports() {
     }
   };
 
+  const handleSendNow = (tmpl: ReportTemplate) => {
+    if (!tmpl.destinatario_telefone) {
+      toast.error("Telefone do destinatário não configurado. Edite o template para adicionar.");
+      return;
+    }
+    sendNow.mutate({
+      phone: tmpl.destinatario_telefone,
+      message: tmpl.conteudo,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -77,7 +89,7 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
-        {/* Sidebar - Lista de templates */}
+        {/* Sidebar */}
         <div className="space-y-2">
           {templates.map((tmpl) => (
             <button
@@ -102,14 +114,12 @@ export default function Reports() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Badge
-                    variant={tmpl.ativo ? "default" : "secondary"}
-                    className={`text-[9px] px-1.5 ${tmpl.ativo ? "bg-green-500/20 text-green-500 border-green-500/30" : ""}`}
-                  >
-                    {tmpl.ativo ? "Ativo" : "Inativo"}
-                  </Badge>
-                </div>
+                <Badge
+                  variant={tmpl.ativo ? "default" : "secondary"}
+                  className={`text-[9px] px-1.5 shrink-0 ${tmpl.ativo ? "bg-green-500/20 text-green-500 border-green-500/30" : ""}`}
+                >
+                  {tmpl.ativo ? "Ativo" : "Inativo"}
+                </Badge>
               </div>
             </button>
           ))}
@@ -125,10 +135,9 @@ export default function Reports() {
           )}
         </div>
 
-        {/* Main content - Detalhes do template */}
+        {/* Detail */}
         {selected ? (
           <div className="space-y-4">
-            {/* Config card */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -144,6 +153,15 @@ export default function Reports() {
                     <Button variant="outline" size="sm" onClick={() => handleEdit(selected)}>
                       <Pencil className="h-3 w-3 mr-1" /> Editar
                     </Button>
+                    <Button
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => handleSendNow(selected)}
+                      disabled={sendNow.isPending}
+                    >
+                      <Send className="h-3 w-3" />
+                      {sendNow.isPending ? "Enviando..." : "Enviar Agora"}
+                    </Button>
                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(selected.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -151,12 +169,19 @@ export default function Reports() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Destinatário</p>
                     <p className="text-sm text-foreground flex items-center gap-1">
                       <Users className="h-3 w-3 text-muted-foreground" />
-                      {selected.destinatario}
+                      {selected.destinatario || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Telefone</p>
+                    <p className="text-sm text-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      {selected.destinatario_telefone || <span className="text-amber-500 text-xs">Não configurado</span>}
                     </p>
                   </div>
                   <div>
@@ -180,7 +205,6 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            {/* Preview card */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
