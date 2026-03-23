@@ -106,23 +106,45 @@ Deno.serve(async (req) => {
     };
 
     const sendMessage = async (number: string, text: string) => {
-      const response = await fetch(KROLIC_SEND_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          number,
-          message: text,
-          forceSend: true,
-          verifyContact: true,
-          linkPreview: true,
-        }),
-      });
-      const data = await response.json();
-      console.log(`[krolic] sendMessage to ${number}: ${response.status}`);
-      return { status: response.status, data };
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        
+        const response = await fetch(KROLIC_SEND_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "access-token": apiKey,
+          },
+          body: JSON.stringify({
+            number,
+            message: text,
+            forceSend: true,
+            verifyContact: true,
+            linkPreview: true,
+          }),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeout);
+        const statusCode = response.status;
+        
+        let data: unknown = null;
+        try {
+          const rawBody = await response.text();
+          try { data = JSON.parse(rawBody); } catch { data = rawBody; }
+        } catch (bodyErr) {
+          // Krolic API may close connection before body is fully read
+          console.warn(`[krolic] Body read error for ${number} (status ${statusCode}), treating as sent`);
+          data = { note: "body_read_error", statusCode };
+        }
+        
+        console.log(`[krolic] sendMessage to ${number}: ${statusCode}`);
+        return { status: statusCode, data };
+      } catch (fetchErr) {
+        console.error(`[krolic] Network error sending to ${number}:`, fetchErr);
+        return { status: 0, error: String(fetchErr) };
+      }
     };
 
     const results: Record<string, unknown> = {};
