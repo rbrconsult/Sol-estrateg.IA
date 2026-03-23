@@ -21,7 +21,7 @@ function deriveMidiaData(records: MakeRecord[]) {
   const canais: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[]; quentes: number; mornos: number; frios: number }> = {};
 
   records.forEach(r => {
-    let canal = r.cidade || 'Outros';
+    let canal = r.canalOrigem || 'Outros';
     if (!canais[canal]) canais[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0, mornos: 0, frios: 0 };
     canais[canal].leads++;
     if (r.status_resposta === 'respondeu') canais[canal].responderam++;
@@ -83,7 +83,7 @@ function deriveMidiaData(records: MakeRecord[]) {
       if (isNaN(d.getTime())) return;
       const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
       const key = ws.toISOString().slice(0, 10);
-      const canal = r.cidade || 'Outros';
+      const canal = r.canalOrigem || 'Outros';
       if (!byWeek[key]) byWeek[key] = {};
       if (!byWeek[key][canal]) byWeek[key][canal] = { leads: 0 };
       byWeek[key][canal].leads++;

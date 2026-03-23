@@ -201,7 +201,7 @@ export function useBIMakeData(dateRange?: DateRange) {
     // ═══ ORIGENS (use real cidade field) ═══
     const origemMap: Record<string, { leads: number; qualificados: number }> = {};
     filtered.forEach(r => {
-      const canal = r.cidade || 'Não informado';
+      const canal = r.canalOrigem || 'Não informado';
       if (!origemMap[canal]) origemMap[canal] = { leads: 0, qualificados: 0 };
       origemMap[canal].leads++;
       if ((r.makeStatus || '').includes('QUALIFICADO') && !(r.makeStatus || '').includes('DES')) {
@@ -385,8 +385,8 @@ export function useBIMakeData(dateRange?: DateRange) {
         const score = parseScore(r.makeScore);
         return {
           nome: r.nome || `Lead ...${(r.telefone || '').slice(-4)}`,
-          cidade: r.cidade || '—',
-          canal: r.cidade || 'WhatsApp',
+          cidade: r.canalOrigem || '—',
+          canal: r.canalOrigem || 'WhatsApp',
           score,
           temperatura: t || (score >= 70 ? 'QUENTE' : score >= 40 ? 'MORNO' : 'FRIO'),
           etapa: r.makeStatus || '—',

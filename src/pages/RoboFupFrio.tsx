@@ -82,7 +82,7 @@ function deriveFupData(records: MakeRecord[]) {
       etapaAtual: `FUP ${Math.min(r.followupCount || 1, 8)}`,
       proximoFup: `FUP ${Math.min((r.followupCount || 1) + 1, 8)}`,
       diasEmFup: r.followupCount ? r.followupCount * 3 : 1,
-      canalOrigem: r.cidade || '—',
+      canalOrigem: r.canalOrigem || '—',
       ultimaResposta: r.lastFollowupDate || '—',
       telefone: r.telefone,
       temp: r.makeTemperatura || '',

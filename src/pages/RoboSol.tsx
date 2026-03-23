@@ -89,7 +89,7 @@ function deriveSolData(records: MakeRecord[]) {
     .filter(r => (r.makeTemperatura || '').toUpperCase() === 'QUENTE')
     .sort((a, b) => (parseInt(b.makeScore || '0') || 0) - (parseInt(a.makeScore || '0') || 0))
     .slice(0, 5)
-    .map(r => ({ nome: r.nome || 'Lead', cidade: r.cidade || '—', score: parseInt(r.makeScore || '0') || 0, canal: r.cidade || 'Direto' }));
+    .map(r => ({ nome: r.nome || 'Lead', cidade: r.canalOrigem || '—', score: parseInt(r.makeScore || '0') || 0, canal: r.canalOrigem || 'Direto' }));
 
   // Disqualification reasons from codigoStatus
   const desqualReasons: Record<string, number> = {};
@@ -106,7 +106,7 @@ function deriveSolData(records: MakeRecord[]) {
   // Performance by channel (derived from cidade/campanha)
   const byCanal: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[] }> = {};
   solRecords.forEach(r => {
-    const canal = r.cidade || 'Outros';
+    const canal = r.canalOrigem || 'Outros';
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [] };
     byCanal[canal].leads++;
     if (r.status_resposta === 'respondeu') byCanal[canal].responderam++;
@@ -190,8 +190,8 @@ function deriveSolData(records: MakeRecord[]) {
     .slice(0, 15)
     .map(r => ({
       nome: r.nome || 'Lead',
-      cidade: r.cidade || '—',
-      canal: r.cidade || 'Direto',
+      cidade: r.canalOrigem || '—',
+      canal: r.canalOrigem || 'Direto',
       score: parseInt(r.makeScore || '0') || 0,
       temperatura: (r.makeTemperatura || 'FRIO').toUpperCase(),
       status: (r.makeStatus || '').toUpperCase() === 'QUALIFICADO' ? 'Qualificado' :

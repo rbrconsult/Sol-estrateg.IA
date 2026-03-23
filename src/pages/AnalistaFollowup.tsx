@@ -64,7 +64,7 @@ function deriveFupData(records: MakeRecord[]) {
   // By canal
   const byCanal: Record<string, { entrouFUP: number; reativados: number }> = {};
   fupRecords.forEach(r => {
-    const canal = r.cidade || 'Outros';
+    const canal = r.canalOrigem || 'Outros';
     if (!byCanal[canal]) byCanal[canal] = { entrouFUP: 0, reativados: 0 };
     byCanal[canal].entrouFUP++;
     if (r.status_resposta === 'respondeu') byCanal[canal].reativados++;
@@ -95,7 +95,7 @@ function deriveFupData(records: MakeRecord[]) {
       etapaAtual: `FUP ${r.followupCount || 1}`,
       proximoFUP: r.lastFollowupDate || '—',
       diasEmFUP: r.lastFollowupDate ? `${Math.max(1, Math.round((Date.now() - new Date(r.lastFollowupDate).getTime()) / 86400000))} dias` : '—',
-      canal: r.cidade || 'Direto',
+      canal: r.canalOrigem || 'Direto',
       ultResposta: r.data_resposta || '—',
     }));
 
@@ -141,7 +141,7 @@ function deriveFaixaConta(records: MakeRecord[]) {
 
 function deriveCidades(records: MakeRecord[]) {
   const cidades: Record<string, number> = {};
-  records.forEach(r => { const c = r.cidade || 'Outros'; cidades[c] = (cidades[c] || 0) + 1; });
+  records.forEach(r => { const c = r.canalOrigem || 'Outros'; cidades[c] = (cidades[c] || 0) + 1; });
   const total = records.length || 1;
   return Object.entries(cidades)
     .sort(([, a], [, b]) => b - a)
