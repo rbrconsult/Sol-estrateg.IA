@@ -21,6 +21,7 @@ import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
 import LoginAnalyticsTab from '@/components/admin/LoginAnalyticsTab';
 import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSettings';
+import { TimeComercialTab } from '@/components/admin/TimeComercialTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
