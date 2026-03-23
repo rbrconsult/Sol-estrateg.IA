@@ -16,7 +16,12 @@ import {
 
 const WEBHOOK_URL = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
 
-const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FOLLOW UP", "FUP FRIO", "ROBO"];
+/** Classify lead by followup_count: >=1 → FUP FRIO, else → ROBÔ SDR */
+function classifyLead(r: MakeRecord): string {
+  return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "ROBÔ SDR";
+}
+
+const ETAPAS_QUALIFICAVEIS = ["ROBÔ SDR", "FUP FRIO"];
 
 export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
@@ -30,19 +35,19 @@ export default function Qualificacao() {
 
   const leads = useMemo(() => {
     if (!records) return [];
-    return records.filter((r) => {
-      const etapa = (r.etapaFunil || "").toUpperCase();
-      if (!ETAPAS_QUALIFICAVEIS.includes(etapa)) return false;
-      const status = (r.makeStatus || "").toUpperCase();
-      if (status === "DESQUALIFICADO") return false;
-      return true;
-    });
+    return records
+      .filter((r) => {
+        const status = (r.makeStatus || "").toUpperCase();
+        if (status === "DESQUALIFICADO") return false;
+        return true;
+      })
+      .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
   }, [records]);
 
   const filtered = useMemo(() => {
     let result = leads;
     if (etapaFilter !== "all") {
-      result = result.filter((r) => (r.etapaFunil || "").toUpperCase() === etapaFilter);
+      result = result.filter((r) => r._classificacao === etapaFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -127,8 +132,7 @@ export default function Qualificacao() {
   const countByEtapa = useMemo(() => {
     const map: Record<string, number> = {};
     for (const l of leads) {
-      const e = (l.etapaFunil || "").toUpperCase();
-      map[e] = (map[e] || 0) + 1;
+      map[l._classificacao] = (map[l._classificacao] || 0) + 1;
     }
     return map;
   }, [leads]);
@@ -294,7 +298,7 @@ export default function Qualificacao() {
                           {lead.nome || "Sem nome"}
                         </span>
                         <Badge variant="outline" className="text-[10px] shrink-0">
-                          {lead.etapaFunil || "—"}
+                          {lead._classificacao}
                         </Badge>
                         {lead.makeTemperatura && (
                           <Badge
