@@ -61,7 +61,7 @@ function CRMSection() {
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
             <DollarSign className="h-3.5 w-3.5" /> Valor
           </div>
-          <p className="text-lg font-bold text-foreground">{formatCurrency(p.valorProposta)}</p>
+          <p className="text-lg font-bold text-foreground">{formatCurrency(p.valorProposta || 0)}</p>
         </div>
         <div className="rounded-lg bg-accent/10 p-3">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
