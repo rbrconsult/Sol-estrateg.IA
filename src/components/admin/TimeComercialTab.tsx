@@ -261,6 +261,23 @@ export function TimeComercialTab() {
                 {!isSuperAdmin && <TableCell>{m.telefone || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs">{m.sm_id || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs max-w-[120px] truncate">{m.krolik_id || "—"}</TableCell>}
+                {isSuperAdmin && (
+                  <TableCell>
+                    <Switch
+                      checked={m.entra_random}
+                      onCheckedChange={async () => {
+                        const newVal = !m.entra_random;
+                        const { error } = await supabase
+                          .from("time_comercial" as any)
+                          .update({ entra_random: newVal })
+                          .eq("id", m.id);
+                        if (error) { toast.error("Erro ao atualizar"); return; }
+                        toast.success(newVal ? "Entra no random" : "Removido do random");
+                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, entra_random: newVal } : x));
+                      }}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>
                   <Switch
                     checked={m.ativo}
