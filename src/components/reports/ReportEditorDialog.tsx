@@ -148,7 +148,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Destinatário (nome/cargo)</Label>
-                <Input value={form.destinatario} onChange={(e) => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: Diretoria" />
+                <Input value={form.destinatario} onChange={(e) => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: João Silva — Diretor" />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
@@ -160,8 +160,20 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   placeholder="5511999999999"
                   type="tel"
                 />
-                <p className="text-[10px] text-muted-foreground">Número WhatsApp com DDD (usado no envio)</p>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Phone className="h-3 w-3" /> Cópia (sempre recebe)
+              </Label>
+              <Input
+                value={form.copia_telefone}
+                onChange={(e) => setForm(f => ({ ...f, copia_telefone: e.target.value }))}
+                placeholder="5511974426112"
+                type="tel"
+              />
+              <p className="text-[10px] text-muted-foreground">Este número recebe cópia de todos os envios deste template</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
