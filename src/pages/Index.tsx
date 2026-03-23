@@ -24,7 +24,7 @@ import { formatCurrencyAbbrev } from "@/lib/formatters";
 const STORAGE_KEY = "sol_insights_meta";
 
 /** Etapas MQL no DS Thread */
-const MQL_ETAPAS = ['SOL SDR', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICACAO'];
+const MQL_ETAPAS = ['SOL SDR', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICACAO', 'PROSPECÇÃO', 'PROSPECCAO', 'TRAFEGO PAGO'];
 /** Etapas SQL no DS Thread */
 const SQL_ETAPAS = ['QUALIFICADO', 'CONTATO REALIZADO'];
 /** Etapas "Fechados" no DS Comercial */
