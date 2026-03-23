@@ -26,6 +26,7 @@ interface TeamMember {
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
+  entra_random: boolean;
   created_at: string;
 }
 
@@ -36,6 +37,7 @@ const EMPTY_FORM = {
   email: "",
   franquia_id: "",
   ativo: true,
+  entra_random: true,
   sm_id: "",
   krolik_id: "",
   krolik_setor_id: "",
@@ -86,6 +88,7 @@ export function TimeComercialTab() {
       email: m.email || "",
       franquia_id: m.franquia_id,
       ativo: m.ativo,
+      entra_random: m.entra_random,
       sm_id: m.sm_id?.toString() || "",
       krolik_id: m.krolik_id || "",
       krolik_setor_id: m.krolik_setor_id || "",
@@ -106,6 +109,7 @@ export function TimeComercialTab() {
       email: form.email || null,
       franquia_id: form.franquia_id,
       ativo: form.ativo,
+      entra_random: form.entra_random,
       sm_id: form.sm_id ? parseInt(form.sm_id) : null,
       krolik_id: form.krolik_id || null,
       krolik_setor_id: form.krolik_setor_id || null,
@@ -233,6 +237,7 @@ export function TimeComercialTab() {
               {!isSuperAdmin && <TableHead>Telefone</TableHead>}
               {isSuperAdmin && <TableHead>SM ID</TableHead>}
               {isSuperAdmin && <TableHead>Krolik ID</TableHead>}
+              {isSuperAdmin && <TableHead>Entra Random</TableHead>}
               <TableHead>Ativo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -256,6 +261,23 @@ export function TimeComercialTab() {
                 {!isSuperAdmin && <TableCell>{m.telefone || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs">{m.sm_id || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs max-w-[120px] truncate">{m.krolik_id || "—"}</TableCell>}
+                {isSuperAdmin && (
+                  <TableCell>
+                    <Switch
+                      checked={m.entra_random}
+                      onCheckedChange={async () => {
+                        const newVal = !m.entra_random;
+                        const { error } = await supabase
+                          .from("time_comercial" as any)
+                          .update({ entra_random: newVal })
+                          .eq("id", m.id);
+                        if (error) { toast.error("Erro ao atualizar"); return; }
+                        toast.success(newVal ? "Entra no random" : "Removido do random");
+                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, entra_random: newVal } : x));
+                      }}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>
                   <Switch
                     checked={m.ativo}
@@ -334,9 +356,15 @@ export function TimeComercialTab() {
                 <Input value={form.krolik_setor_id} onChange={e => setForm(f => ({ ...f, krolik_setor_id: e.target.value }))} />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} />
-              <Label>Ativo</Label>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} />
+                <Label>Ativo</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.entra_random} onCheckedChange={v => setForm(f => ({ ...f, entra_random: v }))} />
+                <Label>Entra no Random</Label>
+              </div>
             </div>
           </div>
           <DialogFooter>
