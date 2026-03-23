@@ -26,7 +26,7 @@ interface TeamMember {
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
-  entra_random: boolean;
+  krolic: boolean;
   created_at: string;
 }
 
