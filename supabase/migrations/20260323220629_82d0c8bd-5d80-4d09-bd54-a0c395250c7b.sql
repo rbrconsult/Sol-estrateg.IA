@@ -1,0 +1,1 @@
+UPDATE app_settings SET value = '5517997235222' WHERE key = 'central_whatsapp_number';
