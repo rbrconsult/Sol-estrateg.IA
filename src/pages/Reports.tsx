@@ -12,8 +12,9 @@ import { ReportEditorDialog } from "@/components/reports/ReportEditorDialog";
 import { toast } from "sonner";
 
 export default function Reports() {
-  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, sendNow } = useReportTemplates();
+  const { templates, isLoading, upsertTemplate, deleteTemplate, toggleActive, generateReport, sendNow } = useReportTemplates();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ReportTemplate | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
