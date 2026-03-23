@@ -107,6 +107,9 @@ Deno.serve(async (req) => {
 
     const sendMessage = async (number: string, text: string) => {
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        
         const response = await fetch(KROLIC_SEND_URL, {
           method: "POST",
           headers: {
@@ -120,12 +123,24 @@ Deno.serve(async (req) => {
             verifyContact: true,
             linkPreview: true,
           }),
+          signal: controller.signal,
         });
-        const rawBody = await response.text();
-        console.log(`[krolic] sendMessage to ${number}: ${response.status} — ${rawBody.slice(0, 200)}`);
-        let data: unknown;
-        try { data = JSON.parse(rawBody); } catch { data = rawBody; }
-        return { status: response.status, data };
+        
+        clearTimeout(timeout);
+        const statusCode = response.status;
+        
+        let data: unknown = null;
+        try {
+          const rawBody = await response.text();
+          try { data = JSON.parse(rawBody); } catch { data = rawBody; }
+        } catch (bodyErr) {
+          // Krolic API may close connection before body is fully read
+          console.warn(`[krolic] Body read error for ${number} (status ${statusCode}), treating as sent`);
+          data = { note: "body_read_error", statusCode };
+        }
+        
+        console.log(`[krolic] sendMessage to ${number}: ${statusCode}`);
+        return { status: statusCode, data };
       } catch (fetchErr) {
         console.error(`[krolic] Network error sending to ${number}:`, fetchErr);
         return { status: 0, error: String(fetchErr) };
