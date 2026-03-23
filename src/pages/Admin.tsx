@@ -782,11 +782,7 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4 max-w-lg">
                     <div className="space-y-2">
-                      <Label>URL da API</Label>
-                      <Input value={evolutionUrl} onChange={(e) => setEvolutionUrl(e.target.value)} placeholder="https://api.exemplo.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>API Key</Label>
+                      <Label>API Key (Token)</Label>
                       <div className="flex gap-2">
                         <Input
                           type={showApiKey ? "text" : "password"}
@@ -834,8 +830,8 @@ export default function Admin() {
                     <div>
                       <p className="text-sm font-medium">1. Krolic API configurada</p>
                       <p className="text-xs text-muted-foreground">
-                        Acima: URL da API, API Key e Nome da Instância preenchidos.
-                        Atual: <code>app_settings</code> → evolution_api_url, evolution_api_key, evolution_instance_name
+                        API Key, Nome da Instância e Número Central preenchidos acima.<br/>
+                        Endpoint fixo: <code>https://api.camkrolik.com.br/core/v2/api/chats/send-text</code>
                       </p>
                     </div>
                   </div>
@@ -844,9 +840,9 @@ export default function Admin() {
                     <div>
                       <p className="text-sm font-medium">2. Endpoint de envio correto</p>
                       <p className="text-xs text-muted-foreground">
-                        <code>POST {'{api_url}'}/message/sendText/{'{instance_name}'}</code><br/>
-                        Header: <code>apikey: {'{api_key}'}</code><br/>
-                        Body: <code>{`{ "number": "5517...", "text": "..." }`}</code>
+                        <code>POST https://api.camkrolik.com.br/core/v2/api/chats/send-text</code><br/>
+                        Header: <code>access-token: {'{api_key}'}</code><br/>
+                        Body: <code>{`{ "number": "5517...", "message": "...", "forceSend": true, "verifyContact": true }`}</code>
                       </p>
                     </div>
                   </div>
