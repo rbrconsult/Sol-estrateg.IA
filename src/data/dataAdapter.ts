@@ -1,4 +1,4 @@
-import { ComercialRecord } from '@/hooks/useMakeComercialData';
+import { ComercialRecord, mapStatusProposta } from '@/hooks/useMakeComercialData';
 import { MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 
 export interface Proposal {
@@ -189,21 +189,27 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
 
 /** @deprecated Use adaptComercialData instead */
 export function adaptSheetData(sheetData: any[]): Proposal[] {
-  return adaptComercialData(sheetData.map((item: any) => ({
-    projetoId: item.projeto_id || '',
-    telefone: item.cliente_telefone || '',
-    etapaSM: item.etapa || '',
-    responsavel: item.responsavel || '',
-    responsavelId: '',
-    representante: item.representante || '',
-    etiquetas: item.etiquetas || '',
-    nomeProposta: item.nome_cliente || item.nome_proposta || '',
-    valorProposta: item.valor_proposta || 0,
-    potenciaSistema: parseFloat(item.potencia_sistema) || 0,
-    tsProposta: item.data_criacao_proposta || item.data_criacao_projeto || '',
-    statusProposta: item.status || '',
-    tsSync: '',
-  })));
+  return adaptComercialData(sheetData.map((item: any) => {
+    const statusProposta = String(item.status || '');
+    const faseSM = String(item.fase_sm || '');
+    return {
+      projetoId: item.projeto_id || '',
+      telefone: item.cliente_telefone || '',
+      etapaSM: item.etapa || '',
+      faseSM,
+      responsavel: item.responsavel || '',
+      responsavelId: '',
+      representante: item.representante || '',
+      etiquetas: item.etiquetas || '',
+      nomeProposta: item.nome_cliente || item.nome_proposta || '',
+      valorProposta: item.valor_proposta || 0,
+      potenciaSistema: parseFloat(item.potencia_sistema) || 0,
+      tsProposta: item.data_criacao_proposta || item.data_criacao_projeto || '',
+      statusProposta,
+      status: mapStatusProposta(statusProposta, faseSM),
+      tsSync: '',
+    };
+  }));
 }
 
 export function extractVendedores(proposals: Proposal[]): string[] {
