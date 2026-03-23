@@ -320,8 +320,6 @@ export default function Qualificacao() {
             <div className="space-y-2">
               {filtered.map((lead, idx) => {
                 const key = lead.telefone || `lead-${idx}`;
-                const isSending = sendingMap[key];
-                const isSent = sentMap[key];
 
                 return (
                   <div
