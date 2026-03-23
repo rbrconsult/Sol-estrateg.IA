@@ -818,6 +818,69 @@ export default function Admin() {
               </CardContent>
             </Card>
             <MonitoredScenariosSettings />
+
+            {/* Requisitos para WhatsApp Funcionar */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Requisitos para WhatsApp Funcionar
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
+                    <div className="rounded-full bg-green-500/10 p-2"><MessageSquare className="h-4 w-4 text-green-500" /></div>
+                    <div>
+                      <p className="text-sm font-medium">1. Krolic API configurada</p>
+                      <p className="text-xs text-muted-foreground">
+                        Acima: URL da API, API Key e Nome da Instância preenchidos.
+                        Atual: <code>app_settings</code> → evolution_api_url, evolution_api_key, evolution_instance_name
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
+                    <div className="rounded-full bg-green-500/10 p-2"><ArrowLeft className="h-4 w-4 text-green-500" /></div>
+                    <div>
+                      <p className="text-sm font-medium">2. Endpoint de envio correto</p>
+                      <p className="text-xs text-muted-foreground">
+                        <code>POST {'{api_url}'}/message/sendText/{'{instance_name}'}</code><br/>
+                        Header: <code>apikey: {'{api_key}'}</code><br/>
+                        Body: <code>{`{ "number": "5517...", "text": "..." }`}</code>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
+                    <div className="rounded-full bg-yellow-500/10 p-2"><Shield className="h-4 w-4 text-yellow-500" /></div>
+                    <div>
+                      <p className="text-sm font-medium">3. Auth da Edge Function</p>
+                      <p className="text-xs text-muted-foreground">
+                        <code>notify-ticket-whatsapp</code> e <code>send-whatsapp-alert</code> usam <code>getUser()</code> para validação.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
+                    <div className="rounded-full bg-cyan-500/10 p-2"><Zap className="h-4 w-4 text-cyan-500" /></div>
+                    <div>
+                      <p className="text-sm font-medium">4. Webhook de recebimento</p>
+                      <p className="text-xs text-muted-foreground">
+                        Krolic API → <code>whatsapp-proxy</code> → <code>whatsapp-webhook</code><br/>
+                        Config na Krolic: Webhook by Events desabilitado, apenas MESSAGES_UPSERT ativo.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
+                    <div className="rounded-full bg-orange-500/10 p-2"><Activity className="h-4 w-4 text-orange-500" /></div>
+                    <div>
+                      <p className="text-sm font-medium">5. Número Central</p>
+                      <p className="text-xs text-muted-foreground">
+                        <code>central_whatsapp_number</code> configurado acima. Recebe cópia de todas as notificações de chamados.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="time-comercial">
