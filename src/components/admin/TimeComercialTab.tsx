@@ -272,7 +272,7 @@ export function TimeComercialTab() {
                           .update({ entra_random: newVal })
                           .eq("id", m.id);
                         if (error) { toast.error("Erro ao atualizar"); return; }
-                        toast.success(newVal ? "Entra no random" : "Removido do random");
+                        toast.success(newVal ? "Krolic ativado" : "Krolic desativado");
                         setMembers(prev => prev.map(x => x.id === m.id ? { ...x, entra_random: newVal } : x));
                       }}
                     />
