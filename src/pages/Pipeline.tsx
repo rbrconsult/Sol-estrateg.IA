@@ -11,36 +11,25 @@ import { HelpButton } from "@/components/HelpButton";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
-import { useLead360 } from "@/contexts/Lead360Context";
 
-// Ordem da jornada completa
 const PIPELINE_STAGES = [
-  'TRAFEGO PAGO',
-  'PROSPECÇÃO',
-  'FOLLOW UP',
-  'QUALIFICAÇÃO',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO',
-  'CONTRATO ASSINADO',
+  'TRAFEGO PAGO', 'PROSPECÇÃO', 'FOLLOW UP', 'QUALIFICAÇÃO',
+  'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO', 'CONTRATO ASSINADO',
 ];
 
-// Etapas que vêm do DS Thread
-const THREAD_STAGES = new Set([
-  'TRAFEGO PAGO', 'PROSPECÇÃO', 'PROSPECAO', 'FOLLOW UP',
-  'QUALIFICAÇÃO', 'QUALIFICACAO', 'QUALIFICADO', 'CONTATO REALIZADO',
-  'SOL SDR', 'DECLÍNIO', 'DECLINIO',
+// Status do DS Thread que excluem o lead do pipeline ativo
+const STATUS_EXCLUIR = new Set([
+  'DESQUALIFICADO', 'DECLINIO', 'DECLÍNIO', 'CANCELADO',
+  'NAO_INTERESSADO', 'NÃO_INTERESSADO',
 ]);
 
-// Etapas do DS Comercial que agrupam como CONTRATO ASSINADO
-const CONTRATO_AGRUPADOS = [
+const CONTRATO_AGRUPADOS = new Set([
   'COBRANÇA', 'COBRANCA', 'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
   'APROVAÇÃO DE FINANCIAMENTO', 'APROVACAO DE FINANCIAMENTO',
   'ELABORAÇÃO DE CONTRATO', 'ELABORACAO DE CONTRATO',
   'CONTRATO ENVIADO', 'AGUARDANDO DOCUMENTOS',
-  'RECEBIMENTO DO CLIENTE (F)',
-];
+  'RECEBIMENTO DO CLIENTE (F)', 'CONTRATO ASSINADO',
+]);
 
 const columnColors: Record<string, string> = {
   'TRAFEGO PAGO': 'border-t-blue-500',
@@ -77,24 +66,24 @@ const Pipeline = () => {
 
   const isLoading = threadLoading || comercialLoading;
   const orgFilterActive = !!selectedOrgId;
-
   const refetch = () => { refetchThread(); refetchComercial(); };
 
-  // Constrói itens unificados
   const unifiedItems = useMemo<UnifiedItem[]>(() => {
     const items: UnifiedItem[] = [];
 
-    // DS Thread → etapas pré-venda
-    const IGNORAR_STATUS = ['DESQUALIFICADO', 'DECLINIO', 'DECLÍNIO', 'SOL SDR'];
+    // DS Thread — apenas leads ATIVOS (não desqualificados)
     for (const r of makeRecords || []) {
-      const statusUpper = (r.makeStatus || '').toUpperCase().trim();
-      if (IGNORAR_STATUS.includes(statusUpper)) continue;
+      const makeStatusUp = (r.makeStatus || '').toUpperCase();
 
-      const etapa = (r.etapaFunil || 'TRAFEGO PAGO').toUpperCase();
-      let stage = etapa;
-      if (etapa === 'PROSPECAO') stage = 'PROSPECÇÃO';
-      if (etapa === 'QUALIFICACAO') stage = 'QUALIFICAÇÃO';
-      if (etapa === 'DECLINIO' || etapa === 'DECLÍNIO') continue;
+      // Exclui desqualificados e declínios
+      if (STATUS_EXCLUIR.has(makeStatusUp)) continue;
+
+      let stage = (r.etapaFunil || 'TRAFEGO PAGO').toUpperCase();
+      if (stage === 'PROSPECAO') stage = 'PROSPECÇÃO';
+      if (stage === 'QUALIFICACAO') stage = 'QUALIFICAÇÃO';
+      if (stage === 'NEGOCIACAO') stage = 'NEGOCIAÇÃO';
+      if (stage === 'SOL SDR') stage = 'TRAFEGO PAGO';
+      if (stage === 'DECLINIO' || stage === 'DECLÍNIO') continue;
       if (!PIPELINE_STAGES.includes(stage)) stage = 'TRAFEGO PAGO';
 
       items.push({
@@ -110,21 +99,15 @@ const Pipeline = () => {
       });
     }
 
-    // DS Comercial → etapas comerciais
+    // DS Comercial — propostas (todas: abertas, ganhas, perdidas)
     for (const r of comercialRecords || []) {
       const etapaUpper = (r.etapaSM || '').toUpperCase().trim();
       let stage = etapaUpper;
 
-      // Agrupa pós-venda em CONTRATO ASSINADO
-      if (CONTRATO_AGRUPADOS.includes(etapaUpper)) {
-        stage = 'CONTRATO ASSINADO';
-      }
-      // Etapas comerciais válidas
-      if (!['PROPOSTA', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'CONTRATO ASSINADO'].includes(stage)) {
-        // Etapas de thread que aparecem no DS Comercial vão para PROPOSTA
-        stage = 'PROPOSTA';
-      }
-      if (stage === 'NEGOCIACAO') stage = 'NEGOCIAÇÃO';
+      if (CONTRATO_AGRUPADOS.has(etapaUpper)) stage = 'CONTRATO ASSINADO';
+      else if (etapaUpper === 'NEGOCIAÇÃO' || etapaUpper === 'NEGOCIACAO') stage = 'NEGOCIAÇÃO';
+      else if (etapaUpper === 'PROPOSTA') stage = 'PROPOSTA';
+      else stage = 'PROPOSTA'; // fallback
 
       items.push({
         id: `comercial-${r.projetoId}`,
@@ -142,14 +125,12 @@ const Pipeline = () => {
     return items;
   }, [makeRecords, comercialRecords]);
 
-  // Filtra por status view
   const filteredItems = useMemo(() => {
     if (statusView === 'abertos') return unifiedItems.filter(i => i.status === 'Aberto');
     if (statusView === 'ganhos') return unifiedItems.filter(i => i.status === 'Ganho');
     return unifiedItems.filter(i => i.status === 'Perdido');
   }, [unifiedItems, statusView]);
 
-  // Agrupa por etapa
   const stageGroups = useMemo(() => {
     const groups: Record<string, UnifiedItem[]> = {};
     PIPELINE_STAGES.forEach(s => { groups[s] = []; });
@@ -160,23 +141,22 @@ const Pipeline = () => {
     return groups;
   }, [filteredItems]);
 
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 }).format(v);
-
   const counts = useMemo(() => ({
     abertos: unifiedItems.filter(i => i.status === 'Aberto').length,
     ganhos: unifiedItems.filter(i => i.status === 'Ganho').length,
     perdidos: unifiedItems.filter(i => i.status === 'Perdido').length,
   }), [unifiedItems]);
 
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 }).format(v);
+
   return (
     <div className="p-4 md:p-6 space-y-4">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Pipeline</h1>
           <p className="text-xs md:text-sm text-muted-foreground">
-            Visão Kanban · Jornada completa · {unifiedItems.length} itens
+            Jornada completa · {counts.abertos} ativos · {counts.ganhos} ganhos · {counts.perdidos} perdidos
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -200,7 +180,6 @@ const Pipeline = () => {
         config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, searchPlaceholder: "Buscar lead..." }}
       />
 
-      {/* Status tabs */}
       <Tabs value={statusView} onValueChange={(v) => setStatusView(v as StatusView)}>
         <TabsList>
           <TabsTrigger value="abertos">Abertos ({counts.abertos})</TabsTrigger>
@@ -213,7 +192,7 @@ const Pipeline = () => {
         <Alert className="border-destructive/50 bg-destructive/10">
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Erro ao carregar dados: {threadError.message}</span>
+            <span>Erro ao carregar dados</span>
             <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading} className="ml-4">
               <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Tentar novamente
@@ -229,7 +208,6 @@ const Pipeline = () => {
         </div>
       )}
 
-      {/* Kanban */}
       {!isLoading && (
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-3 pb-4">
@@ -239,8 +217,7 @@ const Pipeline = () => {
               const totalPower = items.reduce((acc, i) => acc + i.power, 0);
 
               return (
-                <div key={stage} className="flex-shrink-0 w-[240px]">
-                  {/* Cabeçalho da coluna */}
+                <div key={stage} className="flex-shrink-0 w-[220px]">
                   <div className={`rounded-t-lg border-t-4 ${columnColors[stage]} bg-card p-2.5`}>
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-foreground text-xs truncate">{stage}</h3>
@@ -256,46 +233,28 @@ const Pipeline = () => {
                     )}
                   </div>
 
-                  {/* Cards */}
                   <div className="rounded-b-lg border border-t-0 border-border bg-muted/20 p-1.5 min-h-[400px] max-h-[calc(100vh-320px)] overflow-y-auto space-y-1.5">
                     {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-md border border-border bg-card p-2 cursor-pointer hover:border-primary/50 transition-colors"
-                      >
+                      <div key={item.id} className="rounded-md border border-border bg-card p-2 cursor-pointer hover:border-primary/50 transition-colors">
                         <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          {item.value > 0 && (
-                            <span className="text-xs text-emerald-400">{formatCurrency(item.value)}</span>
-                          )}
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                          {item.value > 0 && <span className="text-xs text-emerald-400">{formatCurrency(item.value)}</span>}
                           {item.temperatura && (
                             <span className={`text-xs px-1 rounded ${
                               item.temperatura === 'QUENTE' ? 'bg-red-500/20 text-red-400' :
                               item.temperatura === 'MORNO' ? 'bg-amber-500/20 text-amber-400' :
                               'bg-blue-500/20 text-blue-400'
-                            }`}>
-                              {item.temperatura}
-                            </span>
+                            }`}>{item.temperatura}</span>
                           )}
                         </div>
-                        {item.responsavel && (
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">{item.responsavel}</p>
-                        )}
-                        <div className="mt-1">
-                          <span className={`text-xs px-1 rounded ${
-                            item.source === 'thread'
-                              ? 'bg-blue-500/10 text-blue-400'
-                              : 'bg-emerald-500/10 text-emerald-400'
-                          }`}>
-                            {item.source === 'thread' ? 'SDR' : 'Comercial'}
-                          </span>
-                        </div>
+                        {item.responsavel && <p className="text-xs text-muted-foreground truncate mt-0.5">{item.responsavel}</p>}
+                        <span className={`text-xs px-1 rounded mt-1 inline-block ${
+                          item.source === 'thread' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'
+                        }`}>{item.source === 'thread' ? 'SDR' : 'Comercial'}</span>
                       </div>
                     ))}
                     {items.length === 0 && (
-                      <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">
-                        Nenhum item
-                      </div>
+                      <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">Nenhum item</div>
                     )}
                   </div>
                 </div>

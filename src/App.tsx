@@ -14,10 +14,9 @@ import { ModuleGuard } from "@/components/ModuleGuard";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
-import PipelinePage from "./pages/PipelinePage";
+import Pipeline from "./pages/Pipeline";
 import Forecast from "./pages/Forecast";
 import Performance from "./pages/Performance";
-
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Selecao from "./pages/Selecao";
@@ -36,8 +35,6 @@ import Roadmap from "./pages/Roadmap";
 import PainelComercial from "./pages/PainelComercial";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
-
-// Fase 3-4 pages
 import SLAMonitor from "./pages/SLAMonitor";
 import MidiaReceita from "./pages/MidiaReceita";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
@@ -45,8 +42,6 @@ import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
 import Reprocessamento from "./pages/Reprocessamento";
 import OrgConfigPage from "./pages/admin/OrgConfigPage";
-
-// Solar Market
 import PreVenda from "./pages/solar/PreVenda";
 import Comercial from "./pages/solar/Comercial";
 import VendedorPerformance from "./pages/solar/VendedorPerformance";
@@ -70,159 +65,54 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/selecao" element={
-                <ProtectedRoute>
-                  <Selecao />
-                </ProtectedRoute>
-              } />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Navigate to="/selecao" replace />
-                </ProtectedRoute>
-              } />
-              <Route path="/conferencia" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              {/* Solar Market routes */}
-              <Route path="/solarmarket/prevenda" element={
-                <ProtectedRoute>
-                  <SolarLayout><PreVenda /></SolarLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/solarmarket/comercial" element={
-                <ProtectedRoute>
-                  <SolarLayout><Comercial /></SolarLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/solarmarket/vendedores" element={
-                <ProtectedRoute>
-                  <SolarLayout><VendedorPerformance /></SolarLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="dashboard"><Index /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/pipeline" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="pipeline"><PipelinePage /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/forecast" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/performance" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/chamados" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="chamados"><Chamados /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/bi" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/operacoes" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Operacoes /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/leads" element={
-                <ProtectedRoute>
-                  <MainLayout><Leads /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <MainLayout><Admin /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/filial/:orgId" element={
-                <ProtectedRoute>
-                  <MainLayout><OrgConfigPage /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/ajuda" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/ads-performance" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="bi"><AdsPerformance /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/robo-sol" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="bi"><RoboSol /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/robo-fup-frio" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="bi"><RoboFupFrio /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/jornada-lead" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="bi"><JornadaLead /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/roadmap" element={
-                <ProtectedRoute>
-                  <MainLayout><Roadmap /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/painel-comercial" element={
-                <ProtectedRoute>
-                  <MainLayout><PainelComercial /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/reports" element={
-                <ProtectedRoute>
-                  <MainLayout><Reports /></MainLayout>
-                </ProtectedRoute>
-              } />
-              {/* Fase 3-4 routes */}
-              <Route path="/sla" element={
-                <ProtectedRoute>
-                  <MainLayout><SLAMonitor /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/midia" element={
-                <ProtectedRoute>
-                  <MainLayout><MidiaReceita /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/followup" element={
-                <ProtectedRoute>
-                  <MainLayout><AnalistaFollowup /></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/comissoes" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/sanitizacao" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/reprocessamento" element={
-                <ProtectedRoute>
-                  <MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout>
-                </ProtectedRoute>
-              } />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Navigate to="/selecao" replace /></ProtectedRoute>} />
+
+              {/* Solar Market */}
+              <Route path="/solarmarket/prevenda" element={<ProtectedRoute><SolarLayout><PreVenda /></SolarLayout></ProtectedRoute>} />
+              <Route path="/solarmarket/comercial" element={<ProtectedRoute><SolarLayout><Comercial /></SolarLayout></ProtectedRoute>} />
+              <Route path="/solarmarket/vendedores" element={<ProtectedRoute><SolarLayout><VendedorPerformance /></SolarLayout></ProtectedRoute>} />
+
+              {/* Conferência (antigo dashboard SM) */}
+              <Route path="/conferencia" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
+              {/* Dashboard principal */}
+              <Route path="/dashboard" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="dashboard"><Index /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
+              {/* Pipeline unificado DS Thread + DS Comercial */}
+              <Route path="/pipeline" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Pipeline /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
+              {/* Propostas = Forecast */}
+              <Route path="/forecast" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
+              {/* Contratos → redireciona para Forecast (propostas ganhas) */}
+              <Route path="/contratos" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
+              {/* Vendedores */}
+              <Route path="/performance" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
+              {/* Demais páginas */}
+              <Route path="/chamados" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="chamados"><Chamados /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/bi" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/operacoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Operacoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/leads" element={<ProtectedRoute><MainLayout><Leads /></MainLayout></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><MainLayout><Admin /></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/filial/:orgId" element={<ProtectedRoute><MainLayout><OrgConfigPage /></MainLayout></ProtectedRoute>} />
+              <Route path="/ajuda" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="ajuda"><Ajuda /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/ads-performance" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><AdsPerformance /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/robo-sol" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><RoboSol /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/robo-fup-frio" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><RoboFupFrio /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/jornada-lead" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><JornadaLead /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/roadmap" element={<ProtectedRoute><MainLayout><Roadmap /></MainLayout></ProtectedRoute>} />
+              <Route path="/painel-comercial" element={<ProtectedRoute><MainLayout><PainelComercial /></MainLayout></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><MainLayout><Reports /></MainLayout></ProtectedRoute>} />
+              <Route path="/sla" element={<ProtectedRoute><MainLayout><SLAMonitor /></MainLayout></ProtectedRoute>} />
+              <Route path="/midia" element={<ProtectedRoute><MainLayout><MidiaReceita /></MainLayout></ProtectedRoute>} />
+              <Route path="/followup" element={<ProtectedRoute><MainLayout><AnalistaFollowup /></MainLayout></ProtectedRoute>} />
+              <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
