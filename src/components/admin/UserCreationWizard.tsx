@@ -184,6 +184,14 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
     setModuleAccess(next);
   };
 
+  const toggleGroupModules = (keys: string[], enabled: boolean) => {
+    setModuleAccess(prev => {
+      const next = { ...prev };
+      keys.forEach(k => { next[k] = enabled; });
+      return next;
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
