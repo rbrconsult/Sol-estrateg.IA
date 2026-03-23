@@ -9,11 +9,7 @@ import { StrategicFunnel } from "@/components/dashboard/StrategicFunnel";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useMakeDataStore } from "@/hooks/useMakeDataStore";
 import { useMakeComercialData } from "@/hooks/useMakeComercialData";
-import {
-  getKPIs,
-  getFunnelData,
-  getVendedorPerformance,
-} from "@/data/dataAdapter";
+import { adaptComercialData, getKPIs, getVendedorPerformance } from "@/data/dataAdapter";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpButton } from "@/components/HelpButton";
@@ -38,6 +34,22 @@ const FECHADOS_ETAPAS_SM = [
   'RECEBIMENTO DO CLIENTE (F)',
 ];
 
+
+// Etapas do DS Comercial que agrupam como CONTRATO ASSINADO
+const CONTRATO_AGRUPADOS = new Set([
+  'CONTRATO ASSINADO', 'COBRANÇA', 'COBRANCA',
+  'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
+  'APROVAÇÃO DE FINANCIAMENTO', 'APROVACAO DE FINANCIAMENTO',
+  'ELABORAÇÃO DE CONTRATO', 'ELABORACAO DE CONTRATO',
+  'CONTRATO ENVIADO', 'AGUARDANDO DOCUMENTOS',
+  'RECEBIMENTO DO CLIENTE (F)',
+]);
+
+const FUNNEL_JOURNEY = [
+  'TRAFEGO PAGO', 'PROSPECÇÃO', 'FOLLOW UP', 'QUALIFICAÇÃO',
+  'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO', 'CONTRATO ASSINADO',
+];
+
 const Index = () => {
   const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
   const { data: makeRecords } = useMakeDataStore();
@@ -50,8 +62,35 @@ const Index = () => {
   const lastUpdate = useMemo(() => new Date().toLocaleString('pt-BR'), []);
 
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
-  const funnelData = useMemo(() => getFunnelData(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
+
+  // Funil combinado DS Thread + DS Comercial
+  const combinedFunnelData = useMemo(() => {
+    const threadCounts: Record<string, number> = {};
+    for (const r of makeRecords || []) {
+      let etapa = (r.etapaFunil || 'TRAFEGO PAGO').toUpperCase();
+      if (etapa === 'PROSPECAO') etapa = 'PROSPECÇÃO';
+      if (etapa === 'QUALIFICACAO') etapa = 'QUALIFICAÇÃO';
+      if (etapa === 'SOL SDR') etapa = 'TRAFEGO PAGO';
+      threadCounts[etapa] = (threadCounts[etapa] || 0) + 1;
+    }
+    const comercialCounts: Record<string, { qty: number; valor: number }> = {};
+    for (const r of comercialRecords || []) {
+      let etapa = (r.etapaSM || '').toUpperCase();
+      if (CONTRATO_AGRUPADOS.has(etapa)) etapa = 'CONTRATO ASSINADO';
+      if (!etapa) etapa = 'PROPOSTA';
+      if (!comercialCounts[etapa]) comercialCounts[etapa] = { qty: 0, valor: 0 };
+      comercialCounts[etapa].qty++;
+      comercialCounts[etapa].valor += r.valorProposta || 0;
+    }
+    const threadStages = new Set(['TRAFEGO PAGO','PROSPECÇÃO','FOLLOW UP','QUALIFICAÇÃO','QUALIFICADO','CONTATO REALIZADO']);
+    return FUNNEL_JOURNEY.map(etapa => ({
+      etapa,
+      quantidade: threadStages.has(etapa) ? (threadCounts[etapa] || 0) : (comercialCounts[etapa]?.qty || 0),
+      valor: threadStages.has(etapa) ? 0 : (comercialCounts[etapa]?.valor || 0),
+      taxaConversao: 0,
+    })).filter(d => d.quantidade > 0);
+  }, [makeRecords, comercialRecords]);
 
   // ── KPIs do DS Thread (MQL, SQL) ──
   const threadKpis = useMemo(() => {
@@ -108,16 +147,16 @@ const Index = () => {
   }, [kpis, vendedorPerformance, filteredProposals]);
 
   const funnelBottleneck = useMemo(() => {
-    if (funnelData.length < 2) return "Dados insuficientes";
+    if (combinedFunnelData.length < 2) return "Dados insuficientes";
     let worstIdx = 0;
     let worstConv = 100;
-    for (let i = 1; i < funnelData.length; i++) {
-      const prev = funnelData[i - 1].quantidade;
-      const curr = funnelData[i].quantidade;
+    for (let i = 1; i < combinedFunnelData.length; i++) {
+      const prev = combinedFunnelData[i - 1].quantidade;
+      const curr = combinedFunnelData[i].quantidade;
       const conv = prev > 0 ? (curr / prev) * 100 : 100;
       if (conv < worstConv) { worstConv = conv; worstIdx = i; }
     }
-    return `${funnelData[worstIdx - 1]?.etapa || ""} → ${funnelData[worstIdx]?.etapa || ""} (${worstConv.toFixed(0)}%)`;
+    return `${combinedFunnelData[worstIdx - 1]?.etapa || ""} → ${combinedFunnelData[worstIdx]?.etapa || ""} (${worstConv.toFixed(0)}%)`;
   }, [funnelData]);
 
   return (
@@ -230,7 +269,7 @@ const Index = () => {
               vendedorPerformance={vendedorPerformance}
               meta={meta}
             />
-            <StrategicFunnel data={funnelData} proposals={filteredProposals} />
+            <StrategicFunnel data={combinedFunnelData} proposals={filteredProposals} />
           </div>
 
           <footer className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
