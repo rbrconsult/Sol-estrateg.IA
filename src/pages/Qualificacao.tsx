@@ -466,6 +466,7 @@ export default function Qualificacao() {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="ativos">Ativos</SelectItem>
+                <SelectItem value="qualificados">Qualificados</SelectItem>
                 <SelectItem value="desqualificados">Desqualificados</SelectItem>
               </SelectContent>
             </Select>
