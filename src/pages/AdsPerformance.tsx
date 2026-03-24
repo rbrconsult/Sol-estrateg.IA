@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Megaphone, RefreshCcw } from 'lucide-react';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
 const META_COLOR = '#1877F2';
 const GOOGLE_COLOR = '#34A853';
