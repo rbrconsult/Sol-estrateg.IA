@@ -122,7 +122,7 @@ function deriveWeeklyEvolution(records: MakeRecord[]) {
 }
 
 export default function AdsPerformance() {
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const gf = useGlobalFilters();
   const filteredRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
   const records = filteredRecords;

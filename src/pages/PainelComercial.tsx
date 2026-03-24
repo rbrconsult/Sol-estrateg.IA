@@ -260,7 +260,7 @@ const mensagensReports = [
 export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { proposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
 

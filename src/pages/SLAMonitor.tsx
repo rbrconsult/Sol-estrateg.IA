@@ -156,7 +156,7 @@ function deriveSLAData(records: MakeRecord[]) {
 
 export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
 

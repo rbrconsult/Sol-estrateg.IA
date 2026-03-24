@@ -78,7 +78,7 @@ function KPICard({ label, value, suffix, isDecimal }: { label: string; value: nu
 /* ═══════════════════ MAIN ═══════════════════ */
 export default function Leads() {
   const queryClient = useQueryClient();
-  const { data: makeRecords, isLoading, error, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, error, forceSync } = useMakeDataStore();
   const { orgFilterActive } = { orgFilterActive: false };
   const { selectedOrgName } = useOrgFilter();
   const [searchTerm, setSearchTerm] = useState("");

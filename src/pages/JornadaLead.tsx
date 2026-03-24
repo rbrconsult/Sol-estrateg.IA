@@ -219,7 +219,7 @@ function deriveAbandonByStage(records: MakeRecord[]) {
 /* ── Component ── */
 export default function JornadaLead() {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
 
   const records = makeRecords || [];

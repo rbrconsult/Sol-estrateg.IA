@@ -113,7 +113,7 @@ function deriveFupData(records: MakeRecord[]) {
 /* ── Component ── */
 
 export default function RoboFupFrio() {
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
 

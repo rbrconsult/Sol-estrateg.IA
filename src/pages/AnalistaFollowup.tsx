@@ -150,7 +150,7 @@ function deriveCidades(records: MakeRecord[]) {
 }
 
 export default function AnalistaFollowup() {
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
 

@@ -40,7 +40,7 @@ function isQualificado(r: MakeRecord): boolean {
 const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 export default function Reprocessamento() {
-  const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
+  const { data: records, isLoading, refetch, isFetching, forceSync } = useMakeDataStore();
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
