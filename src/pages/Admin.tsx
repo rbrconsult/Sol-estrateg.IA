@@ -288,11 +288,15 @@ export default function Admin() {
 
       if (roleError) throw roleError;
 
-      // Update full_name in profiles
-      if (formData.full_name !== selectedUser.full_name) {
+      // Update full_name and phone in profiles
+      const profileUpdates: Record<string, any> = {};
+      if (formData.full_name !== selectedUser.full_name) profileUpdates.full_name = formData.full_name;
+      if (formData.phone) profileUpdates.phone = formData.phone;
+      
+      if (Object.keys(profileUpdates).length > 0) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ full_name: formData.full_name })
+          .update(profileUpdates)
           .eq('id', selectedUser.id);
 
         if (profileError) throw profileError;
