@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { getOrigensData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
@@ -13,11 +15,13 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3
 
 export default function Origens() {
   const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const gf = useGlobalFilters();
+  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
   const origensData = useMemo(() => {
-    if (allProposals.length === 0) return [];
-    return getOrigensData(allProposals);
-  }, [allProposals]);
+    if (filteredProposals.length === 0) return [];
+    return getOrigensData(filteredProposals);
+  }, [filteredProposals]);
 
   if (isLoading) {
     return (
@@ -56,6 +60,12 @@ export default function Origens() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      <PageFloatingFilter
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa} setStatus={gf.setStatus}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

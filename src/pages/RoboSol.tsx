@@ -274,9 +274,9 @@ export default function RoboSol() {
       <PageFloatingFilter
         filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
         setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setCanal={pf.setCanal} setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm}
+        setCanal={pf.setCanal} setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
         canais={canais}
-        config={{ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true }}
+        config={{ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
       />
 
       {/* KPIs */}

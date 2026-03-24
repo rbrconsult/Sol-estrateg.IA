@@ -9,6 +9,7 @@ import { Route, AlertTriangle, Search, CheckCircle, Clock, XCircle, RefreshCcw }
 import { Button } from '@/components/ui/button';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { useLead360 } from '@/contexts/Lead360Context';
+import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
@@ -222,7 +223,8 @@ export default function JornadaLead() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
 
-  const records = makeRecords || [];
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showEtapa: true, showStatus: true, showSearch: true });
+  const records = useMemo(() => pf.filterRecords(makeRecords || []), [makeRecords, pf.filterRecords]);
 
   const slaMetrics = useMemo(() => deriveSLAMetrics(records), [records]);
   const leadsByStage = useMemo(() => deriveLeadsByStage(records), [records]);
@@ -263,7 +265,13 @@ export default function JornadaLead() {
         </Button>
       </div>
 
-      {/* BLOCO 1 — SLAs Overview */}
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
+      />
+
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Visão Geral dos SLAs</CardTitle></CardHeader>
         <CardContent>
