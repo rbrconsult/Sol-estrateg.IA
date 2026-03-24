@@ -178,7 +178,7 @@ export default function Reports() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Destinatário</p>
                     <p className="text-sm text-foreground flex items-center gap-1">
@@ -203,6 +203,17 @@ export default function Reports() {
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Canal</p>
                     <Badge variant="outline" className="text-xs">{selected.canal}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Cargos</p>
+                    <div className="flex flex-wrap gap-1">
+                      {((selected as any).destinatario_roles || []).length > 0
+                        ? ((selected as any).destinatario_roles as string[]).map((r: string) => (
+                            <Badge key={r} variant="secondary" className="text-[10px] capitalize">{r}</Badge>
+                          ))
+                        : <span className="text-xs text-muted-foreground">Manual</span>
+                      }
+                    </div>
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Envio</p>

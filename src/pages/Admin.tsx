@@ -437,6 +437,12 @@ export default function Admin() {
     switch (role) {
       case 'super_admin':
         return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Super Admin</Badge>;
+      case 'diretor':
+        return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Diretor</Badge>;
+      case 'gerente':
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Gerente</Badge>;
+      case 'closer':
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Closer</Badge>;
       case 'admin':
         return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Admin</Badge>;
       default:
@@ -621,7 +627,7 @@ export default function Admin() {
                   <CardDescription>Lista de todos os usuários do sistema</CardDescription>
                 </div>
                 <Button onClick={() => {
-                  setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
+                  setFormData({ email: '', password: '', full_name: '', role: 'closer', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
                   setIsCreateDialogOpen(true);
                 }}>
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -921,8 +927,11 @@ export default function Admin() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="diretor">Diretor</SelectItem>
+                    <SelectItem value="gerente">Gerente</SelectItem>
+                    <SelectItem value="closer">Closer</SelectItem>
                     <SelectItem value="user">Usuário</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="admin">Admin (legado)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

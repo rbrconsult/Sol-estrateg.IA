@@ -8,10 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Save, Phone } from "lucide-react";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
+const DESTINATARIO_ROLES = [
+  { value: "diretor", label: "Diretor" },
+  { value: "gerente", label: "Gerente" },
+  { value: "closer", label: "Closer" },
+] as const;
 
 const FREQUENCIAS = ["Diária", "Semanal", "Quinzenal", "Mensal"] as const;
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -58,6 +64,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     periodicidade: "Diária — 07:00",
     canal: "WhatsApp",
     conteudo: "",
+    destinatario_roles: [] as string[],
   });
   const [tab, setTab] = useState("editor");
 
@@ -85,6 +92,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         periodicidade: template.periodicidade,
         canal: template.canal,
         conteudo: template.conteudo,
+        destinatario_roles: (template as any).destinatario_roles || [],
       });
     } else {
       setForm({
@@ -96,6 +104,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         periodicidade: "Diária — 07:00",
         canal: "WhatsApp",
         conteudo: "",
+        destinatario_roles: [],
       });
     }
     setTab("editor");
@@ -174,6 +183,29 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                 type="tel"
               />
               <p className="text-[10px] text-muted-foreground">Este número recebe cópia de todos os envios deste template</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Enviar para (por cargo)</Label>
+              <div className="flex gap-4">
+                {DESTINATARIO_ROLES.map((r) => (
+                  <label key={r.value} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={form.destinatario_roles.includes(r.value)}
+                      onCheckedChange={(checked) => {
+                        setForm(f => ({
+                          ...f,
+                          destinatario_roles: checked
+                            ? [...f.destinatario_roles, r.value]
+                            : f.destinatario_roles.filter(v => v !== r.value),
+                        }));
+                      }}
+                    />
+                    <span className="text-sm">{r.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Selecione quais cargos devem receber este report automaticamente (busca telefone do perfil)</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

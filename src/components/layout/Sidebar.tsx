@@ -269,9 +269,21 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
             <>
               <div className="px-2.5 py-1">
                 <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
-                {userRole === "super_admin" && (
-                  <p className="text-[10px] text-warning font-semibold">Super Admin</p>
-                )}
+              {userRole && (
+                   <p className={`text-[10px] font-semibold ${
+                     userRole === 'super_admin' ? 'text-warning' :
+                     userRole === 'diretor' ? 'text-amber-400' :
+                     userRole === 'gerente' ? 'text-blue-400' :
+                     userRole === 'closer' ? 'text-green-400' :
+                     'text-muted-foreground'
+                   }`}>
+                     {userRole === 'super_admin' ? 'Super Admin' :
+                      userRole === 'diretor' ? 'Diretor' :
+                      userRole === 'gerente' ? 'Gerente' :
+                      userRole === 'closer' ? 'Closer' :
+                      userRole === 'admin' ? 'Admin' : 'Usuário'}
+                   </p>
+                 )}
               </div>
 
               {onResetOnboarding && (

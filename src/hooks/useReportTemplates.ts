@@ -18,6 +18,7 @@ export interface ReportTemplate {
   ordem: number;
   created_at: string;
   updated_at: string;
+  destinatario_roles?: string[];
 }
 
 export function useReportTemplates() {

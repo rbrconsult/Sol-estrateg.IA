@@ -147,9 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [user, validateSession, isImpersonating]);
 
-  // Inactivity timeout: 15 min for non-super_admin users
+  // Inactivity timeout: 15 min for non-privileged users
   useEffect(() => {
-    if (!user || isImpersonating || userRole === 'super_admin') return;
+    if (!user || isImpersonating || userRole === 'super_admin' || userRole === 'diretor') return;
 
     const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
     let timeout: ReturnType<typeof setTimeout>;
