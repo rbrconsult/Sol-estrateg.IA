@@ -136,14 +136,14 @@ Deno.serve(async (req) => {
         .from("organization_configs")
         .select("config_key, config_value")
         .eq("organization_id", effectiveOrgId)
-        .in("config_key", ["make_api_key", "ds_thread", "ds_comercial", "ds_meta_ads", "ds_google_ads", "ds_producao"]);
+        .in("config_key", ["make_api_key", "ds_thread", "ds_thread_id", "ds_comercial", "ds_meta_ads", "ds_google_ads", "ds_producao", "ds_sol_producao"]);
       for (const c of orgConfigs || []) {
         if (c.config_key === "make_api_key") makeApiKey = c.config_value.trim();
-        if (c.config_key === "ds_thread") dsThreadId = c.config_value.trim();
+        if (c.config_key === "ds_thread" || c.config_key === "ds_thread_id") dsThreadId = dsThreadId || c.config_value.trim();
         if (c.config_key === "ds_comercial") dsComercialId = c.config_value.trim();
         if (c.config_key === "ds_meta_ads") dsMetaAdsId = c.config_value.trim();
         if (c.config_key === "ds_google_ads") dsGoogleAdsId = c.config_value.trim();
-        if (c.config_key === "ds_producao") dsProducaoId = c.config_value.trim();
+        if (c.config_key === "ds_producao" || c.config_key === "ds_sol_producao") dsProducaoId = dsProducaoId || c.config_value.trim();
       }
     }
     if (!makeApiKey) makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
