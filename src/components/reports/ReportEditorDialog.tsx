@@ -92,6 +92,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         periodicidade: template.periodicidade,
         canal: template.canal,
         conteudo: template.conteudo,
+        destinatario_roles: (template as any).destinatario_roles || [],
       });
     } else {
       setForm({
