@@ -99,12 +99,21 @@ const Index = () => {
     const sql = records.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
     const contatados = records.filter(r => r.status_resposta === 'respondeu').length;
     const now = new Date();
-    const hojeISO = now.toISOString().slice(0, 10); // "2026-03-24"
-    const hojeBR = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`; // "24/03/2026"
+    const hojeISO = now.toISOString().slice(0, 10);
     const criadosHoje = records.filter(r => {
       const d = r.data_envio || '';
-      // Match both ISO (2026-03-24) and BR (24/03/2026) formats
-      return d.slice(0, 10) === hojeISO || d.slice(0, 10) === hojeBR;
+      if (!d) return false;
+      // Try parsing the date and compare just the date part
+      const parsed = new Date(d);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10) === hojeISO;
+      }
+      // Fallback: try DD/MM/YYYY format
+      const brMatch = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (brMatch) {
+        return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}` === hojeISO;
+      }
+      return false;
     }).length;
     return { mql, sql, total: records.length, contatados, criadosHoje };
   }, [makeRecords]);
