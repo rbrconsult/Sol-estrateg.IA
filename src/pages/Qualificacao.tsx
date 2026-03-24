@@ -367,41 +367,6 @@ export default function Qualificacao() {
         </Card>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, telefone ou cidade..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-          <SelectTrigger className="w-44">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="ativos">Ativos</SelectItem>
-            <SelectItem value="desqualificados">Desqualificados</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={etapaFilter} onValueChange={setEtapaFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Etapa" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Etapas</SelectItem>
-            {ETAPA_OPTIONS.map((e) => (
-              <SelectItem key={e} value={e}>{e}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Manual Qualificar */}
       <Card className="border-dashed border-primary/30">
         <CardContent className="p-4">
