@@ -265,7 +265,13 @@ export default function JornadaLead() {
         </Button>
       </div>
 
-      {/* BLOCO 1 — SLAs Overview */}
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
+      />
+
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Visão Geral dos SLAs</CardTitle></CardHeader>
         <CardContent>
