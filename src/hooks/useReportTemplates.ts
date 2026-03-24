@@ -84,7 +84,9 @@ export function useReportTemplates() {
 
   const generateReport = useMutation({
     mutationFn: async (template: ReportTemplate) => {
-      const organizationId = selectedOrgId ?? template.organization_id ?? undefined;
+      // Usa apenas o filtro global ativo; se estiver em Global, envia undefined
+      // para o backend decidir (super_admin = consolidado, demais = própria filial)
+      const organizationId = selectedOrgId ?? undefined;
       const { data, error } = await supabase.functions.invoke('generate-report', {
         body: { templateContent: template.conteudo, templateTitle: template.titulo, organizationId },
       });

@@ -17,6 +17,20 @@ const toDateKey = (value: string | Date) =>
     day: "2-digit",
   }).format(new Date(value));
 
+const getLeadDateKeyByFields = (lead: Record<string, unknown>, fields: string[]) => {
+  const refDate = fields
+    .map((field) => lead[field])
+    .find((value) => typeof value === "string" && value.length > 0) as string | undefined;
+
+  if (!refDate) return null;
+
+  try {
+    return toDateKey(refDate);
+  } catch {
+    return null;
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -122,22 +136,27 @@ Deno.serve(async (req) => {
       console.error("Error fetching leads:", leadsErr);
     }
 
-    const getLeadDateKey = (lead: any) => {
-      const refDate = lead.data_entrada || lead.created_at;
-      if (!refDate) return null;
-      try {
-        return toDateKey(refDate);
-      } catch {
-        return null;
-      }
-    };
+    // Somente hoje (00:00–23:59 São Paulo)
+    // 1) Prioriza novos leads do dia (data_entrada/created_at)
+    // 2) Se vier vazio, usa atividade do dia (updated_at) para evitar report zerado em operação ativa
+    const leadsCreatedToday = (leads || []).filter((l: any) =>
+      getLeadDateKeyByFields(l, ["data_entrada", "created_at"]) === todayStr
+    );
 
-    // Somente leads do dia (00:00–23:59 São Paulo)
-    const allLeads = (leads || []).filter((l: any) => {
-      const dateKey = getLeadDateKey(l);
-      return dateKey === todayStr;
-    });
-    const todayLeads = allLeads;
+    const leadsUpdatedToday = (leads || []).filter((l: any) =>
+      getLeadDateKeyByFields(l, ["updated_at", "data_entrada", "created_at"]) === todayStr
+    );
+
+    const allLeads = leadsCreatedToday.length > 0 ? leadsCreatedToday : leadsUpdatedToday;
+
+    console.log(
+      "generate-report: leadsCreatedToday=",
+      leadsCreatedToday.length,
+      "leadsUpdatedToday=",
+      leadsUpdatedToday.length,
+      "using=",
+      leadsCreatedToday.length > 0 ? "created" : "updated"
+    );
 
     // ── 2. Calculate KPIs ──
     const leadsGerados = allLeads.length;
