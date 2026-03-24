@@ -377,8 +377,8 @@ export default function Sanitizacao() {
           </div>
         </div>
         <div className="flex items-center gap-2 self-start">
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} /> Atualizar
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing}>
+            <RefreshCw className={cn("h-4 w-4 mr-1", isSyncing && "animate-spin")} /> Atualizar
           </Button>
           {(analysis.dupProjectCount > 0 || analysis.invalidProjectCount > 0 || analysis.semTel.length > 0) && (
             <Badge variant="destructive" className="text-xs">⚠ Ação Necessária</Badge>

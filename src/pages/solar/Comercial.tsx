@@ -187,8 +187,8 @@ export default function Comercial() {
               Limpar filtros
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing || isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>

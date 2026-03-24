@@ -127,8 +127,8 @@ export default function Comissoes() {
           <Badge variant="outline" className="text-xs">
             {filteredProposals.length} propostas
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing}>
+            <RefreshCcw className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} /> Atualizar
           </Button>
         </div>
       </div>

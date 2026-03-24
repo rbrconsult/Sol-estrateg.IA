@@ -193,7 +193,7 @@ const Pipeline = () => {
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
             <span>Erro ao carregar dados: {error.message}</span>
-            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="ml-4">
+            <Button variant="ghost" size="sm" onClick={() => forceSync()} disabled={isSyncing} className="ml-4">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Tentar novamente
             </Button>

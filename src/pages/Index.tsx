@@ -224,8 +224,8 @@ const Index = () => {
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             {threadKpis.total} leads DS Thread • {comercialRecords?.length || 0} DS Comercial
           </span>
-          <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <Button variant="ghost" size="sm" onClick={() => forceSync()} disabled={isSyncing} className="text-muted-foreground hover:text-foreground">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>
