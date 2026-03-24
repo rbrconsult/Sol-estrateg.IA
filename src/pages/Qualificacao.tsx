@@ -79,17 +79,24 @@ export default function Qualificacao() {
       : { nome: "", sm_id: null, krolik_id: null };
   };
 
+  const isDesqualificado = (r: MakeRecord) => {
+    const status = (r.makeStatus || "").toUpperCase();
+    const etapa = (r.etapaFunil || "").toUpperCase();
+    const codigo = (r.codigoStatus || "").toUpperCase();
+    return status === "DESQUALIFICADO" || etapa === "DESQUALIFICADO" || codigo === "DESQUALIFICADO";
+  };
+
   const leadsAtivos = useMemo(() => {
     if (!records) return [];
     return records
-      .filter((r) => (r.makeStatus || "").toUpperCase() !== "DESQUALIFICADO")
+      .filter((r) => !isDesqualificado(r))
       .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
   }, [records]);
 
   const leadsDesqualificados = useMemo(() => {
     if (!records) return [];
     return records
-      .filter((r) => (r.makeStatus || "").toUpperCase() === "DESQUALIFICADO")
+      .filter((r) => isDesqualificado(r))
       .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
   }, [records]);
 
