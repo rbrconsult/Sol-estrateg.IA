@@ -228,17 +228,19 @@ const Index = () => {
       {hasData && (
         <>
           {/* KPIs do robô (DS Thread) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: "MQL", value: threadKpis.mql, sub: "SOL SDR + FUP + Qualificação", color: "text-blue-400" },
-              { label: "SQL", value: threadKpis.sql, sub: "Qualificado + Contato Realizado", color: "text-emerald-400" },
+              { label: "Criados Hoje", value: threadKpis.criadosHoje, sub: "Leads novos hoje", color: "text-purple-400" },
+              { label: "Contatados", value: threadKpis.contatados, sub: "Responderam ao robô", color: "text-cyan-400" },
+              { label: "MQL", value: threadKpis.mql, sub: "SOL SDR + FUP + Qualif.", color: "text-blue-400" },
+              { label: "SQL", value: threadKpis.sql, sub: "Qualificado + Contato", color: "text-emerald-400" },
               { label: "Agendamentos", value: comercialKpis.agendamentos, sub: "Contato / Proposta / Neg.", color: "text-amber-400" },
               { label: "Fechados", value: comercialKpis.fechados, sub: "Contratos + Pós-venda", color: "text-primary" },
             ].map((k) => (
               <div key={k.label} className="rounded-lg border border-border bg-card p-4 space-y-1">
                 <p className="text-xs text-muted-foreground">{k.label}</p>
                 <p className={`text-3xl font-bold ${k.color}`}>{k.value}</p>
-                <p className="text-xs text-muted-foreground">{k.sub}</p>
+                <p className="text-[10px] text-muted-foreground">{k.sub}</p>
               </div>
             ))}
           </div>
