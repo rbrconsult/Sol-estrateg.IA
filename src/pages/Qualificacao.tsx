@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Search, Send, CheckCircle2, Loader2, Users, Filter,
@@ -23,9 +22,15 @@ function classifyLead(r: MakeRecord): string {
   return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
 }
 
-const ETAPAS_QUALIFICAVEIS = ["SOL SDR", "FUP FRIO"];
+function isDesqualificado(r: MakeRecord): boolean {
+  const status = (r.makeStatus || "").toUpperCase();
+  const etapa = (r.etapaFunil || "").toUpperCase();
+  const codigo = (r.codigoStatus || "").toUpperCase();
+  return status === "DESQUALIFICADO" || etapa === "DESQUALIFICADO" || codigo === "DESQUALIFICADO";
+}
 
-type ViewMode = "qualificar" | "desqualificar";
+const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
+const STATUS_OPTIONS = ["all", "ativos", "desqualificados"] as const;
 
 interface KrolicMember {
   id: string;
@@ -38,6 +43,7 @@ export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("all");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
   const [manualPhone, setManualPhone] = useState("");
@@ -46,13 +52,9 @@ export default function Qualificacao() {
   const [manualDesqPhone, setManualDesqPhone] = useState("");
   const [manualDesqName, setManualDesqName] = useState("");
   const [manualDesqSending, setManualDesqSending] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("qualificar");
 
-  // Krolic members
   const [krolicMembers, setKrolicMembers] = useState<KrolicMember[]>([]);
-  // Per-lead vendor selection: key = lead phone, value = member id or "roleta"
   const [vendorMap, setVendorMap] = useState<Record<string, string>>({});
-  // Global vendor for manual send
   const [manualVendor, setManualVendor] = useState<string>("roleta");
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function Qualificacao() {
     fetchKrolic();
   }, []);
 
-  const resolveVendor = (selectedValue: string): { nome: string; sm_id: number | null; krolik_id: string | null } => {
+  const resolveVendor = (selectedValue: string) => {
     if (selectedValue === "roleta" || !selectedValue) {
       if (krolicMembers.length === 0) return { nome: "Roleta", sm_id: null, krolik_id: null };
       const pick = krolicMembers[Math.floor(Math.random() * krolicMembers.length)];
@@ -79,34 +81,28 @@ export default function Qualificacao() {
       : { nome: "", sm_id: null, krolik_id: null };
   };
 
-  const isDesqualificado = (r: MakeRecord) => {
-    const status = (r.makeStatus || "").toUpperCase();
-    const etapa = (r.etapaFunil || "").toUpperCase();
-    const codigo = (r.codigoStatus || "").toUpperCase();
-    return status === "DESQUALIFICADO" || etapa === "DESQUALIFICADO" || codigo === "DESQUALIFICADO";
-  };
-
-  const leadsAtivos = useMemo(() => {
+  const allLeads = useMemo(() => {
     if (!records) return [];
-    return records
-      .filter((r) => !isDesqualificado(r))
-      .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
+    return records.map((r) => ({
+      ...r,
+      _classificacao: classifyLead(r),
+      _desqualificado: isDesqualificado(r),
+    }));
   }, [records]);
-
-  const leadsDesqualificados = useMemo(() => {
-    if (!records) return [];
-    return records
-      .filter((r) => isDesqualificado(r))
-      .map((r) => ({ ...r, _classificacao: classifyLead(r) }));
-  }, [records]);
-
-  const leads = viewMode === "qualificar" ? leadsAtivos : leadsDesqualificados;
 
   const filtered = useMemo(() => {
-    let result = leads;
+    let result = allLeads;
+
+    if (statusFilter === "ativos") {
+      result = result.filter((r) => !r._desqualificado);
+    } else if (statusFilter === "desqualificados") {
+      result = result.filter((r) => r._desqualificado);
+    }
+
     if (etapaFilter !== "all") {
       result = result.filter((r) => r._classificacao === etapaFilter);
     }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -116,6 +112,7 @@ export default function Qualificacao() {
           (r.cidade || "").toLowerCase().includes(q)
       );
     }
+
     result = [...result].sort((a, b) => {
       const getLatest = (r: typeof a) => {
         const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
@@ -124,12 +121,21 @@ export default function Qualificacao() {
       };
       return getLatest(b) - getLatest(a);
     });
+
     return result;
-  }, [leads, etapaFilter, search]);
+  }, [allLeads, statusFilter, etapaFilter, search]);
 
-  const actionLabel = viewMode === "qualificar" ? "Qualificar" : "Re-qualificar";
+  const countAtivos = useMemo(() => allLeads.filter((l) => !l._desqualificado).length, [allLeads]);
+  const countDesq = useMemo(() => allLeads.filter((l) => l._desqualificado).length, [allLeads]);
+  const countByEtapa = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const l of filtered) {
+      map[l._classificacao] = (map[l._classificacao] || 0) + 1;
+    }
+    return map;
+  }, [filtered]);
 
-  const sendToWebhookWithUrl = async (lead: MakeRecord & { _classificacao: string }, webhookUrl: string, label: string) => {
+  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string; _desqualificado: boolean }, webhookUrl: string, label: string) => {
     const key = `${lead.telefone}-${label}`;
     const vendorSelection = vendorMap[lead.telefone || ""] || "roleta";
     const vendor = resolveVendor(vendorSelection);
@@ -167,7 +173,41 @@ export default function Qualificacao() {
     }
   };
 
-  const webhookUrl = viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_DESQUALIFICAR;
+  const sendManual = async () => {
+    const cleaned = manualPhone.replace(/\D/g, "");
+    if (!cleaned || cleaned.length < 10) {
+      toast.error("Informe um número válido com DDD (mínimo 10 dígitos)");
+      return;
+    }
+    const telefoneFormatado = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+    const vendor = resolveVendor(manualVendor);
+    setManualSending(true);
+    try {
+      const payload = {
+        telefone: telefoneFormatado,
+        nome: manualName.trim() || "",
+        etapa_funil: "MANUAL",
+        cidade: "", email: "", valor_conta: "", score: "", temperatura: "",
+        canal_origem: "manual",
+        vendedor: vendor.nome,
+        vendedor_sm_id: vendor.sm_id,
+        vendedor_krolik_id: vendor.krolik_id,
+      };
+      const res = await fetch(WEBHOOK_QUALIFICAR, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success(`${telefoneFormatado} → ${vendor.nome} (qualificado)`);
+      setManualPhone("");
+      setManualName("");
+    } catch (err: any) {
+      toast.error(`Erro ao enviar: ${err.message}`);
+    } finally {
+      setManualSending(false);
+    }
+  };
 
   const sendManualDesqualificar = async () => {
     const cleaned = manualDesqPhone.replace(/\D/g, "");
@@ -182,15 +222,9 @@ export default function Qualificacao() {
         telefone: telefoneFormatado,
         nome: manualDesqName.trim() || "",
         etapa_funil: "MANUAL",
-        cidade: "",
-        email: "",
-        valor_conta: "",
-        score: "",
-        temperatura: "",
+        cidade: "", email: "", valor_conta: "", score: "", temperatura: "",
         canal_origem: "manual",
-        vendedor: "",
-        vendedor_sm_id: null,
-        vendedor_krolik_id: null,
+        vendedor: "", vendedor_sm_id: null, vendedor_krolik_id: null,
       };
       const res = await fetch(WEBHOOK_DESQUALIFICAR, {
         method: "POST",
@@ -207,54 +241,6 @@ export default function Qualificacao() {
       setManualDesqSending(false);
     }
   };
-
-  const sendManual = async () => {
-    const cleaned = manualPhone.replace(/\D/g, "");
-    if (!cleaned || cleaned.length < 10) {
-      toast.error("Informe um número válido com DDD (mínimo 10 dígitos)");
-      return;
-    }
-    const telefoneFormatado = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
-    const vendor = resolveVendor(manualVendor);
-    setManualSending(true);
-    try {
-      const payload = {
-        telefone: telefoneFormatado,
-        nome: manualName.trim() || "",
-        etapa_funil: "MANUAL",
-        cidade: "",
-        email: "",
-        valor_conta: "",
-        score: "",
-        temperatura: "",
-        canal_origem: "manual",
-        vendedor: vendor.nome,
-        vendedor_sm_id: vendor.sm_id,
-        vendedor_krolik_id: vendor.krolik_id,
-      };
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success(`${telefoneFormatado} → ${vendor.nome} (${actionLabel.toLowerCase()})`);
-      setManualPhone("");
-      setManualName("");
-    } catch (err: any) {
-      toast.error(`Erro ao enviar: ${err.message}`);
-    } finally {
-      setManualSending(false);
-    }
-  };
-
-  const countByEtapa = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const l of leads) {
-      map[l._classificacao] = (map[l._classificacao] || 0) + 1;
-    }
-    return map;
-  }, [leads]);
 
   if (isLoading) {
     return (
@@ -293,28 +279,30 @@ export default function Qualificacao() {
         </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={viewMode} onValueChange={(v) => { setViewMode(v as ViewMode); setSentMap({}); }}>
-        <TabsList>
-          <TabsTrigger value="qualificar" className="gap-1.5">
-            <CheckCircle2 className="h-4 w-4" />
-            Qualificar ({leadsAtivos.length})
-          </TabsTrigger>
-          <TabsTrigger value="desqualificar" className="gap-1.5">
-            <XCircle className="h-4 w-4" />
-            Desqualificados ({leadsDesqualificados.length})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
               <Users className="h-3.5 w-3.5" /> Total
             </div>
-            <p className="text-2xl font-bold">{leads.length}</p>
+            <p className="text-2xl font-bold">{allLeads.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Ativos
+            </div>
+            <p className="text-2xl font-bold">{countAtivos}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <XCircle className="h-3.5 w-3.5 text-destructive" /> Desqualificados
+            </div>
+            <p className="text-2xl font-bold">{countDesq}</p>
           </CardContent>
         </Card>
         {Object.entries(countByEtapa).map(([etapa, count]) => (
@@ -328,16 +316,16 @@ export default function Qualificacao() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Enviados
+              <Send className="h-3.5 w-3.5 text-primary" /> Enviados
             </div>
-            <p className="text-2xl font-bold text-green-500">
+            <p className="text-2xl font-bold text-primary">
               {Object.values(sentMap).filter(Boolean).length}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Krolic Members Info */}
+      {/* Krolic Members */}
       {krolicMembers.length > 0 && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-3">
@@ -368,25 +356,35 @@ export default function Qualificacao() {
             className="pl-9"
           />
         </div>
-        <Select value={etapaFilter} onValueChange={setEtapaFilter}>
-          <SelectTrigger className="w-48">
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+          <SelectTrigger className="w-44">
             <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="ativos">Ativos</SelectItem>
+            <SelectItem value="desqualificados">Desqualificados</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={etapaFilter} onValueChange={setEtapaFilter}>
+          <SelectTrigger className="w-44">
             <SelectValue placeholder="Etapa" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as Etapas</SelectItem>
-            {ETAPAS_QUALIFICAVEIS.map((e) => (
+            {ETAPA_OPTIONS.map((e) => (
               <SelectItem key={e} value={e}>{e}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Envio Manual - Qualificar */}
+      {/* Manual Qualificar */}
       <Card className="border-dashed border-primary/30">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3">
-            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
             Qualificar Manual
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -394,23 +392,12 @@ export default function Qualificacao() {
               <label className="text-xs font-medium text-muted-foreground">Número (com DDD)</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="5514996703996"
-                  value={manualPhone}
-                  onChange={(e) => setManualPhone(e.target.value)}
-                  className="pl-9"
-                  disabled={manualSending}
-                />
+                <Input placeholder="5514996703996" value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="pl-9" disabled={manualSending} />
               </div>
             </div>
             <div className="flex-1 space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
-              <Input
-                placeholder="Nome do lead"
-                value={manualName}
-                onChange={(e) => setManualName(e.target.value)}
-                disabled={manualSending}
-              />
+              <Input placeholder="Nome do lead" value={manualName} onChange={(e) => setManualName(e.target.value)} disabled={manualSending} />
             </div>
             <div className="w-48 space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Vendedor</label>
@@ -427,19 +414,15 @@ export default function Qualificacao() {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              onClick={sendManual}
-              disabled={manualSending || !manualPhone.trim()}
-              className="shrink-0 gap-1.5"
-            >
+            <Button onClick={sendManual} disabled={manualSending || !manualPhone.trim()} className="shrink-0 gap-1.5">
               {manualSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Qualificar Manual
+              Qualificar
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Envio Manual - Desqualificar */}
+      {/* Manual Desqualificar */}
       <Card className="border-dashed border-destructive/30">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3">
@@ -451,32 +434,16 @@ export default function Qualificacao() {
               <label className="text-xs font-medium text-muted-foreground">Número (com DDD)</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="5514996703996"
-                  value={manualDesqPhone}
-                  onChange={(e) => setManualDesqPhone(e.target.value)}
-                  className="pl-9"
-                  disabled={manualDesqSending}
-                />
+                <Input placeholder="5514996703996" value={manualDesqPhone} onChange={(e) => setManualDesqPhone(e.target.value)} className="pl-9" disabled={manualDesqSending} />
               </div>
             </div>
             <div className="flex-1 space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
-              <Input
-                placeholder="Nome do lead"
-                value={manualDesqName}
-                onChange={(e) => setManualDesqName(e.target.value)}
-                disabled={manualDesqSending}
-              />
+              <Input placeholder="Nome do lead" value={manualDesqName} onChange={(e) => setManualDesqName(e.target.value)} disabled={manualDesqSending} />
             </div>
-            <Button
-              onClick={sendManualDesqualificar}
-              disabled={manualDesqSending || !manualDesqPhone.trim()}
-              className="shrink-0 gap-1.5"
-              variant="destructive"
-            >
+            <Button onClick={sendManualDesqualificar} disabled={manualDesqSending || !manualDesqPhone.trim()} className="shrink-0 gap-1.5" variant="destructive">
               {manualDesqSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-              Desqualificar Manual
+              Desqualificar
             </Button>
           </div>
         </CardContent>
@@ -486,7 +453,7 @@ export default function Qualificacao() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
-            {filtered.length} leads {viewMode === "qualificar" ? "para qualificação" : "desqualificados"}
+            {filtered.length} leads
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -499,6 +466,7 @@ export default function Qualificacao() {
               {filtered.map((lead, idx) => {
                 const key = lead.telefone || `lead-${idx}`;
                 const selectedVendor = vendorMap[key] || "roleta";
+                const isDQ = lead._desqualificado;
 
                 return (
                   <div
@@ -513,7 +481,7 @@ export default function Qualificacao() {
                         <Badge variant="outline" className="text-[10px] shrink-0">
                           {lead._classificacao}
                         </Badge>
-                        {viewMode === "desqualificar" && (
+                        {isDQ && (
                           <Badge variant="destructive" className="text-[10px] shrink-0">
                             DESQUALIFICADO
                           </Badge>
@@ -523,10 +491,10 @@ export default function Qualificacao() {
                             variant="secondary"
                             className={`text-[10px] shrink-0 ${
                               lead.makeTemperatura === "QUENTE"
-                                ? "bg-red-500/20 text-red-400"
+                                ? "bg-destructive/20 text-destructive"
                                 : lead.makeTemperatura === "MORNO"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-blue-500/20 text-blue-400"
+                                ? "bg-accent/50 text-accent-foreground"
+                                : "bg-primary/20 text-primary"
                             }`}
                           >
                             <Thermometer className="h-3 w-3 mr-0.5" />
@@ -545,13 +513,10 @@ export default function Qualificacao() {
                             {lead.cidade}
                           </span>
                         )}
-                        {lead.makeScore && (
-                          <span>Score: {lead.makeScore}</span>
-                        )}
+                        {lead.makeScore && <span>Score: {lead.makeScore}</span>}
                       </div>
                     </div>
 
-                    {/* Vendor selector per lead */}
                     <Select
                       value={selectedVendor}
                       onValueChange={(v) => setVendorMap((m) => ({ ...m, [key]: v }))}
@@ -568,12 +533,12 @@ export default function Qualificacao() {
                     </Select>
 
                     <div className="flex gap-1.5 shrink-0">
-                      {viewMode === "qualificar" && (
+                      {!isDQ && (
                         <Button
                           size="sm"
                           variant="destructive"
                           disabled={!!sendingMap[`${key}-Desqualificar`]}
-                          onClick={() => sendToWebhookWithUrl(lead, WEBHOOK_DESQUALIFICAR, "Desqualificar")}
+                          onClick={() => sendToWebhook(lead, WEBHOOK_DESQUALIFICAR, "Desqualificar")}
                           className="gap-1"
                         >
                           {sendingMap[`${key}-Desqualificar`] ? (
@@ -586,17 +551,17 @@ export default function Qualificacao() {
                       )}
                       <Button
                         size="sm"
-                        variant={sentMap[`${key}-${actionLabel}`] ? "outline" : "default"}
-                        disabled={!!sendingMap[`${key}-${actionLabel}`]}
-                        onClick={() => sendToWebhookWithUrl(lead, viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_QUALIFICAR, actionLabel)}
+                        variant={sentMap[`${key}-Qualificar`] ? "outline" : "default"}
+                        disabled={!!sendingMap[`${key}-Qualificar`]}
+                        onClick={() => sendToWebhook(lead, WEBHOOK_QUALIFICAR, "Qualificar")}
                         className="gap-1"
                       >
-                        {sendingMap[`${key}-${actionLabel}`] ? (
+                        {sendingMap[`${key}-Qualificar`] ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
                           <Send className="h-3.5 w-3.5" />
                         )}
-                        {actionLabel}
+                        {isDQ ? "Re-qualificar" : "Qualificar"}
                       </Button>
                     </div>
                   </div>
