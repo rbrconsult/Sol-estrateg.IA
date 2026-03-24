@@ -532,6 +532,24 @@ export default function Qualificacao() {
                           </span>
                         )}
                         {lead.makeScore && <span>Score: {lead.makeScore}</span>}
+                        {(() => {
+                          const dates = [
+                            lead.lastFollowupDate,
+                            lead.historico?.length ? lead.historico[lead.historico.length - 1]?.data : null,
+                            lead.data_resposta,
+                            lead.data_envio,
+                          ].filter(Boolean);
+                          const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
+                          if (timestamps.length === 0) return null;
+                          const latest = new Date(Math.max(...timestamps));
+                          const formatted = latest.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                          return (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatted}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
