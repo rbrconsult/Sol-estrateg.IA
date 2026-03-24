@@ -40,7 +40,8 @@ const STATUS_EXCLUIR = new Set([
 type StatusView = 'abertos' | 'ganhos' | 'perdidos';
 
 const Pipeline = () => {
-  const { proposals: allProposals, lastUpdate, isLoading, error, refetch, isFetching, orgFilterActive } = useOrgFilteredProposals();
+  const { proposals: allProposals, lastUpdate, isLoading, error, isFetching, orgFilterActive } = useOrgFilteredProposals();
+  const { forceSync, isSyncing } = useForceSync();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
   const { data: comercialRecords, isLoading: comercialLoading } = useMakeComercialData();
   const { selectedOrgName } = useOrgFilter();
