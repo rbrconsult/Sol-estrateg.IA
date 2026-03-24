@@ -206,6 +206,8 @@ Deno.serve(async (req) => {
     const dataContext = {
       data: todayStr.split("-").reverse().join("/"),
       leads_gerados: String(leadsGerados),
+      // aliases para compatibilidade com templates legados
+      leads: String(leadsGerados),
       leads_qualificados: String(qualificados.length),
       taxa_qualificacao: `${taxaQualificacao}%`,
       oportunidades: String(comProposta.length),
@@ -350,6 +352,8 @@ Responda APENAS com um JSON válido sem markdown, usando as chaves: insight_1, i
     for (const [key, value] of Object.entries(allVars)) {
       filledContent = filledContent.replaceAll(`{{${key}}}`, String(value || ""));
     }
+    // evita placeholders "crus" no WhatsApp caso algum alias não exista
+    filledContent = filledContent.replace(/\{\{\s*[^{}]+\s*\}\}/g, "N/A");
 
     return new Response(JSON.stringify({ 
       success: true, 
