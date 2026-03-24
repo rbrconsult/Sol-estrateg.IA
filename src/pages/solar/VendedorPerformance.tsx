@@ -105,7 +105,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function VendedorPerformance() {
-  const { data: records, isLoading, error, refetch, isFetching } = useMakeComercialData();
+  const { data: records, isLoading, error, isFetching } = useMakeComercialData();
+  const { forceSync, isSyncing } = useForceSync();
   const [sortBy, setSortBy] = useState<"valor" | "projetos" | "conversao">("valor");
 
   const stats = useMemo(() => {
