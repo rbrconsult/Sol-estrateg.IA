@@ -126,6 +126,9 @@ Deno.serve(async (req) => {
     let makeApiKey = "";
     let dsThreadId = "";
     let dsComercialId = "";
+    let dsMetaAdsId = "";
+    let dsGoogleAdsId = "";
+    let dsProducaoId = "";
     const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1437295").trim();
 
     if (effectiveOrgId) {
@@ -133,11 +136,14 @@ Deno.serve(async (req) => {
         .from("organization_configs")
         .select("config_key, config_value")
         .eq("organization_id", effectiveOrgId)
-        .in("config_key", ["make_api_key", "ds_thread", "ds_comercial"]);
+        .in("config_key", ["make_api_key", "ds_thread", "ds_comercial", "ds_meta_ads", "ds_google_ads", "ds_producao"]);
       for (const c of orgConfigs || []) {
         if (c.config_key === "make_api_key") makeApiKey = c.config_value.trim();
         if (c.config_key === "ds_thread") dsThreadId = c.config_value.trim();
         if (c.config_key === "ds_comercial") dsComercialId = c.config_value.trim();
+        if (c.config_key === "ds_meta_ads") dsMetaAdsId = c.config_value.trim();
+        if (c.config_key === "ds_google_ads") dsGoogleAdsId = c.config_value.trim();
+        if (c.config_key === "ds_producao") dsProducaoId = c.config_value.trim();
       }
     }
     if (!makeApiKey) makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
@@ -164,12 +170,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`generate-report: org=${effectiveOrgId}, dsThread=${dsThreadId}, dsComercial=${dsComercialId}, teamMembers=${allowedNames.length}`);
+    // Resolve org slug for Ads/Produção filtering
+    let orgSlug = "";
+    if (effectiveOrgId) {
+      const { data: slugData } = await supabase.from("organizations").select("slug").eq("id", effectiveOrgId).single();
+      orgSlug = slugData?.slug || "";
+    }
+
+    console.log(`generate-report: org=${effectiveOrgId}, slug=${orgSlug}, dsThread=${dsThreadId}, dsComercial=${dsComercialId}, dsMetaAds=${dsMetaAdsId}, dsGoogleAds=${dsGoogleAdsId}, dsProducao=${dsProducaoId}, team=${allowedNames.length}`);
 
     // ── 1. Fetch Make Data Stores in parallel ──
-    const [rawThread, rawComercial] = await Promise.all([
+    const [rawThread, rawComercial, rawMetaAds, rawGoogleAds, rawProducao] = await Promise.all([
       dsThreadId ? fetchMakeDS(dsThreadId, makeApiKey, makeTeamId) : Promise.resolve([]),
       dsComercialId ? fetchMakeDS(dsComercialId, makeApiKey, makeTeamId) : Promise.resolve([]),
+      dsMetaAdsId ? fetchMakeDS(dsMetaAdsId, makeApiKey, makeTeamId) : Promise.resolve([]),
+      dsGoogleAdsId ? fetchMakeDS(dsGoogleAdsId, makeApiKey, makeTeamId) : Promise.resolve([]),
+      dsProducaoId ? fetchMakeDS(dsProducaoId, makeApiKey, makeTeamId) : Promise.resolve([]),
     ]);
 
     // Normalize
@@ -184,7 +200,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`generate-report: threadLeads=${threadLeads.length}, comercialLeads=${comercialLeads.length}`);
+    // Normalize & filter Ads + Produção
+    let metaAds = rawMetaAds.map(norm);
+    let googleAds = rawGoogleAds.map(norm);
+    let producao = rawProducao.map(norm);
+    if (orgSlug) {
+      metaAds = metaAds.filter((d: any) => d.franquia_id === orgSlug);
+      googleAds = googleAds.filter((d: any) => d.franquia_id === orgSlug);
+      producao = producao.filter((d: any) => d.franquia_id === orgSlug);
+    }
+
+    console.log(`generate-report: threadLeads=${threadLeads.length}, comercialLeads=${comercialLeads.length}, metaAds=${metaAds.length}, googleAds=${googleAds.length}, producao=${producao.length}`);
 
     // ── 2. Calculate KPIs from REAL data ──
     const now = new Date();
@@ -266,6 +292,40 @@ Deno.serve(async (req) => {
 
     const monthStart = todayStr ? `${todayStr.slice(0, 7)}-01` : "";
 
+    // ── Ads KPIs (Meta + Google) ──
+    const allAds = [...metaAds, ...googleAds];
+    const totalInvestimento = allAds.reduce((s: number, d: any) => s + (Number(d.gasto_total || d.custo || 0)), 0);
+    const totalCliques = allAds.reduce((s: number, d: any) => s + (Number(d.cliques || 0)), 0);
+    const totalLeadsAds = allAds.reduce((s: number, d: any) => s + (Number(d.leads_total || d.conversoes || 0)), 0);
+    const cplCalc = totalLeadsAds > 0 ? (totalInvestimento / totalLeadsAds) : 0;
+    const cacCalc = vendasArr.length > 0 ? (totalInvestimento / vendasArr.length) : 0;
+    const roiCalc = totalInvestimento > 0 ? (((faturamento - totalInvestimento) / totalInvestimento) * 100) : 0;
+
+    // Top campaigns
+    const campMap: Record<string, { gasto: number; leads: number; cliques: number }> = {};
+    allAds.forEach((d: any) => {
+      const name = d.campaign_name || "Sem nome";
+      if (!campMap[name]) campMap[name] = { gasto: 0, leads: 0, cliques: 0 };
+      campMap[name].gasto += Number(d.gasto_total || d.custo || 0);
+      campMap[name].leads += Number(d.leads_total || d.conversoes || 0);
+      campMap[name].cliques += Number(d.cliques || 0);
+    });
+    const topCampanhas = Object.entries(campMap)
+      .sort((a, b) => b[1].gasto - a[1].gasto)
+      .slice(0, 3)
+      .map(([name, s]) => `• ${name}: R$ ${s.gasto.toFixed(2)} | ${s.leads} leads | ${s.cliques} cliques`)
+      .join("\n") || "Dados de campanha não disponíveis";
+
+    // ── Produção KPIs (SDR + FUP) ──
+    const sdrProd = producao.filter((d: any) => d.robo === "SDR");
+    const fupProd = producao.filter((d: any) => d.robo === "FUP" || d.robo === "FUP_FRIO");
+    const sdrMsgsEnviadas = sdrProd.reduce((s: number, d: any) => s + (Number(d.msgs_enviadas || 0)), 0);
+    const sdrMsgsRecebidas = sdrProd.reduce((s: number, d: any) => s + (Number(d.msgs_recebidas || 0)), 0);
+    const sdrQualDia = sdrProd.reduce((s: number, d: any) => s + (Number(d.qualificados_dia || 0)), 0);
+    const fupDisparos = fupProd.reduce((s: number, d: any) => s + (Number(d.msgs_enviadas || 0)), 0);
+    const fupRespostas = fupProd.reduce((s: number, d: any) => s + (Number(d.msgs_recebidas || 0)), 0);
+    const fupReativados = fupProd.reduce((s: number, d: any) => s + (Number(d.qualificados_dia || 0)), 0);
+
     // ── 3. Build data context ──
     const dataContext: Record<string, string> = {
       data: todayStr ? todayStr.split("-").reverse().join("/") : new Date().toLocaleDateString("pt-BR"),
@@ -303,28 +363,28 @@ Deno.serve(async (req) => {
       destaque_2: "",
       atencao: "",
       acao_gerencial: "",
-      sol_conversas: String(roboLeads.length),
-      sol_qualificados: `${roboQualificados.length} (${roboLeads.length > 0 ? ((roboQualificados.length / roboLeads.length) * 100).toFixed(1) : 0}%)`,
+      sol_conversas: String(sdrMsgsEnviadas || roboLeads.length),
+      sol_qualificados: `${sdrQualDia || roboQualificados.length} (${(sdrMsgsEnviadas || roboLeads.length) > 0 ? (((sdrQualDia || roboQualificados.length) / (sdrMsgsEnviadas || roboLeads.length || 1)) * 100).toFixed(1) : 0}%)`,
       sol_score: avgScore,
       sol_temperatura: mainTemp,
       sol_tempo_qual: "N/A",
-      sol_erros: "0",
-      fup_disparos: "0",
-      fup_respostas: "0",
-      fup_reativados: "0",
+      sol_erros: String(sdrProd.reduce((s: number, d: any) => s + (Number(d.erros || 0)), 0)),
+      fup_disparos: String(fupDisparos),
+      fup_respostas: String(fupRespostas),
+      fup_reativados: String(fupReativados),
       fup_melhor_etapa: "N/A",
       saude_cenarios: "• Todos os cenários: ✅ Operacional",
       ajuste: "Sem ajustes necessários no momento",
-      investimento: "N/A",
-      cpl: "N/A",
+      investimento: totalInvestimento > 0 ? `R$ ${totalInvestimento.toFixed(2)}` : "N/A",
+      cpl: cplCalc > 0 ? `R$ ${cplCalc.toFixed(2)}` : "N/A",
       qualificados: String(threadQualificados.length),
-      cac: "N/A",
-      roi: "N/A",
+      cac: cacCalc > 0 ? `R$ ${cacCalc.toFixed(2)}` : "N/A",
+      roi: totalInvestimento > 0 ? `${roiCalc.toFixed(1)}%` : "N/A",
       perfil: "N/A",
       origem: mainOrigem,
       intencao: "N/A",
       objecao: "N/A",
-      top_campanhas: "Dados de campanha não disponíveis",
+      top_campanhas: topCampanhas,
       proximas_acoes: "Analisar ROI por canal e ajustar orçamento",
     };
 
@@ -353,6 +413,9 @@ DADOS (${dataContext.data}):
 - Distribuição por etapa CRM: ${JSON.stringify(etapas)}
 - Origens: ${JSON.stringify(origens)}
 - Top closers: ${JSON.stringify(Object.entries(closerMap).slice(0, 5).map(([n, s]) => ({ nome: n, ...s })))}
+- INVESTIMENTO ADS: R$ ${totalInvestimento.toFixed(2)} (Meta: ${metaAds.length} registros, Google: ${googleAds.length} registros)
+- CPL: R$ ${cplCalc.toFixed(2)} | CAC: R$ ${cacCalc.toFixed(2)} | ROI: ${roiCalc.toFixed(1)}%
+- PRODUÇÃO ROBÔS: SDR ${sdrMsgsEnviadas} msgs enviadas, ${sdrMsgsRecebidas} recebidas, ${sdrQualDia} qualificados | FUP: ${fupDisparos} disparos, ${fupRespostas} respostas, ${fupReativados} reativados
 
 Responda APENAS com JSON válido sem markdown. Chaves: insight_1, insight_2, insight_3, recomendacao, destaque_1, destaque_2, atencao, acao_gerencial. Cada valor string curta (máx 120 chars) em pt-BR.`;
 
