@@ -57,8 +57,14 @@ const menuGroups: MenuGroup[] = [
       { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
       { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
       { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
+    ],
+  },
+  {
+    label: "Campanhas",
+    items: [
       { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "ads-performance" },
       { title: "Mídia × Receita", icon: DollarSign, path: "/midia", moduleKey: "midia-receita" },
+      { title: "GA4", icon: Globe, path: "/ga4", moduleKey: "ga4" },
     ],
   },
   {
