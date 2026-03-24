@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { getOrigensData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
