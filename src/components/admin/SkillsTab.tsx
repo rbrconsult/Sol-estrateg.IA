@@ -23,11 +23,11 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'send-whatsapp-alert',
-    description: 'Envia alertas de erro Make via WhatsApp (scaffold — não implementado)',
+    description: 'Envia mensagens/alertas via WhatsApp usando Krolic API. Usado por Reports e alertas de erro.',
     category: 'whatsapp',
-    status: 'scaffold',
+    status: 'active',
     dependencies: ['Krolic API'],
-    notes: 'Apenas scaffold. Retorna { success: true, queued: true } sem enviar. Usa getClaims (⚠️).',
+    notes: 'Envia via POST Krolic com forceSend. CC fixo + Super Admin automático.',
   },
   {
     name: 'whatsapp-proxy',
@@ -105,6 +105,14 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
     category: 'ai',
     status: 'active',
     dependencies: ['LOVABLE_API_KEY'],
+  },
+  {
+    name: 'generate-report',
+    description: 'Gera relatórios com dados reais (Make DS thread + comercial) + insights via Lovable AI.',
+    category: 'ai',
+    status: 'active',
+    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'MAKE_DATASTORE_ID', 'MAKE_COMERCIAL_DATASTORE_ID', 'organization_configs', 'time_comercial'],
+    notes: 'Busca DS 64798 (thread) e DS 84404 (comercial) em paralelo. Filtra por org/time_comercial. Substitui variáveis e gera insights via Gemini.',
   },
   // Auth
   {
