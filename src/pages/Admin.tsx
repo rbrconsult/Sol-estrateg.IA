@@ -926,17 +926,26 @@ export default function Admin() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="edit_phone">Telefone (WhatsApp)</Label>
+                <Input
+                  id="edit_phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="5511999999999"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="edit_role">Função</Label>
                 <Select value={formData.role} onValueChange={(value: AppRole) => setFormData({ ...formData, role: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
                     <SelectItem value="diretor">Diretor</SelectItem>
                     <SelectItem value="gerente">Gerente</SelectItem>
                     <SelectItem value="closer">Closer</SelectItem>
                     <SelectItem value="user">Usuário</SelectItem>
-                    <SelectItem value="admin">Admin (legado)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
