@@ -104,6 +104,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         periodicidade: "Diária — 07:00",
         canal: "WhatsApp",
         conteudo: "",
+        destinatario_roles: [],
       });
     }
     setTab("editor");
