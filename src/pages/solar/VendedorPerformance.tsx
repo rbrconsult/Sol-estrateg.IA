@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { RefreshCw, Users, DollarSign, TrendingUp, Zap, Trophy, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
