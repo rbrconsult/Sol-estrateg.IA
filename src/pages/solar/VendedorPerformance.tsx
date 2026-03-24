@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { RefreshCw, Users, DollarSign, TrendingUp, Zap, Trophy, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,7 +105,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function VendedorPerformance() {
-  const { data: records, isLoading, error, refetch, isFetching } = useMakeComercialData();
+  const { data: records, isLoading, error, isFetching } = useMakeComercialData();
+  const { forceSync, isSyncing } = useForceSync();
   const [sortBy, setSortBy] = useState<"valor" | "projetos" | "conversao">("valor");
 
   const stats = useMemo(() => {
@@ -169,8 +171,8 @@ export default function VendedorPerformance() {
               <SelectItem value="conversao">Por Conversão</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing || isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
             Atualizar
           </Button>
         </div>

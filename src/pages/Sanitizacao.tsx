@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -170,7 +171,8 @@ function FunnelBar({ label, value, max, total }: { label: string; value: number;
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function Sanitizacao() {
   const [search, setSearch] = useState("");
-  const { proposals, isLoading, lastUpdate, refetch, isFetching } = useEnrichedProposals();
+  const { proposals, isLoading, lastUpdate, isFetching } = useEnrichedProposals();
+  const { forceSync, isSyncing } = useForceSync();
 
   // ── Compute all analytics from live proposals ──
   const analysis = useMemo(() => {
@@ -350,7 +352,7 @@ export default function Sanitizacao() {
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
         <AlertTriangle className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground text-sm">Nenhum dado disponível para análise de sanitização.</p>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
+        <Button variant="outline" size="sm" onClick={() => forceSync()}>
           <RefreshCw className="h-4 w-4 mr-2" /> Recarregar
         </Button>
       </div>
@@ -376,8 +378,8 @@ export default function Sanitizacao() {
           </div>
         </div>
         <div className="flex items-center gap-2 self-start">
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} /> Atualizar
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing}>
+            <RefreshCw className={cn("h-4 w-4 mr-1", isSyncing && "animate-spin")} /> Atualizar
           </Button>
           {(analysis.dupProjectCount > 0 || analysis.invalidProjectCount > 0 || analysis.semTel.length > 0) && (
             <Badge variant="destructive" className="text-xs">⚠ Ação Necessária</Badge>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { RefreshCw, AlertCircle, TrendingUp, Users, Zap, DollarSign, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +49,8 @@ const statusBadge = (status: string) => {
 };
 
 export default function Comercial() {
-  const { data: records, isLoading, error, refetch, isFetching } = useMakeComercialData();
+  const { data: records, isLoading, error, isFetching } = useMakeComercialData();
+  const { forceSync, isSyncing } = useForceSync();
   const [search, setSearch] = useState("");
   const [filterResp, setFilterResp] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -185,8 +187,8 @@ export default function Comercial() {
               Limpar filtros
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing || isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>

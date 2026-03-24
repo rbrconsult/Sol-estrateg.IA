@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { ExecutiveKPIs } from "@/components/dashboard/ExecutiveKPIs";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
@@ -51,7 +52,8 @@ const FUNNEL_JOURNEY = [
 ];
 
 const Index = () => {
-  const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
+  const { proposals: allProposals, isLoading, error, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
+  const { forceSync, isSyncing } = useForceSync();
   const { data: makeRecords } = useMakeDataStore();
   const { data: comercialRecords } = useMakeComercialData();
   const { selectedOrgName } = useOrgFilter();
@@ -208,8 +210,8 @@ const Index = () => {
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
             <span>Erro ao carregar dados: {error.message}</span>
-            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            <Button variant="ghost" size="sm" onClick={() => forceSync()} disabled={isSyncing}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
               Tentar novamente
             </Button>
           </AlertDescription>
@@ -222,8 +224,8 @@ const Index = () => {
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             {threadKpis.total} leads DS Thread • {comercialRecords?.length || 0} DS Comercial
           </span>
-          <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <Button variant="ghost" size="sm" onClick={() => forceSync()} disabled={isSyncing} className="text-muted-foreground hover:text-foreground">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>

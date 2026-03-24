@@ -47,7 +47,7 @@ interface KrolicMember {
 }
 
 export default function Qualificacao() {
-  const { data: records, isLoading, refetch, isFetching, forceSync } = useMakeDataStore();
+  const { data: records, isLoading, isFetching, forceSync } = useMakeDataStore();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");

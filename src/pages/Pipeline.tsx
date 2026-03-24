@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -39,7 +40,8 @@ const STATUS_EXCLUIR = new Set([
 type StatusView = 'abertos' | 'ganhos' | 'perdidos';
 
 const Pipeline = () => {
-  const { proposals: allProposals, lastUpdate, isLoading, error, refetch, isFetching, orgFilterActive } = useOrgFilteredProposals();
+  const { proposals: allProposals, lastUpdate, isLoading, error, isFetching, orgFilterActive } = useOrgFilteredProposals();
+  const { forceSync, isSyncing } = useForceSync();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
   const { data: comercialRecords, isLoading: comercialLoading } = useMakeComercialData();
   const { selectedOrgName } = useOrgFilter();
@@ -164,8 +166,8 @@ const Pipeline = () => {
           )}
           <Badge variant="outline" className="text-xs">{proposalsForKanban.length} itens</Badge>
           <HelpButton moduleId="pipeline" label="Ajuda do Pipeline" />
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing} className="text-muted-foreground hover:text-foreground">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>
@@ -191,7 +193,7 @@ const Pipeline = () => {
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
             <span>Erro ao carregar dados: {error.message}</span>
-            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="ml-4">
+            <Button variant="ghost" size="sm" onClick={() => forceSync()} disabled={isSyncing} className="ml-4">
               <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Tentar novamente
             </Button>
