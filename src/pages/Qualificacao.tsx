@@ -83,11 +83,26 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!records) return [];
-    return records.map((r) => ({
-      ...r,
-      _classificacao: classifyLead(r),
-      _desqualificado: isDesqualificado(r),
-    }));
+    // Only leads stuck in ROBO stage (not yet qualified/moved forward)
+    const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU', 'NOVO', ''];
+    return records
+      .filter((r) => {
+        const status = (r.makeStatus || '').toUpperCase();
+        const etapa = (r.etapaFunil || '').toUpperCase();
+        const codigo = (r.codigoStatus || '').toUpperCase();
+        // Include if status is empty/robot-stage OR explicitly in qualification
+        const isRoboStage = !status || roboStatuses.includes(status) || status === 'WHATSAPP';
+        // Exclude already qualified leads that moved forward
+        const isQualificado = status === 'QUALIFICADO' && (etapa === 'CLOSER' || etapa === 'AGENDAMENTO' || etapa === 'PROPOSTA');
+        if (isQualificado) return false;
+        // Exclude desqualificados unless filter asks for them
+        return isRoboStage || isDesqualificado(r);
+      })
+      .map((r) => ({
+        ...r,
+        _classificacao: classifyLead(r),
+        _desqualificado: isDesqualificado(r),
+      }));
   }, [records]);
 
   const filtered = useMemo(() => {
