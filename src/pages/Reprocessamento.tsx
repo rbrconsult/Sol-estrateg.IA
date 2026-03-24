@@ -9,22 +9,58 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   RotateCcw, Send, Loader2, CheckCircle2, Search, Phone,
-  MapPin, Thermometer, RefreshCw, Users,
+  MapPin, Thermometer, RefreshCw, Users, Filter,
 } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 const WEBHOOK_URL = "https://hook.us2.make.com/wkesyljs4735mb4vwoo5v033ni9eirho";
+
+function isDesqualificado(r: MakeRecord): boolean {
+  const status = (r.makeStatus || "").toUpperCase();
+  const etapa = (r.etapaFunil || "").toUpperCase();
+  const codigo = (r.codigoStatus || "").toUpperCase();
+  return (
+    status === "DESQUALIFICADO" ||
+    etapa === "DESQUALIFICADO" ||
+    etapa === "DECLINIO" ||
+    etapa === "DECLÍNIO" ||
+    codigo === "DESQUALIFICADO" ||
+    codigo === "LEAD_FRIO"
+  );
+}
+
+function isQualificado(r: MakeRecord): boolean {
+  const status = (r.makeStatus || "").toUpperCase();
+  const etapa = (r.etapaFunil || "").toUpperCase();
+  return status === "QUALIFICADO" || etapa === "QUALIFICADO";
+}
+
+const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 export default function Reprocessamento() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
 
   const leads = useMemo(() => {
     if (!records) return [];
     let result = [...records];
+
+    // Status filter
+    if (statusFilter === "ativos") {
+      result = result.filter(r => !isDesqualificado(r) && !isQualificado(r));
+    } else if (statusFilter === "qualificados") {
+      result = result.filter(r => isQualificado(r));
+    } else if (statusFilter === "desqualificados") {
+      result = result.filter(r => isDesqualificado(r));
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -43,7 +79,7 @@ export default function Reprocessamento() {
       return getLatest(b) - getLatest(a);
     });
     return result;
-  }, [records, search]);
+  }, [records, search, statusFilter]);
 
   const sendToWebhook = async (phone: string, name?: string) => {
     const cleaned = phone.replace(/\D/g, "");
