@@ -144,6 +144,7 @@ export default function Admin() {
         email: profile.email || '',
         full_name: profile.full_name,
         created_at: profile.created_at,
+        phone: profile.phone || '',
         role: roles?.find(r => r.user_id === profile.id)?.role || 'user'
       })) || [];
 
@@ -287,11 +288,15 @@ export default function Admin() {
 
       if (roleError) throw roleError;
 
-      // Update full_name in profiles
-      if (formData.full_name !== selectedUser.full_name) {
+      // Update full_name and phone in profiles
+      const profileUpdates: Record<string, any> = {};
+      if (formData.full_name !== selectedUser.full_name) profileUpdates.full_name = formData.full_name;
+      if (formData.phone) profileUpdates.phone = formData.phone;
+      
+      if (Object.keys(profileUpdates).length > 0) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ full_name: formData.full_name })
+          .update(profileUpdates)
           .eq('id', selectedUser.id);
 
         if (profileError) throw profileError;
@@ -352,7 +357,7 @@ export default function Admin() {
       full_name: u.full_name || '', 
       role: u.role as AppRole,
       organization_id: '00000000-0000-0000-0000-000000000001',
-      phone: ''
+      phone: (u as any).phone || ''
     });
     setIsEditDialogOpen(true);
   };
@@ -921,17 +926,26 @@ export default function Admin() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="edit_phone">Telefone (WhatsApp)</Label>
+                <Input
+                  id="edit_phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="5511999999999"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="edit_role">Função</Label>
                 <Select value={formData.role} onValueChange={(value: AppRole) => setFormData({ ...formData, role: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
                     <SelectItem value="diretor">Diretor</SelectItem>
                     <SelectItem value="gerente">Gerente</SelectItem>
                     <SelectItem value="closer">Closer</SelectItem>
                     <SelectItem value="user">Usuário</SelectItem>
-                    <SelectItem value="admin">Admin (legado)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
