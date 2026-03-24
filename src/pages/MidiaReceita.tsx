@@ -155,9 +155,9 @@ export default function MidiaReceita() {
       <PageFloatingFilter
         filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
         setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm}
+        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm} setTemperatura={pf.setTemperatura} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
         canais={canais}
-        config={{ showPeriodo: true, showCanal: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+        config={{ showPeriodo: true, showCanal: true, showSearch: true, showTemperatura: true, showEtapa: true, showStatus: true, searchPlaceholder: "Buscar lead..." }}
       />
 
       {/* KPIs */}

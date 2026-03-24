@@ -107,7 +107,7 @@ export default function GA4Page() {
       <PageFloatingFilter
         filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
         setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        config={{ showPeriodo: true, showSearch: true }}
+        config={{ showPeriodo: true, showSearch: true, showEtapa: true, showStatus: true, showTemperatura: true }}
       />
       <div>
         <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">

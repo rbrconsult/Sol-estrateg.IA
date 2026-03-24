@@ -204,8 +204,8 @@ export default function SLAMonitor() {
       <PageFloatingFilter
         filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
         setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setSearchTerm={pf.setSearchTerm}
-        config={{ showPeriodo: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+        setSearchTerm={pf.setSearchTerm} setTemperatura={pf.setTemperatura} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        config={{ showPeriodo: true, showSearch: true, showTemperatura: true, showEtapa: true, showStatus: true, searchPlaceholder: "Buscar lead..." }}
       />
 
       {/* Status geral */}
