@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const REPORT_TIMEZONE = "America/Sao_Paulo";
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const toDateKey = (value: string | Date) =>
   new Intl.DateTimeFormat("en-CA", {
@@ -47,22 +48,46 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: organizationId, error: orgError } = await supabase.rpc("get_user_org", {
+    const { templateContent, templateTitle, organizationId: requestedOrganizationId } = await req.json();
+    if (!templateContent) {
+      return new Response(JSON.stringify({ error: "templateContent required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (requestedOrganizationId && !UUID_REGEX.test(String(requestedOrganizationId))) {
+      return new Response(JSON.stringify({ error: "Invalid organizationId" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: baseOrganizationId, error: orgError } = await supabase.rpc("get_user_org", {
       p_user_id: authData.user.id,
     });
-    if (orgError || !organizationId) {
+    if (orgError || !baseOrganizationId) {
       return new Response(JSON.stringify({ error: "Organization not found" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { templateContent, templateTitle } = await req.json();
-    if (!templateContent) {
-      return new Response(JSON.stringify({ error: "templateContent required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    let effectiveOrganizationId = String(baseOrganizationId);
+    if (requestedOrganizationId && requestedOrganizationId !== baseOrganizationId) {
+      const { data: isSuperAdmin, error: roleError } = await supabase.rpc("has_role", {
+        _user_id: authData.user.id,
+        _role: "super_admin",
       });
+
+      if (roleError || !isSuperAdmin) {
+        return new Response(JSON.stringify({ error: "Forbidden organization context" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      effectiveOrganizationId = requestedOrganizationId;
     }
 
     // ── 1. Query leads data (today / current month) ──
@@ -74,7 +99,7 @@ Deno.serve(async (req) => {
     const { data: leads, error: leadsErr } = await supabase
       .from("leads_consolidados")
       .select("*")
-      .eq("organization_id", organizationId);
+      .eq("organization_id", effectiveOrganizationId);
 
     if (leadsErr) {
       console.error("Error fetching leads:", leadsErr);
