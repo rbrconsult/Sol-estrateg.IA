@@ -62,10 +62,11 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'fetch-make-errors',
-    description: 'Busca logs de execução dos cenários Make para monitoramento de erros.',
+    description: 'Busca logs de execução dos cenários Make, sincroniza na tabela make_errors e dispara alertas WhatsApp escalonados (N1/N2/N3) para novos erros.',
     category: 'data',
     status: 'active',
-    dependencies: ['MAKE_API_KEY', 'make_errors'],
+    dependencies: ['MAKE_API_KEY', 'MAKE_TEAM_ID', 'make_errors', 'app_settings (evolution_api_key, central_whatsapp_number)', 'Krolic API'],
+    notes: 'N1: erros/avisos sem parada (resumo). N2: fluxo parado (detalhes técnicos). N3: fluxos críticos parados (Captura Lead, SDR, Qualif, Sync DS) — alerta urgente agregado. Rate limit 1s entre mensagens.',
   },
   {
     name: 'fetch-make-heartbeat',
