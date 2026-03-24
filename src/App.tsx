@@ -47,6 +47,7 @@ import PreVenda from "./pages/solar/PreVenda";
 import Comercial from "./pages/solar/Comercial";
 import VendedorPerformance from "./pages/solar/VendedorPerformance";
 import { SolarLayout } from "./components/layout/SolarLayout";
+import GA4Page from "./pages/GA4";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/ga4" element={<ProtectedRoute><MainLayout><GA4Page /></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

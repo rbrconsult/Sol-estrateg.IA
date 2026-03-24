@@ -62,6 +62,166 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_metrics: {
+        Row: {
+          ad_name: string | null
+          adset_name: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          clicks: number | null
+          conversions: number | null
+          cpc: number | null
+          cpl: number | null
+          created_at: string | null
+          ctr: number | null
+          data_referencia: string
+          id: string
+          impressions: number | null
+          leads: number | null
+          organization_id: string | null
+          plataforma: string
+          raw_data: Json | null
+          receita: number | null
+          roas: number | null
+          spend: number | null
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_name?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cpc?: number | null
+          cpl?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          data_referencia: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          organization_id?: string | null
+          plataforma: string
+          raw_data?: Json | null
+          receita?: number | null
+          roas?: number | null
+          spend?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_name?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cpc?: number | null
+          cpl?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          data_referencia?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          organization_id?: string | null
+          plataforma?: string
+          raw_data?: Json | null
+          receita?: number | null
+          roas?: number | null
+          spend?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ga4_metrics: {
+        Row: {
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          campaign: string | null
+          conversion_rate: number | null
+          conversions: number | null
+          created_at: string | null
+          data_referencia: string
+          events: Json | null
+          id: string
+          landing_page: string | null
+          medium: string | null
+          new_users: number | null
+          organization_id: string | null
+          pages_per_session: number | null
+          raw_data: Json | null
+          sessions: number | null
+          source: string | null
+          synced_at: string | null
+          updated_at: string | null
+          users_count: number | null
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          campaign?: string | null
+          conversion_rate?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          data_referencia: string
+          events?: Json | null
+          id?: string
+          landing_page?: string | null
+          medium?: string | null
+          new_users?: number | null
+          organization_id?: string | null
+          pages_per_session?: number | null
+          raw_data?: Json | null
+          sessions?: number | null
+          source?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+          users_count?: number | null
+        }
+        Update: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          campaign?: string | null
+          conversion_rate?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          data_referencia?: string
+          events?: Json | null
+          id?: string
+          landing_page?: string | null
+          medium?: string | null
+          new_users?: number | null
+          organization_id?: string | null
+          pages_per_session?: number | null
+          raw_data?: Json | null
+          sessions?: number | null
+          source?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+          users_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ga4_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_status_history: {
         Row: {
           changed_by: string | null
