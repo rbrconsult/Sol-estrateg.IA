@@ -114,6 +114,7 @@ const App = () => (
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/ga4" element={<ProtectedRoute><MainLayout><GA4Page /></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
