@@ -1,0 +1,1 @@
+ALTER TABLE public.report_templates ADD COLUMN IF NOT EXISTS destinatario_roles text[] DEFAULT '{}'::text[];
