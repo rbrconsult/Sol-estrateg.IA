@@ -144,6 +144,7 @@ export default function Admin() {
         email: profile.email || '',
         full_name: profile.full_name,
         created_at: profile.created_at,
+        phone: profile.phone || '',
         role: roles?.find(r => r.user_id === profile.id)?.role || 'user'
       })) || [];
 
