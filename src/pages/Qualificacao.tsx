@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Search, Send, CheckCircle2, Loader2, Users, Filter,
-  Phone, MapPin, Thermometer, Target, RefreshCw, XCircle, Shuffle, UserCheck,
+  Phone, MapPin, Thermometer, Target, RefreshCw, XCircle, Shuffle, UserCheck, Clock,
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -367,41 +367,6 @@ export default function Qualificacao() {
         </Card>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, telefone ou cidade..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-          <SelectTrigger className="w-44">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="ativos">Ativos</SelectItem>
-            <SelectItem value="desqualificados">Desqualificados</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={etapaFilter} onValueChange={setEtapaFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Etapa" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Etapas</SelectItem>
-            {ETAPA_OPTIONS.map((e) => (
-              <SelectItem key={e} value={e}>{e}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Manual Qualificar */}
       <Card className="border-dashed border-primary/30">
         <CardContent className="p-4">
@@ -471,12 +436,43 @@ export default function Qualificacao() {
         </CardContent>
       </Card>
 
-      {/* Lead List */}
+      {/* Filters + Lead List */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            {filtered.length} leads
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, telefone ou cidade..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <SelectTrigger className="w-44">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativos">Ativos</SelectItem>
+                <SelectItem value="desqualificados">Desqualificados</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={etapaFilter} onValueChange={setEtapaFilter}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Etapa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Etapas</SelectItem>
+                {ETAPA_OPTIONS.map((e) => (
+                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">{filtered.length} leads</p>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
@@ -536,6 +532,24 @@ export default function Qualificacao() {
                           </span>
                         )}
                         {lead.makeScore && <span>Score: {lead.makeScore}</span>}
+                        {(() => {
+                          const dates = [
+                            lead.lastFollowupDate,
+                            lead.historico?.length ? lead.historico[lead.historico.length - 1]?.data : null,
+                            lead.data_resposta,
+                            lead.data_envio,
+                          ].filter(Boolean);
+                          const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
+                          if (timestamps.length === 0) return null;
+                          const latest = new Date(Math.max(...timestamps));
+                          const formatted = latest.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                          return (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatted}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
