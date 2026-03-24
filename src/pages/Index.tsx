@@ -97,7 +97,13 @@ const Index = () => {
     const records = makeRecords || [];
     const mql = records.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
     const sql = records.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
-    return { mql, sql, total: records.length };
+    const contatados = records.filter(r => r.status_resposta === 'respondeu').length;
+    const hoje = new Date().toISOString().slice(0, 10);
+    const criadosHoje = records.filter(r => {
+      const d = r.data_envio || '';
+      return d.slice(0, 10) === hoje;
+    }).length;
+    return { mql, sql, total: records.length, contatados, criadosHoje };
   }, [makeRecords]);
 
   // ── KPIs do DS Comercial (Agendamentos, Fechados) ──
