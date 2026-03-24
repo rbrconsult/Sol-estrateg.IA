@@ -162,6 +162,45 @@ export default function Qualificacao() {
 
   const webhookUrl = viewMode === "qualificar" ? WEBHOOK_QUALIFICAR : WEBHOOK_DESQUALIFICAR;
 
+  const sendManualDesqualificar = async () => {
+    const cleaned = manualDesqPhone.replace(/\D/g, "");
+    if (!cleaned || cleaned.length < 10) {
+      toast.error("Informe um número válido com DDD (mínimo 10 dígitos)");
+      return;
+    }
+    const telefoneFormatado = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+    setManualDesqSending(true);
+    try {
+      const payload = {
+        telefone: telefoneFormatado,
+        nome: manualDesqName.trim() || "",
+        etapa_funil: "MANUAL",
+        cidade: "",
+        email: "",
+        valor_conta: "",
+        score: "",
+        temperatura: "",
+        canal_origem: "manual",
+        vendedor: "",
+        vendedor_sm_id: null,
+        vendedor_krolik_id: null,
+      };
+      const res = await fetch(WEBHOOK_DESQUALIFICAR, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success(`${telefoneFormatado} desqualificado com sucesso`);
+      setManualDesqPhone("");
+      setManualDesqName("");
+    } catch (err: any) {
+      toast.error(`Erro ao desqualificar: ${err.message}`);
+    } finally {
+      setManualDesqSending(false);
+    }
+  };
+
   const sendManual = async () => {
     const cleaned = manualPhone.replace(/\D/g, "");
     if (!cleaned || cleaned.length < 10) {
