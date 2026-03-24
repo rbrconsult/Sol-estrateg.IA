@@ -3,9 +3,8 @@ import { Globe, TrendingUp, Users, MousePointer, Clock, ArrowUpRight } from "luc
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useGA4Metrics, GA4Metric } from "@/hooks/useCampaignData";
-import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
-import { useGlobalFilter } from "@/contexts/GlobalFilterContext";
+import { useGA4Metrics } from "@/hooks/useCampaignData";
+import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -31,21 +30,21 @@ function KPICard({ label, value, icon: Icon }: { label: string; value: string | 
 
 export default function GA4Page() {
   const { data: ga4Data, isLoading } = useGA4Metrics();
-  const { filters } = useGlobalFilter();
+  const pf = usePageFilters({ showPeriodo: true, showSearch: true }, "mes");
 
   const filtered = useMemo(() => {
     if (!ga4Data) return [];
     let records = ga4Data;
-    if (filters.dateRange?.from) {
-      const from = new Date(filters.dateRange.from).toISOString().slice(0, 10);
+    if (pf.effectiveDateRange?.from) {
+      const from = pf.effectiveDateRange.from.toISOString().slice(0, 10);
       records = records.filter((r) => r.data_referencia >= from);
     }
-    if (filters.dateRange?.to) {
-      const to = new Date(filters.dateRange.to).toISOString().slice(0, 10);
+    if (pf.effectiveDateRange?.to) {
+      const to = pf.effectiveDateRange.to.toISOString().slice(0, 10);
       records = records.filter((r) => r.data_referencia <= to);
     }
     return records;
-  }, [ga4Data, filters]);
+  }, [ga4Data, pf.effectiveDateRange]);
 
   const kpis = useMemo(() => {
     const totalSessions = filtered.reduce((s, r) => s + r.sessions, 0);
@@ -105,7 +104,11 @@ export default function GA4Page() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <PageFloatingFilter />
+      <PageFloatingFilter
+        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
+        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
+        config={{ showPeriodo: true, showSearch: true }}
+      />
       <div>
         <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
           <Globe className="h-5 w-5 text-primary" /> GA4 — Aquisição & Conversão
@@ -129,7 +132,7 @@ export default function GA4Page() {
                 {`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'xffzjdulkdgyicsllznp'}.supabase.co/functions/v1/webhook-campaign-data`}
               </p>
               <p className="text-muted-foreground mt-2 mb-1">Body JSON:</p>
-              <pre className="text-foreground">{`{
+              <pre className="text-foreground whitespace-pre-wrap">{`{
   "type": "ga4",
   "organization_id": "...",
   "records": [
