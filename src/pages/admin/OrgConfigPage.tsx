@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff, Check, X, Loader2,
-  Settings, Webhook, Database, Key, Users as UsersIcon, Search,
+  Settings, Webhook, Database, Key, Users as UsersIcon, Search, Megaphone,
 } from "lucide-react";
 
 interface OrgConfig {
@@ -36,6 +36,7 @@ const CATEGORIES = [
   { value: "datastore", label: "Datastore", icon: Database, color: "bg-green-500/20 text-green-400 border-green-500/30" },
   { value: "api", label: "API", icon: Key, color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
   { value: "responsavel", label: "Responsável", icon: UsersIcon, color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
+  { value: "campanhas", label: "Campanhas", icon: Megaphone, color: "bg-pink-500/20 text-pink-400 border-pink-500/30" },
 ];
 
 export default function OrgConfigPage() {
