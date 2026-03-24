@@ -26,7 +26,14 @@ function isDesqualificado(r: MakeRecord): boolean {
   const status = (r.makeStatus || "").toUpperCase();
   const etapa = (r.etapaFunil || "").toUpperCase();
   const codigo = (r.codigoStatus || "").toUpperCase();
-  return status === "DESQUALIFICADO" || etapa === "DESQUALIFICADO" || codigo === "DESQUALIFICADO";
+  return (
+    status === "DESQUALIFICADO" ||
+    etapa === "DESQUALIFICADO" ||
+    etapa === "DECLINIO" ||
+    etapa === "DECLÍNIO" ||
+    codigo === "DESQUALIFICADO" ||
+    codigo === "LEAD_FRIO"
+  );
 }
 
 const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
