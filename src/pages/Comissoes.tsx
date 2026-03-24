@@ -32,7 +32,8 @@ function getRate(nome: string, overrides: Record<string, string>): number {
 }
 
 export default function Comissoes() {
-  const { proposals, isLoading, refetch, orgFilterActive } = useOrgFilteredProposals();
+  const { proposals, isLoading, orgFilterActive } = useOrgFilteredProposals();
+  const { forceSync, isSyncing } = useForceSync();
   const { selectedOrgName } = useOrgFilter();
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
   const gf = useGlobalFilters();
