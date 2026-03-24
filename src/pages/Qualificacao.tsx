@@ -147,7 +147,8 @@ export default function Qualificacao() {
     return result;
   }, [allLeads, statusFilter, etapaFilter, search]);
 
-  const countAtivos = useMemo(() => allLeads.filter((l) => !l._desqualificado).length, [allLeads]);
+  const countAtivos = useMemo(() => allLeads.filter((l) => !l._desqualificado && !l._qualificado).length, [allLeads]);
+  const countQualif = useMemo(() => allLeads.filter((l) => l._qualificado).length, [allLeads]);
   const countDesq = useMemo(() => allLeads.filter((l) => l._desqualificado).length, [allLeads]);
   const countByEtapa = useMemo(() => {
     const map: Record<string, number> = {};
