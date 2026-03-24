@@ -64,6 +64,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     periodicidade: "Diária — 07:00",
     canal: "WhatsApp",
     conteudo: "",
+    destinatario_roles: [] as string[],
   });
   const [tab, setTab] = useState("editor");
 
