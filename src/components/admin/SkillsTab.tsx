@@ -108,11 +108,11 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'generate-report',
-    description: 'Gera relatórios com dados reais (Make DS thread + comercial) + insights via Lovable AI.',
+    description: 'Gera relatórios com dados reais (Make DS thread + comercial + Meta Ads + Google Ads + Produção) + insights via Lovable AI.',
     category: 'ai',
     status: 'active',
-    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'MAKE_DATASTORE_ID', 'MAKE_COMERCIAL_DATASTORE_ID', 'organization_configs', 'time_comercial'],
-    notes: 'Busca DS 64798 (thread) e DS 84404 (comercial) em paralelo. Filtra por org/time_comercial. Substitui variáveis e gera insights via Gemini.',
+    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'organization_configs (ds_thread_id, ds_comercial, ds_meta_ads, ds_google_ads, ds_sol_producao)', 'time_comercial'],
+    notes: 'Busca 5 DS em paralelo: thread (64798), comercial (84404), Meta Ads (82051), Google Ads (82094), Produção (81973). Calcula KPIs de investimento, CPL, CAC, ROI e produção de robôs. Filtra por org/franquia_id.',
   },
   // Auth
   {
