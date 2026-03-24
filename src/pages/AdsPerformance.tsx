@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Megaphone, RefreshCcw } from 'lucide-react';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
 const META_COLOR = '#1877F2';
 const GOOGLE_COLOR = '#34A853';
@@ -121,7 +123,9 @@ function deriveWeeklyEvolution(records: MakeRecord[]) {
 
 export default function AdsPerformance() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const records = makeRecords || [];
+  const gf = useGlobalFilters();
+  const filteredRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+  const records = filteredRecords;
 
   const attribution = useMemo(() => deriveAttribution(records), [records]);
   const tempByChannel = useMemo(() => deriveTemperatureByChannel(records, attribution), [records, attribution]);
@@ -175,7 +179,13 @@ export default function AdsPerformance() {
         </Button>
       </div>
 
-      {/* KPIs Gerais */}
+      <PageFloatingFilter
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KPICard label="Total Leads" value={totalLeads} color="text-primary" />
         <KPICard label="Taxa Resposta" value={+taxaRespostaGeral.toFixed(1)} suffix="%" />

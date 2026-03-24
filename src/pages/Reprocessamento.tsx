@@ -9,22 +9,58 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   RotateCcw, Send, Loader2, CheckCircle2, Search, Phone,
-  MapPin, Thermometer, RefreshCw, Users,
+  MapPin, Thermometer, RefreshCw, Users, Filter,
 } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 const WEBHOOK_URL = "https://hook.us2.make.com/wkesyljs4735mb4vwoo5v033ni9eirho";
+
+function isDesqualificado(r: MakeRecord): boolean {
+  const status = (r.makeStatus || "").toUpperCase();
+  const etapa = (r.etapaFunil || "").toUpperCase();
+  const codigo = (r.codigoStatus || "").toUpperCase();
+  return (
+    status === "DESQUALIFICADO" ||
+    etapa === "DESQUALIFICADO" ||
+    etapa === "DECLINIO" ||
+    etapa === "DECLÍNIO" ||
+    codigo === "DESQUALIFICADO" ||
+    codigo === "LEAD_FRIO"
+  );
+}
+
+function isQualificado(r: MakeRecord): boolean {
+  const status = (r.makeStatus || "").toUpperCase();
+  const etapa = (r.etapaFunil || "").toUpperCase();
+  return status === "QUALIFICADO" || etapa === "QUALIFICADO";
+}
+
+const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 export default function Reprocessamento() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
 
   const leads = useMemo(() => {
     if (!records) return [];
     let result = [...records];
+
+    // Status filter
+    if (statusFilter === "ativos") {
+      result = result.filter(r => !isDesqualificado(r) && !isQualificado(r));
+    } else if (statusFilter === "qualificados") {
+      result = result.filter(r => isQualificado(r));
+    } else if (statusFilter === "desqualificados") {
+      result = result.filter(r => isDesqualificado(r));
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -43,7 +79,7 @@ export default function Reprocessamento() {
       return getLatest(b) - getLatest(a);
     });
     return result;
-  }, [records, search]);
+  }, [records, search, statusFilter]);
 
   const sendToWebhook = async (phone: string, name?: string) => {
     const cleaned = phone.replace(/\D/g, "");
@@ -177,15 +213,29 @@ export default function Reprocessamento() {
         </CardContent>
       </Card>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome, telefone ou cidade..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, telefone ou cidade..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof STATUS_OPTIONS[number])}>
+          <SelectTrigger className="w-[180px] shrink-0">
+            <Filter className="h-4 w-4 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="ativos">Ativos</SelectItem>
+            <SelectItem value="qualificados">Qualificados</SelectItem>
+            <SelectItem value="desqualificados">Desqualificados</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Lead List */}

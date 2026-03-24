@@ -50,7 +50,7 @@ export default function Qualificacao() {
   const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("all");
+  const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
   const [manualPhone, setManualPhone] = useState("");
