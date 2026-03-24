@@ -230,8 +230,8 @@ export default function Leads() {
         <PageFloatingFilter
           filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
           setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa}
-          config={{ showPeriodo: true, showTemperatura: true, showSearch: false, showEtapa: false }}
+          setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: false, showEtapa: true, showStatus: true }}
         />
 
         <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
