@@ -9,6 +9,7 @@ import { Route, AlertTriangle, Search, CheckCircle, Clock, XCircle, RefreshCcw }
 import { Button } from '@/components/ui/button';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { useLead360 } from '@/contexts/Lead360Context';
+import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
