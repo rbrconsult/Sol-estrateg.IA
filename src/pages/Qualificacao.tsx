@@ -30,7 +30,7 @@ function isDesqualificado(r: MakeRecord): boolean {
 }
 
 const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
-const STATUS_OPTIONS = ["all", "ativos", "desqualificados"] as const;
+const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 interface KrolicMember {
   id: string;
