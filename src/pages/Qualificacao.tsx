@@ -507,8 +507,15 @@ export default function Qualificacao() {
                         <span className="font-medium text-sm truncate">
                           {lead.nome || "Sem nome"}
                         </span>
-                        <Badge variant="outline" className="text-[10px] shrink-0">
-                          {lead._classificacao}
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] shrink-0 ${
+                            lead._classificacao === "SOL SDR"
+                              ? "border-blue-500 text-blue-500 bg-blue-500/10"
+                              : "border-orange-500 text-orange-500 bg-orange-500/10"
+                          }`}
+                        >
+                          {lead._classificacao === "SOL SDR" ? "🤖 SOL" : "🔁 FUP FRIO"}
                         </Badge>
                         {isQF && (
                           <Badge variant="secondary" className="text-[10px] shrink-0 bg-primary/20 text-primary">
