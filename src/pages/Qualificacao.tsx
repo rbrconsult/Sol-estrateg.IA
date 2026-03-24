@@ -333,9 +333,13 @@ export default function Qualificacao() {
         </Select>
       </div>
 
-      {/* Envio Manual */}
+      {/* Envio Manual - Qualificar */}
       <Card className="border-dashed border-primary/30">
         <CardContent className="p-4">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            Qualificar Manual
+          </div>
           <div className="flex flex-col sm:flex-row gap-3 items-end">
             <div className="flex-1 space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Número (com DDD)</label>
@@ -378,10 +382,52 @@ export default function Qualificacao() {
               onClick={sendManual}
               disabled={manualSending || !manualPhone.trim()}
               className="shrink-0 gap-1.5"
-              variant={viewMode === "desqualificar" ? "destructive" : "default"}
             >
               {manualSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {actionLabel} Manual
+              Qualificar Manual
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Envio Manual - Desqualificar */}
+      <Card className="border-dashed border-destructive/30">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3">
+            <XCircle className="h-3.5 w-3.5 text-destructive" />
+            Desqualificar Manual
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Número (com DDD)</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="5514996703996"
+                  value={manualDesqPhone}
+                  onChange={(e) => setManualDesqPhone(e.target.value)}
+                  className="pl-9"
+                  disabled={manualDesqSending}
+                />
+              </div>
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
+              <Input
+                placeholder="Nome do lead"
+                value={manualDesqName}
+                onChange={(e) => setManualDesqName(e.target.value)}
+                disabled={manualDesqSending}
+              />
+            </div>
+            <Button
+              onClick={sendManualDesqualificar}
+              disabled={manualDesqSending || !manualDesqPhone.trim()}
+              className="shrink-0 gap-1.5"
+              variant="destructive"
+            >
+              {manualDesqSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              Desqualificar Manual
             </Button>
           </div>
         </CardContent>
