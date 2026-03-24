@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
 import { toast } from 'sonner';
 
 export interface ReportTemplate {
   id: string;
+  organization_id?: string | null;
   titulo: string;
   icon: string;
   destinatario: string;
@@ -20,6 +22,7 @@ export interface ReportTemplate {
 
 export function useReportTemplates() {
   const queryClient = useQueryClient();
+  const { selectedOrgId } = useOrgFilter();
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['report-templates'],
@@ -80,8 +83,9 @@ export function useReportTemplates() {
 
   const generateReport = useMutation({
     mutationFn: async (template: ReportTemplate) => {
+      const organizationId = selectedOrgId ?? template.organization_id ?? undefined;
       const { data, error } = await supabase.functions.invoke('generate-report', {
-        body: { templateContent: template.conteudo, templateTitle: template.titulo },
+        body: { templateContent: template.conteudo, templateTitle: template.titulo, organizationId },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Falha ao gerar relatório');
