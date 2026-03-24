@@ -158,7 +158,7 @@ export default function Qualificacao() {
     return map;
   }, [filtered]);
 
-  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string; _desqualificado: boolean }, webhookUrl: string, label: string) => {
+  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string; _desqualificado: boolean; _qualificado: boolean }, webhookUrl: string, label: string) => {
     const key = `${lead.telefone}-${label}`;
     const vendorSelection = vendorMap[lead.telefone || ""] || "roleta";
     const vendor = resolveVendor(vendorSelection);
