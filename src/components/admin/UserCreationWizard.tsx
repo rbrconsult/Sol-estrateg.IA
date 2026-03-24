@@ -247,8 +247,9 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
               <Select value={role} onValueChange={(v: AppRole) => setRole(v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="diretor">Diretor</SelectItem>
+                  <SelectItem value="gerente">Gerente</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
                 </SelectContent>
               </Select>
             </div>

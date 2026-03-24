@@ -317,6 +317,9 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'super_admin': return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Super Admin</Badge>;
+      case 'diretor': return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Diretor</Badge>;
+      case 'gerente': return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Gerente</Badge>;
+      case 'closer': return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Closer</Badge>;
       case 'admin': return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Admin</Badge>;
       default: return <Badge variant="outline">Usuário</Badge>;
     }
