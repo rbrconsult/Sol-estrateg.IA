@@ -258,7 +258,7 @@ export default function JornadaLead() {
           </h1>
           <p className="text-sm text-muted-foreground">Dados reais do Data Store — {records.length} leads analisados</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
+        <Button variant="outline" size="sm" onClick={() => forceSync()}>
           <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
         </Button>
       </div>
