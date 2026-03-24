@@ -210,8 +210,8 @@ const Index = () => {
           <AlertCircle className="h-4 w-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
             <span>Erro ao carregar dados: {error.message}</span>
-            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            <Button variant="ghost" size="sm" onClick={() => forceSync()} disabled={isSyncing}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
               Tentar novamente
             </Button>
           </AlertDescription>
