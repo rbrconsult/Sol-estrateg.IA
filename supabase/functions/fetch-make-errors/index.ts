@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
+const KROLIC_SEND_URL = "https://api.camkrolik.com.br/core/v2/api/chats/send-text";
 
 function detectCategory(name: string): string {
   const n = (name ?? "").toLowerCase();
@@ -17,7 +18,16 @@ function detectCategory(name: string): string {
   return "Geral Evolve";
 }
 
-// Fetch individual log detail to get module info
+// Critical flows that trigger N3 escalation
+const CRITICAL_FLOW_PATTERNS = [
+  /captura.*lead/i, /fluxo 1/i, /fluxo 2/i, /sdr/i, /qualif/i, 
+  /sync.*ds/i, /sol.*sync/i, /data.*store/i
+];
+
+function isCriticalFlow(name: string): boolean {
+  return CRITICAL_FLOW_PATTERNS.some((p) => p.test(name ?? ""));
+}
+
 async function fetchLogDetail(
   sid: number,
   logId: string,
@@ -25,30 +35,20 @@ async function fetchLogDetail(
 ): Promise<{ moduleName: string; moduleIndex: number } | null> {
   try {
     const res = await fetch(`${MAKE_BASE}/scenarios/${sid}/logs/${logId}`, { headers });
-    if (!res.ok) {
-      await res.text();
-      return null;
-    }
+    if (!res.ok) { await res.text(); return null; }
     const data = await res.json();
     const detail = data.scenarioLog ?? data;
-    // Try to extract module info from the log detail
     const moduleName = detail.moduleName ?? detail.imtModuleName ?? null;
     const moduleIndex = detail.moduleIndex ?? detail.imtModuleIndex ?? detail.moduleOrder ?? null;
     if (moduleName || moduleIndex) {
       return { moduleName: moduleName ?? "Unknown", moduleIndex: moduleIndex ?? 0 };
     }
     return null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
-// Process log details in batches to avoid overloading the API
 async function enrichLogsWithModuleInfo(
-  logs: any[],
-  sid: number,
-  headers: Record<string, string>,
-  batchSize = 5
+  logs: any[], sid: number, headers: Record<string, string>, batchSize = 5
 ): Promise<void> {
   for (let i = 0; i < logs.length; i += batchSize) {
     const batch = logs.slice(i, i + batchSize);
@@ -69,18 +69,103 @@ async function enrichLogsWithModuleInfo(
   }
 }
 
+// ── WhatsApp Alert helpers ──
+
+async function sendWhatsAppMessage(apiKey: string, phone: string, message: string): Promise<boolean> {
+  try {
+    const cleanPhone = phone.replace(/\D/g, "");
+    const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+    const response = await fetch(KROLIC_SEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "access-token": apiKey },
+      body: JSON.stringify({ number: phoneWithCountry, message, forceSend: true, verifyContact: false, linkPreview: false }),
+    });
+    const ok = response.status >= 200 && response.status < 300;
+    try { await response.text(); } catch { /* ignore */ }
+    return ok;
+  } catch (e) {
+    console.error("[alert] send error:", e);
+    return false;
+  }
+}
+
+function formatN1Message(record: any): string {
+  const time = record.occurred_at
+    ? new Date(record.occurred_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    : "agora";
+  const isWarning = record.execution_status === "warning";
+  return [
+    isWarning ? "⚠️ *ALERTA N1 — Aviso em Fluxo*" : "🟠 *ALERTA N1 — Erro em Fluxo*",
+    "",
+    `📋 *Fluxo:* ${record.scenario_name}`,
+    `📂 *Categoria:* ${record.flow_category}`,
+    `⚙️ *Módulo:* [${record.module_app}] ${record.module_name}`,
+    record.failed_module_index && record.total_modules
+      ? `📊 *Progresso:* Parou no módulo ${record.failed_module_index}/${record.total_modules}`
+      : null,
+    `🕐 *Horário:* ${time}`,
+    "",
+    `O fluxo continuou executando mas registrou ${isWarning ? "um aviso" : "um erro"}.`,
+    "",
+    "Sol Estrateg.IA — Monitor de Fluxos",
+  ].filter(Boolean).join("\n");
+}
+
+function formatN2Message(record: any): string {
+  const time = record.occurred_at
+    ? new Date(record.occurred_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    : "agora";
+  return [
+    "🔴 *ALERTA N2 — FLUXO PARADO*",
+    "",
+    `📋 *Fluxo:* ${record.scenario_name}`,
+    `📂 *Categoria:* ${record.flow_category}`,
+    `🆔 *Scenario ID:* ${record.scenario_id}`,
+    `⚙️ *Módulo com falha:* [${record.module_app}] ${record.module_name}`,
+    record.failed_module_index && record.total_modules
+      ? `📊 *Progresso:* Parou no módulo ${record.failed_module_index}/${record.total_modules}`
+      : null,
+    `❌ *Tipo de erro:* ${record.error_type ?? "Desconhecido"}`,
+    `💬 *Mensagem:* ${(record.error_message ?? "Sem detalhes").substring(0, 300)}`,
+    `🔄 *Tentativas:* ${record.attempts ?? 1}`,
+    `🕐 *Horário:* ${time}`,
+    `🆔 *Execution ID:* ${record.execution_id}`,
+    "",
+    "⚠️ Este fluxo está PARADO e precisa de ação imediata.",
+    "",
+    "Sol Estrateg.IA — Monitor de Fluxos",
+  ].filter(Boolean).join("\n");
+}
+
+function formatN3Message(stoppedCritical: any[]): string {
+  const flowList = stoppedCritical
+    .map((r) => `  • ${r.scenario_name} — [${r.module_app}] ${r.module_name}`)
+    .join("\n");
+  return [
+    "🚨🚨🚨 *ALERTA N3 — FLUXOS CRÍTICOS PARADOS* 🚨🚨🚨",
+    "",
+    `*${stoppedCritical.length} fluxo(s) crítico(s) estão PARADOS:*`,
+    "",
+    flowList,
+    "",
+    "Esses fluxos afetam diretamente a captura de leads, qualificação ou sincronização de dados.",
+    "",
+    "⚠️ *Ação imediata necessária para evitar perda de leads e receita.*",
+    "",
+    "Sol Estrateg.IA — Monitor de Fluxos",
+  ].join("\n");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -91,17 +176,15 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
-    if (authError || !claimsData?.claims) {
+    const { data: userData, error: authError } = await anonClient.auth.getUser(token);
+    if (authError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const MAKE_API_TOKEN = Deno.env.get("MAKE_API_KEY");
     const MAKE_TEAM_ID = Deno.env.get("MAKE_TEAM_ID");
-
     if (!MAKE_API_TOKEN) throw new Error("MAKE_API_KEY not configured");
     if (!MAKE_TEAM_ID) throw new Error("MAKE_TEAM_ID not configured");
 
@@ -112,7 +195,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // 1. Fetch scenarios to map IDs -> names
+    // 1. Fetch scenarios
     const scenariosRes = await fetch(
       `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
       { headers: makeHeaders }
@@ -124,15 +207,12 @@ Deno.serve(async (req) => {
     const scenariosData = await scenariosRes.json();
     const scenarios: Record<number, { name: string; modules: number }> = {};
     for (const s of scenariosData.scenarios ?? []) {
-      scenarios[s.id] = {
-        name: s.name,
-        modules: s.blueprint?.flow?.length ?? 0,
-      };
+      scenarios[s.id] = { name: s.name, modules: s.blueprint?.flow?.length ?? 0 };
     }
 
     const records: any[] = [];
 
-    // 2. SOURCE 1: Incomplete executions (stopped flows)
+    // 2. Incomplete executions (stopped flows)
     const incompleteRes = await fetch(
       `${MAKE_BASE}/incomplete-executions?teamId=${MAKE_TEAM_ID}&pg[limit]=100`,
       { headers: makeHeaders }
@@ -163,7 +243,7 @@ Deno.serve(async (req) => {
       await incompleteRes.text();
     }
 
-    // 3. SOURCE 2: Logs from each scenario (fetch ALL, then filter errors/warnings)
+    // 3. Error/warning logs from each scenario
     const scenarioIds = Object.keys(scenarios).map(Number);
     const logPromises = scenarioIds.map(async (sid) => {
       try {
@@ -171,14 +251,10 @@ Deno.serve(async (req) => {
           `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=50`,
           { headers: makeHeaders }
         );
-        if (!logRes.ok) {
-          await logRes.text();
-          return [];
-        }
+        if (!logRes.ok) { await logRes.text(); return []; }
         const logData = await logRes.json();
         const scenarioInfo = scenarios[sid] ?? { name: `Scenario ${sid}`, modules: 0 };
-        
-        // Filter only errors (status=2) and warnings (status=3)
+
         const errorLogs = (logData.scenarioLogs ?? [])
           .filter((item: any) => item.status === 2 || item.status === 3)
           .map((item: any) => {
@@ -203,13 +279,9 @@ Deno.serve(async (req) => {
             };
           });
 
-        // Enrich with module details (batched, max 5 parallel)
         await enrichLogsWithModuleInfo(errorLogs, sid, makeHeaders, 5);
-
         return errorLogs;
-      } catch {
-        return [];
-      }
+      } catch { return []; }
     });
 
     const logResults = await Promise.all(logPromises);
@@ -217,10 +289,9 @@ Deno.serve(async (req) => {
       records.push(...logs);
     }
 
-    // 4. Upsert to Supabase (never overwrite status/resolution_notes)
-    let upserted = 0;
+    // 4. Upsert + track NEW records for alerting
+    const newRecords: any[] = [];
     for (const record of records) {
-      // Remove internal field before saving
       delete record._rawLogId;
 
       const { data: existing } = await supabase
@@ -231,26 +302,103 @@ Deno.serve(async (req) => {
 
       if (existing) {
         const { status: _s, resolution_notes: _r, ...updateFields } = record;
-        await supabase
-          .from("make_errors")
-          .update(updateFields)
-          .eq("execution_id", record.execution_id);
+        await supabase.from("make_errors").update(updateFields).eq("execution_id", record.execution_id);
       } else {
         await supabase.from("make_errors").insert(record);
+        newRecords.push(record);
       }
-      upserted++;
     }
 
     const stopped = records.filter((r) => r.execution_status === "stopped").length;
     const errorContinued = records.filter((r) => r.execution_status === "error_continued").length;
     const warnings = records.filter((r) => r.execution_status === "warning").length;
 
+    // ── 5. Send WhatsApp alerts for NEW errors ──
+    let alertsSent = 0;
+    try {
+      // Get Krolic API key and central number
+      const { data: settings } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", ["evolution_api_key", "central_whatsapp_number"]);
+
+      const apiKey = settings?.find((s: any) => s.key === "evolution_api_key")?.value;
+      const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
+
+      if (apiKey && centralNumber && newRecords.length > 0) {
+        console.log(`[alerts] ${newRecords.length} new errors detected, sending alerts to ${centralNumber}`);
+
+        // N1: errors that didn't stop the flow
+        const n1Records = newRecords.filter((r) => r.execution_status === "error_continued" || r.execution_status === "warning");
+        // N2: stopped flows
+        const n2Records = newRecords.filter((r) => r.execution_status === "stopped");
+        // N3: critical stopped flows
+        const n3Records = n2Records.filter((r) => isCriticalFlow(r.scenario_name));
+
+        // Send N3 first (aggregated) if critical flows are stopped
+        if (n3Records.length > 0) {
+          const msg = formatN3Message(n3Records);
+          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
+          if (sent) alertsSent++;
+          console.log(`[alerts] N3 sent: ${sent} (${n3Records.length} critical flows)`);
+          // small delay
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+
+        // Send N2 alerts (individual stopped flows)
+        for (const record of n2Records) {
+          const msg = formatN2Message(record);
+          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
+          if (sent) alertsSent++;
+          // Rate limiting: 1s between messages
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+
+        // Send N1 alerts (batch: max 5 individual, then summarize)
+        if (n1Records.length <= 5) {
+          for (const record of n1Records) {
+            const msg = formatN1Message(record);
+            const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
+            if (sent) alertsSent++;
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+        } else {
+          // Summarize N1 if too many
+          const summary = [
+            "🟠 *ALERTA N1 — Resumo de Erros*",
+            "",
+            `Detectados *${n1Records.length} novos erros/avisos* em fluxos:`,
+            "",
+            ...n1Records.slice(0, 10).map((r) => `  • ${r.scenario_name} — ${r.execution_status === "warning" ? "⚠️" : "🟠"} [${r.module_app}] ${r.module_name}`),
+            n1Records.length > 10 ? `  ... e mais ${n1Records.length - 10}` : null,
+            "",
+            "Nenhum fluxo parou, mas vale monitorar.",
+            "",
+            "Sol Estrateg.IA — Monitor de Fluxos",
+          ].filter(Boolean).join("\n");
+          const sent = await sendWhatsAppMessage(apiKey, centralNumber, summary);
+          if (sent) alertsSent++;
+        }
+
+        console.log(`[alerts] Total alerts sent: ${alertsSent}`);
+      } else if (!apiKey) {
+        console.warn("[alerts] Krolic API key not configured, skipping alerts");
+      } else if (!centralNumber) {
+        console.warn("[alerts] Central WhatsApp number not configured, skipping alerts");
+      }
+    } catch (alertError) {
+      console.error("[alerts] Error sending alerts:", alertError);
+      // Don't fail the sync because of alert errors
+    }
+
     return new Response(
       JSON.stringify({
         stopped,
         errorContinued,
         warnings,
-        total: upserted,
+        total: records.length,
+        newErrors: newRecords.length,
+        alertsSent,
         syncedAt: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
