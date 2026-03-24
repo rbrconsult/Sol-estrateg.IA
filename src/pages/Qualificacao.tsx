@@ -302,7 +302,7 @@ export default function Qualificacao() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
+          onClick={() => forceSync()}
           disabled={isFetching}
           className="shrink-0 gap-1.5"
         >
