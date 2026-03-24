@@ -223,7 +223,8 @@ export default function JornadaLead() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
 
-  const records = makeRecords || [];
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showEtapa: true, showStatus: true, showSearch: true });
+  const records = useMemo(() => pf.filterRecords(makeRecords || []), [makeRecords, pf.filterRecords]);
 
   const slaMetrics = useMemo(() => deriveSLAMetrics(records), [records]);
   const leadsByStage = useMemo(() => deriveLeadsByStage(records), [records]);

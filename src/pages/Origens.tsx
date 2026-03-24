@@ -15,11 +15,13 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3
 
 export default function Origens() {
   const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const gf = useGlobalFilters();
+  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
   const origensData = useMemo(() => {
-    if (allProposals.length === 0) return [];
-    return getOrigensData(allProposals);
-  }, [allProposals]);
+    if (filteredProposals.length === 0) return [];
+    return getOrigensData(filteredProposals);
+  }, [filteredProposals]);
 
   if (isLoading) {
     return (

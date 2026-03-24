@@ -14,11 +14,13 @@ const COLORS = ['hsl(var(--destructive))', 'hsl(var(--chart-2))', 'hsl(var(--cha
 
 export default function Perdas() {
   const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const gf = useGlobalFilters();
+  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
   const perdasData = useMemo(() => {
-    if (allProposals.length === 0) return null;
-    return getPerdasData(allProposals);
-  }, [allProposals]);
+    if (filteredProposals.length === 0) return null;
+    return getPerdasData(filteredProposals);
+  }, [filteredProposals]);
 
   if (isLoading) {
     return (
