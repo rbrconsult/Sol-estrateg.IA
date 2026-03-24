@@ -627,7 +627,7 @@ export default function Admin() {
                   <CardDescription>Lista de todos os usuários do sistema</CardDescription>
                 </div>
                 <Button onClick={() => {
-                  setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
+                  setFormData({ email: '', password: '', full_name: '', role: 'closer', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
                   setIsCreateDialogOpen(true);
                 }}>
                   <UserPlus className="h-4 w-4 mr-2" />
