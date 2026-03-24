@@ -323,6 +323,14 @@ export default function Qualificacao() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <UserCheck className="h-3.5 w-3.5 text-green-500" /> Qualificados
+            </div>
+            <p className="text-2xl font-bold text-green-500">{countQualif}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
               <XCircle className="h-3.5 w-3.5 text-destructive" /> Desqualificados
             </div>
             <p className="text-2xl font-bold">{countDesq}</p>
