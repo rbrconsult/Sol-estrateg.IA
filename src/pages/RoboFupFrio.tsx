@@ -113,7 +113,7 @@ function deriveFupData(records: MakeRecord[]) {
 /* ── Component ── */
 
 export default function RoboFupFrio() {
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
 
@@ -156,7 +156,7 @@ export default function RoboFupFrio() {
           </h1>
           <p className="text-sm text-muted-foreground">Dados reais — {kpis.totalEntrou} leads no FUP</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
+        <Button variant="outline" size="sm" onClick={() => forceSync()}>
           <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
         </Button>
       </div>

@@ -47,7 +47,7 @@ interface KrolicMember {
 }
 
 export default function Qualificacao() {
-  const { data: records, isLoading, refetch, isFetching } = useMakeDataStore();
+  const { data: records, isLoading, refetch, isFetching, forceSync } = useMakeDataStore();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
@@ -197,7 +197,7 @@ export default function Qualificacao() {
       setSentMap((m) => ({ ...m, [key]: true }));
       toast.success(`Lead ${lead.nome || lead.telefone} → ${vendor.nome} (${label.toLowerCase()})`);
       // Refetch data to update statuses after webhook
-      setTimeout(() => refetch(), 2000);
+      setTimeout(() => forceSync(), 2000);
     } catch (err: any) {
       toast.error(`Erro ao enviar: ${err.message}`);
     } finally {
@@ -302,7 +302,7 @@ export default function Qualificacao() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
+          onClick={() => forceSync()}
           disabled={isFetching}
           className="shrink-0 gap-1.5"
         >

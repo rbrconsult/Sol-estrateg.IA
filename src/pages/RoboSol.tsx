@@ -230,7 +230,7 @@ function deriveSolData(records: MakeRecord[]) {
 }
 
 export default function RoboSol() {
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const allRecords = makeRecords || [];
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
@@ -268,7 +268,7 @@ export default function RoboSol() {
           </h1>
           <p className="text-sm text-muted-foreground">Performance operacional — Dados reais do Data Store</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
       <PageFloatingFilter

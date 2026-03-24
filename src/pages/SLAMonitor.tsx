@@ -156,7 +156,7 @@ function deriveSLAData(records: MakeRecord[]) {
 
 export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
 
@@ -198,7 +198,7 @@ export default function SLAMonitor() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Monitor de SLA — Jornada do Lead</h1>
           <p className="text-sm text-muted-foreground mt-1">{d.totalLeads} leads rastreados · Dados reais</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
       <PageFloatingFilter

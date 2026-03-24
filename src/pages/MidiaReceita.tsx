@@ -115,7 +115,7 @@ function deriveMidiaData(records: MakeRecord[]) {
 }
 
 export default function MidiaReceita() {
-  const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
+  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const allRecords = makeRecords || [];
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
@@ -149,7 +149,7 @@ export default function MidiaReceita() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Mídia × Receita — Atribuição e ROI</h1>
           <p className="text-sm text-muted-foreground mt-1">{records.length} leads · Dados reais do Data Store</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
       </div>
 
       <PageFloatingFilter

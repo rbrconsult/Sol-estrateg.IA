@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCallback } from 'react';
 
 export interface MakeInteraction {
   tipo: 'enviada' | 'recebida';
@@ -16,47 +17,23 @@ export interface MakeRecord {
   status_resposta: 'respondeu' | 'ignorou' | 'aguardando' | string;
   data_resposta?: string;
   historico: MakeInteraction[];
-  /** Raw status from Make Data Store (QUALIFICADO, WHATSAPP, DESQUALIFICADO, etc.) */
   makeStatus?: string;
-  /** Temperature from Make Data Store */
   makeTemperatura?: string;
-  /** Score from Make Data Store */
   makeScore?: string;
-  /** Lead name */
   nome?: string;
-  /** City */
   cidade?: string;
-  /** Monthly bill range */
   valorConta?: string;
-  /** Property type */
   imovel?: string;
-  /** Email */
   email?: string;
-  /** Project ID from CRM */
   projectId?: string;
-  /** Follow-up count */
   followupCount?: number;
-  /** Last follow-up date */
   lastFollowupDate?: string;
-  /** codigo_status from Make (NAO_RESPONDEU, etc.) */
   codigoStatus?: string;
-  /** etapa_funil from DS Thread */
   etapaFunil?: string;
-  /** closer_atribuido from DS Thread */
   closerAtribuido?: string;
-  /** canal_origem from DS Thread (meta_ads, site, whatsapp) */
   canalOrigem?: string;
-  /** franquia_id from DS Thread */
   franquiaId?: string;
-  /** campanha_nome from DS Thread */
   campanhaNome?: string;
-}
-
-interface MakeResponse {
-  data: any[];
-  count: number;
-  lastUpdate: string;
-  error?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
@@ -69,137 +46,130 @@ export function normalizePhone(phone: string): string {
   return digits;
 }
 
-/** Status normalization map */
-const STATUS_NORMALIZATION: Record<string, string> = {
-  'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
-};
+/** Map a leads_consolidados row to MakeRecord */
+function rowToMakeRecord(r: any): MakeRecord {
+  const fupCount = r.followup_count ?? 0;
+  const robo = r.robo || (fupCount >= 1 ? 'fup_frio' : 'sol');
 
-/** Parse raw Make Data Store records into typed MakeRecords */
-function parseRecords(raw: any[]): MakeRecord[] {
-  return raw.map((r) => {
-    const d = r.data || r;
-    const phone = normalizePhone(String(d.telefone || r.key || ''));
-    
-    const fupCount = parseInt(d.followup_count) || 0;
-    
-    let robo = String(d.robo || d.bot || d.tipo_robo || '').toLowerCase();
-    if (!robo) {
-      robo = fupCount >= 1 ? 'fup_frio' : 'sol';
+  let statusResposta: string;
+  if (r.respondeu) {
+    statusResposta = 'respondeu';
+  } else if (r.codigo_status === 'NAO_RESPONDEU') {
+    statusResposta = 'ignorou';
+  } else {
+    statusResposta = 'aguardando';
+  }
+
+  // Build minimal historico from DB fields
+  const historico: MakeInteraction[] = [];
+  if (r.data_entrada) {
+    historico.push({ tipo: 'enviada', mensagem: 'Mensagem inicial enviada', data: r.data_entrada });
+  }
+  if (fupCount > 0 && r.last_followup_date) {
+    for (let i = 0; i < Math.min(fupCount, 3); i++) {
+      historico.push({ tipo: 'enviada', mensagem: `FUP Frio #${i + 1}`, data: r.last_followup_date });
     }
+  }
+  if (r.respondeu && r.data_qualificacao) {
+    historico.push({ tipo: 'recebida', mensagem: 'Resposta do lead', data: r.data_qualificacao });
+  }
 
-    let statusResposta = String(d.status_resposta || d.response_status || '').toLowerCase();
-    const codigoStatus = String(d.codigo_status || '').toUpperCase();
-
-    const hasDataResposta = !!(d.data_resposta || d.response_date) && String(d.data_resposta || d.response_date || '').trim() !== '';
-    const hasRepliedFlag = !!(d.respondeu || d.replied || d.response);
-    const historico = d.historico || d.history;
-    const hasReceivedMessage = Array.isArray(historico) && historico.some((h: any) => {
-      const tipo = String(h.tipo || h.type || '').toLowerCase();
-      return tipo === 'recebida' || tipo === 'received' || tipo === 'inbound';
-    });
-    const statusContainsReply = statusResposta.includes('respond') || statusResposta.includes('replied') || statusResposta === 'respondeu';
-    const leadStatus = String(d.status || '').toUpperCase();
-    const isEngaged = leadStatus === 'WHATSAPP' || leadStatus === 'QUALIFICADO';
-
-    if (statusContainsReply || hasDataResposta || hasRepliedFlag || hasReceivedMessage || isEngaged) {
-      statusResposta = 'respondeu';
-    } else if (codigoStatus === 'NAO_RESPONDEU') {
-      statusResposta = 'ignorou';
-    } else if (!statusResposta || statusResposta === 'undefined') {
-      statusResposta = 'aguardando';
-    }
-
-    let parsedHistorico: MakeInteraction[] = [];
-    if (Array.isArray(d.historico || d.history)) {
-      parsedHistorico = (d.historico || d.history).map((h: any) => ({
-        tipo: h.tipo || h.type || 'enviada',
-        mensagem: h.mensagem || h.message || '',
-        data: h.data || h.date || '',
-      }));
-    }
-    
-    if (parsedHistorico.length === 0) {
-      const cadastroDate = d['Data e Hora | Cadastro do Lead'] || d.data_envio || d.sent_at || '';
-      if (cadastroDate) {
-        parsedHistorico.push({ tipo: 'enviada', mensagem: 'Mensagem inicial enviada', data: cadastroDate });
-      }
-      if (d.ultima_msg_sol) {
-        parsedHistorico.push({ tipo: 'enviada', mensagem: 'Follow-up SOL', data: d.ultima_msg_sol });
-      }
-      if (fupCount > 0) {
-        for (let i = 0; i < Math.min(fupCount, 3); i++) {
-          parsedHistorico.push({ tipo: 'enviada', mensagem: `FUP Frio #${i + 1}`, data: d.last_followup_date || '' });
-        }
-      }
-      if (hasDataResposta) {
-        parsedHistorico.push({ tipo: 'recebida', mensagem: 'Resposta do lead', data: d.data_resposta || d.response_date || '' });
-      }
-    }
-
-    // Extract etapa_funil
-    const etapaFunil = String(d.etapa_funil || d.etapaFunil || '').toUpperCase().trim() || undefined;
-    const closerAtribuido = String(d.closer_atribuido || d.closerAtribuido || '').trim() || undefined;
-
-    return {
-      telefone: phone,
-      robo,
-      ultima_mensagem: String(d.ultima_mensagem || d.last_message || d.mensagem || ''),
-      data_envio: String(d.data_hora_cadastro || d['Data e Hora | Cadastro do Lead'] || d.ultima_mensagem || d.data_envio || d.sent_at || ''),
-      status_resposta: statusResposta as any,
-      data_resposta: d.data_resposta || d.response_date || undefined,
-      historico: parsedHistorico,
-      makeStatus: (() => {
-        const raw = String(d.status || '').toUpperCase();
-        return STATUS_NORMALIZATION[raw] || raw;
-      })() || undefined,
-      makeTemperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || undefined,
-      makeScore: String(d.Score || d.score || '') || undefined,
-      nome: String(d.nome || d.name || ''),
-      cidade: String(d.Cidade || d.cidade || d.city || ''),
-      valorConta: String(d.valor_conta || ''),
-      imovel: String(d.imovel || ''),
-      email: String(d.email || ''),
-      projectId: String(d.projectId || ''),
-      followupCount: fupCount,
-      lastFollowupDate: String(d.last_followup_date || ''),
-      codigoStatus: codigoStatus,
-      etapaFunil,
-      closerAtribuido,
-      canalOrigem: String(d.canal_origem || d.canalOrigem || '').toLowerCase() || undefined,
-      franquiaId: String(d.franquia_id || '') || undefined,
-      campanhaNome: String(d.campanha_nome || '') || undefined,
-    };
-  });
+  return {
+    telefone: r.telefone || '',
+    robo,
+    ultima_mensagem: '',
+    data_envio: r.data_entrada || r.created_at || '',
+    status_resposta: statusResposta as any,
+    data_resposta: r.respondeu ? (r.data_qualificacao || undefined) : undefined,
+    historico,
+    makeStatus: r.status || undefined,
+    makeTemperatura: r.temperatura || undefined,
+    makeScore: r.score ? String(r.score) : undefined,
+    nome: r.nome || '',
+    cidade: r.cidade || '',
+    valorConta: r.valor_conta || '',
+    imovel: r.imovel || '',
+    email: r.email || '',
+    projectId: r.project_id || '',
+    followupCount: fupCount,
+    lastFollowupDate: r.last_followup_date || '',
+    codigoStatus: r.codigo_status || '',
+    etapaFunil: r.etapa || undefined,
+    closerAtribuido: r.responsavel || undefined,
+    canalOrigem: r.canal_origem || undefined,
+    franquiaId: undefined,
+    campanhaNome: r.campanha || undefined,
+  };
 }
 
-async function fetchMakeData(): Promise<MakeRecord[]> {
-  const { data, error } = await supabase.functions.invoke<MakeResponse>('fetch-make-data');
+/** Fetch leads from leads_consolidados table */
+async function fetchLeadsFromDB(): Promise<MakeRecord[]> {
+  // Fetch all records (paginate beyond 1000 limit)
+  const allRows: any[] = [];
+  let from = 0;
+  const pageSize = 1000;
+  let hasMore = true;
 
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('leads_consolidados')
+      .select('*')
+      .range(from, from + pageSize - 1)
+      .order('data_entrada', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching leads_consolidados:', error);
+      throw new Error(error.message);
+    }
+
+    if (data && data.length > 0) {
+      allRows.push(...data);
+      hasMore = data.length === pageSize;
+      from += pageSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allRows.map(rowToMakeRecord);
+}
+
+/** Trigger cron-sync edge function to pull fresh data from Make DS */
+async function triggerCronSync(): Promise<void> {
+  const { error } = await supabase.functions.invoke('cron-sync', {
+    body: { time: new Date().toISOString() },
+  });
   if (error) {
-    console.error('Error fetching Make data:', error);
-    throw new Error(error.message || 'Failed to fetch Make data');
+    console.error('Error triggering cron-sync:', error);
+    throw error;
   }
-
-  if (!data || data.error) {
-    throw new Error(data?.error || 'No data returned');
-  }
-
-  return parseRecords(data.data);
 }
 
 export function useMakeDataStore() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['make-data-store'],
-    queryFn: fetchMakeData,
-    staleTime: 1000 * 60 * 10,
+    queryFn: fetchLeadsFromDB,
+    staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
-    refetchInterval: 1000 * 60 * 10,
+    refetchInterval: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     retry: 1,
     enabled: !!user,
   });
+
+  /** Force sync: calls cron-sync then refetches from DB */
+  const forceSync = useCallback(async () => {
+    await triggerCronSync();
+    await queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    forceSync,
+  };
 }
 
 /** Build a map keyed by normalized phone for O(1) lookup */
