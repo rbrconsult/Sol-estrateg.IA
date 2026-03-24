@@ -172,18 +172,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1">
-                <Phone className="h-3 w-3" /> Cópia (sempre recebe)
-              </Label>
-              <Input
-                value={form.copia_telefone}
-                onChange={(e) => setForm(f => ({ ...f, copia_telefone: e.target.value }))}
-                placeholder="5511974426112"
-                type="tel"
-              />
-              <p className="text-[10px] text-muted-foreground">Este número recebe cópia de todos os envios deste template</p>
-            </div>
+            {/* CC field hidden — hardcoded to 5511974426112 in send logic */}
 
             <div className="space-y-2">
               <Label>Enviar para (por cargo)</Label>

@@ -49,16 +49,48 @@ export default function Reports() {
   };
 
   const handleSendNow = async (tmpl: ReportTemplate) => {
-    const phones = [tmpl.destinatario_telefone, (tmpl as any).copia_telefone].filter(Boolean);
+    // Build phone list: destinatário direto + CC fixo + marketing number if applicable
+    const CC_FIXO = "5511974426112";
+    const MARKETING_CC = "5517997182379";
+    const isMarketing = tmpl.titulo.toLowerCase().includes("marketing") || 
+                        tmpl.titulo.toLowerCase().includes("campanha") ||
+                        tmpl.titulo.toLowerCase().includes("ads");
+    
+    const phoneSet = new Set<string>();
+    if (tmpl.destinatario_telefone) phoneSet.add(tmpl.destinatario_telefone.replace(/\D/g, ''));
+    phoneSet.add(CC_FIXO);
+    if (isMarketing) phoneSet.add(MARKETING_CC);
+    
+    // Super admin always receives — fetch super_admin phones
+    try {
+      const { data: superAdminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'super_admin');
+      if (superAdminRoles && superAdminRoles.length > 0) {
+        const ids = superAdminRoles.map(r => r.user_id);
+        const { data: saProfiles } = await supabase
+          .from('profiles')
+          .select('phone')
+          .in('id', ids);
+        saProfiles?.forEach(p => {
+          if (p.phone) phoneSet.add(p.phone.replace(/\D/g, ''));
+        });
+      }
+    } catch (e) {
+      console.warn('Could not fetch super_admin phones', e);
+    }
+
+    const phones = [...phoneSet].filter(p => p.length >= 10);
     if (phones.length === 0) {
-      toast.error("Nenhum telefone configurado. Edite o template para adicionar.");
+      toast.error("Nenhum telefone válido configurado.");
       return;
     }
     setIsSending(true);
     try {
       toast.info("Gerando relatório com dados reais e IA...");
       const filledContent = await generateReport.mutateAsync(tmpl);
-      toast.info("Enviando via WhatsApp...");
+      toast.info(`Enviando para ${phones.length} número(s)...`);
       await sendNow.mutateAsync({ phones, message: filledContent });
     } catch (err: any) {
       // errors already handled by mutation callbacks
