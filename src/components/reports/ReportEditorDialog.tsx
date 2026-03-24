@@ -13,6 +13,11 @@ import { Eye, Save, Phone } from "lucide-react";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
+const DESTINATARIO_ROLES = [
+  { value: "diretor", label: "Diretor" },
+  { value: "gerente", label: "Gerente" },
+  { value: "closer", label: "Closer" },
+] as const;
 
 const FREQUENCIAS = ["Diária", "Semanal", "Quinzenal", "Mensal"] as const;
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
