@@ -185,6 +185,29 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               <p className="text-[10px] text-muted-foreground">Este número recebe cópia de todos os envios deste template</p>
             </div>
 
+            <div className="space-y-2">
+              <Label>Enviar para (por cargo)</Label>
+              <div className="flex gap-4">
+                {DESTINATARIO_ROLES.map((r) => (
+                  <label key={r.value} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={form.destinatario_roles.includes(r.value)}
+                      onCheckedChange={(checked) => {
+                        setForm(f => ({
+                          ...f,
+                          destinatario_roles: checked
+                            ? [...f.destinatario_roles, r.value]
+                            : f.destinatario_roles.filter(v => v !== r.value),
+                        }));
+                      }}
+                    />
+                    <span className="text-sm">{r.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Selecione quais cargos devem receber este report automaticamente (busca telefone do perfil)</p>
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Frequência</Label>
