@@ -170,7 +170,8 @@ function FunnelBar({ label, value, max, total }: { label: string; value: number;
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function Sanitizacao() {
   const [search, setSearch] = useState("");
-  const { proposals, isLoading, lastUpdate, refetch, isFetching } = useEnrichedProposals();
+  const { proposals, isLoading, lastUpdate, isFetching } = useEnrichedProposals();
+  const { forceSync, isSyncing } = useForceSync();
 
   // ── Compute all analytics from live proposals ──
   const analysis = useMemo(() => {
