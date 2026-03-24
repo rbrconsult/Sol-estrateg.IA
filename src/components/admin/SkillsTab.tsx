@@ -66,7 +66,7 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
     category: 'data',
     status: 'active',
     dependencies: ['MAKE_API_KEY', 'MAKE_TEAM_ID', 'make_errors', 'app_settings (evolution_api_key, central_whatsapp_number)', 'Krolic API'],
-    notes: 'N1: erros/avisos sem parada (resumo). N2: fluxo parado (detalhes técnicos). N3: fluxos críticos parados (Captura Lead, SDR, Qualif, Sync DS) — alerta urgente agregado. Rate limit 1s entre mensagens.',
+    notes: 'Cron pg_cron a cada 5min (sync-make-errors-5min). N1: erros/avisos sem parada (resumo ≤5 individual, >5 agregado). N2: fluxo parado (Scenario ID, Execution ID, módulo, erro, tentativas). N3: fluxos críticos parados (Captura Lead, SDR, Qualif, Sync DS) — alerta urgente agregado. Alertas enviados para central_whatsapp_number (app_settings). Rate limit 1s entre mensagens.',
   },
   {
     name: 'fetch-make-heartbeat',
