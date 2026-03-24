@@ -495,6 +495,7 @@ export default function Qualificacao() {
                 const key = lead.telefone || `lead-${idx}`;
                 const selectedVendor = vendorMap[key] || "roleta";
                 const isDQ = lead._desqualificado;
+                const isQF = lead._qualificado;
 
                 return (
                   <div
@@ -509,6 +510,11 @@ export default function Qualificacao() {
                         <Badge variant="outline" className="text-[10px] shrink-0">
                           {lead._classificacao}
                         </Badge>
+                        {isQF && (
+                          <Badge variant="secondary" className="text-[10px] shrink-0 bg-primary/20 text-primary">
+                            QUALIFICADO
+                          </Badge>
+                        )}
                         {isDQ && (
                           <Badge variant="destructive" className="text-[10px] shrink-0">
                             DESQUALIFICADO
