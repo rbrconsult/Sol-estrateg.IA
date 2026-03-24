@@ -73,22 +73,38 @@ Deno.serve(async (req) => {
       });
     }
 
-    let effectiveOrganizationId = String(baseOrganizationId);
-    if (requestedOrganizationId && requestedOrganizationId !== baseOrganizationId) {
-      const { data: isSuperAdmin, error: roleError } = await supabase.rpc("has_role", {
+    // Determine effective org: null means "global" (all orgs)
+    let effectiveOrganizationId: string | null = null;
+
+    if (requestedOrganizationId) {
+      // User explicitly selected an org
+      if (requestedOrganizationId !== baseOrganizationId) {
+        const { data: isSuperAdmin, error: roleError } = await supabase.rpc("has_role", {
+          _user_id: authData.user.id,
+          _role: "super_admin",
+        });
+        if (roleError || !isSuperAdmin) {
+          return new Response(JSON.stringify({ error: "Forbidden organization context" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      effectiveOrganizationId = requestedOrganizationId;
+    }
+    // If no requestedOrganizationId → Global mode for super_admin, own org for regular user
+    if (!requestedOrganizationId) {
+      const { data: isSuperAdmin } = await supabase.rpc("has_role", {
         _user_id: authData.user.id,
         _role: "super_admin",
       });
-
-      if (roleError || !isSuperAdmin) {
-        return new Response(JSON.stringify({ error: "Forbidden organization context" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (!isSuperAdmin) {
+        effectiveOrganizationId = String(baseOrganizationId);
       }
-
-      effectiveOrganizationId = requestedOrganizationId;
+      // else remains null → fetch all
     }
+
+    console.log("generate-report: effectiveOrganizationId =", effectiveOrganizationId, "requestedOrganizationId =", requestedOrganizationId);
 
     // ── 1. Query leads data (today / current month) ──
     const now = new Date();
@@ -96,10 +112,11 @@ Deno.serve(async (req) => {
     const monthStart = `${todayStr.slice(0, 7)}-01`;
 
     // Leads from thread (pre-sales)
-    const { data: leads, error: leadsErr } = await supabase
-      .from("leads_consolidados")
-      .select("*")
-      .eq("organization_id", effectiveOrganizationId);
+    let leadsQuery = supabase.from("leads_consolidados").select("*");
+    if (effectiveOrganizationId) {
+      leadsQuery = leadsQuery.eq("organization_id", effectiveOrganizationId);
+    }
+    const { data: leads, error: leadsErr } = await leadsQuery;
 
     if (leadsErr) {
       console.error("Error fetching leads:", leadsErr);
