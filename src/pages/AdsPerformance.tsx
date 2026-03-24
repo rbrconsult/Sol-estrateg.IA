@@ -179,7 +179,13 @@ export default function AdsPerformance() {
         </Button>
       </div>
 
-      {/* KPIs Gerais */}
+      <PageFloatingFilter
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa}
+        config={{ showPeriodo: true, showTemperatura: true, showSearch: true, searchPlaceholder: "Buscar lead..." }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KPICard label="Total Leads" value={totalLeads} color="text-primary" />
         <KPICard label="Taxa Resposta" value={+taxaRespostaGeral.toFixed(1)} suffix="%" />
