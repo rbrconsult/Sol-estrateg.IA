@@ -90,16 +90,17 @@ Deno.serve(async (req) => {
       }
     };
 
+    // Somente leads do dia (00:00–23:59 São Paulo)
     const allLeads = (leads || []).filter((l: any) => {
       const dateKey = getLeadDateKey(l);
-      return !!dateKey && dateKey >= monthStart && dateKey <= todayStr;
+      return dateKey === todayStr;
     });
-    const todayLeads = allLeads.filter((l: any) => getLeadDateKey(l) === todayStr);
+    const todayLeads = allLeads;
 
     // ── 2. Calculate KPIs ──
-    const leadsGerados = todayLeads.length || allLeads.length;
+    const leadsGerados = allLeads.length;
 
-    const qualificados = todayLeads.filter((l: any) =>
+    const qualificados = allLeads.filter((l: any) =>
       ["QUALIFICADO", "CONTATO REALIZADO"].includes(l.etapa?.toUpperCase() || "")
     );
 
