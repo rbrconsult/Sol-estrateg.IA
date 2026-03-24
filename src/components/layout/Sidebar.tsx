@@ -72,6 +72,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
+      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "monitoramento" },
       { title: "Qualificação", icon: Sparkles, path: "/qualificacao", moduleKey: "qualificacao" },
       { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
     ],
