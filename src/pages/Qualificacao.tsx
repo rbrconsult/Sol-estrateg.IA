@@ -43,6 +43,9 @@ export default function Qualificacao() {
   const [manualPhone, setManualPhone] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualSending, setManualSending] = useState(false);
+  const [manualDesqPhone, setManualDesqPhone] = useState("");
+  const [manualDesqName, setManualDesqName] = useState("");
+  const [manualDesqSending, setManualDesqSending] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("qualificar");
 
   // Krolic members
