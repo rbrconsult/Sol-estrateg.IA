@@ -99,6 +99,7 @@ export default function Qualificacao() {
         ...r,
         _classificacao: classifyLead(r),
         _desqualificado: isDesqualificado(r),
+        _qualificado: isQualificado(r),
       }));
   }, [records]);
 
