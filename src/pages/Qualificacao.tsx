@@ -128,11 +128,18 @@ export default function Qualificacao() {
       );
     }
 
+    // Sort by most recent interaction first (like Krolic)
     result = [...result].sort((a, b) => {
       const getLatest = (r: typeof a) => {
-        const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
-        const candidate = lastHist || r.lastFollowupDate || r.data_envio || '';
-        return new Date(candidate).getTime() || 0;
+        // Priority: last follow-up > last history entry > data_envio
+        const dates = [
+          r.lastFollowupDate,
+          r.historico?.length ? r.historico[r.historico.length - 1]?.data : null,
+          r.data_resposta,
+          r.data_envio,
+        ].filter(Boolean);
+        const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
+        return timestamps.length > 0 ? Math.max(...timestamps) : 0;
       };
       return getLatest(b) - getLatest(a);
     });
