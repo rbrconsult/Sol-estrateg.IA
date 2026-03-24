@@ -123,7 +123,9 @@ function deriveWeeklyEvolution(records: MakeRecord[]) {
 
 export default function AdsPerformance() {
   const { data: makeRecords, isLoading, refetch } = useMakeDataStore();
-  const records = makeRecords || [];
+  const gf = useGlobalFilters();
+  const filteredRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+  const records = filteredRecords;
 
   const attribution = useMemo(() => deriveAttribution(records), [records]);
   const tempByChannel = useMemo(() => deriveTemperatureByChannel(records, attribution), [records, attribution]);
