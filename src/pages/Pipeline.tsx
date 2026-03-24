@@ -166,8 +166,8 @@ const Pipeline = () => {
           )}
           <Badge variant="outline" className="text-xs">{proposalsForKanban.length} itens</Badge>
           <HelpButton moduleId="pipeline" label="Ajuda do Pipeline" />
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="text-muted-foreground hover:text-foreground">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing} className="text-muted-foreground hover:text-foreground">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>
