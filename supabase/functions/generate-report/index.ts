@@ -6,6 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const REPORT_TIMEZONE = "America/Sao_Paulo";
+
+const toDateKey = (value: string | Date) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: REPORT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value));
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,7 +33,29 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    const authClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: authData, error: authError } = await authClient.auth.getUser();
+    if (authError || !authData.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: organizationId, error: orgError } = await supabase.rpc("get_user_org", {
+      p_user_id: authData.user.id,
+    });
+    if (orgError || !organizationId) {
+      return new Response(JSON.stringify({ error: "Organization not found" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { templateContent, templateTitle } = await req.json();
     if (!templateContent) {
@@ -35,21 +67,34 @@ Deno.serve(async (req) => {
 
     // ── 1. Query leads data (today / current month) ──
     const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
-    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const todayStr = toDateKey(now);
+    const monthStart = `${todayStr.slice(0, 7)}-01`;
 
     // Leads from thread (pre-sales)
     const { data: leads, error: leadsErr } = await supabase
       .from("leads_consolidados")
       .select("*")
-      .gte("data_entrada", monthStart);
+      .eq("organization_id", organizationId);
 
     if (leadsErr) {
       console.error("Error fetching leads:", leadsErr);
     }
 
-    const allLeads = leads || [];
-    const todayLeads = allLeads.filter((l: any) => l.data_entrada?.startsWith(todayStr));
+    const getLeadDateKey = (lead: any) => {
+      const refDate = lead.data_entrada || lead.created_at;
+      if (!refDate) return null;
+      try {
+        return toDateKey(refDate);
+      } catch {
+        return null;
+      }
+    };
+
+    const allLeads = (leads || []).filter((l: any) => {
+      const dateKey = getLeadDateKey(l);
+      return !!dateKey && dateKey >= monthStart && dateKey <= todayStr;
+    });
+    const todayLeads = allLeads.filter((l: any) => getLeadDateKey(l) === todayStr);
 
     // ── 2. Calculate KPIs ──
     const leadsGerados = todayLeads.length || allLeads.length;
