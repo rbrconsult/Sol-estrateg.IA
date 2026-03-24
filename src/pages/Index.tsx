@@ -52,7 +52,8 @@ const FUNNEL_JOURNEY = [
 ];
 
 const Index = () => {
-  const { proposals: allProposals, isLoading, error, refetch, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
+  const { proposals: allProposals, isLoading, error, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
+  const { forceSync, isSyncing } = useForceSync();
   const { data: makeRecords } = useMakeDataStore();
   const { data: comercialRecords } = useMakeComercialData();
   const { selectedOrgName } = useOrgFilter();
