@@ -107,7 +107,9 @@ export default function Qualificacao() {
     let result = allLeads;
 
     if (statusFilter === "ativos") {
-      result = result.filter((r) => !r._desqualificado);
+      result = result.filter((r) => !r._desqualificado && !r._qualificado);
+    } else if (statusFilter === "qualificados") {
+      result = result.filter((r) => r._qualificado);
     } else if (statusFilter === "desqualificados") {
       result = result.filter((r) => r._desqualificado);
     }
