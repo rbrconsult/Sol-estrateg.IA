@@ -49,7 +49,8 @@ const statusBadge = (status: string) => {
 };
 
 export default function Comercial() {
-  const { data: records, isLoading, error, refetch, isFetching } = useMakeComercialData();
+  const { data: records, isLoading, error, isFetching } = useMakeComercialData();
+  const { forceSync, isSyncing } = useForceSync();
   const [search, setSearch] = useState("");
   const [filterResp, setFilterResp] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
