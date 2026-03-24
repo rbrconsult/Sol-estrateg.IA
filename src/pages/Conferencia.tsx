@@ -430,7 +430,7 @@ export default function Conferencia() {
           {/* ── MICRO FUNIL DA JORNADA ── */}
           <div className="mt-4 pt-3 border-t border-border/30">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Funil da Jornada — % acumulada</p>
-            <div className="flex items-end gap-1">
+            <div className="flex flex-col gap-1.5">
               {filteredPipeline.map((s, i) => {
                 const pctJornada = filteredPipeline[0].valor > 0
                   ? (s.valor / filteredPipeline[0].valor * 100)
@@ -444,10 +444,15 @@ export default function Conferencia() {
                   "bg-success",
                 ];
                 return (
-                  <div key={i} className="flex flex-col items-center" style={{ width: `${pctJornada}%`, minWidth: 40 }}>
-                    <div className={cn("h-3 w-full rounded-sm transition-all duration-700", colors[i] || "bg-primary/30")} />
-                    <p className="text-[10px] font-bold tabular-nums mt-1 text-foreground">{pctJornada.toFixed(1)}%</p>
-                    <p className="text-[9px] text-muted-foreground/70 leading-tight text-center">{s.etapa}</p>
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-[9px] text-muted-foreground w-20 text-right truncate shrink-0">{s.etapa}</span>
+                    <div className="flex-1 h-4 bg-muted/30 rounded-sm overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-sm transition-all duration-700", colors[i] || "bg-primary/30")}
+                        style={{ width: `${Math.max(pctJornada, 2)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-bold tabular-nums w-12 shrink-0">{pctJornada.toFixed(1)}%</span>
                   </div>
                 );
               })}
