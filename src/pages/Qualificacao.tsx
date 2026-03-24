@@ -30,7 +30,7 @@ function isDesqualificado(r: MakeRecord): boolean {
 }
 
 const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
-const STATUS_OPTIONS = ["all", "ativos", "desqualificados"] as const;
+const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 interface KrolicMember {
   id: string;
@@ -81,27 +81,25 @@ export default function Qualificacao() {
       : { nome: "", sm_id: null, krolik_id: null };
   };
 
+  const isQualificado = (r: MakeRecord): boolean => {
+    const status = (r.makeStatus || '').toUpperCase();
+    return status === 'QUALIFICADO';
+  };
+
   const allLeads = useMemo(() => {
     if (!records) return [];
-    // Only leads stuck in ROBO stage (not yet qualified/moved forward)
     const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU', 'NOVO', ''];
     return records
       .filter((r) => {
         const status = (r.makeStatus || '').toUpperCase();
-        const etapa = (r.etapaFunil || '').toUpperCase();
-        const codigo = (r.codigoStatus || '').toUpperCase();
-        // Include if status is empty/robot-stage OR explicitly in qualification
         const isRoboStage = !status || roboStatuses.includes(status) || status === 'WHATSAPP';
-        // Exclude already qualified leads that moved forward
-        const isQualificado = status === 'QUALIFICADO' && (etapa === 'CLOSER' || etapa === 'AGENDAMENTO' || etapa === 'PROPOSTA');
-        if (isQualificado) return false;
-        // Exclude desqualificados unless filter asks for them
-        return isRoboStage || isDesqualificado(r);
+        return isRoboStage || status === 'QUALIFICADO' || isDesqualificado(r);
       })
       .map((r) => ({
         ...r,
         _classificacao: classifyLead(r),
         _desqualificado: isDesqualificado(r),
+        _qualificado: isQualificado(r),
       }));
   }, [records]);
 
@@ -109,7 +107,9 @@ export default function Qualificacao() {
     let result = allLeads;
 
     if (statusFilter === "ativos") {
-      result = result.filter((r) => !r._desqualificado);
+      result = result.filter((r) => !r._desqualificado && !r._qualificado);
+    } else if (statusFilter === "qualificados") {
+      result = result.filter((r) => r._qualificado);
     } else if (statusFilter === "desqualificados") {
       result = result.filter((r) => r._desqualificado);
     }
@@ -147,7 +147,8 @@ export default function Qualificacao() {
     return result;
   }, [allLeads, statusFilter, etapaFilter, search]);
 
-  const countAtivos = useMemo(() => allLeads.filter((l) => !l._desqualificado).length, [allLeads]);
+  const countAtivos = useMemo(() => allLeads.filter((l) => !l._desqualificado && !l._qualificado).length, [allLeads]);
+  const countQualif = useMemo(() => allLeads.filter((l) => l._qualificado).length, [allLeads]);
   const countDesq = useMemo(() => allLeads.filter((l) => l._desqualificado).length, [allLeads]);
   const countByEtapa = useMemo(() => {
     const map: Record<string, number> = {};
@@ -157,7 +158,7 @@ export default function Qualificacao() {
     return map;
   }, [filtered]);
 
-  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string; _desqualificado: boolean }, webhookUrl: string, label: string) => {
+  const sendToWebhook = async (lead: MakeRecord & { _classificacao: string; _desqualificado: boolean; _qualificado: boolean }, webhookUrl: string, label: string) => {
     const key = `${lead.telefone}-${label}`;
     const vendorSelection = vendorMap[lead.telefone || ""] || "roleta";
     const vendor = resolveVendor(vendorSelection);
@@ -322,6 +323,14 @@ export default function Qualificacao() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <UserCheck className="h-3.5 w-3.5 text-green-500" /> Qualificados
+            </div>
+            <p className="text-2xl font-bold text-green-500">{countQualif}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
               <XCircle className="h-3.5 w-3.5 text-destructive" /> Desqualificados
             </div>
             <p className="text-2xl font-bold">{countDesq}</p>
@@ -457,6 +466,7 @@ export default function Qualificacao() {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="ativos">Ativos</SelectItem>
+                <SelectItem value="qualificados">Qualificados</SelectItem>
                 <SelectItem value="desqualificados">Desqualificados</SelectItem>
               </SelectContent>
             </Select>
@@ -485,6 +495,7 @@ export default function Qualificacao() {
                 const key = lead.telefone || `lead-${idx}`;
                 const selectedVendor = vendorMap[key] || "roleta";
                 const isDQ = lead._desqualificado;
+                const isQF = lead._qualificado;
 
                 return (
                   <div
@@ -499,6 +510,11 @@ export default function Qualificacao() {
                         <Badge variant="outline" className="text-[10px] shrink-0">
                           {lead._classificacao}
                         </Badge>
+                        {isQF && (
+                          <Badge variant="secondary" className="text-[10px] shrink-0 bg-primary/20 text-primary">
+                            QUALIFICADO
+                          </Badge>
+                        )}
                         {isDQ && (
                           <Badge variant="destructive" className="text-[10px] shrink-0">
                             DESQUALIFICADO
