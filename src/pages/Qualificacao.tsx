@@ -197,7 +197,7 @@ export default function Qualificacao() {
       setSentMap((m) => ({ ...m, [key]: true }));
       toast.success(`Lead ${lead.nome || lead.telefone} → ${vendor.nome} (${label.toLowerCase()})`);
       // Refetch data to update statuses after webhook
-      setTimeout(() => refetch(), 2000);
+      setTimeout(() => forceSync(), 2000);
     } catch (err: any) {
       toast.error(`Erro ao enviar: ${err.message}`);
     } finally {
