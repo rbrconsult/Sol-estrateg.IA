@@ -83,11 +83,26 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!records) return [];
-    return records.map((r) => ({
-      ...r,
-      _classificacao: classifyLead(r),
-      _desqualificado: isDesqualificado(r),
-    }));
+    // Only leads stuck in ROBO stage (not yet qualified/moved forward)
+    const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU', 'NOVO', ''];
+    return records
+      .filter((r) => {
+        const status = (r.makeStatus || '').toUpperCase();
+        const etapa = (r.etapaFunil || '').toUpperCase();
+        const codigo = (r.codigoStatus || '').toUpperCase();
+        // Include if status is empty/robot-stage OR explicitly in qualification
+        const isRoboStage = !status || roboStatuses.includes(status) || status === 'WHATSAPP';
+        // Exclude already qualified leads that moved forward
+        const isQualificado = status === 'QUALIFICADO' && (etapa === 'CLOSER' || etapa === 'AGENDAMENTO' || etapa === 'PROPOSTA');
+        if (isQualificado) return false;
+        // Exclude desqualificados unless filter asks for them
+        return isRoboStage || isDesqualificado(r);
+      })
+      .map((r) => ({
+        ...r,
+        _classificacao: classifyLead(r),
+        _desqualificado: isDesqualificado(r),
+      }));
   }, [records]);
 
   const filtered = useMemo(() => {
@@ -113,11 +128,18 @@ export default function Qualificacao() {
       );
     }
 
+    // Sort by most recent interaction first (like Krolic)
     result = [...result].sort((a, b) => {
       const getLatest = (r: typeof a) => {
-        const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
-        const candidate = lastHist || r.lastFollowupDate || r.data_envio || '';
-        return new Date(candidate).getTime() || 0;
+        // Priority: last follow-up > last history entry > data_envio
+        const dates = [
+          r.lastFollowupDate,
+          r.historico?.length ? r.historico[r.historico.length - 1]?.data : null,
+          r.data_resposta,
+          r.data_envio,
+        ].filter(Boolean);
+        const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
+        return timestamps.length > 0 ? Math.max(...timestamps) : 0;
       };
       return getLatest(b) - getLatest(a);
     });
