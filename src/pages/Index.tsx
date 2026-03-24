@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useForceSync } from "@/hooks/useForceSync";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { ExecutiveKPIs } from "@/components/dashboard/ExecutiveKPIs";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
