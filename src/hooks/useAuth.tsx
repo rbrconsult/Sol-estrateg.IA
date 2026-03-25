@@ -96,28 +96,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-            fetchOrganizationId(session.user.id);
-          }, 0);
+          setLoading(true);
+          Promise.all([
+            fetchUserRole(session.user.id),
+            fetchOrganizationId(session.user.id),
+          ]).finally(() => setLoading(false));
         } else {
           setUserRole(null);
           setOrganizationId(null);
+          setLoading(false);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        fetchUserRole(session.user.id);
-        fetchOrganizationId(session.user.id);
+        await Promise.all([
+          fetchUserRole(session.user.id),
+          fetchOrganizationId(session.user.id),
+        ]);
+
         // Skip session validation if impersonating
         const isImpersonatingNow = !!localStorage.getItem(IMPERSONATION_KEY);
         if (!isImpersonatingNow) {
@@ -126,7 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             validateSession(session.user.id, sessionToken);
           }
         }
+      } else {
+        setUserRole(null);
+        setOrganizationId(null);
       }
+
       setLoading(false);
     });
 
