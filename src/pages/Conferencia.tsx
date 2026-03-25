@@ -146,31 +146,9 @@ export default function Conferencia() {
     return () => clearInterval(id);
   }, []);
 
-  /* filters */
-  const [periodo, setPeriodo] = useState("30d");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [filterEtapa, setFilterEtapa] = useState("todas");
-  const [filterTemp, setFilterTemp] = useState("todas");
-  const [filterResp, setFilterResp] = useState("todos");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const hasFilters = periodo !== "30d" || !!dateFrom || !!dateTo || filterEtapa !== "todas" || filterTemp !== "todas" || filterResp !== "todos" || !!searchTerm;
-  const clearFilters = () => { setPeriodo("30d"); setDateFrom(undefined); setDateTo(undefined); setFilterEtapa("todas"); setFilterTemp("todas"); setFilterResp("todos"); setSearchTerm(""); };
-
-  const effectiveDateRange = useMemo(() => {
-    const today = new Date();
-    if (periodo === "custom") return { from: dateFrom, to: dateTo };
-    if (periodo === "hoje") return { from: today, to: today };
-    if (periodo === "3d") return { from: subDays(today, 3), to: today };
-    if (periodo === "7d") return { from: subDays(today, 7), to: today };
-    if (periodo === "30d") return { from: subDays(today, 30), to: today };
-    if (periodo === "90d") return { from: subDays(today, 90), to: today };
-    if (periodo === "mes") return { from: startOfMonth(today), to: today };
-    if (periodo === "ano" || periodo === "ytd") return { from: startOfYear(today), to: today };
-    // "all" — no date filter
-    return { from: undefined as Date | undefined, to: undefined as Date | undefined };
-  }, [periodo, dateFrom, dateTo]);
+  const gf = useGlobalFilters();
+  const { periodo, etapa: filterEtapa, temperatura: filterTemp, searchTerm } = gf.filters;
+  const effectiveDateRange = gf.effectiveDateRange;
 
   /** Parse flexible date from DS (ISO or BR dd/MM/yyyy HH:mm:ss) */
   const parseLeadDate = (dateStr?: string) => {
