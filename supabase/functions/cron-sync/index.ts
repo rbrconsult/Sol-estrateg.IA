@@ -411,6 +411,7 @@ Deno.serve(async (req) => {
       const orgResult: Record<string, any> = {};
 
       orgResult.dataStore = await syncDataStore(supabase, creds);
+      orgResult.comercial = await syncComercialDS(supabase, creds);
       orgResult.heartbeat = await syncHeartbeat(supabase, creds);
 
       results[creds.orgName] = orgResult;
