@@ -1,17 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Save, Phone, Database } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Eye, EyeOff, Save, Phone, Database, X, Settings2 } from "lucide-react";
 import { VariableBank } from "./VariableBank";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
 const DESTINATARIO_ROLES = [
@@ -29,7 +30,6 @@ function parsePeriodicidade(p: string) {
   const parts = p.split(" — ");
   const freq = parts[0] || "Diária";
   const rest = parts[1] || "07:00";
-
   if (freq === "Semanal" || freq === "Quinzenal") {
     const match = rest.match(/^(\S+)\s+(.+)$/);
     return { freq, dia: match?.[1] || "Segunda", horario: match?.[2] || "08:00" };
@@ -56,6 +56,7 @@ interface ReportEditorDialogProps {
 }
 
 export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSaving }: ReportEditorDialogProps) {
+  const isMobile = useIsMobile();
   const [form, setForm] = useState({
     titulo: "",
     icon: "📊",
@@ -67,7 +68,8 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     conteudo: "",
     destinatario_roles: [] as string[],
   });
-  const [tab, setTab] = useState("editor");
+  const [showPreview, setShowPreview] = useState(false);
+  const [showConfig, setShowConfig] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const parsed = useMemo(() => parsePeriodicidade(form.periodicidade), [form.periodicidade]);
@@ -95,6 +97,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         conteudo: template.conteudo,
         destinatario_roles: (template as any).destinatario_roles || [],
       });
+      setShowConfig(false);
     } else {
       setForm({
         titulo: "",
@@ -107,8 +110,9 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
         conteudo: "",
         destinatario_roles: [],
       });
+      setShowConfig(true);
     }
-    setTab("editor");
+    setShowPreview(false);
   }, [template, open]);
 
   const handleSave = () => {
@@ -126,7 +130,6 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
       const end = textarea.selectionEnd;
       const newContent = form.conteudo.slice(0, start) + variable + form.conteudo.slice(end);
       setForm(f => ({ ...f, conteudo: newContent }));
-      // Restore cursor position after insert
       setTimeout(() => {
         textarea.focus();
         textarea.selectionStart = textarea.selectionEnd = start + variable.length;
@@ -142,87 +145,84 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
   const dataVars = uniqueVars.filter(v => !v.includes("calc:"));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>{template ? "Editar Template" : "Novo Template"}</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="h-[95vh] p-0 flex flex-col rounded-t-xl">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setForm(f => {
+                const idx = ICONS.indexOf(f.icon);
+                return { ...f, icon: ICONS[(idx + 1) % ICONS.length] };
+              })}
+              className="text-2xl hover:scale-110 transition-transform cursor-pointer"
+              title="Clique para trocar ícone"
+            >
+              {form.icon}
+            </button>
+            <Input
+              value={form.titulo}
+              onChange={(e) => setForm(f => ({ ...f, titulo: e.target.value }))}
+              placeholder="Nome do relatório..."
+              className="text-lg font-bold border-none shadow-none bg-transparent px-0 h-auto focus-visible:ring-0 max-w-[400px]"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowConfig(v => !v)}
+              className={`gap-1.5 text-xs ${showConfig ? 'text-primary' : ''}`}
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              Config
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPreview(v => !v)}
+              className={`gap-1.5 text-xs ${showPreview ? 'text-primary' : ''}`}
+            >
+              {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              Preview
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <Button onClick={handleSave} disabled={!form.titulo.trim() || !form.conteudo.trim() || isSaving} size="sm" className="gap-1.5">
+              <Save className="h-3.5 w-3.5" />
+              {isSaving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
 
-        <Tabs value={tab} onValueChange={setTab} className="flex-1 min-h-0">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="editor">Configurar</TabsTrigger>
-            <TabsTrigger value="variables" className="gap-1">
-              <Database className="h-3 w-3" /> Variáveis
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="gap-1">
-              <Eye className="h-3 w-3" /> Preview
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="editor" className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Título</Label>
-                <Input value={form.titulo} onChange={(e) => setForm(f => ({ ...f, titulo: e.target.value }))} placeholder="Nome do relatório" />
+        {/* Config panel (collapsible) */}
+        {showConfig && (
+          <div className="px-4 py-3 border-b bg-muted/10 space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[11px]">Destinatário</Label>
+                <Input
+                  value={form.destinatario}
+                  onChange={(e) => setForm(f => ({ ...f, destinatario: e.target.value }))}
+                  placeholder="Nome/cargo"
+                  className="h-8 text-xs"
+                />
               </div>
-              <div className="space-y-2">
-                <Label>Ícone</Label>
-                <div className="flex gap-1 flex-wrap">
-                  {ICONS.map((ic) => (
-                    <button key={ic} onClick={() => setForm(f => ({ ...f, icon: ic }))} className={`text-lg p-1.5 rounded-md border transition-all ${form.icon === ic ? "border-primary bg-primary/10 scale-110" : "border-transparent hover:bg-muted"}`}>
-                      {ic}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Destinatário (nome/cargo)</Label>
-                <Input value={form.destinatario} onChange={(e) => setForm(f => ({ ...f, destinatario: e.target.value }))} placeholder="Ex: João Silva — Diretor" />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" /> Telefone do Destinatário
+              <div className="space-y-1">
+                <Label className="text-[11px] flex items-center gap-1">
+                  <Phone className="h-3 w-3" /> Telefone
                 </Label>
                 <Input
                   value={form.destinatario_telefone}
                   onChange={(e) => setForm(f => ({ ...f, destinatario_telefone: e.target.value }))}
                   placeholder="5511999999999"
                   type="tel"
+                  className="h-8 text-xs"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Enviar para (por cargo)</Label>
-              <div className="flex gap-4">
-                {DESTINATARIO_ROLES.map((r) => (
-                  <label key={r.value} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={form.destinatario_roles.includes(r.value)}
-                      onCheckedChange={(checked) => {
-                        setForm(f => ({
-                          ...f,
-                          destinatario_roles: checked
-                            ? [...f.destinatario_roles, r.value]
-                            : f.destinatario_roles.filter(v => v !== r.value),
-                        }));
-                      }}
-                    />
-                    <span className="text-sm">{r.label}</span>
-                  </label>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground">Selecione quais cargos devem receber este report automaticamente</p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Frequência</Label>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Frequência</Label>
                 <Select value={parsed.freq} onValueChange={(v) => updatePeriod("freq", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {FREQUENCIAS.map((f) => (
                       <SelectItem key={f} value={f}>{f}</SelectItem>
@@ -230,12 +230,11 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </SelectContent>
                 </Select>
               </div>
-
               {(parsed.freq === "Semanal" || parsed.freq === "Quinzenal") && (
-                <div className="space-y-2">
-                  <Label>Dia da Semana</Label>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">Dia</Label>
                   <Select value={parsed.dia} onValueChange={(v) => updatePeriod("dia", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {DIAS_SEMANA.map((d) => (
                         <SelectItem key={d} value={d}>{d}</SelectItem>
@@ -244,12 +243,11 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </Select>
                 </div>
               )}
-
               {parsed.freq === "Mensal" && (
-                <div className="space-y-2">
-                  <Label>Dia do Mês</Label>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">Dia do Mês</Label>
                   <Select value={parsed.dia} onValueChange={(v) => updatePeriod("dia", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {DIAS_MES.map((d) => (
                         <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
@@ -258,11 +256,10 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </Select>
                 </div>
               )}
-
-              <div className="space-y-2">
-                <Label>Horário</Label>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Horário</Label>
                 <Select value={parsed.horario} onValueChange={(v) => updatePeriod("horario", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {HORARIOS.map((h) => (
                       <SelectItem key={h} value={h}>{h}</SelectItem>
@@ -270,11 +267,10 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label>Canal</Label>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Canal</Label>
                 <Select value={form.canal} onValueChange={(v) => setForm(f => ({ ...f, canal: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="WhatsApp">WhatsApp</SelectItem>
                     <SelectItem value="Email">Email</SelectItem>
@@ -283,139 +279,111 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                 </Select>
               </div>
             </div>
+            <div className="flex items-center gap-4">
+              <span className="text-[11px] text-muted-foreground font-medium">Enviar para:</span>
+              {DESTINATARIO_ROLES.map((r) => (
+                <label key={r.value} className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={form.destinatario_roles.includes(r.value)}
+                    onCheckedChange={(checked) => {
+                      setForm(f => ({
+                        ...f,
+                        destinatario_roles: checked
+                          ? [...f.destinatario_roles, r.value]
+                          : f.destinatario_roles.filter(v => v !== r.value),
+                      }));
+                    }}
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="text-xs">{r.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Conteúdo do Template</Label>
-                  <p className="text-[10px] text-muted-foreground">
-                    Clique nas variáveis ao lado para inserir →
-                  </p>
+        {/* Main content area: editor + variables + optional preview */}
+        <div className="flex-1 min-h-0 flex">
+          {/* Variable bank sidebar */}
+          <div className="w-[260px] border-r bg-muted/20 flex flex-col min-h-0 shrink-0">
+            <div className="px-3 py-2 border-b">
+              <p className="text-xs font-semibold flex items-center gap-1.5">
+                <Database className="h-3.5 w-3.5 text-primary" />
+                Banco de Variáveis
+              </p>
+            </div>
+            <div className="flex-1 min-h-0 p-2">
+              <VariableBank onInsert={handleInsertVariable} />
+            </div>
+          </div>
+
+          {/* Editor area */}
+          <div className="flex-1 min-h-0 flex flex-col">
+            {/* Detected variables bar */}
+            {uniqueVars.length > 0 && (
+              <div className="px-4 py-2 border-b bg-muted/10 flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                  {dataVars.length} variáveis
+                </span>
+                {calcVars.length > 0 && (
+                  <Badge variant="outline" className="text-[9px] gap-1">
+                    🧮 {calcVars.length} cálculo(s)
+                  </Badge>
+                )}
+                <Separator orientation="vertical" className="h-3" />
+                <div className="flex flex-wrap gap-1">
+                  {dataVars.slice(0, 8).map((v) => (
+                    <Badge key={v} variant="secondary" className="text-[9px] font-mono">{v}</Badge>
+                  ))}
+                  {dataVars.length > 8 && (
+                    <Badge variant="secondary" className="text-[9px]">+{dataVars.length - 8}</Badge>
+                  )}
                 </div>
+              </div>
+            )}
+
+            <div className="flex-1 min-h-0 flex">
+              {/* Textarea */}
+              <div className="flex-1 min-h-0 p-0">
                 <Textarea
                   ref={textareaRef}
                   value={form.conteudo}
                   onChange={(e) => setForm(f => ({ ...f, conteudo: e.target.value }))}
-                  placeholder="Escreva o template da mensagem..."
-                  className="min-h-[260px] font-mono text-xs"
+                  placeholder="Escreva o template da mensagem aqui...&#10;&#10;Use {{variável}} para inserir dados dinâmicos.&#10;Clique nas variáveis à esquerda para inseri-las."
+                  className="h-full w-full resize-none rounded-none border-0 font-mono text-xs leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
                 />
-                {uniqueVars.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground">Variáveis detectadas ({dataVars.length})</Label>
-                      {calcVars.length > 0 && (
-                        <Badge variant="outline" className="text-[9px] gap-1">
-                          <span>🧮</span> {calcVars.length} cálculo(s)
-                        </Badge>
-                      )}
+              </div>
+
+              {/* Live preview panel */}
+              {showPreview && (
+                <div className="w-[380px] border-l bg-muted/10 flex flex-col min-h-0 shrink-0">
+                  <div className="px-3 py-2 border-b flex items-center justify-between">
+                    <p className="text-xs font-semibold flex items-center gap-1.5">
+                      <Eye className="h-3.5 w-3.5 text-primary" />
+                      Preview WhatsApp
+                    </p>
+                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[9px]">
+                      Com variáveis
+                    </Badge>
+                  </div>
+                  <ScrollArea className="flex-1 min-h-0 p-3">
+                    <div className="rounded-xl bg-[#0b141a] border border-border/30 p-3">
+                      <div className="bg-[#005c4b] rounded-lg p-3 max-w-[95%] ml-auto">
+                        <pre className="text-[11px] text-white/90 whitespace-pre-wrap font-sans leading-relaxed">
+                          {form.conteudo || "Sem conteúdo para preview"}
+                        </pre>
+                        <div className="text-right mt-1">
+                          <span className="text-[9px] text-white/50">07:00 ✓✓</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {dataVars.map((v) => (
-                        <Badge key={v} variant="secondary" className="text-xs font-mono">{v}</Badge>
-                      ))}
-                      {calcVars.map((v) => (
-                        <Badge key={v} variant="outline" className="text-xs font-mono border-primary/30 text-primary">{v}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Inline variable bank */}
-              <div className="border rounded-lg p-3 bg-muted/30">
-                <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
-                  <Database className="h-3.5 w-3.5 text-primary" />
-                  Banco de Variáveis
-                </p>
-                <VariableBank onInsert={handleInsertVariable} />
-              </div>
+                  </ScrollArea>
+                </div>
+              )}
             </div>
-          </TabsContent>
-
-          <TabsContent value="variables" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-semibold mb-3">📌 Variáveis Disponíveis</h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Todas as variáveis são preenchidas automaticamente com dados reais do banco de dados e dos Data Stores do Make.
-                  Clique em qualquer variável para copiá-la.
-                </p>
-                <VariableBank onInsert={handleInsertVariable} />
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-semibold mb-3">🧮 Operações Matemáticas</h3>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Use <code className="bg-muted px-1 rounded font-mono">{"{{calc: expressão}}"}</code> para cálculos entre variáveis.
-                  </p>
-                  <div className="space-y-2">
-                    {[
-                      { expr: "{{calc: vendas / propostas * 100}}", desc: "Taxa de conversão (%)" },
-                      { expr: "{{calc: faturamento_num / vendas_num}}", desc: "Ticket médio" },
-                      { expr: "{{calc: faturamento_num - investimento_num}}", desc: "Lucro bruto" },
-                      { expr: "{{calc: investimento_num / vendas_num}}", desc: "CAC dinâmico" },
-                      { expr: "{{calc: faturamento_num / investimento_num}}", desc: "ROAS dinâmico" },
-                      { expr: "{{calc: leads_qualificados_num / leads_gerados_num * 100}}", desc: "Taxa qualificação (%)" },
-                    ].map((ex) => (
-                      <button
-                        key={ex.expr}
-                        onClick={() => handleInsertVariable(ex.expr)}
-                        className="w-full text-left p-2 rounded border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-colors"
-                      >
-                        <code className="text-[10px] font-mono text-primary block">{ex.expr}</code>
-                        <span className="text-[10px] text-muted-foreground">{ex.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <h4 className="text-xs font-semibold mb-2">💡 Variáveis numéricas para cálculo</h4>
-                  <p className="text-[10px] text-muted-foreground mb-2">
-                    Para cálculos, use as variáveis com sufixo <code className="font-mono">_num</code> (valores numéricos puros):
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {[
-                      "vendas_num", "propostas_num", "leads_gerados_num", "leads_qualificados_num",
-                      "faturamento_num", "investimento_num", "cliques_num", "impressoes_num",
-                      "ga4_sessoes_num", "ga4_conversoes_num", "ga4_usuarios_num",
-                    ].map(v => (
-                      <Badge key={v} variant="outline" className="text-[9px] font-mono cursor-pointer hover:bg-primary/10"
-                        onClick={() => handleInsertVariable(v)}
-                      >
-                        {v}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="preview" className="mt-4">
-            <ScrollArea className="h-[450px]">
-              <div className="rounded-xl bg-[#0b141a] border border-border/30 p-4">
-                <div className="bg-[#005c4b] rounded-lg p-3 max-w-[90%] ml-auto">
-                  <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">
-                    {form.conteudo || "Sem conteúdo para preview"}
-                  </pre>
-                  <div className="text-right mt-1">
-                    <span className="text-[9px] text-white/50">07:00 ✓✓</span>
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={!form.titulo.trim() || !form.conteudo.trim() || isSaving}>
-            <Save className="h-4 w-4 mr-1" />
-            {isSaving ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
