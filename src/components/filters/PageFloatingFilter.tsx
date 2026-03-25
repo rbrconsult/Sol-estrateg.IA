@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Filter, X, CalendarIcon, Search } from "lucide-react";
-import { format, subDays, startOfMonth, startOfYear } from "date-fns";
+import { format, subDays, startOfDay, startOfMonth, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -86,20 +86,21 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
 
   const effectiveDateRange = useMemo(() => {
     const today = new Date();
+    const todayStart = startOfDay(today);
     const p = filters.periodo;
     if (p === "custom") return { from: filters.dateFrom, to: filters.dateTo };
-    if (p === "hoje") return { from: today, to: today };
-    if (p === "3d") return { from: subDays(today, 3), to: today };
-    if (p === "7d") return { from: subDays(today, 7), to: today };
-    if (p === "30d") return { from: subDays(today, 30), to: today };
-    if (p === "90d") return { from: subDays(today, 90), to: today };
-    if (p === "mes") return { from: startOfMonth(today), to: today };
+    if (p === "hoje") return { from: todayStart, to: today };
+    if (p === "3d") return { from: startOfDay(subDays(today, 3)), to: today };
+    if (p === "7d") return { from: startOfDay(subDays(today, 7)), to: today };
+    if (p === "30d") return { from: startOfDay(subDays(today, 30)), to: today };
+    if (p === "90d") return { from: startOfDay(subDays(today, 90)), to: today };
+    if (p === "mes") return { from: startOfDay(startOfMonth(today)), to: today };
     if (p === "mesAnterior") {
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
       return { from: lastMonth, to: lastMonthEnd };
     }
-    if (p === "ano" || p === "ytd") return { from: startOfYear(today), to: today };
+    if (p === "ano" || p === "ytd") return { from: startOfDay(startOfYear(today)), to: today };
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
@@ -108,10 +109,14 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
       const { from, to } = effectiveDateRange;
       if (from || to) {
         const dateStr = r.data_envio;
-        if (!dateStr) return true;
+        if (!dateStr) return false;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;
-        if (from && d < from) return false;
+        if (from) {
+          const fromStart = new Date(from);
+          fromStart.setHours(0, 0, 0, 0);
+          if (d < fromStart) return false;
+        }
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
       if (filters.canal !== "todos" && (r as any).canalOrigem !== filters.canal) return false;
@@ -128,10 +133,14 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
       const { from, to } = effectiveDateRange;
       if (from || to) {
         const dateStr = p.dataCriacaoProposta;
-        if (!dateStr) return true;
+        if (!dateStr) return false;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;
-        if (from && d < from) return false;
+        if (from) {
+          const fromStart = new Date(from);
+          fromStart.setHours(0, 0, 0, 0);
+          if (d < fromStart) return false;
+        }
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
       if (filters.temperatura !== "todas" && (p.temperatura || "").toUpperCase() !== filters.temperatura) return false;
