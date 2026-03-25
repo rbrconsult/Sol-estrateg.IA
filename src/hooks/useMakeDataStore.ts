@@ -84,7 +84,7 @@ function rowToMakeRecord(r: any): MakeRecord {
     telefone: r.telefone || '',
     robo,
     ultima_mensagem: '',
-    data_envio: r.data_entrada || r.last_followup_date || r.data_qualificacao || r.data_proposta || r.data_fechamento || r.updated_at || r.created_at || '',
+    data_envio: r.data_entrada || r.last_followup_date || r.data_qualificacao || r.data_proposta || r.data_fechamento || '',
     status_resposta: statusResposta as any,
     data_resposta: r.respondeu ? (r.data_qualificacao || undefined) : undefined,
     historico,
