@@ -162,6 +162,46 @@ Deno.serve(async (req) => {
     const errors = records.filter((r) => r.status === "error").length;
     const warnings = records.filter((r) => r.status === "warning").length;
 
+    // 4. Auto-update monitored_scenario_ids with ALL discovered scenarios
+    const monitoredPayload = scenarios.map((s) => ({ id: s.id, name: s.name }));
+    const { error: settingsErr } = await supabase
+      .from("app_settings")
+      .upsert(
+        { key: "monitored_scenario_ids", value: JSON.stringify(monitoredPayload), updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+    if (settingsErr) {
+      console.error("Failed to auto-update monitored scenarios:", settingsErr.message);
+    } else {
+      console.log(`Auto-updated monitored_scenario_ids with ${monitoredPayload.length} scenarios`);
+    }
+
+    // 5. Auto-discover Data Stores and save to app_settings
+    try {
+      const dsRes = await fetchWithRetry(
+        `${MAKE_BASE}/data-stores?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
+        { headers: makeHeaders }
+      );
+      if (dsRes.ok) {
+        const dsData = await dsRes.json();
+        const dataStores = (dsData.dataStores ?? []).map((ds: any) => ({
+          id: ds.id,
+          name: ds.name,
+          records: ds.records ?? 0,
+          size: ds.datasize ?? 0,
+        }));
+        await supabase
+          .from("app_settings")
+          .upsert(
+            { key: "make_data_stores", value: JSON.stringify(dataStores), updated_at: new Date().toISOString() },
+            { onConflict: "key" }
+          );
+        console.log(`Auto-discovered ${dataStores.length} data stores`);
+      }
+    } catch (dsErr) {
+      console.error("Failed to discover data stores:", dsErr);
+    }
+
     return new Response(
       JSON.stringify({
         scenarios: scenarios.length,
