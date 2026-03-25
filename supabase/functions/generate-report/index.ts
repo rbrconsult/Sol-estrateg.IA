@@ -47,12 +47,38 @@ async function fetchMakeDS(dsId: string, makeApiKey: string, teamId: string): Pr
   return all;
 }
 
+/* ── Supabase paginated fetcher ── */
+async function fetchSupabaseTable(supabase: any, table: string, selectCols: string, filters?: Record<string, any>): Promise<any[]> {
+  const allRows: any[] = [];
+  let offset = 0;
+  const pageSize = 1000;
+  let hasMore = true;
+  while (hasMore) {
+    let q = supabase.from(table).select(selectCols).range(offset, offset + pageSize - 1);
+    if (filters) {
+      for (const [key, val] of Object.entries(filters)) {
+        q = q.eq(key, val);
+      }
+    }
+    const { data, error } = await q;
+    if (error) { console.error(`Supabase ${table} error:`, error.message); break; }
+    if (data && data.length > 0) {
+      allRows.push(...data);
+      hasMore = data.length === pageSize;
+      offset += pageSize;
+    } else {
+      hasMore = false;
+    }
+  }
+  return allRows;
+}
+
 /* ── Normalize record data (Make DS records have nested .data) ── */
 function norm(rec: any): any {
   return rec?.data ?? rec;
 }
 
-/* ── Status classification (mirrors dataAdapter mapStatus) ── */
+/* ── Status classification ── */
 const GANHO = ["CONTRATO ASSINADO", "COBRANÇA", "ANÁLISE DOCUMENTOS", "VISTORIA", "HOMOLOGADO", "INSTALAÇÃO", "INSTALADO", "COMISSÃO"];
 const PERDIDO_ETAPAS = ["PERDIDO", "DECLÍNIO", "CANCELADO"];
 function classifyStatus(d: any): "Aberto" | "Ganho" | "Perdido" {
@@ -63,6 +89,31 @@ function classifyStatus(d: any): "Aberto" | "Ganho" | "Perdido" {
   if (st.includes("ganho")) return "Ganho";
   if (st.includes("perdido")) return "Perdido";
   return "Aberto";
+}
+
+/* ── Safe math expression evaluator ── */
+function evaluateCalcExpression(expr: string, numericVars: Record<string, number>): string {
+  try {
+    // Replace variable names with their numeric values
+    let resolved = expr.trim();
+    // Sort keys by length desc to avoid partial replacements
+    const sortedKeys = Object.keys(numericVars).sort((a, b) => b.length - a.length);
+    for (const key of sortedKeys) {
+      resolved = resolved.replaceAll(key, String(numericVars[key]));
+    }
+    // Only allow numbers, operators, spaces, dots, parens
+    if (!/^[\d\s+\-*/().]+$/.test(resolved)) {
+      return "N/A";
+    }
+    // Evaluate
+    const result = new Function(`"use strict"; return (${resolved});`)();
+    if (typeof result !== "number" || !isFinite(result)) return "N/A";
+    // Format nicely
+    if (Number.isInteger(result)) return String(result);
+    return result.toFixed(2);
+  } catch {
+    return "N/A";
+  }
 }
 
 Deno.serve(async (req) => {
@@ -122,7 +173,7 @@ Deno.serve(async (req) => {
       effectiveOrgId = String(baseOrganizationId);
     }
 
-    // ── Resolve Make credentials (org-specific → global fallback) ──
+    // ── Resolve Make credentials ──
     let makeApiKey = "";
     let dsThreadId = "";
     let dsComercialId = "";
@@ -156,51 +207,56 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── Get allowed team members for filtering ──
+    // ── Get allowed team members ──
     let allowedNames: string[] = [];
+    let orgSlug = "";
     if (effectiveOrgId) {
       const { data: orgData } = await supabase.from("organizations").select("slug").eq("id", effectiveOrgId).single();
-      if (orgData?.slug) {
+      orgSlug = orgData?.slug || "";
+      if (orgSlug) {
         const { data: team } = await supabase
           .from("time_comercial")
           .select("nome, sm_id")
-          .eq("franquia_id", orgData.slug)
+          .eq("franquia_id", orgSlug)
           .eq("ativo", true);
         allowedNames = (team || []).map((m: any) => (m.nome || "").trim().toLowerCase()).filter(Boolean);
       }
     }
 
-    // Resolve org slug for Ads/Produção filtering
-    let orgSlug = "";
-    if (effectiveOrgId) {
-      const { data: slugData } = await supabase.from("organizations").select("slug").eq("id", effectiveOrgId).single();
-      orgSlug = slugData?.slug || "";
-    }
+    console.log(`generate-report: org=${effectiveOrgId}, slug=${orgSlug}`);
 
-    console.log(`generate-report: org=${effectiveOrgId}, slug=${orgSlug}, dsThread=${dsThreadId}, dsComercial=${dsComercialId}, dsMetaAds=${dsMetaAdsId}, dsGoogleAds=${dsGoogleAdsId}, dsProducao=${dsProducaoId}, team=${allowedNames.length}`);
-
-    // ── 1. Fetch Make Data Stores in parallel ──
-    const [rawThread, rawComercial, rawMetaAds, rawGoogleAds, rawProducao] = await Promise.all([
+    // ── 1. Fetch Make DS + Supabase tables in parallel ──
+    const orgFilter = effectiveOrgId ? { organization_id: effectiveOrgId } : {};
+    const [
+      rawThread, rawComercial, rawMetaAds, rawGoogleAds, rawProducao,
+      dbLeads, dbCampaignMetrics, dbGA4Metrics,
+    ] = await Promise.all([
       dsThreadId ? fetchMakeDS(dsThreadId, makeApiKey, makeTeamId) : Promise.resolve([]),
       dsComercialId ? fetchMakeDS(dsComercialId, makeApiKey, makeTeamId) : Promise.resolve([]),
       dsMetaAdsId ? fetchMakeDS(dsMetaAdsId, makeApiKey, makeTeamId) : Promise.resolve([]),
       dsGoogleAdsId ? fetchMakeDS(dsGoogleAdsId, makeApiKey, makeTeamId) : Promise.resolve([]),
       dsProducaoId ? fetchMakeDS(dsProducaoId, makeApiKey, makeTeamId) : Promise.resolve([]),
+      // Supabase tables
+      fetchSupabaseTable(supabase, "leads_consolidados",
+        "id, canal_origem, campanha, status, etapa, etapa_sm, status_proposta, valor_proposta, temperatura, score, responsavel, representante, data_entrada, data_qualificacao, data_agendamento, data_proposta, data_fechamento, closer_atribuido, respondeu",
+        orgFilter),
+      fetchSupabaseTable(supabase, "campaign_metrics",
+        "plataforma, campaign_name, campaign_id, data_referencia, spend, impressions, clicks, leads, ctr, cpc, cpl, roas, receita, conversions",
+        orgFilter),
+      fetchSupabaseTable(supabase, "ga4_metrics",
+        "data_referencia, source, medium, campaign, landing_page, sessions, users_count, new_users, bounce_rate, avg_session_duration, conversions, conversion_rate",
+        orgFilter),
     ]);
 
-    // Normalize
+    // Normalize Make DS
     const threadLeads = rawThread.map(norm);
     let comercialLeads = rawComercial.map(norm);
-
-    // Filter comercial by team members if org-scoped
     if (allowedNames.length > 0) {
       comercialLeads = comercialLeads.filter((d: any) => {
         const resp = (d.responsavel || d.representante || "").toLowerCase().trim();
         return resp && allowedNames.some(n => n.includes(resp) || resp.includes(n));
       });
     }
-
-    // Normalize & filter Ads + Produção
     let metaAds = rawMetaAds.map(norm);
     let googleAds = rawGoogleAds.map(norm);
     let producao = rawProducao.map(norm);
@@ -210,13 +266,13 @@ Deno.serve(async (req) => {
       producao = producao.filter((d: any) => d.franquia_id === orgSlug);
     }
 
-    console.log(`generate-report: threadLeads=${threadLeads.length}, comercialLeads=${comercialLeads.length}, metaAds=${metaAds.length}, googleAds=${googleAds.length}, producao=${producao.length}`);
+    console.log(`generate-report: threadLeads=${threadLeads.length}, comercialLeads=${comercialLeads.length}, dbLeads=${dbLeads.length}, dbCampaigns=${dbCampaignMetrics.length}, dbGA4=${dbGA4Metrics.length}`);
 
     // ── 2. Calculate KPIs from REAL data ──
     const now = new Date();
     const todayStr = toDateKey(now) || "";
 
-    // Thread DS: pre-sales / robot data (all records, not date-filtered — DS already has current state)
+    // === THREAD DS KPIs ===
     const totalThread = threadLeads.length;
     const threadResponderam = threadLeads.filter((d: any) => d.respondeu === true || d.status_resposta === "respondeu");
     const threadQualificados = threadLeads.filter((d: any) => {
@@ -230,12 +286,9 @@ Deno.serve(async (req) => {
     });
     const mainTemp = Object.entries(threadTemperatura).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-    // Comercial DS: CRM proposals
+    // === COMERCIAL DS KPIs ===
     const totalComercial = comercialLeads.length;
-    const propostas = comercialLeads.filter((d: any) => {
-      const val = Number(d.valor_proposta || d.valorProposta || 0);
-      return val > 0;
-    });
+    const propostas = comercialLeads.filter((d: any) => Number(d.valor_proposta || d.valorProposta || 0) > 0);
     const vendasArr = comercialLeads.filter((d: any) => classifyStatus(d) === "Ganho");
     const faturamento = vendasArr.reduce((s: number, d: any) => s + (Number(d.valor_proposta || d.valorProposta || 0)), 0);
     const agendamentos = comercialLeads.filter((d: any) => d.data_agendamento || d.dataAgendamento);
@@ -256,14 +309,13 @@ Deno.serve(async (req) => {
     const taxaResposta = totalThread > 0 ? ((threadResponderam.length / totalThread) * 100).toFixed(1) : "0";
     const taxaQualificacao = totalThread > 0 ? ((threadQualificados.length / totalThread) * 100).toFixed(1) : "0";
 
-    // Robô stats (closer_atribuido = 11995 in thread DS)
+    // Robô stats
     const roboLeads = threadLeads.filter((d: any) => String(d.closer_atribuido) === "11995");
     const roboQualificados = roboLeads.filter((d: any) => {
       const st = (d.makeStatus || d.status || "").toUpperCase();
       return st.includes("QUALIFICADO") || st.includes("CONTATO");
     });
 
-    // Closer details text
     const closerDetalhes = Object.entries(closerMap)
       .filter(([name]) => name !== "Sem responsável")
       .sort((a, b) => b[1].vendas - a[1].vendas)
@@ -279,11 +331,9 @@ Deno.serve(async (req) => {
     });
     const mainOrigem = Object.entries(origens).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-    // Scores
     const scores = threadLeads.map((d: any) => Number(d.makeScore || d.score || 0)).filter(s => s > 0);
     const avgScore = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(0) : "0";
 
-    // Etapas distribution
     const etapas: Record<string, number> = {};
     comercialLeads.forEach((d: any) => {
       const e = d.etapa_sm || d.etapa || "Sem etapa";
@@ -292,31 +342,91 @@ Deno.serve(async (req) => {
 
     const monthStart = todayStr ? `${todayStr.slice(0, 7)}-01` : "";
 
-    // ── Ads KPIs (Meta + Google) ──
+    // === ADS KPIs (Make DS) ===
     const allAds = [...metaAds, ...googleAds];
     const totalInvestimento = allAds.reduce((s: number, d: any) => s + (Number(d.gasto_total || d.custo || 0)), 0);
     const totalCliques = allAds.reduce((s: number, d: any) => s + (Number(d.cliques || 0)), 0);
     const totalLeadsAds = allAds.reduce((s: number, d: any) => s + (Number(d.leads_total || d.conversoes || 0)), 0);
-    const cplCalc = totalLeadsAds > 0 ? (totalInvestimento / totalLeadsAds) : 0;
-    const cacCalc = vendasArr.length > 0 ? (totalInvestimento / vendasArr.length) : 0;
-    const roiCalc = totalInvestimento > 0 ? (((faturamento - totalInvestimento) / totalInvestimento) * 100) : 0;
 
-    // Top campaigns
+    // === SUPABASE CAMPAIGN_METRICS KPIs (supplement/override) ===
+    const dbSpend = dbCampaignMetrics.reduce((s: number, r: any) => s + (Number(r.spend) || 0), 0);
+    const dbClicks = dbCampaignMetrics.reduce((s: number, r: any) => s + (Number(r.clicks) || 0), 0);
+    const dbImpressions = dbCampaignMetrics.reduce((s: number, r: any) => s + (Number(r.impressions) || 0), 0);
+    const dbAdsLeads = dbCampaignMetrics.reduce((s: number, r: any) => s + (Number(r.leads) || 0), 0);
+    const dbReceita = dbCampaignMetrics.reduce((s: number, r: any) => s + (Number(r.receita) || 0), 0);
+
+    // Use DB data if available, fallback to Make DS
+    const finalInvestimento = dbSpend > 0 ? dbSpend : totalInvestimento;
+    const finalCliques = dbClicks > 0 ? dbClicks : totalCliques;
+    const finalImpressions = dbImpressions;
+    const finalLeadsAds = dbAdsLeads > 0 ? dbAdsLeads : totalLeadsAds;
+
+    const cplCalc = finalLeadsAds > 0 ? (finalInvestimento / finalLeadsAds) : 0;
+    const cacCalc = vendasArr.length > 0 ? (finalInvestimento / vendasArr.length) : 0;
+    const roiCalc = finalInvestimento > 0 ? (((faturamento - finalInvestimento) / finalInvestimento) * 100) : 0;
+    const roasCalc = finalInvestimento > 0 ? (faturamento / finalInvestimento) : 0;
+    const ctrCalc = finalImpressions > 0 ? ((finalCliques / finalImpressions) * 100) : 0;
+
+    // Top campaigns (from DB if available)
     const campMap: Record<string, { gasto: number; leads: number; cliques: number }> = {};
-    allAds.forEach((d: any) => {
-      const name = d.campaign_name || "Sem nome";
-      if (!campMap[name]) campMap[name] = { gasto: 0, leads: 0, cliques: 0 };
-      campMap[name].gasto += Number(d.gasto_total || d.custo || 0);
-      campMap[name].leads += Number(d.leads_total || d.conversoes || 0);
-      campMap[name].cliques += Number(d.cliques || 0);
-    });
+    if (dbCampaignMetrics.length > 0) {
+      dbCampaignMetrics.forEach((d: any) => {
+        const name = d.campaign_name || "Sem nome";
+        if (!campMap[name]) campMap[name] = { gasto: 0, leads: 0, cliques: 0 };
+        campMap[name].gasto += Number(d.spend) || 0;
+        campMap[name].leads += Number(d.leads) || 0;
+        campMap[name].cliques += Number(d.clicks) || 0;
+      });
+    } else {
+      allAds.forEach((d: any) => {
+        const name = d.campaign_name || "Sem nome";
+        if (!campMap[name]) campMap[name] = { gasto: 0, leads: 0, cliques: 0 };
+        campMap[name].gasto += Number(d.gasto_total || d.custo || 0);
+        campMap[name].leads += Number(d.leads_total || d.conversoes || 0);
+        campMap[name].cliques += Number(d.cliques || 0);
+      });
+    }
     const topCampanhas = Object.entries(campMap)
       .sort((a, b) => b[1].gasto - a[1].gasto)
       .slice(0, 3)
       .map(([name, s]) => `• ${name}: R$ ${s.gasto.toFixed(2)} | ${s.leads} leads | ${s.cliques} cliques`)
       .join("\n") || "Dados de campanha não disponíveis";
 
-    // ── Produção KPIs (SDR + FUP) ──
+    // === SUPABASE GA4 KPIs ===
+    const ga4Sessions = dbGA4Metrics.reduce((s: number, r: any) => s + (Number(r.sessions) || 0), 0);
+    const ga4Users = dbGA4Metrics.reduce((s: number, r: any) => s + (Number(r.users_count) || 0), 0);
+    const ga4NewUsers = dbGA4Metrics.reduce((s: number, r: any) => s + (Number(r.new_users) || 0), 0);
+    const ga4Conversions = dbGA4Metrics.reduce((s: number, r: any) => s + (Number(r.conversions) || 0), 0);
+    const ga4BounceAvg = dbGA4Metrics.length > 0
+      ? dbGA4Metrics.reduce((s: number, r: any) => s + (Number(r.bounce_rate) || 0), 0) / dbGA4Metrics.length
+      : 0;
+    const ga4DurationAvg = dbGA4Metrics.length > 0
+      ? dbGA4Metrics.reduce((s: number, r: any) => s + (Number(r.avg_session_duration) || 0), 0) / dbGA4Metrics.length
+      : 0;
+    const ga4ConvRate = ga4Sessions > 0 ? ((ga4Conversions / ga4Sessions) * 100) : 0;
+
+    // GA4 top source
+    const sourceMap: Record<string, number> = {};
+    dbGA4Metrics.forEach((r: any) => {
+      const src = r.source || "(direct)";
+      sourceMap[src] = (sourceMap[src] || 0) + (Number(r.sessions) || 0);
+    });
+    const ga4TopSource = Object.entries(sourceMap).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+
+    // === DB LEADS KPIs (supplement) ===
+    const dbLeadsFechados = dbLeads.filter((l: any) => classifyStatus(l) === "Ganho");
+    const dbLeadsQualif = dbLeads.filter((l: any) => {
+      const st = (l.status || "").toUpperCase();
+      const etapa = (l.etapa || "").toUpperCase();
+      return st.includes("QUALIFICADO") || etapa.includes("QUALIFICADO");
+    });
+    const dbPipelineAberto = dbLeads.filter((l: any) => classifyStatus(l) === "Aberto" && Number(l.valor_proposta || 0) > 0);
+    const pipelineValor = dbPipelineAberto.reduce((s: number, l: any) => s + (Number(l.valor_proposta) || 0), 0);
+    const ticketMedio = dbLeadsFechados.length > 0
+      ? dbLeadsFechados.reduce((s: number, l: any) => s + (Number(l.valor_proposta) || 0), 0) / dbLeadsFechados.length
+      : (vendasArr.length > 0 ? faturamento / vendasArr.length : 0);
+
+    // === PRODUÇÃO KPIs ===
     const sdrProd = producao.filter((d: any) => d.robo === "SDR");
     const fupProd = producao.filter((d: any) => d.robo === "FUP" || d.robo === "FUP_FRIO");
     const sdrMsgsEnviadas = sdrProd.reduce((s: number, d: any) => s + (Number(d.msgs_enviadas || 0)), 0);
@@ -326,15 +436,15 @@ Deno.serve(async (req) => {
     const fupRespostas = fupProd.reduce((s: number, d: any) => s + (Number(d.msgs_recebidas || 0)), 0);
     const fupReativados = fupProd.reduce((s: number, d: any) => s + (Number(d.qualificados_dia || 0)), 0);
 
-    // ── 3. Build data context ──
+    // ── 3. Build data context (display values) ──
     const dataContext: Record<string, string> = {
       data: todayStr ? todayStr.split("-").reverse().join("/") : new Date().toLocaleDateString("pt-BR"),
-      leads_gerados: String(totalThread),
-      leads: String(totalThread),
-      leads_qualificados: String(threadQualificados.length),
+      leads_gerados: String(totalThread || dbLeads.length),
+      leads: String(totalThread || dbLeads.length),
+      leads_qualificados: String(threadQualificados.length || dbLeadsQualif.length),
       taxa_qualificacao: `${taxaQualificacao}%`,
       oportunidades: String(propostas.length),
-      vendas: String(vendasArr.length),
+      vendas: String(vendasArr.length || dbLeadsFechados.length),
       faturamento: `R$ ${faturamento.toLocaleString("pt-BR")}`,
       conversao: `${conversao}%`,
       melhor_closer: melhorCloser,
@@ -349,6 +459,55 @@ Deno.serve(async (req) => {
       conversas_totais: String(roboLeads.length),
       handoff: roboLeads.length > 0 ? `${((roboQualificados.length / roboLeads.length) * 100).toFixed(1)}%` : "0%",
       semana: monthStart ? `${monthStart.split("-").reverse().slice(0, 2).join("/")} a ${todayStr.split("-").reverse().join("/")}` : "",
+      ticket_medio: `R$ ${ticketMedio.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`,
+      pipeline_valor: `R$ ${pipelineValor.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`,
+      pipeline_count: String(dbPipelineAberto.length),
+      // Ads
+      investimento: finalInvestimento > 0 ? `R$ ${finalInvestimento.toFixed(2)}` : "N/A",
+      cliques_total: String(finalCliques),
+      impressoes_total: String(finalImpressions),
+      cpl: cplCalc > 0 ? `R$ ${cplCalc.toFixed(2)}` : "N/A",
+      cac: cacCalc > 0 ? `R$ ${cacCalc.toFixed(2)}` : "N/A",
+      roi: finalInvestimento > 0 ? `${roiCalc.toFixed(1)}%` : "N/A",
+      roas_geral: roasCalc > 0 ? `${roasCalc.toFixed(1)}x` : "N/A",
+      ctr_medio: ctrCalc > 0 ? `${ctrCalc.toFixed(2)}%` : "N/A",
+      top_campanhas: topCampanhas,
+      // GA4
+      ga4_sessoes: String(ga4Sessions),
+      ga4_usuarios: String(ga4Users),
+      ga4_novos_usuarios: String(ga4NewUsers),
+      ga4_conversoes: String(ga4Conversions),
+      ga4_bounce: `${ga4BounceAvg.toFixed(1)}%`,
+      ga4_duracao: `${Math.floor(ga4DurationAvg / 60)}m ${Math.round(ga4DurationAvg % 60)}s`,
+      ga4_top_source: ga4TopSource,
+      ga4_taxa_conversao: `${ga4ConvRate.toFixed(2)}%`,
+      // Legacy
+      qualificados: String(threadQualificados.length || dbLeadsQualif.length),
+      origem: mainOrigem,
+    };
+
+    // ── Numeric variables for calc expressions ──
+    const numericVars: Record<string, number> = {
+      vendas_num: vendasArr.length || dbLeadsFechados.length,
+      propostas_num: propostas.length,
+      leads_gerados_num: totalThread || dbLeads.length,
+      leads_qualificados_num: threadQualificados.length || dbLeadsQualif.length,
+      faturamento_num: faturamento,
+      investimento_num: finalInvestimento,
+      cliques_num: finalCliques,
+      impressoes_num: finalImpressions,
+      ga4_sessoes_num: ga4Sessions,
+      ga4_conversoes_num: ga4Conversions,
+      ga4_usuarios_num: ga4Users,
+      pipeline_valor_num: pipelineValor,
+      pipeline_count_num: dbPipelineAberto.length,
+      ticket_medio_num: ticketMedio,
+      robo_leads_num: roboLeads.length,
+      robo_qualificados_num: roboQualificados.length,
+      cpl_num: cplCalc,
+      cac_num: cacCalc,
+      roi_num: roiCalc,
+      roas_num: roasCalc,
     };
 
     // ── 4. AI insights ──
@@ -375,20 +534,13 @@ Deno.serve(async (req) => {
       fup_melhor_etapa: "N/A",
       saude_cenarios: "• Todos os cenários: ✅ Operacional",
       ajuste: "Sem ajustes necessários no momento",
-      investimento: totalInvestimento > 0 ? `R$ ${totalInvestimento.toFixed(2)}` : "N/A",
-      cpl: cplCalc > 0 ? `R$ ${cplCalc.toFixed(2)}` : "N/A",
-      qualificados: String(threadQualificados.length),
-      cac: cacCalc > 0 ? `R$ ${cacCalc.toFixed(2)}` : "N/A",
-      roi: totalInvestimento > 0 ? `${roiCalc.toFixed(1)}%` : "N/A",
       perfil: "N/A",
-      origem: mainOrigem,
       intencao: "N/A",
       objecao: "N/A",
-      top_campanhas: topCampanhas,
       proximas_acoes: "Analisar ROI por canal e ajustar orçamento",
     };
 
-    if (LOVABLE_API_KEY && (totalThread > 0 || totalComercial > 0)) {
+    if (LOVABLE_API_KEY && (totalThread > 0 || totalComercial > 0 || dbLeads.length > 0)) {
       try {
         const prompt = `Você é o analista de dados da Sol Estrateg.IA, plataforma de gestão comercial para energia solar.
 
@@ -400,21 +552,23 @@ Gere com base nos dados:
 5. Uma ação gerencial sugerida (acao_gerencial)
 
 DADOS (${dataContext.data}):
-- Leads (pré-venda): ${totalThread}
-- Qualificados: ${threadQualificados.length} (${taxaQualificacao}%)
+- Leads (pré-venda): ${totalThread || dbLeads.length}
+- Qualificados: ${threadQualificados.length || dbLeadsQualif.length} (${taxaQualificacao}%)
 - Responderam: ${threadResponderam.length} (${taxaResposta}%)
 - Robô SOL: ${roboLeads.length} conversas, ${roboQualificados.length} qualificados
 - Score médio: ${avgScore}
 - Temperatura predominante: ${mainTemp}
 - Propostas (CRM): ${propostas.length}
-- Vendas fechadas: ${vendasArr.length}
+- Vendas fechadas: ${vendasArr.length || dbLeadsFechados.length}
 - Faturamento: R$ ${faturamento.toLocaleString("pt-BR")}
 - Agendamentos: ${agendamentos.length}
+- Pipeline: ${dbPipelineAberto.length} propostas (R$ ${pipelineValor.toLocaleString("pt-BR")})
 - Distribuição por etapa CRM: ${JSON.stringify(etapas)}
 - Origens: ${JSON.stringify(origens)}
 - Top closers: ${JSON.stringify(Object.entries(closerMap).slice(0, 5).map(([n, s]) => ({ nome: n, ...s })))}
-- INVESTIMENTO ADS: R$ ${totalInvestimento.toFixed(2)} (Meta: ${metaAds.length} registros, Google: ${googleAds.length} registros)
-- CPL: R$ ${cplCalc.toFixed(2)} | CAC: R$ ${cacCalc.toFixed(2)} | ROI: ${roiCalc.toFixed(1)}%
+- INVESTIMENTO ADS: R$ ${finalInvestimento.toFixed(2)} | Cliques: ${finalCliques} | Impressões: ${finalImpressions}
+- CPL: R$ ${cplCalc.toFixed(2)} | CAC: R$ ${cacCalc.toFixed(2)} | ROI: ${roiCalc.toFixed(1)}% | ROAS: ${roasCalc.toFixed(1)}x
+- GA4: ${ga4Sessions} sessões, ${ga4Users} usuários, ${ga4Conversions} conversões, bounce ${ga4BounceAvg.toFixed(1)}%
 - PRODUÇÃO ROBÔS: SDR ${sdrMsgsEnviadas} msgs enviadas, ${sdrMsgsRecebidas} recebidas, ${sdrQualDia} qualificados | FUP: ${fupDisparos} disparos, ${fupRespostas} respostas, ${fupReativados} reativados
 
 Responda APENAS com JSON válido sem markdown. Chaves: insight_1, insight_2, insight_3, recomendacao, destaque_1, destaque_2, atencao, acao_gerencial. Cada valor string curta (máx 120 chars) em pt-BR.`;
@@ -450,16 +604,29 @@ Responda APENAS com JSON válido sem markdown. Chaves: insight_1, insight_2, ins
     // ── 5. Replace variables ──
     const allVars = { ...dataContext, ...aiInsights };
     let filledContent = templateContent;
+
+    // First: resolve calc expressions {{calc: expr}}
+    filledContent = filledContent.replace(/\{\{calc:\s*([^}]+)\}\}/gi, (_match: string, expr: string) => {
+      return evaluateCalcExpression(expr, numericVars);
+    });
+
+    // Then: replace standard variables
     for (const [key, value] of Object.entries(allVars)) {
       filledContent = filledContent.replaceAll(`{{${key}}}`, String(value || ""));
     }
+
+    // Also replace _num variables if used directly
+    for (const [key, value] of Object.entries(numericVars)) {
+      filledContent = filledContent.replaceAll(`{{${key}}}`, String(value));
+    }
+
     // Fallback: any remaining {{var}} → N/A
     filledContent = filledContent.replace(/\{\{\s*[^{}]+\s*\}\}/g, "N/A");
 
     return new Response(JSON.stringify({
       success: true,
       content: filledContent,
-      variables: allVars,
+      variables: { ...allVars, ...Object.fromEntries(Object.entries(numericVars).map(([k, v]) => [k, String(v)])) },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

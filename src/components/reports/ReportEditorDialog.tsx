@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Save, Phone } from "lucide-react";
+import { Eye, Save, Phone, Database } from "lucide-react";
+import { VariableBank } from "./VariableBank";
 import type { ReportTemplate } from "@/hooks/useReportTemplates";
 
 const ICONS = ["☀️", "📊", "🤖", "📣", "📈", "🎯", "💰", "🔔", "📋", "⚡"];
@@ -67,12 +68,12 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     destinatario_roles: [] as string[],
   });
   const [tab, setTab] = useState("editor");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const parsed = useMemo(() => parsePeriodicidade(form.periodicidade), [form.periodicidade]);
 
   const updatePeriod = (field: "freq" | "dia" | "horario", value: string) => {
     const next = { ...parsed, [field]: value };
-    // Set defaults when switching frequency
     if (field === "freq") {
       if (value === "Semanal" || value === "Quinzenal") next.dia = next.dia || "Segunda";
       if (value === "Mensal") next.dia = next.dia || "1";
@@ -118,19 +119,41 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
     });
   };
 
-  const variables = form.conteudo.match(/\{\{[a-z_]+\}\}/g) || [];
+  const handleInsertVariable = (variable: string) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newContent = form.conteudo.slice(0, start) + variable + form.conteudo.slice(end);
+      setForm(f => ({ ...f, conteudo: newContent }));
+      // Restore cursor position after insert
+      setTimeout(() => {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + variable.length;
+      }, 0);
+    } else {
+      setForm(f => ({ ...f, conteudo: f.conteudo + variable }));
+    }
+  };
+
+  const variables = form.conteudo.match(/\{\{[a-z_\s:+\-*/0-9.]+\}\}/gi) || [];
   const uniqueVars = [...new Set(variables)];
+  const calcVars = uniqueVars.filter(v => v.includes("calc:"));
+  const dataVars = uniqueVars.filter(v => !v.includes("calc:"));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{template ? "Editar Template" : "Novo Template"}</DialogTitle>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 min-h-0">
-          <TabsList className="grid grid-cols-2 w-full max-w-xs">
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
             <TabsTrigger value="editor">Configurar</TabsTrigger>
+            <TabsTrigger value="variables" className="gap-1">
+              <Database className="h-3 w-3" /> Variáveis
+            </TabsTrigger>
             <TabsTrigger value="preview" className="gap-1">
               <Eye className="h-3 w-3" /> Preview
             </TabsTrigger>
@@ -172,8 +195,6 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               </div>
             </div>
 
-            {/* CC field hidden — hardcoded to 5511974426112 in send logic */}
-
             <div className="space-y-2">
               <Label>Enviar para (por cargo)</Label>
               <div className="flex gap-4">
@@ -194,7 +215,7 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
                   </label>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground">Selecione quais cargos devem receber este report automaticamente (busca telefone do perfil)</p>
+              <p className="text-[10px] text-muted-foreground">Selecione quais cargos devem receber este report automaticamente</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -263,29 +284,112 @@ export function ReportEditorDialog({ open, onOpenChange, template, onSave, isSav
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Conteúdo do Template</Label>
-                <p className="text-[10px] text-muted-foreground">Use {"{{variavel}}"} para dados dinâmicos</p>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Conteúdo do Template</Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Clique nas variáveis ao lado para inserir →
+                  </p>
+                </div>
+                <Textarea
+                  ref={textareaRef}
+                  value={form.conteudo}
+                  onChange={(e) => setForm(f => ({ ...f, conteudo: e.target.value }))}
+                  placeholder="Escreva o template da mensagem..."
+                  className="min-h-[260px] font-mono text-xs"
+                />
+                {uniqueVars.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Variáveis detectadas ({dataVars.length})</Label>
+                      {calcVars.length > 0 && (
+                        <Badge variant="outline" className="text-[9px] gap-1">
+                          <span>🧮</span> {calcVars.length} cálculo(s)
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {dataVars.map((v) => (
+                        <Badge key={v} variant="secondary" className="text-xs font-mono">{v}</Badge>
+                      ))}
+                      {calcVars.map((v) => (
+                        <Badge key={v} variant="outline" className="text-xs font-mono border-primary/30 text-primary">{v}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <Textarea
-                value={form.conteudo}
-                onChange={(e) => setForm(f => ({ ...f, conteudo: e.target.value }))}
-                placeholder="Escreva o template da mensagem..."
-                className="min-h-[220px] font-mono text-xs"
-              />
-            </div>
 
-            {uniqueVars.length > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Variáveis detectadas ({uniqueVars.length})</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {uniqueVars.map((v) => (
-                    <Badge key={v} variant="secondary" className="text-xs font-mono">{v}</Badge>
-                  ))}
+              {/* Inline variable bank */}
+              <div className="border rounded-lg p-3 bg-muted/30">
+                <p className="text-xs font-semibold mb-2 flex items-center gap-1.5">
+                  <Database className="h-3.5 w-3.5 text-primary" />
+                  Banco de Variáveis
+                </p>
+                <VariableBank onInsert={handleInsertVariable} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="variables" className="mt-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-sm font-semibold mb-3">📌 Variáveis Disponíveis</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Todas as variáveis são preenchidas automaticamente com dados reais do banco de dados e dos Data Stores do Make.
+                  Clique em qualquer variável para copiá-la.
+                </p>
+                <VariableBank onInsert={handleInsertVariable} />
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold mb-3">🧮 Operações Matemáticas</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Use <code className="bg-muted px-1 rounded font-mono">{"{{calc: expressão}}"}</code> para cálculos entre variáveis.
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      { expr: "{{calc: vendas / propostas * 100}}", desc: "Taxa de conversão (%)" },
+                      { expr: "{{calc: faturamento_num / vendas_num}}", desc: "Ticket médio" },
+                      { expr: "{{calc: faturamento_num - investimento_num}}", desc: "Lucro bruto" },
+                      { expr: "{{calc: investimento_num / vendas_num}}", desc: "CAC dinâmico" },
+                      { expr: "{{calc: faturamento_num / investimento_num}}", desc: "ROAS dinâmico" },
+                      { expr: "{{calc: leads_qualificados_num / leads_gerados_num * 100}}", desc: "Taxa qualificação (%)" },
+                    ].map((ex) => (
+                      <button
+                        key={ex.expr}
+                        onClick={() => handleInsertVariable(ex.expr)}
+                        className="w-full text-left p-2 rounded border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                      >
+                        <code className="text-[10px] font-mono text-primary block">{ex.expr}</code>
+                        <span className="text-[10px] text-muted-foreground">{ex.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <h4 className="text-xs font-semibold mb-2">💡 Variáveis numéricas para cálculo</h4>
+                  <p className="text-[10px] text-muted-foreground mb-2">
+                    Para cálculos, use as variáveis com sufixo <code className="font-mono">_num</code> (valores numéricos puros):
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      "vendas_num", "propostas_num", "leads_gerados_num", "leads_qualificados_num",
+                      "faturamento_num", "investimento_num", "cliques_num", "impressoes_num",
+                      "ga4_sessoes_num", "ga4_conversoes_num", "ga4_usuarios_num",
+                    ].map(v => (
+                      <Badge key={v} variant="outline" className="text-[9px] font-mono cursor-pointer hover:bg-primary/10"
+                        onClick={() => handleInsertVariable(v)}
+                      >
+                        {v}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </TabsContent>
 
           <TabsContent value="preview" className="mt-4">
