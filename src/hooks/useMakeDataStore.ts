@@ -38,6 +38,8 @@ export interface MakeRecord {
   statusProposta?: string;
   potenciaSistema?: number;
   representante?: string;
+  dataProposta?: string;
+  dataFechamento?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
