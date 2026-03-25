@@ -168,7 +168,12 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
     const isEngaged = leadStatus === 'WHATSAPP' || leadStatus === 'QUALIFICADO';
     const respondeu = hasDataResposta || isEngaged || !!(d.respondeu || d.replied);
 
-    return {
+    // Parse data_entrada — try multiple source fields
+    const parsedDataEntrada = parseDate(d.data_hora_cadastro) 
+      || parseDate(d['Data e Hora | Cadastro do Lead']) 
+      || parseDate(d.data_entrada);
+
+    const record: Record<string, any> = {
       telefone: phone,
       nome: String(d.nome || d.name || '') || null,
       email: String(d.email || '') || null,
@@ -192,7 +197,6 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       sentimento_resposta: String(d.sentimento_resposta || '') || null,
       interesse_detectado: String(d.interesse_detectado || '') || null,
       tempo_resposta_seg: parseInt(d.tempo_resposta_seg) || null,
-      data_entrada: parseDate(d.data_hora_cadastro || d['Data e Hora | Cadastro do Lead'] || d.data_entrada),
       data_qualificacao: parseDate(d.data_qualificacao),
       data_agendamento: parseDate(d.data_agendamento),
       data_proposta: parseDate(d.data_proposta),
@@ -201,17 +205,43 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       organization_id: creds.orgId,
       synced_at: new Date().toISOString(),
     };
-  }).filter(l => l.telefone);
+
+    // CRITICAL: Only set data_entrada if we have a real parsed value
+    // This prevents overwriting existing DB values with null on each sync
+    if (parsedDataEntrada) {
+      record.data_entrada = parsedDataEntrada;
+    }
+
+    return record;
+  }).filter((l: any) => l.telefone);
+
+  // Split into two groups: with and without data_entrada to avoid overwriting nulls
+  const withDataEntrada = leadsToUpsert.filter((l: any) => l.data_entrada);
+  const withoutDataEntrada = leadsToUpsert.filter((l: any) => !l.data_entrada);
 
   let upsertedLeads = 0;
-  for (let i = 0; i < leadsToUpsert.length; i += 50) {
-    const batch = leadsToUpsert.slice(i, i + 50);
+
+  // Batch upsert records WITH data_entrada (full upsert)
+  for (let i = 0; i < withDataEntrada.length; i += 50) {
+    const batch = withDataEntrada.slice(i, i + 50);
     const { error } = await supabase
       .from("leads_consolidados")
       .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
     if (error) console.error(`[${creds.orgName}] Leads upsert error:`, error.message);
     else upsertedLeads += batch.length;
   }
+
+  // Batch upsert records WITHOUT data_entrada (exclude data_entrada column to preserve DB value)
+  for (let i = 0; i < withoutDataEntrada.length; i += 50) {
+    const batch = withoutDataEntrada.slice(i, i + 50);
+    const { error } = await supabase
+      .from("leads_consolidados")
+      .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
+    if (error) console.error(`[${creds.orgName}] Leads upsert (no date) error:`, error.message);
+    else upsertedLeads += batch.length;
+  }
+
+  console.log(`[${creds.orgName}] Upserted: ${withDataEntrada.length} with date, ${withoutDataEntrada.length} without date`);
 
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
