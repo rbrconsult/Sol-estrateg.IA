@@ -271,6 +271,7 @@ export type Database = {
           campanha: string | null
           canal_origem: string | null
           cidade: string | null
+          closer_atribuido: string | null
           codigo_status: string | null
           created_at: string | null
           data_agendamento: string | null
@@ -280,6 +281,7 @@ export type Database = {
           data_qualificacao: string | null
           email: string | null
           etapa: string | null
+          etapa_sm: string | null
           followup_count: number | null
           id: string
           imovel: string | null
@@ -287,13 +289,16 @@ export type Database = {
           last_followup_date: string | null
           nome: string | null
           organization_id: string | null
+          potencia_sistema: number | null
           project_id: string | null
+          representante: string | null
           respondeu: boolean | null
           responsavel: string | null
           robo: string | null
           score: number | null
           sentimento_resposta: string | null
           status: string | null
+          status_proposta: string | null
           synced_at: string | null
           telefone: string
           temperatura: string | null
@@ -306,6 +311,7 @@ export type Database = {
           campanha?: string | null
           canal_origem?: string | null
           cidade?: string | null
+          closer_atribuido?: string | null
           codigo_status?: string | null
           created_at?: string | null
           data_agendamento?: string | null
@@ -315,6 +321,7 @@ export type Database = {
           data_qualificacao?: string | null
           email?: string | null
           etapa?: string | null
+          etapa_sm?: string | null
           followup_count?: number | null
           id?: string
           imovel?: string | null
@@ -322,13 +329,16 @@ export type Database = {
           last_followup_date?: string | null
           nome?: string | null
           organization_id?: string | null
+          potencia_sistema?: number | null
           project_id?: string | null
+          representante?: string | null
           respondeu?: boolean | null
           responsavel?: string | null
           robo?: string | null
           score?: number | null
           sentimento_resposta?: string | null
           status?: string | null
+          status_proposta?: string | null
           synced_at?: string | null
           telefone: string
           temperatura?: string | null
@@ -341,6 +351,7 @@ export type Database = {
           campanha?: string | null
           canal_origem?: string | null
           cidade?: string | null
+          closer_atribuido?: string | null
           codigo_status?: string | null
           created_at?: string | null
           data_agendamento?: string | null
@@ -350,6 +361,7 @@ export type Database = {
           data_qualificacao?: string | null
           email?: string | null
           etapa?: string | null
+          etapa_sm?: string | null
           followup_count?: number | null
           id?: string
           imovel?: string | null
@@ -357,13 +369,16 @@ export type Database = {
           last_followup_date?: string | null
           nome?: string | null
           organization_id?: string | null
+          potencia_sistema?: number | null
           project_id?: string | null
+          representante?: string | null
           respondeu?: boolean | null
           responsavel?: string | null
           robo?: string | null
           score?: number | null
           sentimento_resposta?: string | null
           status?: string | null
+          status_proposta?: string | null
           synced_at?: string | null
           telefone?: string
           temperatura?: string | null
