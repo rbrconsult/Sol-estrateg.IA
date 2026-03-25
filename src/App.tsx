@@ -36,7 +36,7 @@ import PainelComercial from "./pages/PainelComercial";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import SLAMonitor from "./pages/SLAMonitor";
-import MidiaReceita from "./pages/MidiaReceita";
+
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
