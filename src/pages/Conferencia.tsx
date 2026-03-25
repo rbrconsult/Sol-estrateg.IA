@@ -361,21 +361,48 @@ export default function Conferencia() {
 
           const leadsHoje = tabelaLeads.filter(l => isToday((l as any).dataCriacao));
           const totalHoje = leadsHoje.length;
+
+          // Em qualificação HOJE (leads cadastrados hoje que ainda estão em qualificação)
           const emQualHoje = leadsHoje.filter(l => {
             const e = (l.etapa || '').toLowerCase();
-            return e === 'qualificação' || e === 'robô sol';
+            const s = (l.makeStatus || '').toUpperCase();
+            return (e === 'qualificação' || e === 'robô sol' || s === 'EM_QUALIFICACAO' || s === 'NOVO') && !s.includes('QUALIFICADO');
           }).length;
+
+          // Qualificados por SOL hoje
           const qualSolHoje = leadsHoje.filter(l => {
             const s = (l.makeStatus || '');
             return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup !== 'FUP Frio';
           }).length;
+
+          // Qualificados por FUP Frio hoje
           const qualFupHoje = leadsHoje.filter(l => {
             const s = (l.makeStatus || '');
             return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup === 'FUP Frio';
           }).length;
-          const closerHoje = leadsHoje.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa)).length;
-          const propostasHoje = leadsHoje.filter(l => ['Proposta', 'Fechado'].includes(l.etapa)).length;
-          const fechadosHoje = leadsHoje.filter(l => l.etapa === 'Fechado').length;
+
+          // Enviados ao closer hoje — leads que têm closer atribuído OU etapa_sm de negociação
+          const closerHoje = leadsHoje.filter(l => {
+            const tl = l as any;
+            return !!tl.closerAtribuido || ['Closer', 'Proposta', 'Fechado'].includes(l.etapa);
+          }).length;
+
+          // Propostas emitidas hoje — etapa_sm contém PROPOSTA ou similar
+          const propostasHoje = leadsHoje.filter(l => {
+            const tl = l as any;
+            const sm = ((tl.etapaSm || '') as string).toUpperCase();
+            return sm.includes('PROPOSTA') || ['Proposta', 'Fechado'].includes(l.etapa);
+          }).length;
+
+          // Fechados hoje — etapa_sm CONTRATO ou GANHO
+          const fechadosHoje = leadsHoje.filter(l => {
+            const tl = l as any;
+            const sm = ((tl.etapaSm || '') as string).toUpperCase();
+            const sp = ((tl.statusProposta || '') as string).toUpperCase();
+            return sm.includes('CONTRATO') || sm.includes('ASSINADO') || sm.includes('COBRANÇA') || sp.includes('GANHO') || l.etapa === 'Fechado';
+          }).length;
+
+          // FUP Frio hoje
           const fupFrioHoje = leadsHoje.filter(l => l.statusFup === 'FUP Frio').length;
 
           const metrics = [
