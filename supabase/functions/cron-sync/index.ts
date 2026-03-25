@@ -90,32 +90,30 @@ interface OrgCredentials {
   orgName: string;
   makeApiKey: string;
   makeDatastoreId: string;
+  makeComercialDsId: string;
   makeTeamId: string;
 }
 
 async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
-  // Fetch all organizations with their configs
   const { data: orgs } = await supabase.from('organizations').select('id, name');
   if (!orgs?.length) return [];
 
-  // Skip matriz — only sync tenant orgs
   const tenantOrgs = orgs.filter((o: any) => o.id !== MATRIZ_ORG_ID);
 
   const { data: allConfigs } = await supabase
     .from('organization_configs')
     .select('organization_id, config_key, config_value')
-    .in('config_key', ['make_api_key', 'ds_leads_site_geral', 'ds_thread_id', 'make_team_id']);
+    .in('config_key', ['make_api_key', 'ds_leads_site_geral', 'ds_thread_id', 'ds_comercial', 'make_team_id']);
 
-  // Build per-org credentials map
   const configMap: Record<string, Record<string, string>> = {};
   allConfigs?.forEach((c: any) => {
     if (!configMap[c.organization_id]) configMap[c.organization_id] = {};
     configMap[c.organization_id][c.config_key] = c.config_value;
   });
 
-  // Fallback global secrets
   const globalApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
   const globalDsId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
+  const globalComercialDsId = (Deno.env.get("MAKE_COMERCIAL_DATASTORE_ID") || "").trim();
   const globalTeamId = (Deno.env.get("MAKE_TEAM_ID") || "").trim();
 
   return tenantOrgs.map((org: any) => {
@@ -125,6 +123,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       orgName: org.name,
       makeApiKey: cfg.make_api_key || globalApiKey,
       makeDatastoreId: cfg.ds_leads_site_geral || cfg.ds_thread_id || globalDsId,
+      makeComercialDsId: cfg.ds_comercial || globalComercialDsId,
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
   }).filter((o: OrgCredentials) => o.makeApiKey);
