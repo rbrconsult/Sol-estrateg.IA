@@ -43,6 +43,7 @@ const defaultState: FilterState = {
   status: "todos",
 };
 
+// Etapa = posição no funil comercial (onde o lead está)
 const ALL_ETAPAS = [
   'TRAFEGO PAGO',
   'PROSPECÇÃO',
@@ -55,15 +56,15 @@ const ALL_ETAPAS = [
   'CONTRATO ASSINADO',
 ];
 
+// Status = situação de resposta/atividade do lead (o que aconteceu)
 const ALL_STATUSES = [
   'NOVO',
-  'EM_QUALIFICACAO',
-  'QUALIFICADO',
-  'WHATSAPP',
-  'DESQUALIFICADO',
-  'NAO_RESPONDEU',
   'RESPONDEU',
+  'NAO_RESPONDEU',
   'AGUARDANDO',
+  'DESQUALIFICADO',
+  'GANHO',
+  'PERDIDO',
 ];
 
 export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
