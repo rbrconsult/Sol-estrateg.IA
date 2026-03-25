@@ -404,6 +404,7 @@ export function useConferenciaData() {
         dataFechamento: r.dataFechamento || undefined,
         dataQualificacao: r.data_resposta || undefined,
         lastFollowupDate: r.lastFollowupDate || undefined,
+        respondeu: r.status_resposta === 'respondeu',
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
