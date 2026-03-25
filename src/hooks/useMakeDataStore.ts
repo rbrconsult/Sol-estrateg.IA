@@ -14,6 +14,7 @@ export interface MakeRecord {
   robo: 'sol' | 'fup_frio' | string;
   ultima_mensagem: string;
   data_envio: string;
+  dataEntrada?: string;
   status_resposta: 'respondeu' | 'ignorou' | 'aguardando' | string;
   data_resposta?: string;
   historico: MakeInteraction[];
@@ -85,6 +86,7 @@ function rowToMakeRecord(r: any): MakeRecord {
     robo,
     ultima_mensagem: '',
     data_envio: r.data_entrada || r.last_followup_date || r.data_qualificacao || r.data_proposta || r.data_fechamento || '',
+    dataEntrada: r.data_entrada || undefined,
     status_resposta: statusResposta as any,
     data_resposta: r.respondeu ? (r.data_qualificacao || undefined) : undefined,
     historico,

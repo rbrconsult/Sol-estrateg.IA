@@ -51,6 +51,20 @@ const FUNNEL_JOURNEY = [
   'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO', 'CONTRATO ASSINADO',
 ];
 
+const normalizeStage = (value?: string) =>
+  (value || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+const toSaoPauloDateKey = (value?: string): string | null => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+};
+
 const Index = () => {
   const { proposals: allProposals, isLoading, error, isFetching, enrichedCount, orgFilterActive } = useOrgFilteredProposals();
   const { forceSync, isSyncing } = useForceSync();
@@ -100,24 +114,19 @@ const Index = () => {
   // ── KPIs do DS Thread (MQL, SQL) — now filtered by period ──
   const threadKpis = useMemo(() => {
     const records = filteredMakeRecords;
-    const mql = records.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
-    const sql = records.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
+    const mqlStages = new Set(MQL_ETAPAS.map(normalizeStage));
+    const sqlStages = new Set(SQL_ETAPAS.map(normalizeStage));
+
+    const mql = records.filter(r => mqlStages.has(normalizeStage(r.etapaFunil))).length;
+    const sql = records.filter(r => sqlStages.has(normalizeStage(r.etapaFunil))).length;
     const contatados = records.filter(r => r.status_resposta === 'respondeu').length;
-    const now = new Date();
-    const hojeISO = now.toISOString().slice(0, 10);
+    const hojeSP = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
     const criadosHoje = records.filter(r => {
-      const d = r.data_envio || '';
-      if (!d) return false;
-      const parsed = new Date(d);
-      if (!isNaN(parsed.getTime())) {
-        return parsed.toISOString().slice(0, 10) === hojeISO;
-      }
-      const brMatch = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-      if (brMatch) {
-        return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}` === hojeISO;
-      }
-      return false;
+      const dayKey = toSaoPauloDateKey(r.dataEntrada || r.data_envio);
+      return dayKey === hojeSP;
     }).length;
+
     return { mql, sql, total: records.length, contatados, criadosHoje };
   }, [filteredMakeRecords]);
 
