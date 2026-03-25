@@ -121,21 +121,21 @@ const Index = () => {
     return { mql, sql, total: records.length, contatados, criadosHoje };
   }, [filteredMakeRecords]);
 
-  // ── KPIs do DS Comercial (Agendamentos, Fechados) ──
+  // ── KPIs do DS Comercial (Agendamentos, Fechados) — also filtered ──
   const comercialKpis = useMemo(() => {
     const records = comercialRecords || [];
+    // TODO: apply date filtering to comercial records when dataCriacaoProposta is available
     const agendamentos = records.filter(r =>
       ['CONTATO REALIZADO', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'PROPOSTA'].includes(r.etapaSM?.toUpperCase())
     ).length;
-    const fechados = records.filter(r =>
+    const ganhos = records.filter(r =>
       r.status === 'Ganho' ||
-      FECHADOS_ETAPAS_SM.includes(r.etapaSM?.toUpperCase()) ||
-      r.faseSM?.toUpperCase() === 'OPERACIONAL'
-    ).length;
-    const valorFechado = records
-      .filter(r => r.status === 'Ganho' || r.faseSM?.toUpperCase() === 'OPERACIONAL')
-      .reduce((acc, r) => acc + r.valorProposta, 0);
-    return { agendamentos, fechados, valorFechado };
+      FECHADOS_ETAPAS_SM.includes(r.etapaSM?.toUpperCase())
+    );
+    const emInstalacao = records.filter(r => r.faseSM?.toUpperCase() === 'OPERACIONAL' && !ganhos.includes(r));
+    const fechados = ganhos.length;
+    const valorFechado = ganhos.reduce((acc, r) => acc + r.valorProposta, 0);
+    return { agendamentos, fechados, valorFechado, emInstalacao: emInstalacao.length };
   }, [comercialRecords]);
 
   const meta = useMemo(() => {
