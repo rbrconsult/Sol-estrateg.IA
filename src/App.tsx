@@ -121,6 +121,12 @@ const App = () => (
               <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/ga4" element={<ProtectedRoute><MainLayout><GA4Page /></MainLayout></ProtectedRoute>} />
+              <Route path="/campanhas" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasVisaoGeral /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/campanhas/meta" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><MetaAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/campanhas/google" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GoogleAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/campanhas/site" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><SiteGA4Page /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/campanhas/whatsapp" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><WhatsAppPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/campanhas/funil" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><FunilConsolidado /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
