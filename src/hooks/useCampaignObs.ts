@@ -8,24 +8,23 @@ export interface DateRange {
 }
 
 async function fetchTable(table: string, franquiaId: string, range?: DateRange) {
-  let q = supabase.from(table).select('*').eq('franquia_id', franquiaId);
-  if (range) {
-    q = q.gte('date', range.from.toISOString().slice(0, 10))
-         .lte('date', range.to.toISOString().slice(0, 10));
-  }
-  q = q.order('date', { ascending: false });
-
   const allRows: any[] = [];
-  let from = 0;
+  let offset = 0;
   const pageSize = 1000;
   let hasMore = true;
   while (hasMore) {
-    const { data, error } = await q.range(from, from + pageSize - 1);
+    let q = (supabase as any).from(table).select('*').eq('franquia_id', franquiaId);
+    if (range) {
+      q = q.gte('date', range.from.toISOString().slice(0, 10))
+           .lte('date', range.to.toISOString().slice(0, 10));
+    }
+    q = q.order('date', { ascending: false }).range(offset, offset + pageSize - 1);
+    const { data, error } = await q;
     if (error) throw new Error(error.message);
     if (data && data.length > 0) {
       allRows.push(...data);
       hasMore = data.length === pageSize;
-      from += pageSize;
+      offset += pageSize;
     } else {
       hasMore = false;
     }
