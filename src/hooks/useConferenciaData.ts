@@ -44,6 +44,8 @@ export interface TabelaLead {
   id: number; nome: string; etapa: string; temperatura: string; score: number;
   sla: number; statusFup: string; valor: number; dataCriacao?: string;
   makeStatus?: string;
+  etapaSm?: string; closerAtribuido?: string; statusProposta?: string;
+  dataProposta?: string; dataFechamento?: string;
   historico: { data: string; tipo: string; msg: string }[];
 }
 export interface SLAMock {
