@@ -319,71 +319,48 @@ export default function Conferencia() {
 
 
 
-        {/* ══════ RESUMO DO DIA ══════ */}
+        {/* ══════ RESUMO DO DIA + KPIs GERAIS ══════ */}
         {(() => {
           const today = new Date();
           const todayStr = format(today, 'yyyy-MM-dd');
 
           const isToday = (dateStr?: string) => {
             if (!dateStr) return false;
-            // Try ISO format
             if (dateStr.startsWith(todayStr)) return true;
-            // Try BR format DD/MM/YYYY
             const parts = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-            if (parts) {
-              const brDate = `${parts[3]}-${parts[2]}-${parts[1]}`;
-              return brDate === todayStr;
-            }
-            // Try Date parsing
+            if (parts) return `${parts[3]}-${parts[2]}-${parts[1]}` === todayStr;
             const d = new Date(dateStr);
-            if (!isNaN(d.getTime())) {
-              return format(d, 'yyyy-MM-dd') === todayStr;
-            }
-            return false;
+            return !isNaN(d.getTime()) && format(d, 'yyyy-MM-dd') === todayStr;
           };
 
           const leadsHoje = tabelaLeads.filter(l => isToday((l as any).dataCriacao));
           const totalHoje = leadsHoje.length;
-
-          // Leads em qualificação (em processo, não concluído)
-          const emQualificacao = tabelaLeads.filter(l => {
-            const etapa = (l.etapa || '').toLowerCase();
-            return etapa === 'qualificação' || etapa === 'robô sol';
+          const emQualHoje = leadsHoje.filter(l => {
+            const e = (l.etapa || '').toLowerCase();
+            return e === 'qualificação' || e === 'robô sol';
           }).length;
-
-          // Qualificados por SOL (followupCount < 1 implica SOL)
-          const qualificadosHojeSol = leadsHoje.filter(l => {
+          const qualSolHoje = leadsHoje.filter(l => {
             const s = (l.makeStatus || '');
             return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup !== 'FUP Frio';
           }).length;
-
-          // Qualificados por FUP FRIO
-          const qualificadosHojeFup = leadsHoje.filter(l => {
+          const qualFupHoje = leadsHoje.filter(l => {
             const s = (l.makeStatus || '');
             return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup === 'FUP Frio';
           }).length;
-
-          // Enviados ao closer hoje
-          const enviadosCloser = leadsHoje.filter(l => l.etapa === 'Closer' || l.etapa === 'Proposta' || l.etapa === 'Fechado').length;
-
-          // Propostas emitidas hoje
-          const propostasHoje = leadsHoje.filter(l => l.etapa === 'Proposta' || l.etapa === 'Fechado').length;
-
-          // Fechados hoje
+          const closerHoje = leadsHoje.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa)).length;
+          const propostasHoje = leadsHoje.filter(l => ['Proposta', 'Fechado'].includes(l.etapa)).length;
           const fechadosHoje = leadsHoje.filter(l => l.etapa === 'Fechado').length;
-
-          // Passaram por FUP Frio (total, not just today)
-          const totalFupFrio = tabelaLeads.filter(l => l.statusFup === 'FUP Frio').length;
+          const fupFrioHoje = leadsHoje.filter(l => l.statusFup === 'FUP Frio').length;
 
           const metrics = [
-            { label: 'Cadastrados Hoje', value: totalHoje, color: 'text-foreground', icon: '📥' },
-            { label: 'Qualif. SOL', value: qualificadosHojeSol, color: 'text-primary', icon: '🤖' },
-            { label: 'Qualif. FUP Frio', value: qualificadosHojeFup, color: 'text-success', icon: '🔁' },
-            { label: 'Em Qualificação', value: emQualificacao, color: 'text-warning', icon: '🎯' },
-            { label: 'Enviados Closer', value: enviadosCloser, color: 'text-accent-foreground', icon: '📞' },
-            { label: 'Propostas Hoje', value: propostasHoje, color: 'text-primary', icon: '📋' },
-            { label: 'Fechados Hoje', value: fechadosHoje, color: 'text-success', icon: '🏆' },
-            { label: 'Total FUP Frio', value: totalFupFrio, color: 'text-muted-foreground', icon: '🔁' },
+            { label: 'Cadastrados', value: totalHoje, color: 'text-foreground', icon: '📥' },
+            { label: 'Qualif. SOL', value: qualSolHoje, color: 'text-primary', icon: '🤖' },
+            { label: 'Qualif. FUP', value: qualFupHoje, color: 'text-success', icon: '🔁' },
+            { label: 'Em Qualif.', value: emQualHoje, color: 'text-warning', icon: '🎯' },
+            { label: 'Enviados Closer', value: closerHoje, color: 'text-accent-foreground', icon: '📞' },
+            { label: 'Propostas', value: propostasHoje, color: 'text-primary', icon: '📋' },
+            { label: 'Fechados', value: fechadosHoje, color: 'text-success', icon: '🏆' },
+            { label: 'FUP Frio', value: fupFrioHoje, color: 'text-muted-foreground', icon: '🔁' },
           ];
 
           return (
@@ -404,8 +381,8 @@ export default function Conferencia() {
           );
         })()}
 
-        {/* ══════ ROW 1 — KPIs (7 cards, último é repescagem destacado) ══════ */}
-        <section className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
+        {/* ══════ KPIs GERAIS (período filtrado) ══════ */}
+        <section className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
           {filteredKpis.map((k) => (
             <KPI
               key={k.label}
