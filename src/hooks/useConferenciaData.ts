@@ -148,10 +148,34 @@ function estimateValueFromBill(r: MakeRecord): number {
 }
 
 // ─── Main Hook ───
-export function useConferenciaData() {
+export function useConferenciaData(effectiveDateRange?: { from: Date | undefined; to: Date | undefined }) {
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
-  const allRecords = makeRecords || [];
+  // Apply global date filter BEFORE any computation
+  const allRecords = useMemo(() => {
+    const raw = makeRecords || [];
+    const from = effectiveDateRange?.from;
+    const to = effectiveDateRange?.to;
+    if (!from && !to) return raw;
+
+    return raw.filter(r => {
+      const dateStr = r.data_envio;
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return false;
+      if (from) {
+        const fromStart = new Date(from);
+        fromStart.setHours(0, 0, 0, 0);
+        if (d < fromStart) return false;
+      }
+      if (to) {
+        const end = new Date(to);
+        end.setHours(23, 59, 59, 999);
+        if (d > end) return false;
+      }
+      return true;
+    });
+  }, [makeRecords, effectiveDateRange?.from?.getTime(), effectiveDateRange?.to?.getTime()]);
 
   const computed = useMemo(() => {
     const total = allRecords.length;

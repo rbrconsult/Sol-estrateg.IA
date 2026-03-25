@@ -118,9 +118,21 @@ function TempDot({ t }: { t: string }) {
 
 /* ═══════════════════ MAIN PAGE ═══════════════════ */
 export default function Conferencia() {
-  const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData();
+  const [expandedLead, setExpandedLead] = useState<number | null>(null);
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
-  // Use real data only — no mock fallbacks
+  const gf = useGlobalFilters();
+  const { periodo, etapa: filterEtapa, temperatura: filterTemp, searchTerm } = gf.filters;
+  const effectiveDateRange = gf.effectiveDateRange;
+
+  // Hook receives global filter — ALL data is already filtered by period
+  const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData(effectiveDateRange);
+
+  // All data comes pre-filtered from the hook
   const kpiCards = realData?.kpiCards ?? [];
   const pipelineStages = realData?.pipelineStages ?? [];
   const origemLeads = realData?.origemLeads ?? [];
@@ -139,153 +151,18 @@ export default function Conferencia() {
   const scorePorOrigemData = realData?.scorePorOrigem ?? [];
   const monthlyEvolution = realData?.monthlyEvolution ?? [];
 
-  const [expandedLead, setExpandedLead] = useState<number | null>(null);
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const gf = useGlobalFilters();
-  const { periodo, etapa: filterEtapa, temperatura: filterTemp, searchTerm } = gf.filters;
-  const effectiveDateRange = gf.effectiveDateRange;
-
-  /** Parse flexible date from DS (ISO or BR dd/MM/yyyy HH:mm:ss) */
-  const parseLeadDate = (dateStr?: string) => {
-    if (!dateStr) return null;
-
-    // BR format: dd/MM/yyyy (optionally with time)
-    const br = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
-    if (br) {
-      const [, dd, mm, yyyy, hh = '00', mi = '00', ss = '00'] = br;
-      const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi), Number(ss));
-      if (!isNaN(parsed.getTime())) return parsed;
-    }
-
-    // ISO / native
-    const parsed = new Date(dateStr);
-    if (!isNaN(parsed.getTime())) return parsed;
-
-    return null;
-  };
-
-  /** Filter leads by date range */
-  const isInDateRange = (dateStr?: string) => {
-    const { from: effFrom, to: effTo } = effectiveDateRange;
-    if (!effFrom && !effTo) return true;
-
-    const d = parseLeadDate(dateStr);
-    // Leads without a real data_entrada should only appear when no period filter is active
-    if (!d) return !effFrom && !effTo;
-
-    if (effFrom) {
-      const fromStart = new Date(effFrom);
-      fromStart.setHours(0, 0, 0, 0);
-      if (d < fromStart) return false;
-    }
-
-    if (effTo) {
-      const end = new Date(effTo);
-      end.setHours(23, 59, 59, 999);
-      if (d > end) return false;
-    }
-
-    return true;
-  };
-
-  /** Date-filtered leads (base for ALL metrics) */
+  // Secondary filters (etapa, temp, search) applied on top of pre-filtered data
   const filteredLeads = useMemo(() => {
     return tabelaLeads
-      .filter(l => isInDateRange((l as any).dataCriacao))
       .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
       .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
       .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [filterEtapa, filterTemp, searchTerm, tabelaLeads, effectiveDateRange]);
-
-  /** Derive KPIs: use original when no date filter, derive from filteredLeads when filtering */
-  const hasDateFilter = !!(effectiveDateRange.from || effectiveDateRange.to);
-
-    const filteredKpis = useMemo(() => {
-      // When no date filter active (30d default), use the original computed KPIs from all proposals
-      if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
-        return kpiCards;
-      }
-
-      // When filtering, derive from filteredLeads
-      const total = filteredLeads.length;
-      // MQL = leads que passaram da etapa inicial (Robô SOL) E não foram desqualificados
-      const qualificados = filteredLeads.filter(l => {
-        const etapa = (l.etapa || '').toLowerCase();
-        return etapa !== 'robô sol' && etapa !== '' && l.makeStatus !== 'DESQUALIFICADO';
-      });
-      const mqlCount = qualificados.length;
-      const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
-      const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
-      const agendamentos = filteredLeads.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa));
-
-      const respondedCount = filteredLeads.filter(l => l.respondeu).length;
-      const taxaRespostaFiltrada = total > 0 ? Math.round((respondedCount / total) * 100) : 0;
-
-      const fupReativados = filteredLeads.filter(l => {
-        const status = String(l.makeStatus || '').toUpperCase();
-        return l.statusFup === 'FUP Frio' && status.includes('QUALIFICADO') && !status.includes('DES');
-      }).length;
-
-      return [
-        { label: 'Leads Recebidos', value: total, suffix: '', detail: `${total} leads no período` },
-        { label: 'Taxa Resposta', value: taxaRespostaFiltrada, suffix: '%', detail: `${respondedCount} de ${total} responderam` },
-        { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
-        { label: 'SQL', value: comProposta.length, suffix: '', detail: `${mqlCount > 0 ? ((comProposta.length / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
-        { label: 'Agendamentos', value: agendamentos.length, suffix: '', detail: `${comProposta.length > 0 ? ((agendamentos.length / comProposta.length) * 100).toFixed(0) : 0}%` },
-        { label: 'Fechados', value: fechados.length, suffix: '', detail: `${total > 0 ? ((fechados.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
-        { label: 'Resgatados FUP', value: fupReativados, suffix: '', detail: `R$ ${fupReativados * 7}k`, tooltip: 'Leads recuperados via FUP Frio' },
-      ] as KPICard[];
-    }, [filteredLeads, kpiCards, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
-
-  const filteredPipeline = useMemo(() => {
-    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
-      return pipelineStages;
-    }
-    const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
-    const icons = ['🤖', '🎯', '✅', '📞', '📋', '🏆'];
-    return stageOrder.map((etapa, i) => {
-      const laterStages = stageOrder.slice(i);
-      const count = filteredLeads.filter(l => laterStages.includes(l.etapa)).length;
-      return { etapa, valor: count, icon: icons[i], desc: `${count} leads` };
-    });
-  }, [filteredLeads, pipelineStages, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
-
-  const filteredFup = useMemo(() => {
-    // Keep original FUP data (not filtered by date for now)
-    return fupFrio;
-  }, [fupFrio]);
-
-  const filteredMensagens = useMemo(() => mensagens, [mensagens]);
-
-  const filteredHeatmap = useMemo(() => heatmap, [heatmap]);
-
-  const filteredSolHoje = useMemo(() => solHojeData, [solHojeData]);
-
-  const filteredTemperatura = useMemo(() => {
-    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
-      return temperaturaPorEtapa;
-    }
-    const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta'];
-    return stageOrder.map(etapa => {
-      const inStage = filteredLeads.filter(l => l.etapa === etapa);
-      return {
-        etapa,
-        quente: inStage.filter(l => l.temperatura === 'QUENTE').length,
-        morno: inStage.filter(l => l.temperatura === 'MORNO').length,
-        frio: inStage.filter(l => l.temperatura === 'FRIO').length,
-      };
-    });
-  }, [filteredLeads, temperaturaPorEtapa, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
+  }, [filterEtapa, filterTemp, searchTerm, tabelaLeads]);
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
-  const maxPipeline = Math.max(...filteredPipeline.map((s) => s.valor));
-  const maxShare = Math.max(...origemLeads.map((o) => o.share));
+  const maxPipeline = Math.max(...pipelineStages.map((s) => s.valor), 1);
+  const maxShare = Math.max(...origemLeads.map((o) => o.share), 1);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -322,7 +199,7 @@ export default function Conferencia() {
 
         {/* ══════ KPIs GERAIS (período filtrado) ══════ */}
         <section className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-          {filteredKpis.map((k) => (
+          {kpiCards.map((k) => (
             <KPI
               key={k.label}
               label={k.label}
@@ -341,7 +218,7 @@ export default function Conferencia() {
 
           {/* Pipeline horizontal */}
           <div className="flex items-stretch gap-0 overflow-x-auto pb-2">
-            {filteredPipeline.map((s, i) => {
+            {pipelineStages.map((s, i) => {
               const pct = ((s.valor / maxPipeline) * 100);
               return (
                 <div key={s.etapa} className="flex items-center min-w-0">
@@ -355,13 +232,13 @@ export default function Conferencia() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    {i < filteredPipeline.length - 1 && (
+                    {i < pipelineStages.length - 1 && (
                       <p className="text-[9px] text-muted-foreground/70 mt-1 tabular-nums">
-                        ↓ {((filteredPipeline[i + 1].valor / s.valor) * 100).toFixed(0)}%
+                        ↓ {((pipelineStages[i + 1].valor / s.valor) * 100).toFixed(0)}%
                       </p>
                     )}
                   </div>
-                  {i < filteredPipeline.length - 1 && (
+                  {i < pipelineStages.length - 1 && (
                     <ArrowRight className="h-4 w-4 text-muted-foreground/40 mx-1 shrink-0" />
                   )}
                 </div>
@@ -373,9 +250,9 @@ export default function Conferencia() {
           <div className="mt-4 pt-3 border-t border-border/30">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Funil da Jornada — % acumulada</p>
             <div className="flex flex-col gap-1.5">
-              {filteredPipeline.map((s, i) => {
-                const pctJornada = filteredPipeline[0].valor > 0
-                  ? (s.valor / filteredPipeline[0].valor * 100)
+              {pipelineStages.map((s, i) => {
+                const pctJornada = pipelineStages[0].valor > 0
+                  ? (s.valor / pipelineStages[0].valor * 100)
                   : 0;
                 const colors = [
                   "bg-primary",
@@ -406,7 +283,7 @@ export default function Conferencia() {
             <RotateCcw className="h-3.5 w-3.5 text-success" />
             <span className="text-[10px] text-success font-semibold uppercase tracking-wider">Repescagem FUP Frio</span>
             <span className="text-[10px] text-muted-foreground">
-              — {filteredFup.reativados} leads resgatados voltam para
+              — {fupFrio.reativados} leads resgatados voltam para
             </span>
             <span className="text-[10px] font-semibold text-foreground">Closer</span>
             <ArrowRight className="h-3 w-3 text-success/60" />
@@ -426,12 +303,12 @@ export default function Conferencia() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center">
-                <p className="text-3xl font-extrabold text-success tabular-nums">{filteredFup.reativados}</p>
+                <p className="text-3xl font-extrabold text-success tabular-nums">{fupFrio.reativados}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">leads resgatados</p>
-                <p className="text-[10px] text-success/70 tabular-nums">de {filteredFup.entraram} que esfriaram</p>
+                <p className="text-[10px] text-success/70 tabular-nums">de {fupFrio.entraram} que esfriaram</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-extrabold text-success tabular-nums">{filteredFup.valorRecuperado}</p>
+                <p className="text-3xl font-extrabold text-success tabular-nums">{fupFrio.valorRecuperado}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">valor recuperado</p>
                 <p className="text-[10px] text-success/70 tabular-nums">ticket médio {fupFrio.ticketMedio}</p>
               </div>
@@ -544,11 +421,11 @@ export default function Conferencia() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Mensagens</p>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <p className="text-xl font-extrabold text-foreground tabular-nums">{filteredMensagens.enviadas.toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.enviadas.toLocaleString("pt-BR")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">enviadas</p>
               </div>
               <div>
-                <p className="text-xl font-extrabold text-foreground tabular-nums">{filteredMensagens.recebidas.toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.recebidas.toLocaleString("pt-BR")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">recebidas</p>
               </div>
               <div>
@@ -576,23 +453,23 @@ export default function Conferencia() {
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Mapa de Calor — Respostas</p>
-            <span className="text-[10px] text-primary font-medium">Pico: {filteredHeatmap.pico}</span>
+            <span className="text-[10px] text-primary font-medium">Pico: {heatmap.pico}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
                   <th className="w-16" />
-                  {filteredHeatmap.dias.map((d) => (
+                  {heatmap.dias.map((d) => (
                     <th key={d} className="text-[10px] text-muted-foreground font-medium text-center pb-1.5 px-1">{d}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredHeatmap.periodos.map((p, pi) => (
+                {heatmap.periodos.map((p, pi) => (
                   <tr key={p}>
                     <td className="text-[10px] text-muted-foreground font-medium pr-2 py-0.5">{p}</td>
-                    {filteredHeatmap.valores[pi].map((v, di) => {
+                    {heatmap.valores[pi].map((v, di) => {
                       const intensity = v / 100;
                       return (
                         <td key={di} className="p-0.5">
@@ -639,7 +516,7 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Temperatura por Etapa</p>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={filteredTemperatura}>
+              <BarChart data={temperaturaPorEtapa}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="etapa" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={45} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
