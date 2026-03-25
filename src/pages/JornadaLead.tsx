@@ -32,13 +32,7 @@ const SLA_DEFS: SLADef[] = [
     icon: '📥',
     ator: 'Automação',
     getRecords: (recs) => recs.filter(r => r.robo === 'sol' && r.data_envio),
-    getTimeMinutes: (r) => {
-      // Time from entry to first message — approximate from historico
-      if (r.historico.length >= 1 && r.historico[0].data && r.data_envio) {
-        return Math.random() * 4 + 0.5; // Real: entry timestamp vs first bot msg
-      }
-      return 1.5; // Default fast response
-    },
+    getTimeMinutes: () => null, // C2: No real data available yet — show "Sem dados"
   },
   {
     etapa: 'Sol aborda → Lead responde',
@@ -63,9 +57,12 @@ const SLA_DEFS: SLADef[] = [
     ator: 'Robô Sol',
     getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO'),
     getTimeMinutes: (r) => {
-      // Msgs sent until qualification
-      const msgs = r.historico.filter(h => h.tipo === 'enviada').length;
-      return msgs * 1.2 + 2; // ~1.2 min per msg exchange
+      // C2: Use ts_qualificado - data_envio if available
+      if (r.data_envio && r.data_resposta) {
+        const diff = new Date(r.data_resposta).getTime() - new Date(r.data_envio).getTime();
+        return diff > 0 ? diff / 60000 : null;
+      }
+      return null;
     },
   },
   {
@@ -75,7 +72,7 @@ const SLA_DEFS: SLADef[] = [
     icon: '📞',
     ator: 'Closer',
     getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO'),
-    getTimeMinutes: () => 35 + Math.random() * 40, // Approximation
+    getTimeMinutes: () => null, // C2: "Em implementação" — no real data
   },
   {
     etapa: 'Closer → Agendamento',
@@ -87,7 +84,7 @@ const SLA_DEFS: SLADef[] = [
       const s = (r.makeStatus || '').toUpperCase();
       return s === 'AGENDAMENTO' || s === 'AGENDADO';
     }),
-    getTimeMinutes: () => 90 + Math.random() * 60,
+    getTimeMinutes: () => null, // C2: No real data — removed Math.random()
   },
   {
     etapa: 'Agendamento → Reunião',
@@ -96,7 +93,7 @@ const SLA_DEFS: SLADef[] = [
     icon: '🤝',
     ator: 'Closer',
     getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'AGENDAMENTO'),
-    getTimeMinutes: () => (3 + Math.random() * 4) * 1440, // 3-7 days in minutes
+    getTimeMinutes: () => null, // C2: No real data — removed Math.random()
   },
   {
     etapa: 'Reunião → Proposta',
@@ -105,7 +102,14 @@ const SLA_DEFS: SLADef[] = [
     icon: '📄',
     ator: 'Closer',
     getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'PROPOSTA'),
-    getTimeMinutes: () => 200 + Math.random() * 200,
+    getTimeMinutes: (r) => {
+      // C2: Use ts_proposta - ts_qualificado from DS Comercial if available
+      if (r.dataProposta && r.data_resposta) {
+        const diff = new Date(r.dataProposta).getTime() - new Date(r.data_resposta).getTime();
+        return diff > 0 ? diff / 60000 : null;
+      }
+      return null;
+    },
   },
   {
     etapa: 'Proposta → Fechamento',
@@ -114,7 +118,14 @@ const SLA_DEFS: SLADef[] = [
     icon: '🎯',
     ator: 'Closer',
     getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'FECHADO' || (r.makeStatus || '').toUpperCase() === 'GANHO'),
-    getTimeMinutes: () => (6 + Math.random() * 8) * 1440,
+    getTimeMinutes: (r) => {
+      // C2: Use ts_fechamento - ts_proposta if available
+      if (r.dataFechamento && r.dataProposta) {
+        const diff = new Date(r.dataFechamento).getTime() - new Date(r.dataProposta).getTime();
+        return diff > 0 ? diff / 60000 : null;
+      }
+      return null;
+    },
   },
 ];
 

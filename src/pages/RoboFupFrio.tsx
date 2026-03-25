@@ -69,11 +69,12 @@ function deriveFupData(records: MakeRecord[]) {
   const desqNovamente = Math.max(0, reativados - qualificadosFup - Math.round(reativados * 0.13));
   const emQual = reativados - qualificadosFup - desqNovamente;
 
-  const resultadoReativados = [
-    { resultado: 'Qualificados → Closer', qtd: qualificadosFup || Math.round(reativados * 0.58), pct: 0 },
-    { resultado: 'Desqualificados novamente', qtd: desqNovamente > 0 ? desqNovamente : Math.round(reativados * 0.29), pct: 0 },
-    { resultado: 'Ainda em qualificação', qtd: emQual > 0 ? emQual : Math.round(reativados * 0.13), pct: 0 },
-  ].map(r => ({ ...r, pct: reativados > 0 ? Math.round((r.qtd / reativados) * 100) : 0 }));
+  // C5: Removed fallback percentages — show real data only
+  const resultadoReativados = reativados > 0 ? [
+    { resultado: 'Qualificados → Closer', qtd: qualificadosFup, pct: 0 },
+    { resultado: 'Desqualificados novamente', qtd: Math.max(0, desqNovamente), pct: 0 },
+    { resultado: 'Ainda em qualificação', qtd: Math.max(0, emQual), pct: 0 },
+  ].map(r => ({ ...r, pct: reativados > 0 ? Math.round((r.qtd / reativados) * 100) : 0 })) : [];
 
   // Active leads in FUP
   const leadsAtivos = fupRecords
