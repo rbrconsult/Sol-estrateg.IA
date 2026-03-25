@@ -172,19 +172,45 @@ export default function Conferencia() {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [periodo, dateFrom, dateTo]);
 
+  /** Parse flexible date from DS (ISO or BR dd/MM/yyyy HH:mm:ss) */
+  const parseLeadDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+
+    // BR format: dd/MM/yyyy (optionally with time)
+    const br = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (br) {
+      const [, dd, mm, yyyy, hh = '00', mi = '00', ss = '00'] = br;
+      const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi), Number(ss));
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+
+    // ISO / native
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) return parsed;
+
+    return null;
+  };
+
   /** Filter leads by date range */
   const isInDateRange = (dateStr?: string) => {
     const { from: effFrom, to: effTo } = effectiveDateRange;
     if (!effFrom && !effTo) return true;
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return false;
-    if (effFrom && d < effFrom) return false;
+
+    const d = parseLeadDate(dateStr);
+    if (!d) return false;
+
+    if (effFrom) {
+      const fromStart = new Date(effFrom);
+      fromStart.setHours(0, 0, 0, 0);
+      if (d < fromStart) return false;
+    }
+
     if (effTo) {
       const end = new Date(effTo);
       end.setHours(23, 59, 59, 999);
       if (d > end) return false;
     }
+
     return true;
   };
 
