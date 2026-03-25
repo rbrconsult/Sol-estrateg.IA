@@ -34,6 +34,11 @@ export interface MakeRecord {
   canalOrigem?: string;
   franquiaId?: string;
   campanhaNome?: string;
+  closerAtribuido?: string;
+  etapaSm?: string;
+  statusProposta?: string;
+  potenciaSistema?: number;
+  representante?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
