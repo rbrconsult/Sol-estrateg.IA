@@ -90,8 +90,21 @@ function parseScore(s: string | undefined): number {
 
 function safeDate(str: string | undefined | null): Date | null {
   if (!str) return null;
-  const d = new Date(str);
-  return isNaN(d.getTime()) ? null : d;
+  const raw = String(str).trim();
+  if (!raw) return null;
+
+  const iso = new Date(raw);
+  if (!isNaN(iso.getTime())) return iso;
+
+  // dd/MM/yyyy [HH:mm[:ss]]
+  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (br) {
+    const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = br;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), Number(ss));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  return null;
 }
 
 function dayOfWeek(d: Date): number { return d.getDay(); }
@@ -106,6 +119,41 @@ function formatCurrencyShort(v: number): string {
   if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
   if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}k`;
   return `R$ ${v.toFixed(0)}`;
+}
+
+function getPrimaryDateForFilter(r: MakeRecord): Date | null {
+  return safeDate(
+    r.dataEntrada ||
+    r.lastFollowupDate ||
+    r.data_resposta ||
+    r.dataProposta ||
+    r.dataFechamento ||
+    r.data_envio
+  );
+}
+
+function getOrigemLabel(r: MakeRecord): string {
+  const raw = (r.canalOrigem || '').trim().toLowerCase();
+  if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) return 'Meta Ads';
+  if (raw === 'google_ads' || raw.includes('google')) return 'Google Ads';
+  if (raw === 'site' || raw.includes('landing')) return 'Site';
+  if (raw === 'whatsapp' || raw.includes('whatsapp')) return 'WhatsApp';
+  if (raw) return raw;
+  return 'Direto / Não identificado';
+}
+
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((acc, v) => acc + v, 0) / values.length;
+}
+
+function getStageAnchorDate(r: MakeRecord, stage: string): Date | null {
+  if (stage === 'Robô SOL') return safeDate(r.dataEntrada || r.data_envio);
+  if (stage === 'Qualificação') return safeDate(r.data_resposta || r.lastFollowupDate || r.dataEntrada || r.data_envio);
+  if (stage === 'Qualificado') return safeDate(r.data_resposta || r.lastFollowupDate || r.dataEntrada || r.data_envio);
+  if (stage === 'Closer') return safeDate(r.lastFollowupDate || r.data_resposta || r.dataEntrada || r.data_envio);
+  if (stage === 'Proposta') return safeDate(r.dataProposta || r.lastFollowupDate || r.dataEntrada || r.data_envio);
+  return safeDate(r.dataFechamento || r.dataProposta || r.lastFollowupDate || r.data_envio);
 }
 
 /** Map Make status → Sol Pipeline stage */
@@ -159,10 +207,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     if (!from && !to) return raw;
 
     return raw.filter(r => {
-      const dateStr = r.data_envio;
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return false;
+      const d = getPrimaryDateForFilter(r);
+      if (!d) return false;
       if (from) {
         const fromStart = new Date(from);
         fromStart.setHours(0, 0, 0, 0);
@@ -290,38 +336,65 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     });
 
     // ── SLA ──
-    const temposResposta: number[] = [];
+    const temposRespostaMin: number[] = [];
     allRecords.forEach(r => {
-      const envio = safeDate(r.data_envio);
-      const resposta = safeDate(r.data_resposta);
+      const envio = safeDate(r.dataEntrada || r.data_envio);
+      const resposta = safeDate(r.data_resposta || r.lastFollowupDate);
       if (envio && resposta) {
-        const diffHours = (resposta.getTime() - envio.getTime()) / (1000 * 60 * 60);
-        if (diffHours >= 0 && diffHours < 720) temposResposta.push(diffHours);
+        const diffMin = (resposta.getTime() - envio.getTime()) / (1000 * 60);
+        if (diffMin >= 0 && diffMin <= 60 * 24 * 30) temposRespostaMin.push(diffMin);
       }
     });
-    const tempoMedioResposta = temposResposta.length > 0
-      ? temposResposta.reduce((a, b) => a + b, 0) / temposResposta.length : 0;
-    const dentroDe24h = temposResposta.filter(t => t <= 24).length;
-    const pctDentro24h = temposResposta.length > 0 ? Math.round((dentroDe24h / temposResposta.length) * 100) : 0;
+    const tempoMedioRespostaMin = average(temposRespostaMin);
+    const abordadosAte5Min = temposRespostaMin.filter(t => t <= 5).length;
+    const dentroDe24h = temposRespostaMin.filter(t => t <= 24 * 60).length;
+    const pctAbordados5min = temposRespostaMin.length > 0 ? Math.round((abordadosAte5Min / temposRespostaMin.length) * 100) : 0;
+    const pctDentro24h = temposRespostaMin.length > 0 ? Math.round((dentroDe24h / temposRespostaMin.length) * 100) : 0;
     const leadsAguardando = allRecords.filter(r => r.status_resposta === 'aguardando').length;
 
     let tempoRespostaStr = '—';
-    if (tempoMedioResposta > 0) {
-      if (tempoMedioResposta < 1) tempoRespostaStr = `${Math.round(tempoMedioResposta * 60)}min`;
-      else if (tempoMedioResposta < 24) tempoRespostaStr = `${tempoMedioResposta.toFixed(1)}h`;
-      else tempoRespostaStr = `${Math.round(tempoMedioResposta / 24)}d`;
+    if (tempoMedioRespostaMin > 0) {
+      if (tempoMedioRespostaMin < 60) tempoRespostaStr = `${Math.round(tempoMedioRespostaMin)}min`;
+      else if (tempoMedioRespostaMin < 1440) tempoRespostaStr = `${(tempoMedioRespostaMin / 60).toFixed(1)}h`;
+      else tempoRespostaStr = `${Math.round(tempoMedioRespostaMin / 1440)}d`;
     }
 
     // ── Sol Hoje (últimos 7 dias) ──
-    const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    const solHoje: SolHoje[] = diasSemana.map((dia, i) => {
-      const weight = i < 5 ? 1.0 : i === 5 ? 0.6 : 0.4;
-      const totalWeight = 5 * 1.0 + 0.6 + 0.4;
-      const qualDia = Math.round(mqlCount * (weight / totalWeight));
-      const q = Math.round(qualDia * (quentes.length / Math.max(total, 1)));
-      const m = Math.round(qualDia * (mornos.length / Math.max(total, 1)));
-      const f = Math.max(0, qualDia - q - m);
-      return { dia, qualificados: qualDia, scores: Math.round(qualDia * (scoreMedio / 100)), quentes: q, mornos: m, frios: f };
+    const daysBack = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - (6 - i));
+      return d;
+    });
+    const weekLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const solHoje: SolHoje[] = daysBack.map(day => {
+      const dayStart = new Date(day);
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const dayRecords = allRecords.filter(r => {
+        const d = getPrimaryDateForFilter(r);
+        return !!d && d >= dayStart && d <= dayEnd;
+      });
+
+      const dayQualified = dayRecords.filter(r => {
+        const stage = getSolStageFromMake(r);
+        return ['Qualificado', 'Closer', 'Proposta', 'Fechado'].includes(stage);
+      });
+
+      const scoresSum = dayQualified.reduce((acc, r) => acc + parseScore(r.makeScore), 0);
+      const dayQuentes = dayQualified.filter(r => getTemp(r) === 'QUENTE').length;
+      const dayMornos = dayQualified.filter(r => getTemp(r) === 'MORNO').length;
+      const dayFrios = dayQualified.filter(r => getTemp(r) === 'FRIO').length;
+
+      return {
+        dia: weekLabels[day.getDay()],
+        qualificados: dayQualified.length,
+        scores: Math.round(scoresSum),
+        quentes: dayQuentes,
+        mornos: dayMornos,
+        frios: dayFrios,
+      };
     });
 
     // ── Desqualificação motivos ──
@@ -343,13 +416,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     // C3: Use canal_origem exclusively — no message text inference
     const origemCounts: Record<string, { total: number; ganhos: number }> = {};
     allRecords.forEach(r => {
-      const raw = (r.canalOrigem || '').trim().toLowerCase();
-      let origem = 'Direto / Não identificado';
-      if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) origem = 'Meta Ads';
-      else if (raw === 'google_ads' || raw.includes('google')) origem = 'Google Ads';
-      else if (raw === 'site' || raw.includes('landing')) origem = 'Site';
-      else if (raw === 'whatsapp' || raw.includes('whatsapp')) origem = 'WhatsApp';
-      else if (raw) origem = raw;
+      const origem = getOrigemLabel(r);
 
       if (!origemCounts[origem]) origemCounts[origem] = { total: 0, ganhos: 0 };
       origemCounts[origem].total++;
@@ -360,8 +427,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const scoreByOrigem: Record<string, { scores: number[]; count: number }> = {};
     allRecords.forEach(r => {
       const score = parseScore(r.makeScore);
-      let origem = 'Direto';
-      // simplified
+      const origem = getOrigemLabel(r);
       if (!scoreByOrigem[origem]) scoreByOrigem[origem] = { scores: [], count: 0 };
       scoreByOrigem[origem].count++;
       if (score > 0) scoreByOrigem[origem].scores.push(score);
@@ -497,11 +563,22 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       conversao: data.total > 0 ? Math.round((data.ganhos / data.total) * 100) : 0,
     }));
 
+    const fupReactivationDays = fupRecords
+      .map(r => {
+        const start = safeDate(r.dataEntrada || r.data_envio);
+        const end = safeDate(r.lastFollowupDate || r.data_resposta);
+        if (!start || !end) return null;
+        const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+        if (diff < 0 || diff > 180) return null;
+        return diff;
+      })
+      .filter((v): v is number => v !== null);
+
     const fupFrioData: FupFrio = {
       entraram: fupTotal,
       reativados: fupReativados,
       pctReativados: fupTotal > 0 ? +(fupReativados / fupTotal * 100).toFixed(1) : 0,
-      diasAteReativar: 3.2,
+      diasAteReativar: +average(fupReactivationDays).toFixed(1),
       valorRecuperado: formatCurrencyShort(valorFupRecuperado),
       ticketMedio: fupReativados > 0 ? formatCurrencyShort(valorFupRecuperado / fupReativados) : 'R$ 0',
       conversaoPosResgate: fupReativados > 0 ? Math.round((fupReativados / Math.max(fupTotal, 1)) * 100) : 0,
@@ -529,16 +606,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     };
 
     const slaData: SLAData = {
-      pctAbordados5min: pctDentro24h > 0 ? Math.min(pctDentro24h + 20, 100) : 0,
+      pctAbordados5min,
       tempoMedioRespostaLead: tempoRespostaStr,
     };
 
     const heatmapData: HeatmapData = {
       dias: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
       periodos: ['Manhã', 'Tarde', 'Noite'],
-      valores: heatmapNorm[0].every(v => v === 0)
-        ? [[45, 82, 88, 60, 55, 30, 15], [50, 70, 75, 65, 58, 35, 20], [30, 85, 90, 50, 40, 25, 10]]
-        : heatmapNorm,
+      valores: heatmapNorm,
       pico: `${peakDay} ${peakPeriodo}`,
     };
 
@@ -554,19 +629,48 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       .map(etapa => ({ etapa, ...tempByEtapa[etapa] }));
 
     const slaMockData: SLAMock = {
-      primeiroAtendimento: { media: tempoMedioResposta > 0 ? +tempoMedioResposta.toFixed(1) : 0, pctDentro24h, total },
+      primeiroAtendimento: {
+        media: tempoMedioRespostaMin > 0 ? +tempoMedioRespostaMin.toFixed(1) : 0,
+        pctDentro24h,
+        total: temposRespostaMin.length,
+      },
       porEtapa: stageOrder.slice(0, 5).map(etapa => {
         const slaMap: Record<string, number> = { 'Robô SOL': 1, 'Qualificação': 3, 'Qualificado': 5, 'Closer': 7, 'Proposta': 10 };
         const leadsInStage = allRecords.filter(r => getSolStageFromMake(r) === etapa);
-        const mediaDias = leadsInStage.length > 0 ? leadsInStage.length * 0.5 : 0; // simplified
+        const stageDurations = leadsInStage
+          .map(r => {
+            const anchor = getStageAnchorDate(r, etapa);
+            if (!anchor) return null;
+            const days = (Date.now() - anchor.getTime()) / (1000 * 60 * 60 * 24);
+            if (days < 0 || days > 365) return null;
+            return days;
+          })
+          .filter((v): v is number => v !== null);
+
+        const mediaDias = average(stageDurations);
         const slaDias = slaMap[etapa] || 5;
         return {
-          etapa, slaDias, mediaDias: +mediaDias.toFixed(1),
+          etapa,
+          slaDias,
+          mediaDias: +mediaDias.toFixed(1),
           status: (mediaDias <= slaDias * 0.7 ? 'ok' : mediaDias <= slaDias ? 'warning' : 'overdue') as 'ok' | 'warning' | 'overdue',
         };
       }),
       robos: { tempoResposta: tempoRespostaStr, leadsAguardando, taxaResposta },
-      geralProposta: { mediaDias: 0 },
+      geralProposta: {
+        mediaDias: +average(
+          allRecords
+            .map(r => {
+              const start = safeDate(r.dataEntrada || r.data_envio);
+              const proposta = safeDate(r.dataProposta);
+              if (!start || !proposta) return null;
+              const diff = (proposta.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+              if (diff < 0 || diff > 365) return null;
+              return diff;
+            })
+            .filter((v): v is number => v !== null)
+        ).toFixed(1),
+      },
     };
 
     const robotInsightsData: RobotInsightsData = {
@@ -582,8 +686,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       },
       funilMensagens: [
         { etapa: 'Enviadas', valor: mensagens.enviadas },
-        { etapa: 'Entregues', valor: Math.round(mensagens.enviadas * 0.98) },
-        { etapa: 'Lidas', valor: Math.round(mensagens.enviadas * 0.69) },
+        { etapa: 'Entregues', valor: mensagens.enviadas },
+        { etapa: 'Lidas', valor: mensagens.recebidas },
         { etapa: 'Respondidas', valor: mensagens.recebidas },
         { etapa: 'Qualificadas', valor: mqlCount },
       ],
