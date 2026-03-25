@@ -161,6 +161,14 @@ export default function Conferencia() {
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
+  const primeiroAtendimentoLabel = useMemo(() => {
+    const mins = slaMockData.primeiroAtendimento.media;
+    if (!mins || mins <= 0) return "—";
+    if (mins < 60) return `${Math.round(mins)}min`;
+    if (mins < 1440) return `${(mins / 60).toFixed(1)}h`;
+    return `${(mins / 1440).toFixed(1)}d`;
+  }, [slaMockData.primeiroAtendimento.media]);
+
   const maxPipeline = Math.max(...pipelineStages.map((s) => s.valor), 1);
   const maxShare = Math.max(...origemLeads.map((o) => o.share), 1);
 
@@ -543,7 +551,7 @@ export default function Conferencia() {
             <div className="pt-2 border-t border-border/30 space-y-1.5">
               <div className="flex justify-between text-[10px]">
                 <span className="text-muted-foreground">1º Atendimento</span>
-                <span className="font-semibold text-foreground">{slaMockData.primeiroAtendimento.media}min</span>
+                <span className="font-semibold text-foreground">{primeiroAtendimentoLabel}</span>
               </div>
               <div className="flex justify-between text-[10px]">
                 <span className="text-muted-foreground">Dentro 24h</span>
@@ -559,13 +567,13 @@ export default function Conferencia() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA por Etapa</p>
             <div className="space-y-2">
               {slaMockData.porEtapa.slice(0, 5).map((e: any) => {
-                const pct = e.meta > 0 ? Math.min((e.mediaDias / e.meta) * 100, 100) : 0;
+                const pct = e.slaDias > 0 ? Math.min((e.mediaDias / e.slaDias) * 100, 100) : 0;
                 const status = pct <= 60 ? "bg-success" : pct <= 85 ? "bg-warning" : "bg-destructive";
                 return (
                   <div key={e.etapa}>
                     <div className="flex justify-between text-[10px] mb-0.5">
                       <span className="text-muted-foreground truncate">{e.etapa}</span>
-                      <span className="font-semibold text-foreground tabular-nums">{e.mediaDias}d / {e.meta}d</span>
+                      <span className="font-semibold text-foreground tabular-nums">{e.mediaDias}d / {e.slaDias}d</span>
                     </div>
                     <div className="h-1.5 bg-secondary/50 rounded overflow-hidden">
                       <div className={cn("h-full rounded transition-all", status)} style={{ width: `${pct}%` }} />
