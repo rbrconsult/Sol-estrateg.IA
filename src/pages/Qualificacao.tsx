@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
