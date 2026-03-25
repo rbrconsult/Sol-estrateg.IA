@@ -57,10 +57,12 @@ function deriveFupData(records: MakeRecord[]) {
   const desqReativados = fupRecords.filter(r => ((r.codigoStatus || '').includes('DESQUAL') || (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO') && r.status_resposta === 'respondeu').length;
   const noRespReativados = fupRecords.filter(r => (r.codigoStatus === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou') && r.status_resposta === 'respondeu').length;
 
-  const porStatusAnterior = [
-    { statusAnterior: 'DESQUALIFICADO', qtd: desqEntrou || Math.round(totalEntrou * 0.54), reativados: desqReativados || Math.round(reativados * 0.45), taxa: 0 },
-    { statusAnterior: 'Sem resposta', qtd: noRespEntrou || Math.round(totalEntrou * 0.46), reativados: noRespReativados || Math.round(reativados * 0.55), taxa: 0 },
-  ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 }));
+  // C5: Removed fallback percentages — show real data only
+  const hasEnoughData = totalEntrou >= 30;
+  const porStatusAnterior = hasEnoughData ? [
+    { statusAnterior: 'DESQUALIFICADO', qtd: desqEntrou, reativados: desqReativados, taxa: 0 },
+    { statusAnterior: 'Sem resposta', qtd: noRespEntrou, reativados: noRespReativados, taxa: 0 },
+  ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 })) : [];
 
   // Results of reactivated
   const qualificadosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
