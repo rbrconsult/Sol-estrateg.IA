@@ -205,36 +205,40 @@ export default function Conferencia() {
   /** Derive KPIs: use original when no date filter, derive from filteredLeads when filtering */
   const hasDateFilter = !!(effectiveDateRange.from || effectiveDateRange.to);
 
-  const filteredKpis = useMemo(() => {
-    // When no date filter active (30d default), use the original computed KPIs from all proposals
-    if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
-      return kpiCards;
-    }
+    const filteredKpis = useMemo(() => {
+      // When no date filter active (30d default), use the original computed KPIs from all proposals
+      if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
+        return kpiCards;
+      }
 
-    // When filtering, derive from filteredLeads
-    const total = filteredLeads.length;
-    // MQL = leads que passaram da etapa inicial (Robô SOL) E não foram desqualificados
-    const qualificados = filteredLeads.filter(l => {
-      const etapa = (l.etapa || '').toLowerCase();
-      return etapa !== 'robô sol' && etapa !== '' && l.makeStatus !== 'DESQUALIFICADO';
-    });
-    const mqlCount = qualificados.length;
-    const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
-    const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
-    const agendamentos = filteredLeads.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa));
-    const taxaResp = kpiCards.find(k => k.label === 'Taxa Resposta');
-    const fupCard = kpiCards.find(k => k.label === 'Resgatados FUP');
+      // When filtering, derive from filteredLeads
+      const total = filteredLeads.length;
+      // MQL = leads que passaram da etapa inicial (Robô SOL) E não foram desqualificados
+      const qualificados = filteredLeads.filter(l => {
+        const etapa = (l.etapa || '').toLowerCase();
+        return etapa !== 'robô sol' && etapa !== '' && l.makeStatus !== 'DESQUALIFICADO';
+      });
+      const mqlCount = qualificados.length;
+      const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
+      const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
+      const agendamentos = filteredLeads.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa));
+      const taxaResp = kpiCards.find(k => k.label === 'Taxa Resposta');
 
-    return [
-      { label: 'Leads Recebidos', value: total, suffix: '', detail: `${total} leads no período` },
-      taxaResp || { label: 'Taxa Resposta', value: 0, suffix: '%', detail: '—' },
-      { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
-      { label: 'SQL', value: comProposta.length, suffix: '', detail: `${mqlCount > 0 ? ((comProposta.length / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
-      { label: 'Agendamentos', value: agendamentos.length, suffix: '', detail: `${comProposta.length > 0 ? ((agendamentos.length / comProposta.length) * 100).toFixed(0) : 0}%` },
-      { label: 'Fechados', value: fechados.length, suffix: '', detail: `${total > 0 ? ((fechados.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
-      fupCard ? { ...fupCard } : { label: 'Resgatados FUP', value: 0, suffix: '', detail: 'R$ 0' },
-    ] as KPICard[];
-  }, [filteredLeads, kpiCards, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
+      const fupReativados = filteredLeads.filter(l => {
+        const status = String(l.makeStatus || '').toUpperCase();
+        return l.statusFup === 'FUP Frio' && status.includes('QUALIFICADO') && !status.includes('DES');
+      }).length;
+
+      return [
+        { label: 'Leads Recebidos', value: total, suffix: '', detail: `${total} leads no período` },
+        taxaResp || { label: 'Taxa Resposta', value: 0, suffix: '%', detail: '—' },
+        { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
+        { label: 'SQL', value: comProposta.length, suffix: '', detail: `${mqlCount > 0 ? ((comProposta.length / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
+        { label: 'Agendamentos', value: agendamentos.length, suffix: '', detail: `${comProposta.length > 0 ? ((agendamentos.length / comProposta.length) * 100).toFixed(0) : 0}%` },
+        { label: 'Fechados', value: fechados.length, suffix: '', detail: `${total > 0 ? ((fechados.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
+        { label: 'Resgatados FUP', value: fupReativados, suffix: '', detail: `R$ ${fupReativados * 7}k`, tooltip: 'Leads recuperados via FUP Frio' },
+      ] as KPICard[];
+    }, [filteredLeads, kpiCards, hasDateFilter, filterEtapa, filterTemp, searchTerm]);
 
   const filteredPipeline = useMemo(() => {
     if (!hasDateFilter && filterEtapa === "todas" && filterTemp === "todas" && !searchTerm) {
