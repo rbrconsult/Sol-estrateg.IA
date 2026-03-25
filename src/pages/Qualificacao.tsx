@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ interface KrolicMember {
 
 export default function Qualificacao() {
   const { data: records, isLoading, isFetching, forceSync, refetch } = useMakeDataStore();
+  const gf = useGlobalFilters();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
@@ -96,8 +98,30 @@ export default function Qualificacao() {
   const allLeads = useMemo(() => {
     if (!records) return [];
     const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU', 'NOVO', ''];
+    
+    // Apply global date filter
+    const { from: effFrom, to: effTo } = gf.effectiveDateRange;
+    
     return records
       .filter((r) => {
+        // Date filter using data_envio (which uses data_entrada as primary)
+        if (effFrom || effTo) {
+          const dateStr = r.data_envio;
+          if (!dateStr) return false; // No date = exclude when filtering by period
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return false;
+          if (effFrom) {
+            const fromStart = new Date(effFrom);
+            fromStart.setHours(0, 0, 0, 0);
+            if (d < fromStart) return false;
+          }
+          if (effTo) {
+            const end = new Date(effTo);
+            end.setHours(23, 59, 59, 999);
+            if (d > end) return false;
+          }
+        }
+        
         const status = (r.makeStatus || '').toUpperCase();
         const isRoboStage = !status || roboStatuses.includes(status) || status === 'WHATSAPP';
         return isRoboStage || status === 'QUALIFICADO' || isDesqualificado(r);
@@ -108,7 +132,7 @@ export default function Qualificacao() {
         _desqualificado: isDesqualificado(r),
         _qualificado: isQualificado(r),
       }));
-  }, [records]);
+  }, [records, gf.effectiveDateRange]);
 
   const filtered = useMemo(() => {
     let result = allLeads;
