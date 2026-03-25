@@ -199,7 +199,7 @@ export default function Conferencia() {
 
         {/* ══════ KPIs GERAIS (período filtrado) ══════ */}
         <section className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-          {filteredKpis.map((k) => (
+          {kpiCards.map((k) => (
             <KPI
               key={k.label}
               label={k.label}
@@ -218,7 +218,7 @@ export default function Conferencia() {
 
           {/* Pipeline horizontal */}
           <div className="flex items-stretch gap-0 overflow-x-auto pb-2">
-            {filteredPipeline.map((s, i) => {
+            {pipelineStages.map((s, i) => {
               const pct = ((s.valor / maxPipeline) * 100);
               return (
                 <div key={s.etapa} className="flex items-center min-w-0">
@@ -232,13 +232,13 @@ export default function Conferencia() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    {i < filteredPipeline.length - 1 && (
+                    {i < pipelineStages.length - 1 && (
                       <p className="text-[9px] text-muted-foreground/70 mt-1 tabular-nums">
-                        ↓ {((filteredPipeline[i + 1].valor / s.valor) * 100).toFixed(0)}%
+                        ↓ {((pipelineStages[i + 1].valor / s.valor) * 100).toFixed(0)}%
                       </p>
                     )}
                   </div>
-                  {i < filteredPipeline.length - 1 && (
+                  {i < pipelineStages.length - 1 && (
                     <ArrowRight className="h-4 w-4 text-muted-foreground/40 mx-1 shrink-0" />
                   )}
                 </div>
@@ -250,9 +250,9 @@ export default function Conferencia() {
           <div className="mt-4 pt-3 border-t border-border/30">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Funil da Jornada — % acumulada</p>
             <div className="flex flex-col gap-1.5">
-              {filteredPipeline.map((s, i) => {
-                const pctJornada = filteredPipeline[0].valor > 0
-                  ? (s.valor / filteredPipeline[0].valor * 100)
+              {pipelineStages.map((s, i) => {
+                const pctJornada = pipelineStages[0].valor > 0
+                  ? (s.valor / pipelineStages[0].valor * 100)
                   : 0;
                 const colors = [
                   "bg-primary",
@@ -283,7 +283,7 @@ export default function Conferencia() {
             <RotateCcw className="h-3.5 w-3.5 text-success" />
             <span className="text-[10px] text-success font-semibold uppercase tracking-wider">Repescagem FUP Frio</span>
             <span className="text-[10px] text-muted-foreground">
-              — {filteredFup.reativados} leads resgatados voltam para
+              — {fupFrio.reativados} leads resgatados voltam para
             </span>
             <span className="text-[10px] font-semibold text-foreground">Closer</span>
             <ArrowRight className="h-3 w-3 text-success/60" />
@@ -303,12 +303,12 @@ export default function Conferencia() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center">
-                <p className="text-3xl font-extrabold text-success tabular-nums">{filteredFup.reativados}</p>
+                <p className="text-3xl font-extrabold text-success tabular-nums">{fupFrio.reativados}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">leads resgatados</p>
-                <p className="text-[10px] text-success/70 tabular-nums">de {filteredFup.entraram} que esfriaram</p>
+                <p className="text-[10px] text-success/70 tabular-nums">de {fupFrio.entraram} que esfriaram</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-extrabold text-success tabular-nums">{filteredFup.valorRecuperado}</p>
+                <p className="text-3xl font-extrabold text-success tabular-nums">{fupFrio.valorRecuperado}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">valor recuperado</p>
                 <p className="text-[10px] text-success/70 tabular-nums">ticket médio {fupFrio.ticketMedio}</p>
               </div>
@@ -421,11 +421,11 @@ export default function Conferencia() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Mensagens</p>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <p className="text-xl font-extrabold text-foreground tabular-nums">{filteredMensagens.enviadas.toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.enviadas.toLocaleString("pt-BR")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">enviadas</p>
               </div>
               <div>
-                <p className="text-xl font-extrabold text-foreground tabular-nums">{filteredMensagens.recebidas.toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-extrabold text-foreground tabular-nums">{mensagens.recebidas.toLocaleString("pt-BR")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">recebidas</p>
               </div>
               <div>
@@ -453,23 +453,23 @@ export default function Conferencia() {
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Mapa de Calor — Respostas</p>
-            <span className="text-[10px] text-primary font-medium">Pico: {filteredHeatmap.pico}</span>
+            <span className="text-[10px] text-primary font-medium">Pico: {heatmap.pico}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
                   <th className="w-16" />
-                  {filteredHeatmap.dias.map((d) => (
+                  {heatmap.dias.map((d) => (
                     <th key={d} className="text-[10px] text-muted-foreground font-medium text-center pb-1.5 px-1">{d}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredHeatmap.periodos.map((p, pi) => (
+                {heatmap.periodos.map((p, pi) => (
                   <tr key={p}>
                     <td className="text-[10px] text-muted-foreground font-medium pr-2 py-0.5">{p}</td>
-                    {filteredHeatmap.valores[pi].map((v, di) => {
+                    {heatmap.valores[pi].map((v, di) => {
                       const intensity = v / 100;
                       return (
                         <td key={di} className="p-0.5">
@@ -516,7 +516,7 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Temperatura por Etapa</p>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={filteredTemperatura}>
+              <BarChart data={temperaturaPorEtapa}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="etapa" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={45} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
