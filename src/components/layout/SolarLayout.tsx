@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { GlobalPageControls } from "@/components/layout/GlobalPageControls";
 
 const menuItems = [
   { title: "Pré-venda", icon: Search, path: "/solarmarket/prevenda" },
