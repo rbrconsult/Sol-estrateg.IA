@@ -44,6 +44,336 @@ export type Database = {
         }
         Relationships: []
       }
+      ads_google_campaigns_daily: {
+        Row: {
+          ad_group_id: string | null
+          ad_group_name: string | null
+          ad_group_status: string | null
+          ad_id: string | null
+          ad_status: string | null
+          all_conversions: number | null
+          all_conversions_value: number | null
+          campaign_id: string
+          campaign_name: string | null
+          campaign_status: string | null
+          clicks: number | null
+          company_id: string
+          conversion_value: number | null
+          conversions: number | null
+          cost: number | null
+          cost_per_conversion: number | null
+          cpc: number | null
+          cpm: number | null
+          ctr: number | null
+          customer_id: string
+          date: string
+          dispositivo: string | null
+          engagements: number | null
+          franquia_id: string
+          id: string
+          impressions: number | null
+          inserted_at: string | null
+          objetivo: string | null
+          orcamento_campanha: number | null
+          raw_payload: Json | null
+          rede: string | null
+          roas: number | null
+          updated_at: string | null
+          video_view_rate: number | null
+          video_views: number | null
+        }
+        Insert: {
+          ad_group_id?: string | null
+          ad_group_name?: string | null
+          ad_group_status?: string | null
+          ad_id?: string | null
+          ad_status?: string | null
+          all_conversions?: number | null
+          all_conversions_value?: number | null
+          campaign_id: string
+          campaign_name?: string | null
+          campaign_status?: string | null
+          clicks?: number | null
+          company_id: string
+          conversion_value?: number | null
+          conversions?: number | null
+          cost?: number | null
+          cost_per_conversion?: number | null
+          cpc?: number | null
+          cpm?: number | null
+          ctr?: number | null
+          customer_id?: string
+          date: string
+          dispositivo?: string | null
+          engagements?: number | null
+          franquia_id?: string
+          id?: string
+          impressions?: number | null
+          inserted_at?: string | null
+          objetivo?: string | null
+          orcamento_campanha?: number | null
+          raw_payload?: Json | null
+          rede?: string | null
+          roas?: number | null
+          updated_at?: string | null
+          video_view_rate?: number | null
+          video_views?: number | null
+        }
+        Update: {
+          ad_group_id?: string | null
+          ad_group_name?: string | null
+          ad_group_status?: string | null
+          ad_id?: string | null
+          ad_status?: string | null
+          all_conversions?: number | null
+          all_conversions_value?: number | null
+          campaign_id?: string
+          campaign_name?: string | null
+          campaign_status?: string | null
+          clicks?: number | null
+          company_id?: string
+          conversion_value?: number | null
+          conversions?: number | null
+          cost?: number | null
+          cost_per_conversion?: number | null
+          cpc?: number | null
+          cpm?: number | null
+          ctr?: number | null
+          customer_id?: string
+          date?: string
+          dispositivo?: string | null
+          engagements?: number | null
+          franquia_id?: string
+          id?: string
+          impressions?: number | null
+          inserted_at?: string | null
+          objetivo?: string | null
+          orcamento_campanha?: number | null
+          raw_payload?: Json | null
+          rede?: string | null
+          roas?: number | null
+          updated_at?: string | null
+          video_view_rate?: number | null
+          video_views?: number | null
+        }
+        Relationships: []
+      }
+      ads_meta_campaigns_daily: {
+        Row: {
+          ad_id: string
+          ad_name: string | null
+          ad_status: string | null
+          adset_id: string | null
+          adset_name: string | null
+          adset_status: string | null
+          campaign_id: string
+          campaign_name: string | null
+          campaign_status: string | null
+          capi_agendado_enviado: boolean | null
+          capi_fechado_enviado: boolean | null
+          capi_lead_enviado: boolean | null
+          capi_qualificado_enviado: boolean | null
+          clicks: number | null
+          company_id: string
+          cpc: number | null
+          cpl: number | null
+          cpl_agendado: number | null
+          cpl_qualificado: number | null
+          cpm: number | null
+          creative_id: string | null
+          creative_name: string | null
+          ctr: number | null
+          date: string
+          dispositivo: string | null
+          external_account_id: string
+          franquia_id: string
+          frequency: number | null
+          id: string
+          impressions: number | null
+          inserted_at: string | null
+          leads: number | null
+          leads_agendados: number | null
+          leads_fechados: number | null
+          leads_qualificados: number | null
+          objetivo: string | null
+          orcamento_diario: number | null
+          orcamento_total: number | null
+          publico_alvo: string | null
+          raw_payload: Json | null
+          reach: number | null
+          receita_gerada: number | null
+          roas: number | null
+          spend: number | null
+          taxa_agendamento: number | null
+          taxa_fechamento: number | null
+          taxa_qualificacao: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_id: string
+          ad_name?: string | null
+          ad_status?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          adset_status?: string | null
+          campaign_id: string
+          campaign_name?: string | null
+          campaign_status?: string | null
+          capi_agendado_enviado?: boolean | null
+          capi_fechado_enviado?: boolean | null
+          capi_lead_enviado?: boolean | null
+          capi_qualificado_enviado?: boolean | null
+          clicks?: number | null
+          company_id: string
+          cpc?: number | null
+          cpl?: number | null
+          cpl_agendado?: number | null
+          cpl_qualificado?: number | null
+          cpm?: number | null
+          creative_id?: string | null
+          creative_name?: string | null
+          ctr?: number | null
+          date: string
+          dispositivo?: string | null
+          external_account_id?: string
+          franquia_id?: string
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          inserted_at?: string | null
+          leads?: number | null
+          leads_agendados?: number | null
+          leads_fechados?: number | null
+          leads_qualificados?: number | null
+          objetivo?: string | null
+          orcamento_diario?: number | null
+          orcamento_total?: number | null
+          publico_alvo?: string | null
+          raw_payload?: Json | null
+          reach?: number | null
+          receita_gerada?: number | null
+          roas?: number | null
+          spend?: number | null
+          taxa_agendamento?: number | null
+          taxa_fechamento?: number | null
+          taxa_qualificacao?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_id?: string
+          ad_name?: string | null
+          ad_status?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          adset_status?: string | null
+          campaign_id?: string
+          campaign_name?: string | null
+          campaign_status?: string | null
+          capi_agendado_enviado?: boolean | null
+          capi_fechado_enviado?: boolean | null
+          capi_lead_enviado?: boolean | null
+          capi_qualificado_enviado?: boolean | null
+          clicks?: number | null
+          company_id?: string
+          cpc?: number | null
+          cpl?: number | null
+          cpl_agendado?: number | null
+          cpl_qualificado?: number | null
+          cpm?: number | null
+          creative_id?: string | null
+          creative_name?: string | null
+          ctr?: number | null
+          date?: string
+          dispositivo?: string | null
+          external_account_id?: string
+          franquia_id?: string
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          inserted_at?: string | null
+          leads?: number | null
+          leads_agendados?: number | null
+          leads_fechados?: number | null
+          leads_qualificados?: number | null
+          objetivo?: string | null
+          orcamento_diario?: number | null
+          orcamento_total?: number | null
+          publico_alvo?: string | null
+          raw_payload?: Json | null
+          reach?: number | null
+          receita_gerada?: number | null
+          roas?: number | null
+          spend?: number | null
+          taxa_agendamento?: number | null
+          taxa_fechamento?: number | null
+          taxa_qualificacao?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      analytics_ga4_daily: {
+        Row: {
+          campaign: string | null
+          company_id: string
+          conversions: number | null
+          date: string
+          engaged_sessions: number | null
+          franquia_id: string
+          id: string
+          inserted_at: string | null
+          landing_page: string | null
+          medium: string | null
+          new_users: number | null
+          property_id: string
+          raw_payload: Json | null
+          revenue: number | null
+          sessions: number | null
+          source: string | null
+          updated_at: string | null
+          users: number | null
+        }
+        Insert: {
+          campaign?: string | null
+          company_id: string
+          conversions?: number | null
+          date: string
+          engaged_sessions?: number | null
+          franquia_id?: string
+          id?: string
+          inserted_at?: string | null
+          landing_page?: string | null
+          medium?: string | null
+          new_users?: number | null
+          property_id: string
+          raw_payload?: Json | null
+          revenue?: number | null
+          sessions?: number | null
+          source?: string | null
+          updated_at?: string | null
+          users?: number | null
+        }
+        Update: {
+          campaign?: string | null
+          company_id?: string
+          conversions?: number | null
+          date?: string
+          engaged_sessions?: number | null
+          franquia_id?: string
+          id?: string
+          inserted_at?: string | null
+          landing_page?: string | null
+          medium?: string | null
+          new_users?: number | null
+          property_id?: string
+          raw_payload?: Json | null
+          revenue?: number | null
+          sessions?: number | null
+          source?: string | null
+          updated_at?: string | null
+          users?: number | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -221,6 +551,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      integration_runs: {
+        Row: {
+          company_id: string | null
+          error_message: string | null
+          finished_at: string | null
+          franquia_id: string | null
+          id: string
+          integration_name: string
+          meta: Json | null
+          rows_received: number | null
+          rows_upserted: number | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          company_id?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          franquia_id?: string | null
+          id?: string
+          integration_name: string
+          meta?: Json | null
+          rows_received?: number | null
+          rows_upserted?: number | null
+          started_at?: string | null
+          status: string
+        }
+        Update: {
+          company_id?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          franquia_id?: string | null
+          id?: string
+          integration_name?: string
+          meta?: Json | null
+          rows_received?: number | null
+          rows_upserted?: number | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       lead_status_history: {
         Row: {
@@ -505,6 +877,93 @@ export type Database = {
           started_at?: string
           status?: string
           transfer_bytes?: number | null
+        }
+        Relationships: []
+      }
+      media_performance_daily: {
+        Row: {
+          cac: number | null
+          campaign_id: string | null
+          campaign_name: string | null
+          channel: string
+          clicks: number | null
+          company_id: string
+          conversions: number | null
+          cpl: number | null
+          date: string
+          franquia_id: string
+          id: string
+          impressions: number | null
+          inserted_at: string | null
+          landing_page: string | null
+          leads: number | null
+          leads_agendados: number | null
+          leads_fechados: number | null
+          leads_qualificados: number | null
+          medium: string | null
+          revenue: number | null
+          roas: number | null
+          sessions: number | null
+          source: string | null
+          spend: number | null
+          updated_at: string | null
+          users: number | null
+        }
+        Insert: {
+          cac?: number | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          channel: string
+          clicks?: number | null
+          company_id: string
+          conversions?: number | null
+          cpl?: number | null
+          date: string
+          franquia_id?: string
+          id?: string
+          impressions?: number | null
+          inserted_at?: string | null
+          landing_page?: string | null
+          leads?: number | null
+          leads_agendados?: number | null
+          leads_fechados?: number | null
+          leads_qualificados?: number | null
+          medium?: string | null
+          revenue?: number | null
+          roas?: number | null
+          sessions?: number | null
+          source?: string | null
+          spend?: number | null
+          updated_at?: string | null
+          users?: number | null
+        }
+        Update: {
+          cac?: number | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          channel?: string
+          clicks?: number | null
+          company_id?: string
+          conversions?: number | null
+          cpl?: number | null
+          date?: string
+          franquia_id?: string
+          id?: string
+          impressions?: number | null
+          inserted_at?: string | null
+          landing_page?: string | null
+          leads?: number | null
+          leads_agendados?: number | null
+          leads_fechados?: number | null
+          leads_qualificados?: number | null
+          medium?: string | null
+          revenue?: number | null
+          roas?: number | null
+          sessions?: number | null
+          source?: string | null
+          spend?: number | null
+          updated_at?: string | null
+          users?: number | null
         }
         Relationships: []
       }
@@ -1005,6 +1464,63 @@ export type Database = {
           session_token?: string
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_conversations_daily: {
+        Row: {
+          campaign_id: string | null
+          campaign_name: string | null
+          company_id: string
+          conversations_replied: number | null
+          conversations_started: number | null
+          cpl: number | null
+          date: string
+          franquia_id: string
+          id: string
+          inserted_at: string | null
+          leads: number | null
+          leads_agendados: number | null
+          leads_fechados: number | null
+          leads_qualificados: number | null
+          raw_payload: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          campaign_name?: string | null
+          company_id: string
+          conversations_replied?: number | null
+          conversations_started?: number | null
+          cpl?: number | null
+          date: string
+          franquia_id?: string
+          id?: string
+          inserted_at?: string | null
+          leads?: number | null
+          leads_agendados?: number | null
+          leads_fechados?: number | null
+          leads_qualificados?: number | null
+          raw_payload?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          campaign_name?: string | null
+          company_id?: string
+          conversations_replied?: number | null
+          conversations_started?: number | null
+          cpl?: number | null
+          date?: string
+          franquia_id?: string
+          id?: string
+          inserted_at?: string | null
+          leads?: number | null
+          leads_agendados?: number | null
+          leads_fechados?: number | null
+          leads_qualificados?: number | null
+          raw_payload?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }
