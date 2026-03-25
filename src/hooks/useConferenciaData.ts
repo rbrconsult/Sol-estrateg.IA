@@ -47,6 +47,7 @@ export interface TabelaLead {
   etapaSm?: string; closerAtribuido?: string; statusProposta?: string;
   dataProposta?: string; dataFechamento?: string;
   dataQualificacao?: string; lastFollowupDate?: string;
+  respondeu?: boolean;
   historico: { data: string; tipo: string; msg: string }[];
 }
 export interface SLAMock {
