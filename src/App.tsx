@@ -54,7 +54,7 @@ import GoogleAdsPage from "./pages/campanhas/GoogleAds";
 import SiteGA4Page from "./pages/campanhas/SiteGA4";
 import WhatsAppPage from "./pages/campanhas/WhatsApp";
 import FunilConsolidado from "./pages/campanhas/FunilConsolidado";
-
+import TimeComercialPage from "./pages/TimeComercialPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -127,6 +127,7 @@ const App = () => (
               <Route path="/campanhas/site" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><SiteGA4Page /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/whatsapp" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><WhatsAppPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/funil" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><FunilConsolidado /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/time-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="time-comercial"><TimeComercialPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

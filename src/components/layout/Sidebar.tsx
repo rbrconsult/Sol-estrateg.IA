@@ -48,15 +48,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Contratos", icon: Handshake, path: "/contratos", moduleKey: "pipeline" },
       { title: "Vendedores", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
       { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes" },
-    ],
-  },
-  {
-    label: "Inteligência",
-    items: [
-      { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
-      { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
-      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
-      { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
+      { title: "Time Comercial", icon: Users, path: "/time-comercial", moduleKey: "time-comercial" },
     ],
   },
   {
@@ -74,9 +66,13 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: "Insights",
+    label: "Inteligência",
     items: [
-      { title: "Reports", icon: FileText, path: "/reports", moduleKey: "reports" },
+      { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
+      { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
+      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
+      { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
+      { title: "Insights | Skills", icon: FileText, path: "/reports", moduleKey: "reports" },
     ],
   },
   {

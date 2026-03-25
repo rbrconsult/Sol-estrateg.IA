@@ -919,21 +919,21 @@ export default function Admin() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit_full_name">Nome Completo</Label>
-                <Input
-                  id="edit_full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder="Nome do usuário"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="edit_phone">Telefone (WhatsApp)</Label>
                 <Input
                   id="edit_phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="5511999999999"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_full_name">Nome Completo</Label>
+                <Input
+                  id="edit_full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Nome do usuário"
                 />
               </div>
               <div className="space-y-2">
