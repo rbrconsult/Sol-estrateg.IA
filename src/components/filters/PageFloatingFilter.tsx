@@ -43,6 +43,7 @@ const defaultState: FilterState = {
   status: "todos",
 };
 
+// Etapa = posição no funil comercial (onde o lead está)
 const ALL_ETAPAS = [
   'TRAFEGO PAGO',
   'PROSPECÇÃO',
@@ -55,15 +56,15 @@ const ALL_ETAPAS = [
   'CONTRATO ASSINADO',
 ];
 
+// Status = situação de resposta/atividade do lead (o que aconteceu)
 const ALL_STATUSES = [
   'NOVO',
-  'EM_QUALIFICACAO',
-  'QUALIFICADO',
-  'WHATSAPP',
-  'DESQUALIFICADO',
-  'NAO_RESPONDEU',
   'RESPONDEU',
+  'NAO_RESPONDEU',
   'AGUARDANDO',
+  'DESQUALIFICADO',
+  'GANHO',
+  'PERDIDO',
 ];
 
 export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
@@ -263,10 +264,10 @@ export function PageFloatingFilter({
             </div>
           )}
 
-          {/* Etapa Funil */}
+          {/* Etapa Funil — posição no funil */}
           {config.showEtapa && setEtapa && (
             <div>
-              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Etapa Funil</label>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">📋 Etapa do Funil</label>
               <Select value={filters.etapa} onValueChange={setEtapa}>
                 <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -277,14 +278,14 @@ export function PageFloatingFilter({
             </div>
           )}
 
-          {/* Status */}
+          {/* Status — situação de resposta do lead */}
           {config.showStatus && setStatus && (
             <div>
-              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Status</label>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">🏷 Situação do Lead</label>
               <Select value={filters.status} onValueChange={setStatus}>
                 <SelectTrigger className="w-full h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="todos">Todas Situações</SelectItem>
                   {(config.statuses || ALL_STATUSES).map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
                 </SelectContent>
               </Select>
