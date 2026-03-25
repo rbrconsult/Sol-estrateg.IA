@@ -48,7 +48,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Contratos", icon: Handshake, path: "/contratos", moduleKey: "pipeline" },
       { title: "Vendedores", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
       { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes" },
-      { title: "Time Comercial", icon: Users, path: "/time-comercial", moduleKey: "time-comercial" },
+      
     ],
   },
   {
