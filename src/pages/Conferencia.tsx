@@ -222,7 +222,9 @@ export default function Conferencia() {
       const fechados = filteredLeads.filter(l => l.etapa === 'Fechado');
       const comProposta = filteredLeads.filter(l => ['Proposta', 'Fechado'].includes(l.etapa));
       const agendamentos = filteredLeads.filter(l => ['Closer', 'Proposta', 'Fechado'].includes(l.etapa));
-      const taxaResp = kpiCards.find(k => k.label === 'Taxa Resposta');
+
+      const respondedCount = filteredLeads.filter(l => l.respondeu).length;
+      const taxaRespostaFiltrada = total > 0 ? Math.round((respondedCount / total) * 100) : 0;
 
       const fupReativados = filteredLeads.filter(l => {
         const status = String(l.makeStatus || '').toUpperCase();
@@ -231,7 +233,7 @@ export default function Conferencia() {
 
       return [
         { label: 'Leads Recebidos', value: total, suffix: '', detail: `${total} leads no período` },
-        taxaResp || { label: 'Taxa Resposta', value: 0, suffix: '%', detail: '—' },
+        { label: 'Taxa Resposta', value: taxaRespostaFiltrada, suffix: '%', detail: `${respondedCount} de ${total} responderam` },
         { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
         { label: 'SQL', value: comProposta.length, suffix: '', detail: `${mqlCount > 0 ? ((comProposta.length / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
         { label: 'Agendamentos', value: agendamentos.length, suffix: '', detail: `${comProposta.length > 0 ? ((agendamentos.length / comProposta.length) * 100).toFixed(0) : 0}%` },
