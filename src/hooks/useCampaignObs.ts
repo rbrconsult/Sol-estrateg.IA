@@ -33,8 +33,8 @@ async function fetchTable(table: string, franquiaId: string, range?: DateRange) 
 }
 
 async function fetchLastSync(franquiaId: string) {
-  const { data } = await supabase
-    .from('integration_runs' as any)
+  const { data } = await (supabase as any)
+    .from('integration_runs')
     .select('finished_at, integration_name, status')
     .eq('franquia_id', franquiaId)
     .order('finished_at', { ascending: false })
