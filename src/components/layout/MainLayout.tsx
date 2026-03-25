@@ -72,6 +72,8 @@ export function MainLayout({ children }: MainLayoutProps) {
         {children}
       </main>
 
+      <GlobalPageControls />
+
       {/* Floating "Novidades" button — bottom right */}
       <Link
         to="/roadmap"

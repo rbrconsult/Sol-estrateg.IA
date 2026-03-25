@@ -154,6 +154,8 @@ export function SolarLayout({ children }: { children: ReactNode }) {
       <main className={cn("transition-all duration-300", isMobile ? "" : marginLeft)}>
         {children}
       </main>
+
+      <GlobalPageControls />
     </div>
   );
 }
