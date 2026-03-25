@@ -72,14 +72,18 @@ function deriveAttribution(records: MakeRecord[]) {
     .sort((a, b) => b.leads - a.leads);
 }
 
+/* C3: Temperature by channel — use canal_origem directly */
 function deriveTemperatureByChannel(records: MakeRecord[], attribution: ReturnType<typeof deriveAttribution>) {
   return attribution.map(a => {
-    // We need to re-process from records to get temp distribution per channel
     const channelRecords = records.filter(r => {
-      const cidade = (r.cidade || '').toLowerCase();
-      if (a.canal === 'Meta Ads') return cidade.includes('meta') || cidade.includes('facebook') || cidade.includes('instagram') || (!cidade.includes('google') && (r.telefone.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100 < 60));
-      if (a.canal === 'Google Ads') return cidade.includes('google') || (!cidade.includes('meta') && !cidade.includes('facebook') && (r.telefone.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100 >= 60 && r.telefone.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100 < 85));
-      return true;
+      const raw = (r.canalOrigem || '').trim().toLowerCase();
+      let canal = 'Direto / Não identificado';
+      if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) canal = 'Meta Ads';
+      else if (raw === 'google_ads' || raw.includes('google')) canal = 'Google Ads';
+      else if (raw === 'site' || raw.includes('landing') || raw.includes('site')) canal = 'Site';
+      else if (raw === 'whatsapp' || raw.includes('whatsapp')) canal = 'WhatsApp';
+      else if (raw) canal = raw;
+      return canal === a.canal;
     });
     return {
       canal: a.canal,
