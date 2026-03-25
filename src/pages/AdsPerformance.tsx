@@ -38,21 +38,19 @@ function KPICard({ label, value, suffix = '', color }: { label: string; value: n
   );
 }
 
-/* Derive attribution from canal_origem or heuristic */
+/* C3: Derive attribution exclusively from canal_origem */
 function deriveAttribution(records: MakeRecord[]) {
   const byCanal: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[]; quentes: number }> = {};
 
   records.forEach(r => {
-    let canal = 'Direto';
-    const cidade = (r.cidade || '').toLowerCase();
-    if (cidade.includes('meta') || cidade.includes('facebook') || cidade.includes('instagram')) {
-      canal = 'Meta Ads';
-    } else if (cidade.includes('google')) {
-      canal = 'Google Ads';
-    } else if (r.makeScore && parseInt(r.makeScore) > 0) {
-      
-      canal = r.canalOrigem === 'meta_ads' ? 'Meta Ads' : r.canalOrigem === 'google_ads' ? 'Google Ads' : r.canalOrigem === 'site' ? 'Site' : 'Direto';
-    }
+    // C3: Use ONLY canal_origem — no inference from cidade or messages
+    const raw = (r.canalOrigem || '').trim().toLowerCase();
+    let canal = 'Direto / Não identificado';
+    if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) canal = 'Meta Ads';
+    else if (raw === 'google_ads' || raw.includes('google')) canal = 'Google Ads';
+    else if (raw === 'site' || raw.includes('landing') || raw.includes('site')) canal = 'Site';
+    else if (raw === 'whatsapp' || raw.includes('whatsapp')) canal = 'WhatsApp';
+    else if (raw) canal = raw;
 
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0 };
     byCanal[canal].leads++;
