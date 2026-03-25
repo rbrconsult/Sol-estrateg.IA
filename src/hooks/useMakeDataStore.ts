@@ -178,9 +178,15 @@ export function useMakeDataStore() {
     await queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
   }, [queryClient]);
 
+  /** Light refetch: just re-reads from local DB without triggering cron-sync */
+  const refetch = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['make-data-store'] });
+  }, [queryClient]);
+
   return {
     ...query,
     forceSync,
+    refetch,
   };
 }
 
