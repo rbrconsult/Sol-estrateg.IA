@@ -168,7 +168,12 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
     const isEngaged = leadStatus === 'WHATSAPP' || leadStatus === 'QUALIFICADO';
     const respondeu = hasDataResposta || isEngaged || !!(d.respondeu || d.replied);
 
-    return {
+    // Parse data_entrada — try multiple source fields
+    const parsedDataEntrada = parseDate(d.data_hora_cadastro) 
+      || parseDate(d['Data e Hora | Cadastro do Lead']) 
+      || parseDate(d.data_entrada);
+
+    const record: Record<string, any> = {
       telefone: phone,
       nome: String(d.nome || d.name || '') || null,
       email: String(d.email || '') || null,
@@ -192,7 +197,6 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       sentimento_resposta: String(d.sentimento_resposta || '') || null,
       interesse_detectado: String(d.interesse_detectado || '') || null,
       tempo_resposta_seg: parseInt(d.tempo_resposta_seg) || null,
-      data_entrada: parseDate(d.data_hora_cadastro || d['Data e Hora | Cadastro do Lead'] || d.data_entrada),
       data_qualificacao: parseDate(d.data_qualificacao),
       data_agendamento: parseDate(d.data_agendamento),
       data_proposta: parseDate(d.data_proposta),
@@ -201,7 +205,15 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       organization_id: creds.orgId,
       synced_at: new Date().toISOString(),
     };
-  }).filter(l => l.telefone);
+
+    // CRITICAL: Only set data_entrada if we have a real parsed value
+    // This prevents overwriting existing DB values with null on each sync
+    if (parsedDataEntrada) {
+      record.data_entrada = parsedDataEntrada;
+    }
+
+    return record;
+  }).filter((l: any) => l.telefone);
 
   let upsertedLeads = 0;
   for (let i = 0; i < leadsToUpsert.length; i += 50) {
