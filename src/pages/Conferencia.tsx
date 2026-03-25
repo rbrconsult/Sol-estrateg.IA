@@ -359,25 +359,29 @@ export default function Conferencia() {
             return isQualificado(l) && l.statusFup === 'FUP Frio' && isToday(qualEventDate(l));
           }).length;
 
-          // Enviados ao closer hoje — leads que têm closer atribuído OU etapa_sm de negociação
-          const closerHoje = leadsHoje.filter(l => {
+          // C4: Enviados ao closer hoje — leads que têm closer atribuído OU etapa_sm de negociação
+          const closerHoje = tabelaLeads.filter(l => {
             const tl = l as any;
-            return !!tl.closerAtribuido || ['Closer', 'Proposta', 'Fechado'].includes(l.etapa);
+            return (!!tl.closerAtribuido || ['Closer', 'Proposta', 'Fechado'].includes(l.etapa)) && isToday((l as any).dataCriacao);
           }).length;
 
-          // Propostas emitidas hoje — etapa_sm contém PROPOSTA ou similar
-          const propostasHoje = leadsHoje.filter(l => {
+          // C4: Propostas emitidas HOJE — use dataProposta (not dataCriacao)
+          const propostasHoje = tabelaLeads.filter(l => {
             const tl = l as any;
+            if (tl.dataProposta && isToday(tl.dataProposta)) return true;
+            // Fallback: if dataProposta not available, check etapa and dataCriacao
             const sm = ((tl.etapaSm || '') as string).toUpperCase();
-            return sm.includes('PROPOSTA') || ['Proposta', 'Fechado'].includes(l.etapa);
+            return (sm.includes('PROPOSTA') || ['Proposta', 'Fechado'].includes(l.etapa)) && isToday(tl.dataCriacao);
           }).length;
 
-          // Fechados hoje — etapa_sm CONTRATO ou GANHO
-          const fechadosHoje = leadsHoje.filter(l => {
+          // C4: Fechados HOJE — use dataFechamento (not dataCriacao)
+          const fechadosHoje = tabelaLeads.filter(l => {
             const tl = l as any;
+            if (tl.dataFechamento && isToday(tl.dataFechamento)) return true;
+            // Fallback: check etapa_sm for CONTRATO change today
             const sm = ((tl.etapaSm || '') as string).toUpperCase();
             const sp = ((tl.statusProposta || '') as string).toUpperCase();
-            return sm.includes('CONTRATO') || sm.includes('ASSINADO') || sm.includes('COBRANÇA') || sp.includes('GANHO') || l.etapa === 'Fechado';
+            return (sm.includes('CONTRATO') || sm.includes('ASSINADO') || sm.includes('COBRANÇA') || sp.includes('GANHO') || l.etapa === 'Fechado') && isToday(tl.dataCriacao);
           }).length;
 
           // FUP Frio hoje

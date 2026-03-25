@@ -25,11 +25,11 @@ function calcScore(proposals: Proposal[], kpis: KPIs, vendedorPerf: VendedorData
   else if (kpis.taxaConversao >= 10) conv = 18;
   else if (kpis.taxaConversao >= 5) conv = 10;
 
-  // 2. Ciclo (25pts)
+  // M3: Adjusted thresholds for solar sales cycle (longer than 7 days)
   let ciclo = 0;
-  if (kpis.cicloProposta <= 7) ciclo = 25;
-  else if (kpis.cicloProposta <= 15) ciclo = 18;
-  else if (kpis.cicloProposta <= 30) ciclo = 10;
+  if (kpis.cicloProposta <= 15) ciclo = 25;
+  else if (kpis.cicloProposta <= 30) ciclo = 18;
+  else if (kpis.cicloProposta <= 60) ciclo = 10;
 
   // 3. Distribuição (25pts)
   let dist = 25;
