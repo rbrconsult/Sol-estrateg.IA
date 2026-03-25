@@ -48,6 +48,12 @@ import Comercial from "./pages/solar/Comercial";
 import VendedorPerformance from "./pages/solar/VendedorPerformance";
 import { SolarLayout } from "./components/layout/SolarLayout";
 import GA4Page from "./pages/GA4";
+import CampanhasVisaoGeral from "./pages/campanhas/VisaoGeral";
+import MetaAdsPage from "./pages/campanhas/MetaAds";
+import GoogleAdsPage from "./pages/campanhas/GoogleAds";
+import SiteGA4Page from "./pages/campanhas/SiteGA4";
+import WhatsAppPage from "./pages/campanhas/WhatsApp";
+import FunilConsolidado from "./pages/campanhas/FunilConsolidado";
 
 const queryClient = new QueryClient();
 
