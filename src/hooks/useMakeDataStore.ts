@@ -34,7 +34,6 @@ export interface MakeRecord {
   canalOrigem?: string;
   franquiaId?: string;
   campanhaNome?: string;
-  closerAtribuido?: string;
   etapaSm?: string;
   statusProposta?: string;
   potenciaSistema?: number;
