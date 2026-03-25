@@ -47,6 +47,7 @@ export interface TabelaLead {
   etapaSm?: string; closerAtribuido?: string; statusProposta?: string;
   dataProposta?: string; dataFechamento?: string;
   dataQualificacao?: string; lastFollowupDate?: string;
+  respondeu?: boolean;
   historico: { data: string; tipo: string; msg: string }[];
 }
 export interface SLAMock {
@@ -403,6 +404,7 @@ export function useConferenciaData() {
         dataFechamento: r.dataFechamento || undefined,
         dataQualificacao: r.data_resposta || undefined,
         lastFollowupDate: r.lastFollowupDate || undefined,
+        respondeu: r.status_resposta === 'respondeu',
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
