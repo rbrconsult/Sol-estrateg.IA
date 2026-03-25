@@ -191,7 +191,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       sentimento_resposta: String(d.sentimento_resposta || '') || null,
       interesse_detectado: String(d.interesse_detectado || '') || null,
       tempo_resposta_seg: parseInt(d.tempo_resposta_seg) || null,
-      data_entrada: parseDate(d['Data e Hora | Cadastro do Lead'] || d.data_entrada),
+      data_entrada: parseDate(d.data_hora_cadastro || d['Data e Hora | Cadastro do Lead'] || d.data_entrada),
       data_qualificacao: parseDate(d.data_qualificacao),
       data_agendamento: parseDate(d.data_agendamento),
       data_proposta: parseDate(d.data_proposta),
