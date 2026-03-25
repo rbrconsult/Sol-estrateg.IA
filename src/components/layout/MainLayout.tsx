@@ -9,6 +9,7 @@ import { Menu, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { GlobalPageControls } from "@/components/layout/GlobalPageControls";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -70,6 +71,8 @@ export function MainLayout({ children }: MainLayoutProps) {
       )}>
         {children}
       </main>
+
+      <GlobalPageControls />
 
       {/* Floating "Novidades" button — bottom right */}
       <Link
