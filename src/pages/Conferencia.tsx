@@ -319,64 +319,90 @@ export default function Conferencia() {
 
 
 
-        {/* ══════ ROW 1.5 — SOL HOJE (7 dias) ══════ */}
-        <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">🤖 Sol Hoje — Atividade Diária</p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
-            {(() => {
-              const mqlCard = filteredKpis.find(k => k.label === "MQL");
-              const leadsCard = filteredKpis.find(k => k.label === "Leads Recebidos");
-              const fupCard = filteredKpis.find(k => k.label === "Resgatados FUP");
-              const taxaResp = filteredKpis.find(k => k.label === "Taxa Resposta");
-              const mqlVal = mqlCard?.value ?? 0;
-              const leadsVal = leadsCard?.value ?? 0;
-              const fupVal = fupCard?.value ?? 0;
-              const taxaVal = taxaResp?.value ?? 0;
+        {/* ══════ RESUMO DO DIA ══════ */}
+        {(() => {
+          const today = new Date();
+          const todayStr = format(today, 'yyyy-MM-dd');
 
-              // Use real temperature distribution from filteredTemperatura
-              const totalTemp = filteredTemperatura.reduce((s, t) => s + t.quente + t.morno + t.frio, 0);
-              const totalQuentes = filteredTemperatura.reduce((s, t) => s + t.quente, 0);
-              const totalMornos = filteredTemperatura.reduce((s, t) => s + t.morno, 0);
-              const totalFrios = filteredTemperatura.reduce((s, t) => s + t.frio, 0);
+          const isToday = (dateStr?: string) => {
+            if (!dateStr) return false;
+            // Try ISO format
+            if (dateStr.startsWith(todayStr)) return true;
+            // Try BR format DD/MM/YYYY
+            const parts = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+            if (parts) {
+              const brDate = `${parts[3]}-${parts[2]}-${parts[1]}`;
+              return brDate === todayStr;
+            }
+            // Try Date parsing
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+              return format(d, 'yyyy-MM-dd') === todayStr;
+            }
+            return false;
+          };
 
-              // Abandono = leads desqualificados (status DESQUALIFICADO), não o total residual
-              const desqualificadosCount = filteredLeads.filter(l => l.makeStatus === 'DESQUALIFICADO').length;
-              const abandono = desqualificadosCount;
-              const qualifFup = fupVal;
+          const leadsHoje = tabelaLeads.filter(l => isToday((l as any).dataCriacao));
+          const totalHoje = leadsHoje.length;
 
-              return [
-                { label: "Qualificados", value: mqlVal, color: "text-primary" },
-                { label: "Abandono", value: abandono, color: "text-destructive" },
-                { label: "Qualif. FUP", value: qualifFup, color: "text-success" },
-                { label: "Quentes", value: totalQuentes, color: "text-orange-500" },
-                { label: "Mornos", value: totalMornos, color: "text-amber-400" },
-                { label: "Frios", value: totalFrios, color: "text-blue-400" },
-              ].map(item => (
-                <div key={item.label} className="text-center">
-                  <p className={cn("text-2xl font-extrabold tabular-nums", item.color)}>{item.value}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.label}</p>
-                </div>
-              ));
-            })()}
-          </div>
-          <div className="flex items-end gap-1 h-16">
-            {filteredSolHoje.map((d, i) => {
-              const maxQ = Math.max(...filteredSolHoje.map(x => x.qualificados));
-              const h = (d.qualificados / maxQ) * 100;
-              return (
-                <div key={d.dia} className="flex-1 flex flex-col items-center gap-0.5">
-                  <div className="w-full flex flex-col justify-end" style={{ height: 48 }}>
-                    <div
-                      className={cn("w-full rounded-t transition-all duration-500", i === 2 ? "bg-primary" : "bg-primary/40")}
-                      style={{ height: `${h}%` }}
-                    />
+          // Leads em qualificação (em processo, não concluído)
+          const emQualificacao = tabelaLeads.filter(l => {
+            const etapa = (l.etapa || '').toLowerCase();
+            return etapa === 'qualificação' || etapa === 'robô sol';
+          }).length;
+
+          // Qualificados por SOL (followupCount < 1 implica SOL)
+          const qualificadosHojeSol = leadsHoje.filter(l => {
+            const s = (l.makeStatus || '');
+            return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup !== 'FUP Frio';
+          }).length;
+
+          // Qualificados por FUP FRIO
+          const qualificadosHojeFup = leadsHoje.filter(l => {
+            const s = (l.makeStatus || '');
+            return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup === 'FUP Frio';
+          }).length;
+
+          // Enviados ao closer hoje
+          const enviadosCloser = leadsHoje.filter(l => l.etapa === 'Closer' || l.etapa === 'Proposta' || l.etapa === 'Fechado').length;
+
+          // Propostas emitidas hoje
+          const propostasHoje = leadsHoje.filter(l => l.etapa === 'Proposta' || l.etapa === 'Fechado').length;
+
+          // Fechados hoje
+          const fechadosHoje = leadsHoje.filter(l => l.etapa === 'Fechado').length;
+
+          // Passaram por FUP Frio (total, not just today)
+          const totalFupFrio = tabelaLeads.filter(l => l.statusFup === 'FUP Frio').length;
+
+          const metrics = [
+            { label: 'Cadastrados Hoje', value: totalHoje, color: 'text-foreground', icon: '📥' },
+            { label: 'Qualif. SOL', value: qualificadosHojeSol, color: 'text-primary', icon: '🤖' },
+            { label: 'Qualif. FUP Frio', value: qualificadosHojeFup, color: 'text-success', icon: '🔁' },
+            { label: 'Em Qualificação', value: emQualificacao, color: 'text-warning', icon: '🎯' },
+            { label: 'Enviados Closer', value: enviadosCloser, color: 'text-accent-foreground', icon: '📞' },
+            { label: 'Propostas Hoje', value: propostasHoje, color: 'text-primary', icon: '📋' },
+            { label: 'Fechados Hoje', value: fechadosHoje, color: 'text-success', icon: '🏆' },
+            { label: 'Total FUP Frio', value: totalFupFrio, color: 'text-muted-foreground', icon: '🔁' },
+          ];
+
+          return (
+            <section className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-3">
+                📊 Resumo do Dia — {format(today, "dd 'de' MMMM", { locale: ptBR })}
+              </p>
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+                {metrics.map(m => (
+                  <div key={m.label} className="text-center">
+                    <span className="text-sm">{m.icon}</span>
+                    <p className={cn("text-2xl font-extrabold tabular-nums leading-none mt-1", m.color)}>{m.value}</p>
+                    <p className="text-[9px] text-muted-foreground mt-1 leading-tight">{m.label}</p>
                   </div>
-                  <span className="text-[9px] text-muted-foreground">{d.dia}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* ══════ ROW 1 — KPIs (7 cards, último é repescagem destacado) ══════ */}
         <section className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
