@@ -95,8 +95,16 @@ export default function Qualificacao() {
   };
 
   const isQualificado = (r: MakeRecord): boolean => {
+    if (isDesqualificado(r)) return false;
     const status = (r.makeStatus || '').toUpperCase();
-    return status === 'QUALIFICADO';
+    const etapa = (r.etapaFunil || '').toUpperCase();
+    const etapaSm = (r.etapaSm || '').toUpperCase();
+    return (
+      status === 'QUALIFICADO' ||
+      status.includes('QUALIFICADO') ||
+      etapa === 'QUALIFICADO' ||
+      etapaSm.includes('QUALIFICADO')
+    );
   };
 
   const allLeads = useMemo(() => {
