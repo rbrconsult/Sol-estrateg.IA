@@ -90,32 +90,30 @@ interface OrgCredentials {
   orgName: string;
   makeApiKey: string;
   makeDatastoreId: string;
+  makeComercialDsId: string;
   makeTeamId: string;
 }
 
 async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
-  // Fetch all organizations with their configs
   const { data: orgs } = await supabase.from('organizations').select('id, name');
   if (!orgs?.length) return [];
 
-  // Skip matriz — only sync tenant orgs
   const tenantOrgs = orgs.filter((o: any) => o.id !== MATRIZ_ORG_ID);
 
   const { data: allConfigs } = await supabase
     .from('organization_configs')
     .select('organization_id, config_key, config_value')
-    .in('config_key', ['make_api_key', 'ds_leads_site_geral', 'ds_thread_id', 'make_team_id']);
+    .in('config_key', ['make_api_key', 'ds_leads_site_geral', 'ds_thread_id', 'ds_comercial', 'make_team_id']);
 
-  // Build per-org credentials map
   const configMap: Record<string, Record<string, string>> = {};
   allConfigs?.forEach((c: any) => {
     if (!configMap[c.organization_id]) configMap[c.organization_id] = {};
     configMap[c.organization_id][c.config_key] = c.config_value;
   });
 
-  // Fallback global secrets
   const globalApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
   const globalDsId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
+  const globalComercialDsId = (Deno.env.get("MAKE_COMERCIAL_DATASTORE_ID") || "").trim();
   const globalTeamId = (Deno.env.get("MAKE_TEAM_ID") || "").trim();
 
   return tenantOrgs.map((org: any) => {
@@ -125,6 +123,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       orgName: org.name,
       makeApiKey: cfg.make_api_key || globalApiKey,
       makeDatastoreId: cfg.ds_leads_site_geral || cfg.ds_thread_id || globalDsId,
+      makeComercialDsId: cfg.ds_comercial || globalComercialDsId,
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
   }).filter((o: OrgCredentials) => o.makeApiKey);
@@ -215,6 +214,75 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
 
+/** Sync DS Comercial (84404) — enrich leads_consolidados with CRM data */
+async function syncComercialDS(supabase: any, creds: OrgCredentials): Promise<any> {
+  if (!creds.makeComercialDsId) return { skipped: true, reason: 'no comercial DS id' };
+
+  const makeHeaders = { Authorization: `Token ${creds.makeApiKey}`, "Content-Type": "application/json" };
+  const allRecords: any[] = [];
+  let offset = 0;
+  const limit = 100;
+  let hasMore = true;
+
+  while (hasMore) {
+    const apiUrl = `${MAKE_BASE}/data-stores/${creds.makeComercialDsId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+    const makeRes = await fetchWithRetry(apiUrl, { headers: makeHeaders });
+    if (!makeRes.ok) {
+      const errorText = await makeRes.text();
+      console.error(`[${creds.orgName}] Comercial DS error:`, makeRes.status, errorText);
+      return { error: `API error ${makeRes.status}` };
+    }
+    const makeData = await makeRes.json();
+    const records = makeData?.records || makeData?.data || [];
+    if (Array.isArray(records)) allRecords.push(...records);
+    hasMore = Array.isArray(records) && records.length === limit;
+    offset += limit;
+  }
+
+  console.log(`[${creds.orgName}] Comercial DS: ${allRecords.length} records`);
+
+  // Build phone→comercial map for enrichment
+  let enriched = 0;
+  for (const r of allRecords) {
+    const d = r.data || r;
+    const phone = normalizePhone(String(d.telefone || d.phone || r.key || ''));
+    if (!phone) continue;
+
+    const etapaSm = String(d.etapa_sm || d.etapa || '').trim();
+    const statusProposta = String(d.status_proposta || '').trim();
+    const representante = String(d.representante || d.closer || '').trim();
+    const valorProposta = parseFloat(d.valor_proposta) || null;
+    const potencia = parseFloat(d.potencia_sistema || d.potencia) || null;
+    const dataProposta = parseDate(d.data_proposta || d.data_criacao_proposta);
+    const dataFechamento = parseDate(d.data_fechamento || d.data_contrato);
+
+    // Determine closer_atribuido from representante
+    const closerAtribuido = representante || null;
+
+    const updateFields: Record<string, any> = {};
+    if (etapaSm) updateFields.etapa_sm = etapaSm;
+    if (statusProposta) updateFields.status_proposta = statusProposta;
+    if (closerAtribuido) updateFields.closer_atribuido = closerAtribuido;
+    if (representante) updateFields.representante = representante;
+    if (valorProposta) updateFields.valor_proposta = valorProposta;
+    if (potencia) updateFields.potencia_sistema = potencia;
+    if (dataProposta) updateFields.data_proposta = dataProposta;
+    if (dataFechamento) updateFields.data_fechamento = dataFechamento;
+
+    if (Object.keys(updateFields).length === 0) continue;
+
+    const { error } = await supabase
+      .from('leads_consolidados')
+      .update(updateFields)
+      .eq('telefone', phone)
+      .eq('organization_id', creds.orgId);
+
+    if (!error) enriched++;
+  }
+
+  return { fetched: allRecords.length, enriched };
+}
+
 async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeTeamId) return { skipped: true, reason: 'no team id' };
 
@@ -270,7 +338,6 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   const allResults = await batchedPromises(fetchFns, 2);
   for (const logs of allResults) heartbeatRecords.push(...logs);
 
-  // Deduplicate by execution_id to avoid "ON CONFLICT DO UPDATE cannot affect row a second time"
   const dedupMap = new Map<string, any>();
   for (const r of heartbeatRecords) {
     dedupMap.set(r.execution_id, r);
@@ -344,6 +411,7 @@ Deno.serve(async (req) => {
       const orgResult: Record<string, any> = {};
 
       orgResult.dataStore = await syncDataStore(supabase, creds);
+      orgResult.comercial = await syncComercialDS(supabase, creds);
       orgResult.heartbeat = await syncHeartbeat(supabase, creds);
 
       results[creds.orgName] = orgResult;

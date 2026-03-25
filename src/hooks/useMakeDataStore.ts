@@ -34,6 +34,10 @@ export interface MakeRecord {
   canalOrigem?: string;
   franquiaId?: string;
   campanhaNome?: string;
+  etapaSm?: string;
+  statusProposta?: string;
+  potenciaSistema?: number;
+  representante?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
@@ -95,10 +99,14 @@ function rowToMakeRecord(r: any): MakeRecord {
     lastFollowupDate: r.last_followup_date || '',
     codigoStatus: r.codigo_status || '',
     etapaFunil: r.etapa || undefined,
-    closerAtribuido: r.responsavel || undefined,
+    closerAtribuido: r.closer_atribuido || r.responsavel || undefined,
     canalOrigem: r.canal_origem || undefined,
     franquiaId: undefined,
     campanhaNome: r.campanha || undefined,
+    etapaSm: r.etapa_sm || undefined,
+    statusProposta: r.status_proposta || undefined,
+    potenciaSistema: r.potencia_sistema ? Number(r.potencia_sistema) : undefined,
+    representante: r.representante || undefined,
   };
 }
 

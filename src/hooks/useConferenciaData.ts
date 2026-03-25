@@ -44,6 +44,8 @@ export interface TabelaLead {
   id: number; nome: string; etapa: string; temperatura: string; score: number;
   sla: number; statusFup: string; valor: number; dataCriacao?: string;
   makeStatus?: string;
+  etapaSm?: string; closerAtribuido?: string; statusProposta?: string;
+  dataProposta?: string; dataFechamento?: string;
   historico: { data: string; tipo: string; msg: string }[];
 }
 export interface SLAMock {
@@ -106,6 +108,14 @@ function formatCurrencyShort(v: number): string {
 
 /** Map Make status → Sol Pipeline stage */
 function getSolStageFromMake(r: MakeRecord): string {
+  // Prioritize etapa_sm from CRM DS 84404 if available
+  const etapaSm = (r.etapaSm || '').toUpperCase();
+  if (etapaSm) {
+    if (etapaSm.includes('CONTRATO') || etapaSm.includes('ASSINADO') || etapaSm.includes('COBRANÇA') || etapaSm.includes('GANHO')) return 'Fechado';
+    if (etapaSm.includes('PROPOSTA') || etapaSm.includes('NEGOCI')) return 'Proposta';
+    if (etapaSm.includes('AGEND') || etapaSm.includes('CONTATO') || etapaSm.includes('CLOSER')) return 'Closer';
+  }
+
   const status = (r.makeStatus || '').toUpperCase();
   if (status.includes('GANHO') || status.includes('FECHADO') || status.includes('VENDA')) return 'Fechado';
   if (status.includes('PROPOSTA') || status.includes('NEGOCI')) return 'Proposta';
@@ -385,6 +395,9 @@ export function useConferenciaData() {
         valor,
         dataCriacao: r.data_envio || undefined,
         makeStatus: (r.makeStatus || '').toUpperCase(),
+        etapaSm: r.etapaSm || undefined,
+        closerAtribuido: r.closerAtribuido || r.representante || undefined,
+        statusProposta: r.statusProposta || undefined,
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
