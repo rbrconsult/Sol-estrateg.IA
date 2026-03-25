@@ -151,9 +151,10 @@ const Index = () => {
     return sorted[0]?.nome || "N/A";
   }, [vendedorPerformance]);
 
+  // M3: Adjusted health score thresholds for solar sales cycle
   const healthScore = useMemo(() => {
     let conv = kpis.taxaConversao >= 15 ? 25 : kpis.taxaConversao >= 10 ? 18 : kpis.taxaConversao >= 5 ? 10 : 0;
-    let ciclo = kpis.cicloProposta <= 7 ? 25 : kpis.cicloProposta <= 15 ? 18 : kpis.cicloProposta <= 30 ? 10 : 0;
+    let ciclo = kpis.cicloProposta <= 15 ? 25 : kpis.cicloProposta <= 30 ? 18 : kpis.cicloProposta <= 60 ? 10 : 0;
     const totalVal = vendedorPerformance.reduce((a, v) => a + v.valorTotal, 0);
     let dist = 25;
     if (totalVal > 0) {
