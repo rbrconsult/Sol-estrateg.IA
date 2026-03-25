@@ -399,6 +399,10 @@ export function useConferenciaData() {
         etapaSm: r.etapaSm || undefined,
         closerAtribuido: r.closerAtribuido || r.representante || undefined,
         statusProposta: r.statusProposta || undefined,
+        dataProposta: r.data_proposta || undefined,
+        dataFechamento: r.data_fechamento || undefined,
+        dataQualificacao: r.data_resposta || undefined,
+        lastFollowupDate: r.lastFollowupDate || undefined,
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
