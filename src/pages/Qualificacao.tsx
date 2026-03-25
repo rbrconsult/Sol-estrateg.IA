@@ -29,6 +29,10 @@ function isDesqualificado(r: MakeRecord): boolean {
   const codigo = (r.codigoStatus || "").toUpperCase();
   return (
     status === "DESQUALIFICADO" ||
+    status === "DECLINIO" ||
+    status === "DECLÍNIO" ||
+    status.includes("DECLINIO") ||
+    status.includes("DECLÍNIO") ||
     etapa === "DESQUALIFICADO" ||
     etapa === "DECLINIO" ||
     etapa === "DECLÍNIO" ||
