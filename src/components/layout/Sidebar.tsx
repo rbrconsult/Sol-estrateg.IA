@@ -55,14 +55,14 @@ const menuGroups: MenuGroup[] = [
     label: "Campanhas",
     items: [
       { title: "Visão Geral", icon: LayoutDashboard, path: "/campanhas", moduleKey: "bi" },
+      { title: "Ads Performance", icon: Megaphone, path: "/campanhas/ads", moduleKey: "bi" },
+      { title: "Mídia × Receita", icon: DollarSign, path: "/campanhas/receita", moduleKey: "bi" },
+      { title: "GA4", icon: Globe, path: "/campanhas/ga4", moduleKey: "bi" },
       { title: "Meta Ads", icon: Megaphone, path: "/campanhas/meta", moduleKey: "bi" },
       { title: "Google Ads", icon: Globe, path: "/campanhas/google", moduleKey: "bi" },
       { title: "Site (GA4)", icon: Globe, path: "/campanhas/site", moduleKey: "bi" },
       { title: "WhatsApp", icon: Zap, path: "/campanhas/whatsapp", moduleKey: "bi" },
       { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi" },
-      { title: "Ads Performance", icon: Megaphone, path: "/ads-performance", moduleKey: "ads-performance" },
-      { title: "Mídia × Receita", icon: DollarSign, path: "/midia", moduleKey: "midia-receita" },
-      { title: "GA4 (legado)", icon: Globe, path: "/ga4", moduleKey: "ga4" },
     ],
   },
   {
