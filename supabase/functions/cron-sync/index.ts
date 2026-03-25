@@ -183,7 +183,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       score: parseInt(d.Score || d.score) || null,
       status: STATUS_NORMALIZATION[String(d.status || 'novo').toUpperCase()] || String(d.status || 'novo').toUpperCase(),
       codigo_status: String(d.codigo_status || '').toUpperCase() || null,
-      etapa: String(d.etapa || '') || null,
+      etapa: String(d.etapa_funil || d.etapa || '') || null,
       responsavel: String(d.responsavel || '') || null,
       robo,
       followup_count: fupCount,
