@@ -175,7 +175,8 @@ export default function Conferencia() {
     if (!effFrom && !effTo) return true;
 
     const d = parseLeadDate(dateStr);
-    if (!d) return false;
+    // Leads without a real data_entrada should only appear when no period filter is active
+    if (!d) return !effFrom && !effTo;
 
     if (effFrom) {
       const fromStart = new Date(effFrom);
