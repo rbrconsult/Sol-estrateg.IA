@@ -316,15 +316,16 @@ export function useConferenciaData() {
     });
     const totalDesqual = desqualificados.length || 1;
 
-    // ── Origem (infer from email domain, cidade patterns) ──
+    // C3: Use canal_origem exclusively — no message text inference
     const origemCounts: Record<string, { total: number; ganhos: number }> = {};
     allRecords.forEach(r => {
-      let origem = 'Direto';
-      const msgs = r.historico.map(h => h.mensagem.toLowerCase()).join(' ');
-      if (msgs.includes('facebook') || msgs.includes('meta') || msgs.includes('instagram')) origem = 'Meta';
-      else if (msgs.includes('google')) origem = 'Google';
-      else if (msgs.includes('site') || msgs.includes('landing')) origem = 'Site';
-      else if (r.email && r.email.includes('@')) origem = 'Direto';
+      const raw = (r.canalOrigem || '').trim().toLowerCase();
+      let origem = 'Direto / Não identificado';
+      if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) origem = 'Meta Ads';
+      else if (raw === 'google_ads' || raw.includes('google')) origem = 'Google Ads';
+      else if (raw === 'site' || raw.includes('landing')) origem = 'Site';
+      else if (raw === 'whatsapp' || raw.includes('whatsapp')) origem = 'WhatsApp';
+      else if (raw) origem = raw;
 
       if (!origemCounts[origem]) origemCounts[origem] = { total: 0, ganhos: 0 };
       origemCounts[origem].total++;

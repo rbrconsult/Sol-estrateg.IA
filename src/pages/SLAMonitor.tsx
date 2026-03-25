@@ -57,34 +57,45 @@ function deriveSLAData(records: MakeRecord[]) {
   const slaStages = stages.map(s => {
     let realMedioMin = 0;
     let pctCumprindo = 0;
+    let hasData = false;
 
     if (s.id === 2 && withResponseTime.length > 0) {
+      hasData = true;
       realMedioMin = avgResponseMinutes;
       pctCumprindo = Math.round(withResponseTime.filter(r => {
         const diff = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000;
         return diff <= s.slaMetaMinutos;
       }).length / withResponseTime.length * 100);
     } else if (s.id === 1) {
-      // Assume automation is fast
-      realMedioMin = 1.5;
-      pctCumprindo = 95;
+      // C2: No real data available for Lead → Sol aborda. Show "Sem dados" instead of hardcoded.
+      hasData = false;
     } else if (s.id === 3) {
-      const qualRecs = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO' && r.data_resposta);
-      realMedioMin = qualRecs.length > 0 ? 8 : 0;
-      pctCumprindo = qualRecs.length > 0 ? 85 : 0;
+      // C2: Use real qualification data if available
+      const qualRecs = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO' && r.data_resposta && r.data_envio);
+      if (qualRecs.length > 0) {
+        hasData = true;
+        const times = qualRecs.map(r => {
+          const envio = new Date(r.data_envio).getTime();
+          const resp = new Date(r.data_resposta!).getTime();
+          return Math.max(0, (resp - envio) / 60000);
+        }).filter(t => t > 0 && t < 10080); // < 7 days
+        realMedioMin = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+        pctCumprindo = times.length > 0 ? Math.round(times.filter(t => t <= s.slaMetaMinutos).length / times.length * 100) : 0;
+      }
     } else if (s.id === 4) {
-      realMedioMin = 45;
-      pctCumprindo = 70;
+      // C2: "Em implementação" — no real data for Qualificado → Closer
+      hasData = false;
     }
 
-    const status: SLAStatus = pctCumprindo >= 80 ? "dentro" : pctCumprindo >= 50 ? "atencao" : "fora";
+    const status: SLAStatus = !hasData ? "dentro" : pctCumprindo >= 80 ? "dentro" : pctCumprindo >= 50 ? "atencao" : "fora";
 
     return {
       ...s,
-      realMedio: formatMinutes(realMedioMin),
+      realMedio: !hasData ? "Sem dados" : formatMinutes(realMedioMin),
       realMedioMinutos: realMedioMin,
-      status,
-      pctCumprindo,
+      status: !hasData ? "dentro" as SLAStatus : status,
+      pctCumprindo: !hasData ? 0 : pctCumprindo,
+      hasData,
     };
   });
 

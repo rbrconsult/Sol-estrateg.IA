@@ -94,9 +94,12 @@ const Index = () => {
     })).filter(d => d.quantidade > 0);
   }, [makeRecords, comercialRecords]);
 
-  // ── KPIs do DS Thread (MQL, SQL) ──
+  // C1: Apply global date filter to makeRecords
+  const filteredMakeRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+
+  // ── KPIs do DS Thread (MQL, SQL) — now filtered by period ──
   const threadKpis = useMemo(() => {
-    const records = makeRecords || [];
+    const records = filteredMakeRecords;
     const mql = records.filter(r => r.etapaFunil && MQL_ETAPAS.includes(r.etapaFunil)).length;
     const sql = records.filter(r => r.etapaFunil && SQL_ETAPAS.includes(r.etapaFunil)).length;
     const contatados = records.filter(r => r.status_resposta === 'respondeu').length;
@@ -105,12 +108,10 @@ const Index = () => {
     const criadosHoje = records.filter(r => {
       const d = r.data_envio || '';
       if (!d) return false;
-      // Try parsing the date and compare just the date part
       const parsed = new Date(d);
       if (!isNaN(parsed.getTime())) {
         return parsed.toISOString().slice(0, 10) === hojeISO;
       }
-      // Fallback: try DD/MM/YYYY format
       const brMatch = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
       if (brMatch) {
         return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}` === hojeISO;
@@ -118,23 +119,23 @@ const Index = () => {
       return false;
     }).length;
     return { mql, sql, total: records.length, contatados, criadosHoje };
-  }, [makeRecords]);
+  }, [filteredMakeRecords]);
 
-  // ── KPIs do DS Comercial (Agendamentos, Fechados) ──
+  // ── KPIs do DS Comercial (Agendamentos, Fechados) — also filtered ──
   const comercialKpis = useMemo(() => {
     const records = comercialRecords || [];
+    // TODO: apply date filtering to comercial records when dataCriacaoProposta is available
     const agendamentos = records.filter(r =>
       ['CONTATO REALIZADO', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'PROPOSTA'].includes(r.etapaSM?.toUpperCase())
     ).length;
-    const fechados = records.filter(r =>
+    const ganhos = records.filter(r =>
       r.status === 'Ganho' ||
-      FECHADOS_ETAPAS_SM.includes(r.etapaSM?.toUpperCase()) ||
-      r.faseSM?.toUpperCase() === 'OPERACIONAL'
-    ).length;
-    const valorFechado = records
-      .filter(r => r.status === 'Ganho' || r.faseSM?.toUpperCase() === 'OPERACIONAL')
-      .reduce((acc, r) => acc + r.valorProposta, 0);
-    return { agendamentos, fechados, valorFechado };
+      FECHADOS_ETAPAS_SM.includes(r.etapaSM?.toUpperCase())
+    );
+    const emInstalacao = records.filter(r => r.faseSM?.toUpperCase() === 'OPERACIONAL' && !ganhos.includes(r));
+    const fechados = ganhos.length;
+    const valorFechado = ganhos.reduce((acc, r) => acc + r.valorProposta, 0);
+    return { agendamentos, fechados, valorFechado, emInstalacao: emInstalacao.length };
   }, [comercialRecords]);
 
   const meta = useMemo(() => {
@@ -150,9 +151,10 @@ const Index = () => {
     return sorted[0]?.nome || "N/A";
   }, [vendedorPerformance]);
 
+  // M3: Adjusted health score thresholds for solar sales cycle
   const healthScore = useMemo(() => {
     let conv = kpis.taxaConversao >= 15 ? 25 : kpis.taxaConversao >= 10 ? 18 : kpis.taxaConversao >= 5 ? 10 : 0;
-    let ciclo = kpis.cicloProposta <= 7 ? 25 : kpis.cicloProposta <= 15 ? 18 : kpis.cicloProposta <= 30 ? 10 : 0;
+    let ciclo = kpis.cicloProposta <= 15 ? 25 : kpis.cicloProposta <= 30 ? 18 : kpis.cicloProposta <= 60 ? 10 : 0;
     const totalVal = vendedorPerformance.reduce((a, v) => a + v.valorTotal, 0);
     let dist = 25;
     if (totalVal > 0) {

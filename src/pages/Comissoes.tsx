@@ -15,10 +15,9 @@ import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
-// Comissão padrão 2%, Danielle 3%
+// A3: Comissão padrão 2%, Danieli 3% (fixed typo — case-insensitive match)
 const COMMISSION_RATES: Record<string, number> = {
-  "Danielle": 3,
-  "DANIELI": 3,
+  "danieli": 3,
 };
 const DEFAULT_RATE = 2;
 

@@ -57,21 +57,24 @@ function deriveFupData(records: MakeRecord[]) {
   const desqReativados = fupRecords.filter(r => ((r.codigoStatus || '').includes('DESQUAL') || (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO') && r.status_resposta === 'respondeu').length;
   const noRespReativados = fupRecords.filter(r => (r.codigoStatus === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou') && r.status_resposta === 'respondeu').length;
 
-  const porStatusAnterior = [
-    { statusAnterior: 'DESQUALIFICADO', qtd: desqEntrou || Math.round(totalEntrou * 0.54), reativados: desqReativados || Math.round(reativados * 0.45), taxa: 0 },
-    { statusAnterior: 'Sem resposta', qtd: noRespEntrou || Math.round(totalEntrou * 0.46), reativados: noRespReativados || Math.round(reativados * 0.55), taxa: 0 },
-  ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 }));
+  // C5: Removed fallback percentages — show real data only
+  const hasEnoughData = totalEntrou >= 30;
+  const porStatusAnterior = hasEnoughData ? [
+    { statusAnterior: 'DESQUALIFICADO', qtd: desqEntrou, reativados: desqReativados, taxa: 0 },
+    { statusAnterior: 'Sem resposta', qtd: noRespEntrou, reativados: noRespReativados, taxa: 0 },
+  ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 })) : [];
 
   // Results of reactivated
   const qualificadosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
   const desqNovamente = Math.max(0, reativados - qualificadosFup - Math.round(reativados * 0.13));
   const emQual = reativados - qualificadosFup - desqNovamente;
 
-  const resultadoReativados = [
-    { resultado: 'Qualificados → Closer', qtd: qualificadosFup || Math.round(reativados * 0.58), pct: 0 },
-    { resultado: 'Desqualificados novamente', qtd: desqNovamente > 0 ? desqNovamente : Math.round(reativados * 0.29), pct: 0 },
-    { resultado: 'Ainda em qualificação', qtd: emQual > 0 ? emQual : Math.round(reativados * 0.13), pct: 0 },
-  ].map(r => ({ ...r, pct: reativados > 0 ? Math.round((r.qtd / reativados) * 100) : 0 }));
+  // C5: Removed fallback percentages — show real data only
+  const resultadoReativados = reativados > 0 ? [
+    { resultado: 'Qualificados → Closer', qtd: qualificadosFup, pct: 0 },
+    { resultado: 'Desqualificados novamente', qtd: Math.max(0, desqNovamente), pct: 0 },
+    { resultado: 'Ainda em qualificação', qtd: Math.max(0, emQual), pct: 0 },
+  ].map(r => ({ ...r, pct: reativados > 0 ? Math.round((r.qtd / reativados) * 100) : 0 })) : [];
 
   // Active leads in FUP
   const leadsAtivos = fupRecords
@@ -270,24 +273,30 @@ export default function RoboFupFrio() {
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Performance por Etapa de Entrada</CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Status anterior</TableHead><TableHead className="text-right">Qtd</TableHead>
-                <TableHead className="text-right">Reativados</TableHead><TableHead className="text-right">Taxa</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {porStatusAnterior.map(s => (
-                <TableRow key={s.statusAnterior}>
-                  <TableCell className="font-medium text-xs">{s.statusAnterior}</TableCell>
-                  <TableCell className="text-right text-xs">{s.qtd}</TableCell>
-                  <TableCell className="text-right text-xs font-semibold">{s.reativados}</TableCell>
-                  <TableCell className="text-right"><Badge variant="secondary" className="text-xs">{s.taxa}%</Badge></TableCell>
+          {porStatusAnterior.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">
+              Dados insuficientes para calcular. Mínimo de 30 reativações necessário.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Status anterior</TableHead><TableHead className="text-right">Qtd</TableHead>
+                  <TableHead className="text-right">Reativados</TableHead><TableHead className="text-right">Taxa</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {porStatusAnterior.map(s => (
+                  <TableRow key={s.statusAnterior}>
+                    <TableCell className="font-medium text-xs">{s.statusAnterior}</TableCell>
+                    <TableCell className="text-right text-xs">{s.qtd}</TableCell>
+                    <TableCell className="text-right text-xs font-semibold">{s.reativados}</TableCell>
+                    <TableCell className="text-right"><Badge variant="secondary" className="text-xs">{s.taxa}%</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
