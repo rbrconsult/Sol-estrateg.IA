@@ -337,16 +337,20 @@ export default function Conferencia() {
             return (e === 'qualificação' || e === 'robô sol' || s === 'EM_QUALIFICACAO' || s === 'NOVO') && !s.includes('QUALIFICADO');
           }).length;
 
-          // Qualificados por SOL hoje
-          const qualSolHoje = leadsHoje.filter(l => {
-            const s = (l.makeStatus || '');
-            return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup !== 'FUP Frio';
+          const isQualificado = (l: any) => {
+            const s = String(l.makeStatus || '').toUpperCase();
+            return s.includes('QUALIFICADO') && !s.includes('DES');
+          };
+          const qualEventDate = (l: any) => l.dataQualificacao || l.lastFollowupDate || l.dataCriacao;
+
+          // Qualificados por SOL hoje (pela data de qualificação/evento, não pela data de cadastro)
+          const qualSolHoje = tabelaLeads.filter(l => {
+            return isQualificado(l) && l.statusFup !== 'FUP Frio' && isToday(qualEventDate(l));
           }).length;
 
-          // Qualificados por FUP Frio hoje
-          const qualFupHoje = leadsHoje.filter(l => {
-            const s = (l.makeStatus || '');
-            return s.includes('QUALIFICADO') && !s.includes('DES') && l.statusFup === 'FUP Frio';
+          // Qualificados por FUP Frio hoje (pela data de qualificação/evento)
+          const qualFupHoje = tabelaLeads.filter(l => {
+            return isQualificado(l) && l.statusFup === 'FUP Frio' && isToday(qualEventDate(l));
           }).length;
 
           // Enviados ao closer hoje — leads que têm closer atribuído OU etapa_sm de negociação
