@@ -122,7 +122,8 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       orgId: org.id,
       orgName: org.name,
       makeApiKey: cfg.make_api_key || globalApiKey,
-      makeDatastoreId: cfg.ds_leads_site_geral || cfg.ds_thread_id || globalDsId,
+      // Prioritize thread DS (64798) as source of truth for SOL/FUP journey and statuses
+      makeDatastoreId: cfg.ds_thread_id || cfg.ds_leads_site_geral || globalDsId,
       makeComercialDsId: cfg.ds_comercial || globalComercialDsId,
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
