@@ -305,6 +305,42 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
     (s: any) => ({ id: s.id, name: s.name })
   );
 
+  // Auto-update monitored_scenario_ids in app_settings
+  const monitoredPayload = scenarios.map((s) => ({ id: s.id, name: s.name }));
+  await supabase
+    .from("app_settings")
+    .upsert(
+      { key: "monitored_scenario_ids", value: JSON.stringify(monitoredPayload), updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+  console.log(`[${creds.orgName}] Auto-updated ${monitoredPayload.length} monitored scenarios`);
+
+  // Auto-discover Data Stores
+  try {
+    const dsRes = await fetchWithRetry(
+      `${MAKE_BASE}/data-stores?teamId=${creds.makeTeamId}&pg[limit]=200`,
+      { headers: makeHeaders }
+    );
+    if (dsRes.ok) {
+      const dsData = await dsRes.json();
+      const dataStores = (dsData.dataStores ?? []).map((ds: any) => ({
+        id: ds.id,
+        name: ds.name,
+        records: ds.records ?? 0,
+        size: ds.datasize ?? 0,
+      }));
+      await supabase
+        .from("app_settings")
+        .upsert(
+          { key: "make_data_stores", value: JSON.stringify(dataStores), updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+      console.log(`[${creds.orgName}] Auto-discovered ${dataStores.length} data stores`);
+    }
+  } catch (dsErr) {
+    console.error(`[${creds.orgName}] DS discovery error:`, dsErr);
+  }
+
   const heartbeatRecords: any[] = [];
 
   const fetchFns = scenarios.map((scenario) => async () => {
