@@ -308,17 +308,6 @@ export default function Conferencia() {
           </div>
         </header>
 
-        {/* ══════ FLOATING FILTER FAB ══════ */}
-        <FloatingFilter
-          periodo={periodo} setPeriodo={setPeriodo}
-          dateFrom={dateFrom} setDateFrom={setDateFrom}
-          dateTo={dateTo} setDateTo={setDateTo}
-          filterEtapa={filterEtapa} setFilterEtapa={setFilterEtapa}
-          filterTemp={filterTemp} setFilterTemp={setFilterTemp}
-          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-          etapasUnicas={etapasUnicas}
-          hasFilters={hasFilters} clearFilters={clearFilters}
-        />
 
 
 
