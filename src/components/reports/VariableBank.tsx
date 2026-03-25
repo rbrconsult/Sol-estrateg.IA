@@ -160,7 +160,7 @@ export function VariableBank({ onInsert }: VariableBankProps) {
         </div>
       </div>
 
-      <ScrollArea className="h-[280px]">
+      <ScrollArea className="h-full max-h-[calc(100vh-300px)]">
         <div className="space-y-1">
           {filtered.map((cat) => (
             <div key={cat.label}>
