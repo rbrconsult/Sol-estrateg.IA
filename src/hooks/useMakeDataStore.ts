@@ -109,6 +109,8 @@ function rowToMakeRecord(r: any): MakeRecord {
     statusProposta: r.status_proposta || undefined,
     potenciaSistema: r.potencia_sistema ? Number(r.potencia_sistema) : undefined,
     representante: r.representante || undefined,
+    dataProposta: r.data_proposta || undefined,
+    dataFechamento: r.data_fechamento || undefined,
   };
 }
 
