@@ -50,17 +50,12 @@ export default function Reports() {
   };
 
   const handleSendNow = async (tmpl: ReportTemplate) => {
-    // Build phone list: destinatário direto + CC fixo + marketing number if applicable
+    // Build phone list: destinatário direto + CC fixo
     const CC_FIXO = "5511974426112";
-    const MARKETING_CC = "5517997182379";
-    const isMarketing = tmpl.titulo.toLowerCase().includes("marketing") || 
-                        tmpl.titulo.toLowerCase().includes("campanha") ||
-                        tmpl.titulo.toLowerCase().includes("ads");
     
     const phoneSet = new Set<string>();
     if (tmpl.destinatario_telefone) phoneSet.add(tmpl.destinatario_telefone.replace(/\D/g, ''));
     phoneSet.add(CC_FIXO);
-    if (isMarketing) phoneSet.add(MARKETING_CC);
     
     // Super admin always receives — fetch super_admin phones
     try {
