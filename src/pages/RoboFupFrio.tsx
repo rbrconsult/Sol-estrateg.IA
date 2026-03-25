@@ -273,24 +273,30 @@ export default function RoboFupFrio() {
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Performance por Etapa de Entrada</CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Status anterior</TableHead><TableHead className="text-right">Qtd</TableHead>
-                <TableHead className="text-right">Reativados</TableHead><TableHead className="text-right">Taxa</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {porStatusAnterior.map(s => (
-                <TableRow key={s.statusAnterior}>
-                  <TableCell className="font-medium text-xs">{s.statusAnterior}</TableCell>
-                  <TableCell className="text-right text-xs">{s.qtd}</TableCell>
-                  <TableCell className="text-right text-xs font-semibold">{s.reativados}</TableCell>
-                  <TableCell className="text-right"><Badge variant="secondary" className="text-xs">{s.taxa}%</Badge></TableCell>
+          {porStatusAnterior.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">
+              Dados insuficientes para calcular. Mínimo de 30 reativações necessário.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Status anterior</TableHead><TableHead className="text-right">Qtd</TableHead>
+                  <TableHead className="text-right">Reativados</TableHead><TableHead className="text-right">Taxa</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {porStatusAnterior.map(s => (
+                  <TableRow key={s.statusAnterior}>
+                    <TableCell className="font-medium text-xs">{s.statusAnterior}</TableCell>
+                    <TableCell className="text-right text-xs">{s.qtd}</TableCell>
+                    <TableCell className="text-right text-xs font-semibold">{s.reativados}</TableCell>
+                    <TableCell className="text-right"><Badge variant="secondary" className="text-xs">{s.taxa}%</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
