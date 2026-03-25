@@ -390,8 +390,6 @@ export function useConferenciaData() {
         etapaSm: r.etapaSm || undefined,
         closerAtribuido: r.closerAtribuido || r.representante || undefined,
         statusProposta: r.statusProposta || undefined,
-        dataProposta: r.data_envio ? undefined : undefined, // will be populated after comercial sync
-        dataFechamento: undefined,
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
