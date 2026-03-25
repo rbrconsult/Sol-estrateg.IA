@@ -107,10 +107,10 @@ export default function MonitoredScenariosSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Activity className="h-5 w-5 text-primary" />
-          Cenários Monitorados (Heartbeat)
+          Cenários Monitorados (Auto-Discovery)
         </CardTitle>
         <CardDescription>
-          Adicione o ID do cenário Make.com — o nome é buscado automaticamente. A ordem define a exibição.
+          Cenários são detectados automaticamente a cada sincronização do Heartbeat. Você pode adicionar manualmente ou remover da lista.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

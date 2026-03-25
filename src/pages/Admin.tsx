@@ -826,6 +826,7 @@ export default function Admin() {
               </CardContent>
             </Card>
             <MonitoredScenariosSettings />
+            <DiscoveredDataStores />
 
             {/* Requisitos para WhatsApp Funcionar */}
             <Card>
