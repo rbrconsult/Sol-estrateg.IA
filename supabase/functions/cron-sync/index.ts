@@ -215,15 +215,33 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
     return record;
   }).filter((l: any) => l.telefone);
 
+  // Split into two groups: with and without data_entrada to avoid overwriting nulls
+  const withDataEntrada = leadsToUpsert.filter((l: any) => l.data_entrada);
+  const withoutDataEntrada = leadsToUpsert.filter((l: any) => !l.data_entrada);
+
   let upsertedLeads = 0;
-  for (let i = 0; i < leadsToUpsert.length; i += 50) {
-    const batch = leadsToUpsert.slice(i, i + 50);
+
+  // Batch upsert records WITH data_entrada (full upsert)
+  for (let i = 0; i < withDataEntrada.length; i += 50) {
+    const batch = withDataEntrada.slice(i, i + 50);
     const { error } = await supabase
       .from("leads_consolidados")
       .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
     if (error) console.error(`[${creds.orgName}] Leads upsert error:`, error.message);
     else upsertedLeads += batch.length;
   }
+
+  // Batch upsert records WITHOUT data_entrada (exclude data_entrada column to preserve DB value)
+  for (let i = 0; i < withoutDataEntrada.length; i += 50) {
+    const batch = withoutDataEntrada.slice(i, i + 50);
+    const { error } = await supabase
+      .from("leads_consolidados")
+      .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
+    if (error) console.error(`[${creds.orgName}] Leads upsert (no date) error:`, error.message);
+    else upsertedLeads += batch.length;
+  }
+
+  console.log(`[${creds.orgName}] Upserted: ${withDataEntrada.length} with date, ${withoutDataEntrada.length} without date`);
 
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
