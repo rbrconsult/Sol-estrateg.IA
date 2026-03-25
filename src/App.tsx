@@ -54,6 +54,9 @@ import GoogleAdsPage from "./pages/campanhas/GoogleAds";
 import SiteGA4Page from "./pages/campanhas/SiteGA4";
 import WhatsAppPage from "./pages/campanhas/WhatsApp";
 import FunilConsolidado from "./pages/campanhas/FunilConsolidado";
+import CampanhasAdsPerformance from "./pages/campanhas/AdsPerformance";
+import CampanhasMidiaReceita from "./pages/campanhas/MidiaReceita";
+import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
 import TimeComercialPage from "./pages/TimeComercialPage";
 const queryClient = new QueryClient();
 
