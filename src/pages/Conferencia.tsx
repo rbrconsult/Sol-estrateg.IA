@@ -179,7 +179,7 @@ export default function Conferencia() {
         {/* ══════ HEADER ══════ */}
         <header className="sticky top-0 z-50 py-4 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight text-foreground">Sol Estrateg.IA</h1>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">Dashboard</h1>
             {hasData && (
               <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-success/50 text-success">
                 Dados reais
