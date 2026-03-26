@@ -41,7 +41,9 @@ export interface MakeRecord {
   potenciaSistema?: number;
   representante?: string;
   dataProposta?: string;
-  dataFechamento?: string;
+    dataFechamento?: string;
+    sentimentoResposta?: string;
+    interesseDetectado?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
@@ -114,6 +116,8 @@ function rowToMakeRecord(r: any): MakeRecord {
     representante: r.representante || undefined,
     dataProposta: r.data_proposta || undefined,
     dataFechamento: r.data_fechamento || undefined,
+    sentimentoResposta: r.sentimento_resposta || undefined,
+    interesseDetectado: r.interesse_detectado || undefined,
   };
 }
 

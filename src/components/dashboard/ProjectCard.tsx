@@ -1,5 +1,5 @@
 import { Proposal } from "@/data/dataAdapter";
-import { User, Zap, Clock, MapPin, Mail, Phone, Thermometer, Star, Home } from "lucide-react";
+import { User, Zap, Clock, MapPin, Mail, Phone, Thermometer, Star, Home, MessageCircle, Heart, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ProjectCardProps {
@@ -11,6 +11,12 @@ const tempConfig: Record<string, { label: string; emoji: string; className: stri
   QUENTE: { label: "Quente", emoji: "🔥", className: "bg-red-500/20 text-red-400 border-red-500/40" },
   MORNO: { label: "Morno", emoji: "🌤", className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/40" },
   FRIO: { label: "Frio", emoji: "❄️", className: "bg-blue-500/20 text-blue-400 border-blue-500/40" },
+};
+
+const sentimentConfig: Record<string, { emoji: string; className: string }> = {
+  positivo: { emoji: "😊", className: "text-green-400" },
+  negativo: { emoji: "😞", className: "text-red-400" },
+  neutro: { emoji: "😐", className: "text-yellow-400" },
 };
 
 export function ProjectCard({ proposal, onClick }: ProjectCardProps) {
@@ -36,6 +42,10 @@ export function ProjectCard({ proposal, onClick }: ProjectCardProps) {
   const temp = proposal.temperatura || proposal.makeTemperatura?.toUpperCase() || "";
   const score = proposal.solScore || (proposal.makeScore ? parseFloat(proposal.makeScore) : 0);
   const nome = proposal.makeNome || proposal.nomeCliente;
+  const sentimento = proposal.makeSentimento?.toLowerCase() || "";
+  const interesse = proposal.makeInteresse || "";
+  const ultimaMensagem = proposal.makeUltimaMensagem || "";
+  const historico = proposal.makeHistorico || [];
 
   return (
     <div
@@ -91,6 +101,37 @@ export function ProjectCard({ proposal, onClick }: ProjectCardProps) {
           </div>
         )}
       </div>
+
+      {/* Conversa de Qualificação */}
+      {(ultimaMensagem || sentimento || interesse) && (
+        <div className="rounded-md bg-muted/40 border border-border/50 p-2 space-y-1.5">
+          {ultimaMensagem && (
+            <div className="flex items-start gap-1.5 text-xs">
+              <MessageCircle className="h-3 w-3 shrink-0 mt-0.5 text-primary" />
+              <span className="text-muted-foreground line-clamp-2">{ultimaMensagem}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {sentimento && sentimentConfig[sentimento] && (
+              <div className="flex items-center gap-1 text-xs">
+                <span>{sentimentConfig[sentimento].emoji}</span>
+                <span className={sentimentConfig[sentimento].className}>{sentimento}</span>
+              </div>
+            )}
+            {interesse && (
+              <div className="flex items-center gap-1 text-xs">
+                <Target className="h-3 w-3 text-primary" />
+                <span className="text-muted-foreground truncate max-w-[120px]">{interesse}</span>
+              </div>
+            )}
+            {historico.length > 0 && (
+              <span className="text-[10px] text-muted-foreground ml-auto">
+                {historico.length} msg
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Score + Responsáveis */}
       <div className="space-y-1">

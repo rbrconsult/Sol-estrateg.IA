@@ -49,6 +49,9 @@ export interface Proposal {
   makeEmail?: string;
   makeImovel?: string;
   makeNome?: string;
+  makeSentimento?: string;
+  makeInteresse?: string;
+  makeUltimaMensagem?: string;
 }
 
 // Etapas reais da planilha SOL Insights

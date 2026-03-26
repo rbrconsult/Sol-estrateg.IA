@@ -127,7 +127,7 @@ const Pipeline = () => {
         solSdr: false,
         tempoSolSdr: 0,
         etiquetas: '',
-        origemLead: '',
+        origemLead: r.canalOrigem || '',
         probabilidade: 50,
         motivoPerda: '',
         makeStatus: r.makeStatus,
@@ -137,6 +137,10 @@ const Pipeline = () => {
         makeStatusResposta: r.status_resposta,
         makeCidade: r.cidade,
         makeValorConta: r.valorConta,
+        makeSentimento: r.sentimentoResposta,
+        makeInteresse: r.interesseDetectado,
+        makeUltimaMensagem: r.historico?.length ? r.historico[r.historico.length - 1].mensagem : r.ultima_mensagem,
+        makeHistorico: r.historico,
       };
     });
 
