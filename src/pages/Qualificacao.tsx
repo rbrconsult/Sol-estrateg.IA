@@ -124,7 +124,7 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!records) return [];
-    const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU', 'NOVO', ''];
+    const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU'];
     
     // Apply global date filter
     const { from: effFrom, to: effTo } = gf.effectiveDateRange;
