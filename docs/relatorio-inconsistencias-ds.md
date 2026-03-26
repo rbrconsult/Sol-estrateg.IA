@@ -197,6 +197,21 @@ Remover `LEAD_FRIO` da função `isDesqualificado()` ou criar uma terceira class
 
 ---
 
+## 9.1 Pipeline — Enriquecimento dos Cards (Implementado)
+
+**Melhoria aplicada:** Cards do Kanban agora exibem dados de conversa de qualificação vindos do DS Thread:
+
+| Campo | Origem DB | Exibição no Card |
+|-------|-----------|-----------------|
+| `sentimento_resposta` | `leads_consolidados.sentimento_resposta` | Emoji + label (😊 positivo, 😞 negativo, 😐 neutro) |
+| `interesse_detectado` | `leads_consolidados.interesse_detectado` | Ícone 🎯 + texto do interesse |
+| `ultima_mensagem` | Último item do `historico[]` ou campo `ultima_mensagem` | Ícone 💬 + texto (line-clamp 2 linhas) |
+| `historico` (contagem) | Array reconstruído no `rowToMakeRecord` | Badge "X msg" |
+
+**⚠️ Limitação atual:** O `historico[]` é reconstruído de forma sintética (mensagem inicial + FUPs + resposta) pois o DS Thread não envia o conteúdo real das mensagens para o banco. Para dados reais, seria necessário que o Make.com populasse um campo `historico_json` no DS Thread com as mensagens trocadas.
+
+---
+
 ## 10. Recomendações Gerais
 
 1. **Mapear campos TS** no `cron-sync` para preencher `data_qualificacao` e `data_entrada`
@@ -209,3 +224,4 @@ Remover `LEAD_FRIO` da função `isDesqualificado()` ou criar uma terceira class
 8. **Mover URLs de webhook** para configuração dinâmica (organization_configs) em vez de hardcoded
 9. **Filtrar thread leads** pelos mesmos filtros globais aplicados aos leads comerciais no Pipeline
 10. **Implementar badges de origem** (SOL SDR / Solar Market) no Kanban conforme especificação
+11. **Enriquecer DS Thread no Make.com** com campo `historico_json` contendo mensagens reais da conversa de qualificação para exibição completa nos cards do Pipeline
