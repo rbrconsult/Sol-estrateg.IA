@@ -91,15 +91,13 @@ const PERDIDO_ETAPAS = ['PERDIDO', 'DECLÍNIO', 'DECLINIO', 'CANCELADO'];
 
 // Mapeia status da planilha — agora usa etapa_sm como fonte primária
 function mapStatus(statusProposta: string, etapaSM?: string): 'Aberto' | 'Ganho' | 'Perdido' {
+  // Prioridade 1: classificar por etapa_sm para Perdido
   const etapaUpper = (etapaSM || '').toUpperCase().trim();
-  
-  // Prioridade 1: classificar por etapa_sm
-  if (GANHO_ETAPAS.includes(etapaUpper)) return 'Ganho';
   if (PERDIDO_ETAPAS.includes(etapaUpper)) return 'Perdido';
   
-  // Prioridade 2: classificar por status_proposta textual
+  // Ganho = apenas status_proposta '5' (Aceita no SolarMarket)
   const normalized = (statusProposta || '').toLowerCase().trim();
-  if (normalized === 'ganho' || normalized.includes('ganho') || normalized.includes('fechado') || normalized.includes('vencido')) return 'Ganho';
+  if (normalized === '5' || normalized === 'ganho' || normalized.includes('ganho') || normalized.includes('fechado') || normalized.includes('vencido')) return 'Ganho';
   if (normalized === 'perdido' || normalized.includes('perdido') || normalized.includes('cancelado')) return 'Perdido';
   
   return 'Aberto';
