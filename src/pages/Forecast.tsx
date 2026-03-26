@@ -371,7 +371,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Potência Confirmada</span>
                 </div>
                 <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
-                <p className="text-xs text-muted-foreground mt-1">Somente Cobrança</p>
+                <p className="text-xs text-muted-foreground mt-1">Somente Propostas Aceitas</p>
               </CardContent>
             </Card>
 
