@@ -470,35 +470,7 @@ export default function RoboSol() {
       </Card>
 
       {/* Heatmap */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Melhor Horário e Dia</CardTitle></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <div className="min-w-[600px]">
-              <div className="flex gap-1 mb-1 pl-12">
-                {Array.from({ length: 24 }, (_, i) => (
-                  <div key={i} className="flex-1 text-center text-[9px] text-muted-foreground">{i}h</div>
-                ))}
-              </div>
-              {heatmap.map((row, di) => {
-                const maxV = Math.max(...heatmap.flat(), 1);
-                return (
-                  <div key={di} className="flex gap-1 mb-1 items-center">
-                    <span className="text-xs text-muted-foreground w-10 text-right shrink-0">{diasSemana[di]}</span>
-                    {row.map((v, hi) => {
-                      const opacity = v / maxV;
-                      return (
-                        <div key={hi} className="flex-1 h-5 rounded-sm" title={`${diasSemana[di]} ${hi}h: ${v}`}
-                          style={{ backgroundColor: `hsl(var(--primary) / ${Math.max(opacity, 0.05)})` }} />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <HeatmapChart records={records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.followupCount ?? 0) === 0))} dateField="data_envio" />
 
       {/* Evolução Diária */}
       {evolucaoDiaria.length > 0 && (
