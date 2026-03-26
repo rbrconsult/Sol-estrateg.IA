@@ -706,10 +706,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     // ─── Monthly Evolution ───
     const monthlyMap: Record<string, { total: number; qualificados: number; fechados: number; msgEnviadas: number; msgRecebidas: number }> = {};
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const nowForMonthly = new Date();
+    const currentMonthKey = `${nowForMonthly.getFullYear()}-${String(nowForMonthly.getMonth() + 1).padStart(2, '0')}`;
     allRecords.forEach(r => {
-      const d = safeDate(r.data_envio);
+      const d = safeDate(r.dataEntrada || r.data_envio);
       if (!d) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      // Ignore future months
+      if (key > currentMonthKey) return;
       if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
       monthlyMap[key].total++;
       const s = (r.makeStatus || '').toUpperCase();
