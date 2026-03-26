@@ -120,10 +120,10 @@ export default function RoboFupFrio() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
+  const gf = useGlobalFilters();
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
 
   const fupData = useMemo(() => deriveFupData(records), [records]);
 
