@@ -66,9 +66,13 @@ export function useEnrichedProposals(): EnrichedData {
 
   const { data: ganhosFallback } = useQuery({
     queryKey: ['ganhos-fallback'],
-    queryFn: fetchGanhosFallback,
+    queryFn: async () => {
+      const result = await fetchGanhosFallback();
+      console.log('[ganhos-fallback] fetched:', result.length, result.map(r => r.projetoId));
+      return result;
+    },
     staleTime: 1000 * 60 * 10,
-    enabled: !!comercialRecords,
+    enabled: !!comercialRecords && comercialRecords.length > 0,
   });
 
   const result = useMemo(() => {
