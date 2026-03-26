@@ -61,9 +61,10 @@ export default function Forecast() {
   }
 
   const chartData = [
-    { periodo: '30 dias', receita: forecastData.forecast30, potencia: forecastData.potencia30 },
-    { periodo: '60 dias', receita: forecastData.forecast60, potencia: forecastData.potencia60 },
-    { periodo: '90 dias', receita: forecastData.forecast90, potencia: forecastData.potencia90 },
+    { periodo: '7 dias', receita: forecastData.forecast7, potencia: forecastData.potencia7 },
+    { periodo: '14 dias', receita: forecastData.forecast14, potencia: forecastData.potencia14 },
+    { periodo: '21 dias', receita: forecastData.forecast21, potencia: forecastData.potencia21 },
+    { periodo: '28 dias', receita: forecastData.forecast28, potencia: forecastData.potencia28 },
   ];
 
   return (
