@@ -393,7 +393,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">SLA Fechamento</span>
                 </div>
                 <p className="text-2xl font-bold">{forecastData.slaFechamentoDias > 0 ? `${Math.round(forecastData.slaFechamentoDias)}d` : '—'}</p>
-                <p className="text-xs text-muted-foreground mt-1">Iniciado → Aceita (média)</p>
+                <p className="text-xs text-muted-foreground mt-1">Proposta → Aceite (média)</p>
               </CardContent>
             </Card>
           </div>
