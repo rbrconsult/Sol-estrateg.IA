@@ -16,6 +16,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
 import Forecast from "./pages/Forecast";
+import Contratos from "./pages/Contratos";
 import Performance from "./pages/Performance";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -97,7 +98,7 @@ const App = () => (
               <Route path="/forecast" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Contratos → redireciona para Forecast (propostas ganhas) */}
-              <Route path="/contratos" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/contratos" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Contratos /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Vendedores */}
               <Route path="/performance" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout></ProtectedRoute>} />
