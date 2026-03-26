@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const COLORS = ['hsl(var(--destructive))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--primary))'];
 
 export default function Perdas() {
-  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const { proposals: allProposals, isLoading, error } = useOrgFilteredProposals();
   const gf = useGlobalFilters();
   const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 

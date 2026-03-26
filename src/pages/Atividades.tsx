@@ -167,7 +167,7 @@ function LeadList({ leads, type, onClose }: LeadListProps) {
 }
 
 export default function Atividades() {
-  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const { proposals: allProposals, isLoading, error } = useOrgFilteredProposals();
   const [activeKPI, setActiveKPI] = useState<KPIType>(null);
 
   const { proposals, atividadesData, vendedorPerformance } = useMemo(() => {
