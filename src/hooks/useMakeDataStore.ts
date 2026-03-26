@@ -41,7 +41,9 @@ export interface MakeRecord {
   potenciaSistema?: number;
   representante?: string;
   dataProposta?: string;
-  dataFechamento?: string;
+    dataFechamento?: string;
+    sentimentoResposta?: string;
+    interesseDetectado?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
