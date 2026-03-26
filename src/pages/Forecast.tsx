@@ -184,11 +184,16 @@ export default function Forecast() {
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="periodo" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                    {(pipelineMode === "receita" || pipelineMode === "ambos") && (
+                      <YAxis yAxisId="receita" stroke="hsl(var(--primary))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                    )}
+                    {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
+                      <YAxis yAxisId="potencia" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(v) => `${formatNumber(v)} kWh`} />
+                    )}
                     <Tooltip
                       formatter={(value: number, name: string) => [
-                        name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWp`,
-                        name === 'receita' ? 'Receita' : 'Potência'
+                        name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWh`,
+                        name === 'receita' ? 'R$ Receita' : 'kWh Potência'
                       ]}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
@@ -196,11 +201,12 @@ export default function Forecast() {
                         borderRadius: '8px'
                       }}
                     />
+                    <Legend formatter={(value) => value === 'receita' ? 'R$ Receita' : 'kWh Potência'} />
                     {(pipelineMode === "receita" || pipelineMode === "ambos") && (
-                      <Bar dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="receita" />
+                      <Bar yAxisId="receita" dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="receita" />
                     )}
                     {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
-                      <Bar dataKey="potencia" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="potencia" />
+                      <Bar yAxisId="potencia" dataKey="potencia" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="potencia" />
                     )}
                   </BarChart>
                 </ResponsiveContainer>
