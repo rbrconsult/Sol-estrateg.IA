@@ -145,6 +145,35 @@ function calcularTempoNaEtapa(ultimaAtualizacao: string): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
+// Probabilidade dinâmica baseada na etapa do funil
+const PROBABILIDADE_POR_ETAPA: Record<string, number> = {
+  'TRAFEGO PAGO': 5,
+  'PROSPECÇÃO': 10,
+  'FOLLOW UP': 15,
+  'QUALIFICAÇÃO': 20,
+  'QUALIFICADO': 30,
+  'CONTATO REALIZADO': 40,
+  'PROPOSTA': 50,
+  'NEGOCIAÇÃO': 70,
+  'CONTRATO ASSINADO': 90,
+  'COBRANÇA': 95,
+  'ANÁLISE DOCUMENTOS': 95,
+  'ANALISE DOCUMENTOS': 95,
+  'APROVAÇÃO DE FINANCIAMENTO': 92,
+  'APROVACAO DE FINANCIAMENTO': 92,
+  'ELABORAÇÃO DE CONTRATO': 88,
+  'ELABORACAO DE CONTRATO': 88,
+  'CONTRATO ENVIADO': 85,
+  'AGUARDANDO DOCUMENTOS': 80,
+};
+
+function calcularProbabilidadePorEtapa(etapa: string, status: string): number {
+  if (status === 'Ganho') return 100;
+  if (status === 'Perdido') return 0;
+  const etapaUp = (etapa || '').toUpperCase().trim();
+  return PROBABILIDADE_POR_ETAPA[etapaUp] ?? 50;
+}
+
 export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
   return records.map((item, index) => {
     const status = mapStatus(item.statusProposta, item.etapaSM);
