@@ -487,7 +487,7 @@ export default function Forecast() {
                           const clienteName = c.makeNome || c.nomeCliente || '—';
                           const projetoName = c.nomeProposta || c.projetoId || '—';
                           return (
-                            <TableRow key={c.id}>
+                            <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedContrato(c)}>
                               <TableCell>
                                 {confirmado ? (
                                   <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 text-xs">Ganho</Badge>
