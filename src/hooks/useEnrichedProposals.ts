@@ -79,7 +79,7 @@ export function useEnrichedProposals(): EnrichedData {
     // Merge fallback ganhos that are NOT already in Make DS (by projetoId)
     const makeProjectIds = new Set(comercialRecords.map(r => r.projetoId));
     const missingGanhos = (ganhosFallback || []).filter(g => g.projetoId && !makeProjectIds.has(g.projetoId));
-    console.log('[EnrichedProposals] fallback ganhos:', ganhosFallback?.length || 0, 'missing:', missingGanhos.length, missingGanhos.map(g => g.projetoId));
+    
     const allRecords = missingGanhos.length > 0 ? [...comercialRecords, ...missingGanhos] : comercialRecords;
 
     const adapted = adaptComercialData(allRecords);
