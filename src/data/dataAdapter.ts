@@ -78,13 +78,7 @@ export const etapasPipeline = [
   'Fechamento'
 ];
 
-/** Etapas que indicam status "Ganho" (pós-venda) */
-const GANHO_ETAPAS = [
-  'CONTRATO ASSINADO', 'COBRANÇA', 'COBRANCA', 'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
-  'APROVAÇÃO DE FINANCIAMENTO', 'APROVACAO DE FINANCIAMENTO',
-  'ELABORAÇÃO DE CONTRATO', 'ELABORACAO DE CONTRATO',
-  'CONTRATO ENVIADO', 'AGUARDANDO DOCUMENTOS',
-];
+/** Etapas que indicam status "Perdido" — GANHO é determinado SOMENTE por status_proposta === '5' */
 
 /** Etapas que indicam status "Perdido" */
 const PERDIDO_ETAPAS = ['PERDIDO', 'DECLÍNIO', 'DECLINIO', 'CANCELADO'];
@@ -95,10 +89,10 @@ function mapStatus(statusProposta: string, etapaSM?: string): 'Aberto' | 'Ganho'
   const etapaUpper = (etapaSM || '').toUpperCase().trim();
   if (PERDIDO_ETAPAS.includes(etapaUpper)) return 'Perdido';
   
-  // Ganho = apenas status_proposta '5' (Aceita no SolarMarket)
-  const normalized = (statusProposta || '').toLowerCase().trim();
-  if (normalized === '5' || normalized === 'ganho' || normalized.includes('ganho') || normalized.includes('fechado') || normalized.includes('vencido')) return 'Ganho';
-  if (normalized === 'perdido' || normalized.includes('perdido') || normalized.includes('cancelado')) return 'Perdido';
+  // Ganho = SOMENTE status_proposta === '5' (Aceita no SolarMarket)
+  const normalized = (statusProposta || '').trim();
+  if (normalized === '5') return 'Ganho';
+  if (normalized === '3' || normalized === '4') return 'Perdido';
   
   return 'Aberto';
 }
