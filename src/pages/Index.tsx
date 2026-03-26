@@ -80,13 +80,16 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
 
+  // C1: Apply global date filter to makeRecords
+  const filteredMakeRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+
   // Filter comercial records by global date range
   const filteredComercialRecords = useMemo(() => {
     if (!comercialRecords?.length) return [];
     const { from, to } = gf.effectiveDateRange;
     if (!from && !to) return comercialRecords;
     return comercialRecords.filter(r => {
-      const dateStr = r.dataCriacaoProposta || r.dataUltimaAtualizacao;
+      const dateStr = r.tsProposta || r.tsSync;
       if (!dateStr) return false;
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return false;
@@ -123,9 +126,6 @@ const Index = () => {
       taxaConversao: 0,
     })).filter(d => d.quantidade > 0);
   }, [filteredMakeRecords, filteredComercialRecords]);
-
-  // C1: Apply global date filter to makeRecords
-  const filteredMakeRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
 
   // ── KPIs do DS Thread (MQL, SQL) — now filtered by period ──
   const threadKpis = useMemo(() => {
