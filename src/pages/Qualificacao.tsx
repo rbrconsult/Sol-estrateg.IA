@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ interface KrolicMember {
 export default function Qualificacao() {
   const { data: records, isLoading, isFetching, forceSync, refetch } = useMakeDataStore();
   const gf = useGlobalFilters();
+  const { selectedOrgId, orgs } = useOrgFilter();
   const [search, setSearch] = useState("");
   const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
@@ -70,17 +72,30 @@ export default function Qualificacao() {
   const [vendorMap, setVendorMap] = useState<Record<string, string>>({});
   const [manualVendor, setManualVendor] = useState<string>("roleta");
 
+  // Resolve the franchise slug for filtering time_comercial
+  const selectedOrgSlug = useMemo(() => {
+    if (!selectedOrgId) return null;
+    return orgs.find((o) => o.id === selectedOrgId)?.slug || null;
+  }, [selectedOrgId, orgs]);
+
   useEffect(() => {
     const fetchKrolic = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("time_comercial")
         .select("id, nome, sm_id, krolik_id")
         .eq("ativo", true)
         .eq("krolic", true);
+
+      // For super admins with a selected org, filter by franchise slug
+      if (selectedOrgSlug) {
+        query = query.eq("franquia_id", selectedOrgSlug);
+      }
+
+      const { data } = await query;
       if (data) setKrolicMembers(data);
     };
     fetchKrolic();
-  }, []);
+  }, [selectedOrgSlug]);
 
   const resolveVendor = (selectedValue: string) => {
     if (selectedValue === "roleta" || !selectedValue) {
