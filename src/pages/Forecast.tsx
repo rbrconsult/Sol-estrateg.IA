@@ -61,9 +61,10 @@ export default function Forecast() {
   }
 
   const chartData = [
-    { periodo: '30 dias', receita: forecastData.forecast30, potencia: forecastData.potencia30 },
-    { periodo: '60 dias', receita: forecastData.forecast60, potencia: forecastData.potencia60 },
-    { periodo: '90 dias', receita: forecastData.forecast90, potencia: forecastData.potencia90 },
+    { periodo: '7 dias', receita: forecastData.forecast7, potencia: forecastData.potencia7 },
+    { periodo: '14 dias', receita: forecastData.forecast14, potencia: forecastData.potencia14 },
+    { periodo: '21 dias', receita: forecastData.forecast21, potencia: forecastData.potencia21 },
+    { periodo: '28 dias', receita: forecastData.forecast28, potencia: forecastData.potencia28 },
   ];
 
   return (
@@ -107,35 +108,45 @@ export default function Forecast() {
       {viewMode === "previsao" ? (
         <>
           {/* KPIs Previsão */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Target className="h-4 w-4" />
-                  <span className="text-xs font-medium">Forecast 30d</span>
+                  <span className="text-xs font-medium">Forecast 7d</span>
                 </div>
-                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast30)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia30)} kWp · prob ≥ 70%</p>
+                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast7)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWp · prob ≥ 90%</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="text-xs font-medium">Forecast 60d</span>
+                  <span className="text-xs font-medium">Forecast 14d</span>
                 </div>
-                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast60)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia60)} kWp · prob ≥ 40%</p>
+                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast14)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWp · prob ≥ 70%</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Calendar className="h-4 w-4" />
-                  <span className="text-xs font-medium">Forecast 90d</span>
+                  <span className="text-xs font-medium">Forecast 21d</span>
                 </div>
-                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast90)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia90)} kWp · todo pipeline</p>
+                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast21)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWp · prob ≥ 40%</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-xs font-medium">Forecast 28d</span>
+                </div>
+                <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast28)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWp · todo pipeline</p>
               </CardContent>
             </Card>
             <Card>
@@ -324,7 +335,7 @@ export default function Forecast() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={[
-                  { label: 'Receita Prevista (90d)', valor: forecastData.forecast90, tipo: 'previsto' },
+                  { label: 'Receita Prevista (28d)', valor: forecastData.forecast28, tipo: 'previsto' },
                   { label: 'Receita Confirmada', valor: forecastData.receitaConfirmada, tipo: 'confirmado' },
                 ]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />

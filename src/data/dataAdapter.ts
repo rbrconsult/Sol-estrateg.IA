@@ -509,30 +509,39 @@ export function getForecastData(proposals: Proposal[]) {
   const abertos = proposals.filter(p => p.status === 'Aberto');
   const ganhos = proposals.filter(p => p.status === 'Ganho');
   
-  // Previsão 30 dias (alta confiança: prob >= 70%)
-  const forecast30 = abertos
+  // Previsão 7 dias (muito alta confiança: prob >= 90%)
+  const forecast7 = abertos
+    .filter(p => p.probabilidade >= 90)
+    .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
+  
+  // Previsão 14 dias (alta confiança: prob >= 70%)
+  const forecast14 = abertos
     .filter(p => p.probabilidade >= 70)
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
-  // Previsão 60 dias (média + alta: prob >= 40%)
-  const forecast60 = abertos
+  // Previsão 21 dias (média + alta: prob >= 40%)
+  const forecast21 = abertos
     .filter(p => p.probabilidade >= 40)
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
-  // Previsão 90 dias (todo pipeline aberto)
-  const forecast90 = abertos
+  // Previsão 28 dias (todo pipeline aberto)
+  const forecast28 = abertos
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
   // Potência prevista
-  const potencia30 = abertos
+  const potencia7 = abertos
+    .filter(p => p.probabilidade >= 90)
+    .reduce((acc, p) => acc + (p.potenciaSistema * p.probabilidade / 100), 0);
+  
+  const potencia14 = abertos
     .filter(p => p.probabilidade >= 70)
     .reduce((acc, p) => acc + (p.potenciaSistema * p.probabilidade / 100), 0);
   
-  const potencia60 = abertos
+  const potencia21 = abertos
     .filter(p => p.probabilidade >= 40)
     .reduce((acc, p) => acc + (p.potenciaSistema * p.probabilidade / 100), 0);
   
-  const potencia90 = abertos
+  const potencia28 = abertos
     .reduce((acc, p) => acc + (p.potenciaSistema * p.probabilidade / 100), 0);
   
   // Propostas de alta probabilidade (>= 70%)
@@ -576,17 +585,18 @@ export function getForecastData(proposals: Proposal[]) {
   })).sort((a, b) => b.probabilidadeMedia - a.probabilidadeMedia);
   
   return {
-    forecast30,
-    forecast60,
-    forecast90,
-    potencia30,
-    potencia60,
-    potencia90,
+    forecast7,
+    forecast14,
+    forecast21,
+    forecast28,
+    potencia7,
+    potencia14,
+    potencia21,
+    potencia28,
     altaProbabilidade,
     emRisco,
     distribuicao,
-    pipelinePonderado: forecast90,
-    // Novos campos: Contratos
+    pipelinePonderado: forecast28,
     receitaConfirmada,
     potenciaConfirmada,
     totalContratos,
