@@ -49,7 +49,6 @@ export default function Forecast() {
     return (
       <div className="p-6 space-y-4">
         <h1 className="text-2xl font-bold">Forecast & Contratos</h1>
-        <PageFloatingFilter />
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Target className="h-12 w-12 text-muted-foreground mb-4" />
