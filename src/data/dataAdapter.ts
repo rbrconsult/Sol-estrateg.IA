@@ -652,6 +652,17 @@ export function getForecastData(proposals: Proposal[]) {
     ticketMedioContrato,
     totalPropostasAbertas: abertos.length,
     distribuicaoPorEtapa,
+    // Funil Contrato
+    totalNegociosIniciados,
+    valorNegociosIniciados,
+    ticketMedioIniciados,
+    totalLeadsQualificados,
+    valorLeadsQualificados,
+    totalPropostasGeradas,
+    valorPropostasGeradas,
+    ticketMedioPropostas,
+    taxaConversao,
+    slaFechamentoDias,
   };
 }
 
