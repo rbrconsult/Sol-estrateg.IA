@@ -168,18 +168,6 @@ function deriveSolData(records: MakeRecord[]) {
     .slice(-17)
     .map(([dia, d]) => ({ dia: dia.slice(5), ...d }));
 
-  // Heatmap (7 days x 24 hours) from data_envio timestamps
-  const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
-  solRecords.forEach(r => {
-    try {
-      const raw = r.data_envio || ""; const parts = raw.match(/\d+/g); const d = parts && parts.length >= 5 ? new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]), parseInt(parts[3]), parseInt(parts[4])) : new Date(raw);
-      if (isNaN(d.getTime())) return;
-      const day = d.getDay(); // 0=Sun
-      const hour = d.getHours();
-      const mapDay = day === 0 ? 6 : day - 1; // Mon=0
-      heatmap[mapDay][hour]++;
-    } catch { /* skip */ }
-  });
 
   // Daily evolution
   const evolByDay: Record<string, { recebidos: number; qualificados: number }> = {};
