@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCallback } from 'react';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
 
 export interface MakeInteraction {
   tipo: 'enviada' | 'recebida';
@@ -116,20 +117,25 @@ function rowToMakeRecord(r: any): MakeRecord {
   };
 }
 
-/** Fetch leads from leads_consolidados table */
-async function fetchLeadsFromDB(): Promise<MakeRecord[]> {
-  // Fetch all records (paginate beyond 1000 limit)
+/** Fetch leads from leads_consolidados table, optionally filtered by org */
+async function fetchLeadsFromDB(orgId?: string | null): Promise<MakeRecord[]> {
   const allRows: any[] = [];
   let from = 0;
   const pageSize = 1000;
   let hasMore = true;
 
   while (hasMore) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('leads_consolidados')
       .select('*')
       .range(from, from + pageSize - 1)
       .order('data_entrada', { ascending: false });
+
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching leads_consolidados:', error);
@@ -163,9 +169,15 @@ export function useMakeDataStore() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  let selectedOrgId: string | null = null;
+  try {
+    const orgFilter = useOrgFilter();
+    selectedOrgId = orgFilter.selectedOrgId;
+  } catch {}
+
   const query = useQuery({
-    queryKey: ['make-data-store'],
-    queryFn: fetchLeadsFromDB,
+    queryKey: ['make-data-store', selectedOrgId],
+    queryFn: () => fetchLeadsFromDB(selectedOrgId),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchInterval: 1000 * 60 * 5,

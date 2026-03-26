@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
 import { KPICard } from '@/components/campanhas/KPICard';
 import { EmptyState } from '@/components/campanhas/EmptyState';
 import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from '@/lib/formatters';
@@ -22,12 +23,19 @@ const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid h
 
 function useLeadsForReceita() {
   const { user } = useAuth();
+  let selectedOrgId: string | null = null;
+  try { const o = useOrgFilter(); selectedOrgId = o.selectedOrgId; } catch {}
+
   return useQuery({
-    queryKey: ['leads-consolidados-receita'],
+    queryKey: ['leads-consolidados-receita', selectedOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('leads_consolidados')
         .select('campanha, canal_origem, status, etapa, etapa_sm, status_proposta, valor_proposta');
+      if (selectedOrgId) {
+        query = query.eq('organization_id', selectedOrgId);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },

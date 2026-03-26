@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { getAtividadesData, getVendedorPerformance, Proposal } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
@@ -167,7 +167,7 @@ function LeadList({ leads, type, onClose }: LeadListProps) {
 }
 
 export default function Atividades() {
-  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const { proposals: allProposals, isLoading, error } = useOrgFilteredProposals();
   const [activeKPI, setActiveKPI] = useState<KPIType>(null);
 
   const { proposals, atividadesData, vendedorPerformance } = useMemo(() => {

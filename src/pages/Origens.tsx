@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { getOrigensData } from "@/data/dataAdapter";
@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--destructive))'];
 
 export default function Origens() {
-  const { proposals: allProposals, isLoading, error } = useEnrichedProposals();
+  const { proposals: allProposals, isLoading, error } = useOrgFilteredProposals();
   const gf = useGlobalFilters();
   const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 

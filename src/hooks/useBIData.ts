@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useEnrichedProposals } from '@/hooks/useEnrichedProposals';
+import { useOrgFilteredProposals } from '@/hooks/useOrgFilteredProposals';
 import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 import { getVendedorPerformance, getKPIs, Proposal } from '@/data/dataAdapter';
 import type { DateRange } from '@/components/dashboard/DateFilter';
@@ -69,7 +69,7 @@ function getSolStage(etapa: string, status: string): string {
 
 // ─── Main Hook ───
 export function useBIData(dateRange?: DateRange) {
-  const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useEnrichedProposals();
+  const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useOrgFilteredProposals();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
   // Filter by date range
