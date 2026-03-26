@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, Search, AlertTriangle, Phone, PhoneOff, BarChart3, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEnrichedProposals } from "@/hooks/useEnrichedProposals";
+import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { normalizePhone } from "@/hooks/useMakeDataStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
