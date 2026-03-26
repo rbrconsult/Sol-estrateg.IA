@@ -166,9 +166,9 @@ export default function RoboFupFrio() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm} setTemperatura={pf.setTemperatura} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setCanal={gf.setCanal} setSearchTerm={gf.setSearchTerm} setTemperatura={gf.setTemperatura} setEtapa={gf.setEtapa} setStatus={gf.setStatus}
         canais={canais}
         config={{ showPeriodo: true, showCanal: true, showSearch: true, showTemperatura: true, showEtapa: true, showStatus: true }}
       />

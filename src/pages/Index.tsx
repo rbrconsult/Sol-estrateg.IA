@@ -146,10 +146,9 @@ const Index = () => {
     return { mql, sql, total: records.length, contatados, criadosHoje };
   }, [filteredMakeRecords]);
 
-  // ── KPIs do DS Comercial (Agendamentos, Fechados) — also filtered ──
+  // ── KPIs do DS Comercial (Agendamentos, Fechados) — filtered by global date ──
   const comercialKpis = useMemo(() => {
-    const records = comercialRecords || [];
-    // TODO: apply date filtering to comercial records when dataCriacaoProposta is available
+    const records = filteredComercialRecords;
     const agendamentos = records.filter(r =>
       ['CONTATO REALIZADO', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'PROPOSTA'].includes(r.etapaSM?.toUpperCase())
     ).length;
@@ -161,7 +160,7 @@ const Index = () => {
     const fechados = ganhos.length;
     const valorFechado = ganhos.reduce((acc, r) => acc + r.valorProposta, 0);
     return { agendamentos, fechados, valorFechado, emInstalacao: emInstalacao.length };
-  }, [comercialRecords]);
+  }, [filteredComercialRecords]);
 
   const meta = useMemo(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
