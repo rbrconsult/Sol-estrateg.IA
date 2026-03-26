@@ -59,8 +59,22 @@
 | `data_resposta` | Vazio | Impossível calcular tempo entre FUPs |
 | `lastFollowupDate` | Parcialmente preenchido (~40%) | Heatmap de horários e "Última resposta" afetados |
 | `data_envio` (fallback) | Formato inconsistente | Heatmap usa como fallback quando `lastFollowupDate` vazio |
+| `respondeu` (boolean) | Apenas 12 de 187 leads FUP têm `true` (6.4%) | Taxa de reativação artificialmente baixa; `respondeu` parece ser marcado apenas na qualificação, não na resposta real do lead |
+| `codigo_status` | Valores mistos: `LEAD_FRIO`, `NAO_RESPONDEU`, `WHATSAPP`, `SOLARMARKET_*`, `null` | Classificação "por status anterior" inconsistente; leads com `null` não entram em nenhuma categoria |
+| `status` (campo geral) | Leads FUP com status `ABERTO`, `PERDIDO`, `EM_QUALIFICACAO` sem distinção clara | Dificulta saber se o lead foi reativado e depois perdido vs. nunca reativado |
 
 **DS de origem:** DS Thread (filtrado por `followupCount >= 1`)
+
+**⚠️ Erro crítico identificado:**  
+Dos 187 leads com `followup_count >= 1`, apenas **12 possuem `respondeu = true`**. Distribuição por FUP:
+- FUP 1: 5 responderam (de ~35)
+- FUP 2: 1 respondeu (de ~21)  
+- FUP 3: 6 responderam (de ~43)
+- FUP 4-5: 0 responderam (de ~88)
+
+**Causa provável:** O campo `respondeu` no DS Thread só é atualizado quando o lead atinge status `QUALIFICADO`, não quando ele efetivamente responde uma mensagem do FUP Frio. Isso faz com que leads que responderam mas não foram qualificados apareçam como "ignorou".
+
+**Correção sugerida no DS:** Criar um trigger no Make que marque `respondeu = TRUE` sempre que uma resposta for recebida no WhatsApp, independente do status final do lead.
 
 ---
 
