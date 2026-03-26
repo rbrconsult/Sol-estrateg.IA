@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { getForecastData } from "@/data/dataAdapter";
+import { getForecastData, Proposal } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from "@/lib/formatters";
-import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent } from "lucide-react";
+import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent, X, Phone, Mail, MapPin, User, Hash, Thermometer, MessageSquare } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +12,8 @@ import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
@@ -20,6 +22,7 @@ export default function Forecast() {
   const { selectedOrgName } = useOrgFilter();
   const [pipelineMode, setPipelineMode] = useState<"receita" | "potencia" | "ambos">("ambos");
   const [viewMode, setViewMode] = useState<"previsao" | "contratos">("previsao");
+  const [selectedContrato, setSelectedContrato] = useState<Proposal | null>(null);
   const pf = useGlobalFilters();
 
   const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
@@ -484,7 +487,7 @@ export default function Forecast() {
                           const clienteName = c.makeNome || c.nomeCliente || '—';
                           const projetoName = c.nomeProposta || c.projetoId || '—';
                           return (
-                            <TableRow key={c.id}>
+                            <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedContrato(c)}>
                               <TableCell>
                                 {confirmado ? (
                                   <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 text-xs">Ganho</Badge>
@@ -547,6 +550,110 @@ export default function Forecast() {
           </Card>
         </>
       )}
+
+      {/* Detail Sheet */}
+      <Sheet open={!!selectedContrato} onOpenChange={(open) => !open && setSelectedContrato(null)}>
+        <SheetContent className="w-[420px] sm:w-[480px] overflow-y-auto">
+          {selectedContrato && (() => {
+            const c = selectedContrato;
+            const clienteName = c.makeNome || c.nomeCliente || '—';
+            const DetailRow = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
+              <div className="flex items-start gap-3 py-2">
+                <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-sm font-medium break-words">{value || '—'}</p>
+                </div>
+              </div>
+            );
+            return (
+              <>
+                <SheetHeader>
+                  <SheetTitle className="text-left text-lg">{clienteName}</SheetTitle>
+                  <p className="text-xs text-muted-foreground">{c.nomeProposta || c.projetoId}</p>
+                </SheetHeader>
+
+                <div className="mt-4 space-y-1">
+                  {/* Status badges */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 text-xs">
+                      {c.status}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
+                    {c.faseSM && <Badge variant="secondary" className="text-xs">Fase: {c.faseSM}</Badge>}
+                    {c.temperatura && (
+                      <Badge variant="outline" className="text-xs">
+                        {c.temperatura === 'QUENTE' ? '🔥' : c.temperatura === 'MORNO' ? '🌤️' : '❄️'} {c.temperatura}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Financeiro */}
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1">Financeiro</h4>
+                  <DetailRow icon={DollarSign} label="Valor da Proposta" value={formatCurrencyFull(c.valorProposta)} />
+                  <DetailRow icon={Zap} label="Potência do Sistema" value={c.potenciaSistema > 0 ? `${formatNumber(c.potenciaSistema)} kWh` : '—'} />
+                  <DetailRow icon={Percent} label="Probabilidade" value={`${c.probabilidade}%`} />
+
+                  <Separator />
+
+                  {/* Contato */}
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1">Contato</h4>
+                  <DetailRow icon={Phone} label="Telefone" value={c.clienteTelefone} />
+                  <DetailRow icon={Mail} label="Email" value={c.makeEmail || c.clienteEmail || '—'} />
+                  <DetailRow icon={MapPin} label="Cidade" value={c.makeCidade || '—'} />
+                  {c.makeValorConta && <DetailRow icon={Zap} label="Valor da Conta" value={c.makeValorConta} />}
+                  {c.makeImovel && <DetailRow icon={Hash} label="Imóvel" value={c.makeImovel} />}
+
+                  <Separator />
+
+                  {/* Responsáveis */}
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1">Responsáveis</h4>
+                  <DetailRow icon={User} label="Responsável (SDR)" value={c.responsavel} />
+                  <DetailRow icon={User} label="Representante (Closer)" value={c.representante} />
+
+                  <Separator />
+
+                  {/* Datas */}
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1">Datas</h4>
+                  <DetailRow icon={Calendar} label="Criação do Projeto" value={c.dataCriacaoProjeto ? new Date(c.dataCriacaoProjeto).toLocaleDateString('pt-BR') : '—'} />
+                  <DetailRow icon={Calendar} label="Criação da Proposta" value={c.dataCriacaoProposta ? new Date(c.dataCriacaoProposta).toLocaleDateString('pt-BR') : '—'} />
+                  <DetailRow icon={Clock} label="SLA Proposta" value={c.slaProposta > 0 ? `${c.slaProposta} dias` : '—'} />
+                  <DetailRow icon={Clock} label="Tempo na Etapa" value={c.tempoNaEtapa > 0 ? `${c.tempoNaEtapa} dias` : '—'} />
+
+                  {/* Make enrichment */}
+                  {(c.makeRobo || c.makeStatusResposta || c.makeTotalMensagens) && (
+                    <>
+                      <Separator />
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1">Interações (SOL)</h4>
+                      {c.makeRobo && <DetailRow icon={MessageSquare} label="Robô" value={c.makeRobo} />}
+                      {c.makeStatusResposta && <DetailRow icon={MessageSquare} label="Status Resposta" value={c.makeStatusResposta} />}
+                      {c.makeTotalMensagens != null && <DetailRow icon={MessageSquare} label="Total Mensagens" value={String(c.makeTotalMensagens)} />}
+                      {c.makeMensagensRecebidas != null && <DetailRow icon={MessageSquare} label="Mensagens Recebidas" value={String(c.makeMensagensRecebidas)} />}
+                      {c.makeSentimento && <DetailRow icon={MessageSquare} label="Sentimento" value={c.makeSentimento} />}
+                      {c.makeInteresse && <DetailRow icon={MessageSquare} label="Interesse" value={c.makeInteresse} />}
+                    </>
+                  )}
+
+                  {/* Etiquetas */}
+                  {c.etiquetas && (
+                    <>
+                      <Separator />
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-3 pb-1">Etiquetas</h4>
+                      <div className="flex flex-wrap gap-1.5 py-1">
+                        {c.etiquetas.split(',').map((tag, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">{tag.trim()}</Badge>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
