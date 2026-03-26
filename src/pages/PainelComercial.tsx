@@ -258,13 +258,14 @@ export default function PainelComercial() {
   const { selectedOrgName } = useOrgFilter();
 
   const allRecords = makeRecords || [];
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const gf = useGlobalFilters();
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const filteredProposals = useMemo(() => gf.filterProposals(proposals), [proposals, gf.filterProposals]);
 
   const alerts = useMemo(() => deriveAlerts(records), [records]);
   const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
   const summary = useMemo(() => deriveSummary(records), [records]);
-  const forecastData = useMemo(() => proposals.length > 0 ? getForecastData(proposals) : null, [proposals]);
+  const forecastData = useMemo(() => filteredProposals.length > 0 ? getForecastData(filteredProposals) : null, [filteredProposals]);
 
   const handleOpenLead = (lead: CloserLead) => {
     openLead360({
