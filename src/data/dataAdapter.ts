@@ -611,10 +611,19 @@ export function getForecastData(proposals: Proposal[]) {
 
   // SLA médio (dias entre criação da proposta e aceite/fechamento)
   const temposFechamento = ganhos.map(p => {
-    const criacao = new Date(p.dataCriacaoProposta || p.dataCriacaoProjeto);
-    const fechamento = new Date(p.ultimaAtualizacao);
+    const criacao = new Date(p.dataCriacaoProposta || p.dataCriacaoProjeto || p.ultimaAtualizacao);
+    const fechamento = new Date(p.ultimaAtualizacao || p.dataCriacaoProposta);
     if (isNaN(criacao.getTime()) || isNaN(fechamento.getTime())) return -1;
-    return Math.max(0, (fechamento.getTime() - criacao.getTime()) / (1000 * 60 * 60 * 24));
+    const dias = (fechamento.getTime() - criacao.getTime()) / (1000 * 60 * 60 * 24);
+    // Se criação e fechamento são iguais (sem data separada), tentar usar dataCriacaoProjeto como início
+    if (dias === 0 && p.dataCriacaoProjeto && p.dataCriacaoProjeto !== p.dataCriacaoProposta) {
+      const inicio = new Date(p.dataCriacaoProjeto);
+      if (!isNaN(inicio.getTime())) {
+        const diasAlt = (fechamento.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24);
+        if (diasAlt > 0 && diasAlt < 365) return diasAlt;
+      }
+    }
+    return Math.max(0, dias);
   }).filter(d => d >= 0 && d < 365);
   const slaFechamentoDias = temposFechamento.length > 0
     ? temposFechamento.reduce((a, b) => a + b, 0) / temposFechamento.length
