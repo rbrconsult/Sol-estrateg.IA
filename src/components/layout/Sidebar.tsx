@@ -33,7 +33,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: "Pré-venda",
     items: [
-      { title: "Dashboard", icon: Presentation, path: "/conferencia", moduleKey: "conferencia" },
+      { title: "Dashboard", icon: Presentation, path: "/dashboard", moduleKey: "conferencia" },
       { title: "Leads", icon: Users, path: "/leads", moduleKey: "leads" },
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
       { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },

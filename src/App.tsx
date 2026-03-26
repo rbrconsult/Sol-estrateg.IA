@@ -84,7 +84,8 @@ const App = () => (
               <Route path="/solarmarket/comercial" element={<ProtectedRoute><SolarLayout><Comercial /></SolarLayout></ProtectedRoute>} />
               <Route path="/solarmarket/vendedores" element={<ProtectedRoute><SolarLayout><VendedorPerformance /></SolarLayout></ProtectedRoute>} />
 
-              {/* Conferência (antigo dashboard SM) */}
+              {/* Dashboard Pré-Venda */}
+              <Route path="/dashboard" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/conferencia" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Dashboard principal */}
