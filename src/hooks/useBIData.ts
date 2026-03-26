@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useEnrichedProposals } from '@/hooks/useEnrichedProposals';
+import { useOrgFilteredProposals } from '@/hooks/useOrgFilteredProposals';
 import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
 import { getVendedorPerformance, getKPIs, Proposal } from '@/data/dataAdapter';
 import type { DateRange } from '@/components/dashboard/DateFilter';
