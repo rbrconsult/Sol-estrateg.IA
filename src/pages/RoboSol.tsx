@@ -233,10 +233,10 @@ function deriveSolData(records: MakeRecord[]) {
 export default function RoboSol() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const allRecords = makeRecords || [];
+  const gf = useGlobalFilters();
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
 
