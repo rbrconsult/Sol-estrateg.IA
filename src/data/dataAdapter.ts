@@ -683,6 +683,7 @@ export function getForecastData(proposals: Proposal[]) {
     totalPropostasAceitas,
     valorPropostasAceitas,
     ticketMedioAceitas,
+    propostasAceitasIds: propostasAceitas.map((p) => p.id),
     totalCobranca,
     ticketMedioCobranca,
     taxaConversao,
