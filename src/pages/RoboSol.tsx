@@ -205,7 +205,7 @@ function deriveSolData(records: MakeRecord[]) {
     .slice(0, 15)
     .map(r => ({
       nome: r.nome || 'Lead',
-      cidade: r.canalOrigem || '—',
+      cidade: r.cidade || '—',
       canal: r.canalOrigem || 'Direto',
       score: parseInt(r.makeScore || '0') || 0,
       temperatura: (r.makeTemperatura || 'FRIO').toUpperCase(),
