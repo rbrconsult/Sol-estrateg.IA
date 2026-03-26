@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, RefreshCw, Search, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, Search, ChevronDown, ChevronUp, MessageSquare, Timer, Bot, Zap, TrendingUp, CheckCircle2, Clock, AlertTriangle, Send, Users, Flame, CheckCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -8,13 +8,9 @@ import { useMakeDataStore, type MakeRecord } from "@/hooks/useMakeDataStore";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
-import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SLAMetrics } from "@/components/leads/SLAMetrics";
-import { RobotInsights } from "@/components/leads/RobotInsights";
 
 /* ───────── animated counter ───────── */
 function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
@@ -75,17 +71,65 @@ function KPICard({ label, value, suffix, isDecimal }: { label: string; value: nu
   );
 }
 
+/* ───────── helpers ───────── */
+/** Normalize temperature, filtering out junk like "XXXX" */
+function normalizeTemp(t: string | undefined): string {
+  if (!t) return "";
+  const upper = t.toUpperCase().trim();
+  if (["QUENTE", "MORNO", "FRIO"].includes(upper)) return upper;
+  return "";
+}
+
+/** Normalize closer name for consistent grouping */
+function normalizeCloser(c: string | undefined): string {
+  if (!c) return "";
+  return c.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+}
+
+/** Get etapa label — treat empty as "Sem Etapa" */
+function getEtapaLabel(r: MakeRecord): string {
+  return r.etapaFunil?.trim() || "SEM ETAPA";
+}
+
+function safeDate(str: string | undefined): Date | null {
+  if (!str) return null;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function hoursSince(dateStr: string): number {
+  const d = safeDate(dateStr);
+  if (!d) return 0;
+  return Math.max(0, (Date.now() - d.getTime()) / (1000 * 60 * 60));
+}
+
+/* ═══════════════════ ETAPAS DO FUNIL ═══════════════════ */
+const JOURNEY_ORDER = [
+  'TRAFEGO PAGO',
+  'SOL SDR',
+  'PROSPECÇÃO',
+  'FOLLOW UP',
+  'QUALIFICAÇÃO',
+  'QUALIFICADO',
+  'CONTATO REALIZADO',
+  'PROPOSTA',
+  'NEGOCIAÇÃO',
+  'REMARKETING',
+  'DECLÍNIO',
+  'SEM ETAPA',
+];
+
 /* ═══════════════════ MAIN ═══════════════════ */
 export default function Leads() {
   const queryClient = useQueryClient();
   const { data: makeRecords, isLoading, error, forceSync } = useMakeDataStore();
-  const { orgFilterActive } = { orgFilterActive: false };
   const { selectedOrgName } = useOrgFilter();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEtapa, setFilterEtapa] = useState("todas");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterCloser, setFilterCloser] = useState("todos");
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
+  const [tableLimit, setTableLimit] = useState(50);
   const pf = useGlobalFilters();
 
   const handleRefresh = () => {
@@ -99,22 +143,25 @@ export default function Leads() {
     return () => clearInterval(id);
   }, []);
 
-  /* ── All records from DS Thread (905) — apply period filter from global filters ── */
+  /* ── Period filter ── */
   const periodFiltered = useMemo(() => {
     const records = makeRecords || [];
     return pf.filterRecords ? pf.filterRecords(records) : records;
   }, [makeRecords, pf.filterRecords]);
 
-  /* ── Extract unique values for filters ── */
+  /* ── Extract unique values for filters (normalized) ── */
   const etapas = useMemo(() => {
     const set = new Set<string>();
-    periodFiltered.forEach(r => { if (r.etapaFunil) set.add(r.etapaFunil); });
+    periodFiltered.forEach(r => set.add(getEtapaLabel(r)));
     return Array.from(set).sort();
   }, [periodFiltered]);
 
   const closers = useMemo(() => {
     const set = new Set<string>();
-    periodFiltered.forEach(r => { if (r.closerAtribuido) set.add(r.closerAtribuido); });
+    periodFiltered.forEach(r => {
+      const c = normalizeCloser(r.closerAtribuido);
+      if (c && c.toUpperCase() !== "SOL SDR") set.add(c);
+    });
     return Array.from(set).sort();
   }, [periodFiltered]);
 
@@ -124,7 +171,7 @@ export default function Leads() {
     return Array.from(set).sort();
   }, [periodFiltered]);
 
-  /* ── Filtered records (search + inline filters on top of period) ── */
+  /* ── Filtered records ── */
   const filtered = useMemo(() => {
     return periodFiltered.filter(r => {
       if (searchTerm) {
@@ -134,9 +181,9 @@ export default function Leads() {
           (r.cidade || "").toLowerCase().includes(term);
         if (!match) return false;
       }
-      if (filterEtapa !== "todas" && r.etapaFunil !== filterEtapa) return false;
+      if (filterEtapa !== "todas" && getEtapaLabel(r) !== filterEtapa) return false;
       if (filterStatus !== "todos" && r.makeStatus !== filterStatus) return false;
-      if (filterCloser !== "todos" && r.closerAtribuido !== filterCloser) return false;
+      if (filterCloser !== "todos" && normalizeCloser(r.closerAtribuido) !== filterCloser) return false;
       return true;
     });
   }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser]);
@@ -144,28 +191,28 @@ export default function Leads() {
   /* ── KPIs ── */
   const kpis = useMemo(() => {
     const total = filtered.length;
-    const quentes = filtered.filter(r => (r.makeTemperatura || "").toUpperCase() === "QUENTE").length;
-    const mornos = filtered.filter(r => (r.makeTemperatura || "").toUpperCase() === "MORNO").length;
-    const frios = filtered.filter(r => (r.makeTemperatura || "").toUpperCase() === "FRIO").length;
+    const quentes = filtered.filter(r => normalizeTemp(r.makeTemperatura) === "QUENTE").length;
+    const mornos = filtered.filter(r => normalizeTemp(r.makeTemperatura) === "MORNO").length;
+    const frios = filtered.filter(r => normalizeTemp(r.makeTemperatura) === "FRIO").length;
+    const semTemp = total - quentes - mornos - frios;
     const responderam = filtered.filter(r => r.status_resposta === "respondeu").length;
     const taxaResposta = total > 0 ? (responderam / total) * 100 : 0;
     const scores = filtered.filter(r => r.makeScore).map(r => parseFloat(r.makeScore!) || 0).filter(s => s > 0);
     const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-    return { total, quentes, mornos, frios, responderam, taxaResposta, scoreMedio };
+    return { total, quentes, mornos, frios, semTemp, responderam, taxaResposta, scoreMedio };
   }, [filtered]);
 
-  /* ── Funil por Etapa (journey order) ── */
-  const JOURNEY_ORDER = ['TRAFEGO PAGO', 'PROSPECÇÃO', 'FOLLOW UP', 'QUALIFICAÇÃO', 'QUALIFICADO', 'CONTATO REALIZADO'];
+  /* ── Funil por Etapa ── */
   const funnelData = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const r of filtered) {
-      const etapa = r.etapaFunil || 'TRAFEGO PAGO';
+      const etapa = getEtapaLabel(r);
       counts[etapa] = (counts[etapa] || 0) + 1;
     }
-    return JOURNEY_ORDER.map(etapa => ({
-      etapa,
-      quantidade: counts[etapa] || 0,
-    }));
+    // Include only stages that have data, in journey order
+    return JOURNEY_ORDER
+      .filter(etapa => (counts[etapa] || 0) > 0)
+      .map(etapa => ({ etapa, quantidade: counts[etapa] || 0 }));
   }, [filtered]);
 
   const maxFunnel = useMemo(() => Math.max(...funnelData.map(f => f.quantidade), 1), [funnelData]);
@@ -181,29 +228,139 @@ export default function Leads() {
     return () => obs.disconnect();
   }, []);
 
+  /* ── SLA Metrics (MakeRecord only) ── */
+  const slaData = useMemo(() => {
+    const SLA_ETAPA: Record<string, { label: string; maxDias: number }> = {
+      "TRAFEGO PAGO": { label: "Tráfego Pago", maxDias: 1 },
+      "SOL SDR": { label: "Sol SDR", maxDias: 2 },
+      "PROSPECÇÃO": { label: "Prospecção", maxDias: 2 },
+      "QUALIFICAÇÃO": { label: "Qualificação", maxDias: 3 },
+      "QUALIFICADO": { label: "Qualificado", maxDias: 5 },
+      "CONTATO REALIZADO": { label: "Contato Realizado", maxDias: 3 },
+      "PROPOSTA": { label: "Proposta", maxDias: 5 },
+      "NEGOCIAÇÃO": { label: "Negociação", maxDias: 7 },
+    };
+
+    // SLA por etapa: tempo desde data_envio para leads ativos
+    const ativos = filtered.filter(r => r.makeStatus && !["PERDIDO", "DESQUALIFICADO", "GANHO"].includes(r.makeStatus.toUpperCase()));
+    const etapaSLA = Object.entries(SLA_ETAPA).map(([etapa, config]) => {
+      const leads = ativos.filter(r => getEtapaLabel(r) === etapa);
+      const tempos = leads.map(r => {
+        const d = safeDate(r.data_envio || r.dataEntrada);
+        if (!d) return 0;
+        return Math.max(0, (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+      }).filter(t => t > 0 && t < 365);
+      const media = tempos.length > 0 ? tempos.reduce((a, b) => a + b, 0) / tempos.length : 0;
+      const foraDoSLA = tempos.filter(t => t > config.maxDias).length;
+      return { etapa, ...config, quantidade: leads.length, media: Math.round(media * 10) / 10, foraDoSLA };
+    }).filter(e => e.quantidade > 0);
+
+    const totalForaSLA = etapaSLA.reduce((a, e) => a + e.foraDoSLA, 0);
+
+    // SLA robôs
+    const comResposta = filtered.filter(r => r.data_envio && r.data_resposta);
+    const temposRobo = comResposta.map(r => {
+      const envio = safeDate(r.data_envio);
+      const resp = safeDate(r.data_resposta);
+      if (!envio || !resp) return -1;
+      return Math.max(0, (resp.getTime() - envio.getTime()) / (1000 * 60 * 60));
+    }).filter(h => h >= 0 && h < 720);
+    const mediaRoboHoras = temposRobo.length > 0 ? temposRobo.reduce((a, b) => a + b, 0) / temposRobo.length : 0;
+
+    // SLA 1º atendimento (data_entrada → data de qualificação/resposta)
+    const comQualif = filtered.filter(r => r.dataEntrada && r.data_resposta);
+    const temposAtend = comQualif.map(r => {
+      const entrada = safeDate(r.dataEntrada);
+      const resp = safeDate(r.data_resposta);
+      if (!entrada || !resp) return -1;
+      return Math.max(0, (resp.getTime() - entrada.getTime()) / (1000 * 60 * 60 * 24));
+    }).filter(d => d >= 0 && d < 365);
+    const mediaAtend = temposAtend.length > 0 ? temposAtend.reduce((a, b) => a + b, 0) / temposAtend.length : 0;
+    const dentroSLA24h = temposAtend.filter(d => d <= 1).length;
+    const taxaSLA24h = temposAtend.length > 0 ? (dentroSLA24h / temposAtend.length) * 100 : 0;
+
+    return { etapaSLA, totalForaSLA, mediaRoboHoras, mediaAtend, taxaSLA24h, dentroSLA24h, temposAtendCount: temposAtend.length };
+  }, [filtered]);
+
+  /* ── Robot Insights (MakeRecord only) ── */
+  const robotData = useMemo(() => {
+    const solRecords = filtered.filter(r => r.robo === "sol");
+    const fupRecords = filtered.filter(r => r.robo !== "sol");
+
+    const solResp = solRecords.filter(r => r.status_resposta === "respondeu").length;
+    const fupResp = fupRecords.filter(r => r.status_resposta === "respondeu").length;
+    const solTaxa = solRecords.length > 0 ? (solResp / solRecords.length) * 100 : 0;
+    const fupTaxa = fupRecords.length > 0 ? (fupResp / fupRecords.length) * 100 : 0;
+
+    const calcTempoMedio = (records: MakeRecord[]) => {
+      const tempos = records
+        .filter(r => r.data_envio && r.data_resposta)
+        .map(r => {
+          const envio = safeDate(r.data_envio);
+          const resp = safeDate(r.data_resposta);
+          if (!envio || !resp) return -1;
+          return (resp.getTime() - envio.getTime()) / (1000 * 60 * 60);
+        })
+        .filter(h => h >= 0 && h < 720);
+      return tempos.length > 0 ? tempos.reduce((a, b) => a + b, 0) / tempos.length : 0;
+    };
+
+    const robots = [
+      { name: "Sol (Qualificação)", icon: "🤖", total: solRecords.length, responderam: solResp, taxa: solTaxa, tempoMedio: calcTempoMedio(solRecords) },
+      { name: "FUP Frio (Follow-up)", icon: "❄️", total: fupRecords.length, responderam: fupResp, taxa: fupTaxa, tempoMedio: calcTempoMedio(fupRecords) },
+    ];
+
+    // Follow-up count
+    const phoneMap = new Map<string, { count: number; responded: boolean }>();
+    for (const r of filtered) {
+      if (!r.telefone) continue;
+      const fc = r.followupCount || 1;
+      const existing = phoneMap.get(r.telefone);
+      if (existing) {
+        existing.count = Math.max(existing.count, fc);
+        if (r.status_resposta === "respondeu") existing.responded = true;
+      } else {
+        phoneMap.set(r.telefone, { count: fc, responded: r.status_resposta === "respondeu" });
+      }
+    }
+    const fupEntries = Array.from(phoneMap.values());
+    const mediaFups = fupEntries.length > 0 ? fupEntries.reduce((a, e) => a + e.count, 0) / fupEntries.length : 0;
+    const respondidos = fupEntries.filter(e => e.responded);
+    const mediaFupsAteResp = respondidos.length > 0 ? respondidos.reduce((a, e) => a + e.count, 0) / respondidos.length : 0;
+    const excessoFups = fupEntries.filter(e => e.count >= 5 && !e.responded).length;
+
+    // Funnel
+    const totalEnviados = filtered.filter(r => r.data_envio).length;
+    const totalResponderam = filtered.filter(r => r.status_resposta === "respondeu").length;
+    const qualificados = filtered.filter(r => getEtapaLabel(r) === "QUALIFICADO").length;
+
+    // Alertas
+    const ignorando3d = filtered.filter(r => r.status_resposta !== "respondeu" && hoursSince(r.data_envio) > 72).length;
+    const quentesSemResp = filtered.filter(r => normalizeTemp(r.makeTemperatura) === "QUENTE" && r.status_resposta !== "respondeu").length;
+
+    return { robots, mediaFups, mediaFupsAteResp, excessoFups, fupEntries: fupEntries.length, respondidosCount: respondidos.length, totalEnviados, totalResponderam, qualificados, ignorando3d, quentesSemResp };
+  }, [filtered]);
+
   /* ── Alerts ── */
   const alerts = useMemo(() => {
     const result: { type: "alert" | "info" | "success"; title: string; desc: string }[] = [];
-    const ignored3d = filtered.filter(r => {
-      if (r.status_resposta !== 'ignorou') return false;
-      if (!r.data_envio) return false;
-      const sent = new Date(r.data_envio);
-      return (Date.now() - sent.getTime()) / (1000 * 60 * 60 * 24) > 3;
-    });
-    if (ignored3d.length > 0) {
-      result.push({ type: "alert", title: `${ignored3d.length} leads ignoraram FUP há +3 dias`, desc: "Leads sem resposta ao follow-up." });
+    if (robotData.ignorando3d > 0) {
+      result.push({ type: "alert", title: `${robotData.ignorando3d} leads sem resposta há +3 dias`, desc: "Leads que não responderam ao follow-up." });
+    }
+    if (robotData.quentesSemResp > 0) {
+      result.push({ type: "alert", title: `${robotData.quentesSemResp} leads quentes sem resposta`, desc: "Priorizar contato direto com esses leads." });
     }
     if (kpis.total > 0) {
       result.push({ type: "info", title: `Taxa de resposta: ${kpis.taxaResposta.toFixed(0)}%`, desc: `${kpis.responderam} de ${kpis.total} leads responderam.` });
     }
     if (kpis.quentes > 0) {
-      result.push({ type: "success", title: `${kpis.quentes} leads quentes`, desc: `${kpis.mornos} mornos · ${kpis.frios} frios` });
+      result.push({ type: "success", title: `${kpis.quentes} leads quentes`, desc: `${kpis.mornos} mornos · ${kpis.frios} frios · ${kpis.semTemp} sem classificação` });
     }
     return result;
-  }, [filtered, kpis]);
+  }, [kpis, robotData]);
 
-  /* ── Table pagination ── */
-  const tableLeads = useMemo(() => filtered.slice(0, 50), [filtered]);
+  /* ── Table data ── */
+  const tableLeads = useMemo(() => filtered.slice(0, tableLimit), [filtered, tableLimit]);
 
   if (isLoading) {
     return (
@@ -236,7 +393,7 @@ export default function Leads() {
 
         <header className="sticky top-0 z-50 py-5 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border/40">
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-foreground">Dashboard de Leads</h1>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">Leads</h1>
             <p className="text-xs text-muted-foreground mt-0.5">DS Thread · {filtered.length} de {(makeRecords || []).length} leads</p>
           </div>
           <div className="flex items-center gap-5">
@@ -288,11 +445,12 @@ export default function Leads() {
         </section>
 
         {/* ══════ KPIs ══════ */}
-        <section className="grid grid-cols-2 lg:grid-cols-6 gap-3 mt-4">
+        <section className="grid grid-cols-2 lg:grid-cols-7 gap-3 mt-4">
           <KPICard label="Total Leads" value={kpis.total} />
           <KPICard label="Quentes" value={kpis.quentes} />
           <KPICard label="Mornos" value={kpis.mornos} />
           <KPICard label="Frios" value={kpis.frios} />
+          <KPICard label="S/ Classificação" value={kpis.semTemp} />
           <KPICard label="Taxa Resposta" value={kpis.taxaResposta} suffix="%" isDecimal />
           <KPICard label="Score Médio" value={kpis.scoreMedio} isDecimal />
         </section>
@@ -305,7 +463,7 @@ export default function Leads() {
               <div className="space-y-2.5">
                 {funnelData.map((f, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className="w-36 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
+                    <span className="w-40 text-[11px] text-muted-foreground truncate">{f.etapa}</span>
                     <div className="flex-1 h-6 rounded bg-secondary/50 overflow-hidden">
                       <div
                         className="h-full rounded bg-primary/70 flex items-center justify-end pr-2 transition-all duration-1000 ease-out"
@@ -342,6 +500,213 @@ export default function Leads() {
           </div>
         </section>
 
+        {/* ══════ SLA de Atendimento ══════ */}
+        <section className="mt-6 rounded-xl border border-primary/20 bg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Timer className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground tracking-tight">SLA de Atendimento</h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tempo de resposta e permanência por etapa</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground">Fora do SLA</p>
+              <p className={cn("text-sm font-bold tabular-nums", slaData.totalForaSLA > 0 ? "text-destructive" : "text-primary")}>
+                {slaData.totalForaSLA} leads
+              </p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                {
+                  label: "Tempo Médio 1º Atendimento",
+                  value: slaData.mediaAtend > 0 ? `${slaData.mediaAtend.toFixed(1)}d` : "—",
+                  sub: `${slaData.temposAtendCount} leads`,
+                  status: slaData.mediaAtend <= 1 ? "ok" : slaData.mediaAtend <= 3 ? "warning" : "overdue" as const,
+                },
+                {
+                  label: "Dentro SLA 24h",
+                  value: `${slaData.taxaSLA24h.toFixed(0)}%`,
+                  sub: `${slaData.dentroSLA24h} de ${slaData.temposAtendCount}`,
+                  status: slaData.taxaSLA24h >= 80 ? "ok" : slaData.taxaSLA24h >= 50 ? "warning" : "overdue" as const,
+                },
+                {
+                  label: "SLA Robôs (resp.)",
+                  value: slaData.mediaRoboHoras > 0 ? `${slaData.mediaRoboHoras.toFixed(1)}h` : "—",
+                  sub: `${kpis.responderam} responderam`,
+                  status: slaData.mediaRoboHoras <= 4 ? "ok" : slaData.mediaRoboHoras <= 12 ? "warning" : "overdue" as const,
+                },
+              ].map((kpi, i) => (
+                <div key={i} className={cn(
+                  "rounded-lg p-3 border",
+                  kpi.status === "ok" ? "border-primary/20 bg-primary/5" :
+                  kpi.status === "warning" ? "border-warning/30 bg-warning/5" :
+                  "border-destructive/30 bg-destructive/5"
+                )}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    {kpi.status === "ok" ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> :
+                     kpi.status === "warning" ? <Clock className="h-3.5 w-3.5 text-warning" /> :
+                     <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{kpi.label}</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{kpi.value}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{kpi.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {slaData.etapaSLA.length > 0 && (
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium">SLA por Etapa do Funil</p>
+                <div className="space-y-2">
+                  {slaData.etapaSLA.map((e, i) => {
+                    const status = e.media <= e.maxDias * 0.6 ? "ok" : e.media <= e.maxDias ? "warning" : "overdue";
+                    const pct = Math.min((e.media / e.maxDias) * 100, 150);
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="w-32 text-[11px] text-muted-foreground truncate">{e.label}</span>
+                        <div className="flex-1 h-5 rounded bg-secondary/50 overflow-hidden relative">
+                          <div
+                            className={cn(
+                              "h-full rounded transition-all duration-700",
+                              status === "ok" ? "bg-primary/60" : status === "warning" ? "bg-warning/60" : "bg-destructive/60"
+                            )}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
+                          <div className="absolute top-0 h-full w-px bg-foreground/30" style={{ left: `${Math.min((e.maxDias / (e.maxDias * 1.5)) * 100, 100)}%` }} />
+                        </div>
+                        <span className={cn("text-xs font-bold w-12 text-right tabular-nums", status === "ok" ? "text-primary" : status === "warning" ? "text-warning" : "text-destructive")}>
+                          {e.media}d
+                        </span>
+                        <span className="text-[10px] text-muted-foreground w-16 text-right">SLA: {e.maxDias}d</span>
+                        {e.foraDoSLA > 0 && <span className="text-[10px] font-semibold text-destructive w-12 text-right">{e.foraDoSLA} fora</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ══════ Robôs & Follow-up ══════ */}
+        <section className="mt-6 rounded-xl border border-primary/20 bg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Bot className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Robôs & Follow-up</h3>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Sol · FUP Frio · Conversão</p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Comparativo de Robôs */}
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+                <Zap className="h-3 w-3" /> Comparativo de Robôs
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {robotData.robots.map((robot, i) => (
+                  <div key={i} className="rounded-lg border border-border/50 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-base">{robot.icon}</span>
+                      <span className="text-xs font-semibold text-foreground">{robot.name}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase">Contatos</p>
+                        <p className="text-xl font-bold text-foreground tabular-nums">{robot.total}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase">Taxa Resp.</p>
+                        <p className={cn("text-xl font-bold tabular-nums", robot.taxa >= 30 ? "text-primary" : robot.taxa >= 15 ? "text-warning" : robot.total === 0 ? "text-muted-foreground" : "text-destructive")}>
+                          {robot.total > 0 ? `${robot.taxa.toFixed(0)}%` : "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase">Tempo Méd.</p>
+                        <p className="text-xl font-bold text-foreground tabular-nums">
+                          {robot.tempoMedio > 0 ? `${robot.tempoMedio.toFixed(1)}h` : "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-1.5 rounded-full bg-secondary/50 overflow-hidden">
+                      <div className="h-full rounded-full bg-primary/60 transition-all duration-700" style={{ width: `${Math.min(robot.taxa, 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Acompanhamento */}
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+                <MessageSquare className="h-3 w-3" /> Acompanhamento Ativo
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase">Média FUPs/Lead</p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{robotData.mediaFups.toFixed(1)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{robotData.fupEntries} leads</p>
+                </div>
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase">FUPs até Resposta</p>
+                  <p className="text-2xl font-bold text-primary tabular-nums">{robotData.mediaFupsAteResp.toFixed(1)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{robotData.respondidosCount} responderam</p>
+                </div>
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase">Excesso (+5 FUPs)</p>
+                  <p className={cn("text-2xl font-bold tabular-nums", robotData.excessoFups === 0 ? "text-primary" : "text-warning")}>
+                    {robotData.excessoFups === 0 ? "✓" : robotData.excessoFups}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{robotData.excessoFups === 0 ? "Nenhum excesso" : "sem resposta"}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase">Taxa Conversão FUP</p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">
+                    {robotData.fupEntries > 0 ? ((robotData.respondidosCount / robotData.fupEntries) * 100).toFixed(0) : 0}%
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">leads que responderam</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Funil de Conversão dos Robôs */}
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+                <TrendingUp className="h-3 w-3" /> Funil de Conversão dos Robôs
+              </p>
+              <div className="space-y-2">
+                {[
+                  { label: "Enviados", value: robotData.totalEnviados, color: "bg-primary/40" },
+                  { label: "Responderam", value: robotData.totalResponderam, color: "bg-primary/60" },
+                  { label: "Qualificados", value: robotData.qualificados, color: "bg-primary/80" },
+                ].map((step, i, arr) => {
+                  const max = Math.max(...arr.map(s => s.value), 1);
+                  const pct = (step.value / max) * 100;
+                  const prevValue = i > 0 ? arr[i - 1].value : step.value;
+                  const convRate = prevValue > 0 && i > 0 ? ((step.value / prevValue) * 100).toFixed(0) : null;
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="w-24 text-[11px] text-muted-foreground">{step.label}</span>
+                      <div className="flex-1 h-6 rounded bg-secondary/40 overflow-hidden">
+                        <div className={cn("h-full rounded transition-all duration-700", step.color)} style={{ width: `${Math.max(pct, 2)}%` }} />
+                      </div>
+                      <span className="text-xs font-bold text-foreground w-10 text-right tabular-nums">{step.value}</span>
+                      {convRate && <span className="text-[10px] text-muted-foreground w-14 text-right">{convRate}%</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ══════ Tabela ══════ */}
         <section className="mt-6 rounded-lg border border-border/50 bg-card overflow-hidden">
           <div className="px-5 py-4 border-b border-border/40">
@@ -353,7 +718,7 @@ export default function Leads() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {["Nome", "Telefone", "Etapa Funil", "Status", "Cidade", "Temperatura", "Score", "Closer", "Status FUP", "Data"].map(h => (
+                  {["Nome", "Telefone", "Etapa", "Status", "Cidade", "Temp.", "Score", "Closer", "FUP", "Data"].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -361,13 +726,13 @@ export default function Leads() {
               <tbody>
                 {tableLeads.map((r, i) => {
                   const isExpanded = expandedLead === (r.telefone + i);
+                  const temp = normalizeTemp(r.makeTemperatura);
+                  const closer = normalizeCloser(r.closerAtribuido);
                   return (
                     <>
                       <tr
                         key={r.telefone + i}
-                        className={cn(
-                          "border-b border-border/20 transition-colors hover:bg-secondary/30 cursor-pointer"
-                        )}
+                        className="border-b border-border/20 transition-colors hover:bg-secondary/30 cursor-pointer"
                         onClick={() => setExpandedLead(isExpanded ? null : r.telefone + i)}
                       >
                         <td className="px-3 py-2.5 font-medium text-foreground text-xs">
@@ -378,19 +743,19 @@ export default function Leads() {
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground text-xs font-mono">{r.telefone || '—'}</td>
                         <td className="px-3 py-2.5">
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary">
-                            {r.etapaFunil || '—'}
+                          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", getEtapaLabel(r) === "SEM ETAPA" ? "bg-secondary text-muted-foreground" : "bg-primary/10 text-primary")}>
+                            {getEtapaLabel(r)}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{r.makeStatus || '—'}</td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{r.cidade || '—'}</td>
                         <td className="px-3 py-2.5">
-                          {r.makeTemperatura ? <TempDot temp={r.makeTemperatura} /> : "—"}
+                          {temp ? <TempDot temp={temp} /> : <span className="text-xs text-muted-foreground/50">—</span>}
                         </td>
                         <td className="px-3 py-2.5 text-xs font-semibold text-foreground tabular-nums">
                           {r.makeScore && parseFloat(r.makeScore) > 0 ? parseFloat(r.makeScore).toFixed(1) : "—"}
                         </td>
-                        <td className="px-3 py-2.5 text-xs text-muted-foreground">{r.closerAtribuido || '—'}</td>
+                        <td className="px-3 py-2.5 text-xs text-muted-foreground">{closer || '—'}</td>
                         <td className="px-3 py-2.5">
                           <span className={cn(
                             "text-[10px] font-semibold px-2 py-0.5 rounded",
@@ -442,9 +807,11 @@ export default function Leads() {
               </tbody>
             </table>
           </div>
-          {filtered.length > 50 && (
+          {filtered.length > tableLimit && (
             <div className="px-5 py-3 border-t border-border/40 text-center">
-              <p className="text-xs text-muted-foreground">Exibindo 50 de {filtered.length} leads. Use os filtros para refinar.</p>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => setTableLimit(prev => prev + 50)}>
+                Carregar mais ({filtered.length - tableLimit} restantes)
+              </Button>
             </div>
           )}
         </section>
@@ -455,16 +822,16 @@ export default function Leads() {
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Temperatura por Etapa</h3>
             <div className="space-y-3">
               {JOURNEY_ORDER.map((etapa) => {
-                const etapaRecords = filtered.filter(r => (r.etapaFunil || 'TRAFEGO PAGO') === etapa);
-                const quente = etapaRecords.filter(r => (r.makeTemperatura || "").toUpperCase() === "QUENTE").length;
-                const morno = etapaRecords.filter(r => (r.makeTemperatura || "").toUpperCase() === "MORNO").length;
-                const frio = etapaRecords.filter(r => (r.makeTemperatura || "").toUpperCase() === "FRIO").length;
+                const etapaRecords = filtered.filter(r => getEtapaLabel(r) === etapa);
+                const quente = etapaRecords.filter(r => normalizeTemp(r.makeTemperatura) === "QUENTE").length;
+                const morno = etapaRecords.filter(r => normalizeTemp(r.makeTemperatura) === "MORNO").length;
+                const frio = etapaRecords.filter(r => normalizeTemp(r.makeTemperatura) === "FRIO").length;
                 const total = etapaRecords.length;
                 if (total === 0) return null;
                 return (
                   <div key={etapa}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] text-muted-foreground truncate w-36">{etapa}</span>
+                      <span className="text-[11px] text-muted-foreground truncate w-40">{etapa}</span>
                       <span className="text-[11px] text-muted-foreground tabular-nums">{total}</span>
                     </div>
                     <div className="flex h-3 rounded overflow-hidden bg-secondary/50">
@@ -481,7 +848,7 @@ export default function Leads() {
 
         <footer className="mt-12 mb-6 text-center">
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40 font-medium">
-            RBR Consult × Dashboard de Leads
+            Sol Estrateg.IA × Leads
           </p>
         </footer>
       </div>
