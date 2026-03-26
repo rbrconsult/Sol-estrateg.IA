@@ -442,24 +442,15 @@ export default function Forecast() {
                 const ETAPAS_COBRANCA = new Set(['COBRANÇA', 'COBRANCA']);
                 const contratos = filteredProposals
                   .filter(p => p.status === 'Ganho')
-                  .sort((a, b) => {
-                    // Ganho confirmado (status_proposta explícito) primeiro
-                    const aConfirm = (a.faseSM || '').toLowerCase().includes('ganho') || (a.faseSM || '').toLowerCase().includes('fechado') ? 1 : 0;
-                    const bConfirm = (b.faseSM || '').toLowerCase().includes('ganho') || (b.faseSM || '').toLowerCase().includes('fechado') ? 1 : 0;
-                    if (bConfirm !== aConfirm) return bConfirm - aConfirm;
-                    return b.valorProposta - a.valorProposta;
-                  });
+                  .sort((a, b) => b.valorProposta - a.valorProposta);
                 if (contratos.length === 0) {
                   return <p className="text-sm text-muted-foreground py-4 text-center">Nenhum contrato fechado no período</p>;
                 }
 
-                const isGanhoConfirmado = (p: typeof contratos[0]) => {
-                  const fase = (p.faseSM || '').toLowerCase();
-                  return fase.includes('ganho') || fase.includes('fechado') || fase.includes('vencido');
-                };
+                const isGanhoConfirmado = (_p: typeof contratos[0]) => true; // status_proposta=5 é o único critério
 
-                const ganhoCount = contratos.filter(isGanhoConfirmado).length;
-                const cobrancaCount = contratos.filter(p => ETAPAS_COBRANCA.has((p.etapa || '').toUpperCase()) && !isGanhoConfirmado(p)).length;
+                const ganhoCount = contratos.length;
+                const cobrancaCount = contratos.filter(p => ETAPAS_COBRANCA.has((p.etapa || '').toUpperCase())).length;
 
                 return (
                   <>
