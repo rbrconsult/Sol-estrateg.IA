@@ -22,6 +22,7 @@ export default function Forecast() {
   const { selectedOrgName } = useOrgFilter();
   const [pipelineMode, setPipelineMode] = useState<"receita" | "potencia" | "ambos">("ambos");
   const [viewMode, setViewMode] = useState<"previsao" | "contratos">("previsao");
+  const [selectedContrato, setSelectedContrato] = useState<Proposal | null>(null);
   const pf = useGlobalFilters();
 
   const filteredProposals = useMemo(() => pf.filterProposals(allProposals), [allProposals, pf.filterProposals]);
