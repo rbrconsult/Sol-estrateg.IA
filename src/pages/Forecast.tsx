@@ -235,7 +235,7 @@ export default function Forecast() {
                     </Pie>
                     <Legend />
                     <Tooltip
-                      formatter={(value: number) => formatCurrencyAbbrev(value)}
+                      formatter={(value: number) => `R$ ${formatCurrencyAbbrev(value)}`}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
