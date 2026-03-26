@@ -216,6 +216,7 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
       origemLead: etiquetas,
       probabilidade,
       motivoPerda: '',
+      faseSM: item.faseSM || '',
     };
   });
 }
