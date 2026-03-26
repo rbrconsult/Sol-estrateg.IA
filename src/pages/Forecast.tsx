@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { getForecastData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
-import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3 } from "lucide-react";
+import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from "@/lib/formatters";
+import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -289,7 +289,64 @@ export default function Forecast() {
         </>
       ) : (
         <>
-          {/* KPIs Contratos */}
+          {/* Funil: Contrato → Receita Confirmada */}
+
+          {/* Row 1: Funil de Conversão */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-blue-500/30 bg-blue-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
+                  <Users className="h-4 w-4" />
+                  <span className="text-xs font-medium">Leads Qualificados</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{forecastData.totalLeadsQualificados}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatCurrencyAbbrev(forecastData.valorLeadsQualificados)} total
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-indigo-500/30 bg-indigo-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
+                  <FileCheck className="h-4 w-4" />
+                  <span className="text-xs font-medium">Propostas Geradas</span>
+                </div>
+                <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">{forecastData.totalPropostasGeradas}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatCurrencyAbbrev(forecastData.valorPropostasGeradas)} · TM {formatCurrencyAbbrev(forecastData.ticketMedioPropostas)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-1">
+                  <ArrowRight className="h-4 w-4" />
+                  <span className="text-xs font-medium">Negócios Iniciados</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{forecastData.totalNegociosIniciados}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatCurrencyAbbrev(forecastData.valorNegociosIniciados)} · TM {formatCurrencyAbbrev(forecastData.ticketMedioIniciados)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-500/30 bg-green-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="text-xs font-medium">Propostas Aceitas</span>
+                </div>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{forecastData.totalContratos}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatCurrencyAbbrev(forecastData.receitaConfirmada)} · TM {formatCurrencyAbbrev(forecastData.ticketMedioContrato)}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Row 2: Receita + Indicadores */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-green-500/30 bg-green-500/5">
               <CardContent className="pt-6">
@@ -301,16 +358,7 @@ export default function Forecast() {
                 <p className="text-xs text-muted-foreground mt-1">Contratos assinados</p>
               </CardContent>
             </Card>
-            <Card className="border-green-500/30 bg-green-500/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-                  <FileCheck className="h-4 w-4" />
-                  <span className="text-xs font-medium">Total Contratos</span>
-                </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{forecastData.totalContratos}</p>
-                <p className="text-xs text-muted-foreground mt-1">Negócios fechados</p>
-              </CardContent>
-            </Card>
+
             <Card className="border-green-500/30 bg-green-500/5">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
@@ -321,17 +369,65 @@ export default function Forecast() {
                 <p className="text-xs text-muted-foreground mt-1">Instalação contratada</p>
               </CardContent>
             </Card>
-            <Card className="border-green-500/30 bg-green-500/5">
+
+            <Card>
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="text-xs font-medium">Ticket Médio</span>
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Percent className="h-4 w-4" />
+                  <span className="text-xs font-medium">Taxa de Conversão</span>
                 </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatCurrencyAbbrev(forecastData.ticketMedioContrato)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Valor médio por contrato</p>
+                <p className="text-2xl font-bold">{formatPercent(forecastData.taxaConversao)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Fechados / Iniciados</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-xs font-medium">SLA Fechamento</span>
+                </div>
+                <p className="text-2xl font-bold">{forecastData.slaFechamentoDias > 0 ? `${Math.round(forecastData.slaFechamentoDias)}d` : '—'}</p>
+                <p className="text-xs text-muted-foreground mt-1">Iniciado → Aceita (média)</p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Funil Visual */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Funil: Qualificação → Receita</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={[
+                  { etapa: 'Qualificados', quantidade: forecastData.totalLeadsQualificados, valor: forecastData.valorLeadsQualificados },
+                  { etapa: 'Propostas', quantidade: forecastData.totalPropostasGeradas, valor: forecastData.valorPropostasGeradas },
+                  { etapa: 'Negócios', quantidade: forecastData.totalNegociosIniciados, valor: forecastData.valorNegociosIniciados },
+                  { etapa: 'Fechados', quantidade: forecastData.totalContratos, valor: forecastData.receitaConfirmada },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="etapa" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis yAxisId="qtd" stroke="hsl(var(--primary))" />
+                  <YAxis yAxisId="valor" orientation="right" tickFormatter={(v) => formatCurrencyAbbrev(v)} stroke="hsl(var(--chart-2))" />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      name === 'quantidade' ? value : formatCurrencyAbbrev(value),
+                      name === 'quantidade' ? 'Quantidade' : 'R$ Valor'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend formatter={(value) => value === 'quantidade' ? 'Quantidade' : 'R$ Valor'} />
+                  <Bar yAxisId="qtd" dataKey="quantidade" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="quantidade" />
+                  <Bar yAxisId="valor" dataKey="valor" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="valor" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
           {/* Comparativo Previsto vs Confirmado */}
           <Card>
@@ -341,8 +437,8 @@ export default function Forecast() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={[
-                  { label: 'Receita Prevista (28d)', valor: forecastData.forecast28, tipo: 'previsto' },
-                  { label: 'Receita Confirmada', valor: forecastData.receitaConfirmada, tipo: 'confirmado' },
+                  { label: 'Receita Prevista (28d)', valor: forecastData.forecast28 },
+                  { label: 'Receita Confirmada', valor: forecastData.receitaConfirmada },
                 ]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" />
@@ -357,7 +453,7 @@ export default function Forecast() {
                   />
                   <Bar dataKey="valor" radius={[4, 4, 0, 0]}>
                     <Cell fill="hsl(var(--primary))" />
-                    <Cell fill="hsl(142 71% 45%)" />
+                    <Cell fill="hsl(var(--chart-2))" />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
