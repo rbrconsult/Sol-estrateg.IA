@@ -676,6 +676,11 @@ export function getForecastData(proposals: Proposal[]) {
     totalPropostasGeradas,
     valorPropostasGeradas,
     ticketMedioPropostas,
+    totalPropostasAceitas,
+    valorPropostasAceitas,
+    ticketMedioAceitas,
+    totalCobranca,
+    ticketMedioCobranca,
     taxaConversao,
     slaFechamentoDias,
   };
