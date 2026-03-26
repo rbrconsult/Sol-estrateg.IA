@@ -440,15 +440,14 @@ export default function Forecast() {
             <CardContent>
               {(() => {
                 const ETAPAS_COBRANCA = new Set(['COBRANÇA', 'COBRANCA']);
-                const propostasAceitasIds = new Set<string>(forecastData.propostasAceitasIds || []);
                 const contratos = filteredProposals
-                  .filter(p => propostasAceitasIds.has(p.id))
+                  .filter(p => p.status === 'Ganho')
                   .sort((a, b) => b.valorProposta - a.valorProposta);
                 if (contratos.length === 0) {
-                  return <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma proposta aceita no período</p>;
+                  return <p className="text-sm text-muted-foreground py-4 text-center">Nenhum contrato fechado no período</p>;
                 }
 
-                const isGanhoConfirmado = (_p: typeof contratos[0]) => true;
+                const isGanhoConfirmado = (_p: typeof contratos[0]) => true; // status_proposta=5 é o único critério
 
                 const ganhoCount = contratos.length;
                 const cobrancaCount = contratos.filter(p => ETAPAS_COBRANCA.has((p.etapa || '').toUpperCase())).length;

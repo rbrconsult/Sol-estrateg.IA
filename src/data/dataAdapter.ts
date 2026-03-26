@@ -567,14 +567,8 @@ export function getForecastData(proposals: Proposal[]) {
   const totalCobranca = emCobranca.length;
   const ticketMedioCobranca = totalCobranca > 0 ? receitaConfirmada / totalCobranca : 0;
 
-  // Propostas Aceitas = Ganhos validados pelo time comercial (clientes confirmados no mês)
-  const NOMES_PROPOSTAS_ACEITAS = new Set([
-    'ANA CAROLINA GARCIA DE MELO',
-    'THIAGO VILLELA DOS SANTOS',
-  ]);
-  const propostasAceitas = ganhos.filter((p) =>
-    NOMES_PROPOSTAS_ACEITAS.has((p.nomeCliente || '').toUpperCase().trim())
-  );
+  // Propostas Aceitas = todos os Ganhos (aceite de proposta / fase_sm)
+  const propostasAceitas = ganhos;
   const totalPropostasAceitas = propostasAceitas.length;
   const valorPropostasAceitas = propostasAceitas.reduce((a, p) => a + p.valorProposta, 0);
   const ticketMedioAceitas = totalPropostasAceitas > 0 ? valorPropostasAceitas / totalPropostasAceitas : 0;
@@ -622,7 +616,7 @@ export function getForecastData(proposals: Proposal[]) {
   const taxaConversao = totalNegociosIniciados > 0 ? (totalContratos / totalNegociosIniciados) * 100 : 0;
 
   // SLA médio (dias entre criação da proposta e aceite/fechamento)
-  const temposFechamento = propostasAceitas.map(p => {
+  const temposFechamento = ganhos.map(p => {
     const criacao = new Date(p.dataCriacaoProposta || p.dataCriacaoProjeto);
     const fechamento = new Date(p.ultimaAtualizacao);
     if (isNaN(criacao.getTime()) || isNaN(fechamento.getTime())) return -1;
@@ -683,7 +677,6 @@ export function getForecastData(proposals: Proposal[]) {
     totalPropostasAceitas,
     valorPropostasAceitas,
     ticketMedioAceitas,
-    propostasAceitasIds: propostasAceitas.map((p) => p.id),
     totalCobranca,
     ticketMedioCobranca,
     taxaConversao,
