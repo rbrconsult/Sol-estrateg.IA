@@ -145,6 +145,35 @@ function calcularTempoNaEtapa(ultimaAtualizacao: string): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
+// Probabilidade dinâmica baseada na etapa do funil
+const PROBABILIDADE_POR_ETAPA: Record<string, number> = {
+  'TRAFEGO PAGO': 5,
+  'PROSPECÇÃO': 10,
+  'FOLLOW UP': 15,
+  'QUALIFICAÇÃO': 20,
+  'QUALIFICADO': 30,
+  'CONTATO REALIZADO': 40,
+  'PROPOSTA': 50,
+  'NEGOCIAÇÃO': 70,
+  'CONTRATO ASSINADO': 90,
+  'COBRANÇA': 95,
+  'ANÁLISE DOCUMENTOS': 95,
+  'ANALISE DOCUMENTOS': 95,
+  'APROVAÇÃO DE FINANCIAMENTO': 92,
+  'APROVACAO DE FINANCIAMENTO': 92,
+  'ELABORAÇÃO DE CONTRATO': 88,
+  'ELABORACAO DE CONTRATO': 88,
+  'CONTRATO ENVIADO': 85,
+  'AGUARDANDO DOCUMENTOS': 80,
+};
+
+function calcularProbabilidadePorEtapa(etapa: string, status: string): number {
+  if (status === 'Ganho') return 100;
+  if (status === 'Perdido') return 0;
+  const etapaUp = (etapa || '').toUpperCase().trim();
+  return PROBABILIDADE_POR_ETAPA[etapaUp] ?? 50;
+}
+
 export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
   return records.map((item, index) => {
     const status = mapStatus(item.statusProposta, item.etapaSM);
@@ -153,8 +182,8 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
     const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao);
     const etiquetas = (item.etiquetas || '').trim();
 
-    // Probabilidade derivada de status
-    let probabilidade = status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : 50;
+    // Probabilidade derivada de etapa + status
+    let probabilidade = calcularProbabilidadePorEtapa(etapa, status);
 
     return {
       id: item.projetoId || `PROP-${String(index).padStart(4, '0')}`,
@@ -477,20 +506,20 @@ export function getMonthlyData(proposals: Proposal[]) {
 
 // Forecast - Previsão de receita
 export function getForecastData(proposals: Proposal[]) {
-  const hoje = new Date();
   const abertos = proposals.filter(p => p.status === 'Aberto');
+  const ganhos = proposals.filter(p => p.status === 'Ganho');
   
-  // Previsão 30 dias
+  // Previsão 30 dias (alta confiança: prob >= 70%)
   const forecast30 = abertos
     .filter(p => p.probabilidade >= 70)
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
-  // Previsão 60 dias
+  // Previsão 60 dias (média + alta: prob >= 40%)
   const forecast60 = abertos
     .filter(p => p.probabilidade >= 40)
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
-  // Previsão 90 dias
+  // Previsão 90 dias (todo pipeline aberto)
   const forecast90 = abertos
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
@@ -519,6 +548,32 @@ export function getForecastData(proposals: Proposal[]) {
     { faixa: '51-75%', quantidade: abertos.filter(p => p.probabilidade > 50 && p.probabilidade <= 75).length, valor: abertos.filter(p => p.probabilidade > 50 && p.probabilidade <= 75).reduce((a, p) => a + p.valorProposta, 0) },
     { faixa: '76-100%', quantidade: abertos.filter(p => p.probabilidade > 75).length, valor: abertos.filter(p => p.probabilidade > 75).reduce((a, p) => a + p.valorProposta, 0) }
   ];
+
+  // === Contratos (Ganhos) ===
+  const receitaConfirmada = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
+  const potenciaConfirmada = ganhos.reduce((acc, p) => acc + p.potenciaSistema, 0);
+  const totalContratos = ganhos.length;
+  const ticketMedioContrato = totalContratos > 0 ? receitaConfirmada / totalContratos : 0;
+
+  // Distribuição por etapa (para visão detalhada)
+  const etapaMap = new Map<string, { count: number; valor: number; potencia: number; prob: number }>();
+  abertos.forEach(p => {
+    const etapa = p.etapa || 'SEM ETAPA';
+    const curr = etapaMap.get(etapa) || { count: 0, valor: 0, potencia: 0, prob: 0 };
+    curr.count++;
+    curr.valor += p.valorProposta;
+    curr.potencia += p.potenciaSistema;
+    curr.prob += p.probabilidade;
+    etapaMap.set(etapa, curr);
+  });
+  const distribuicaoPorEtapa = Array.from(etapaMap.entries()).map(([etapa, d]) => ({
+    etapa,
+    quantidade: d.count,
+    valor: d.valor,
+    valorPonderado: d.valor * (d.prob / d.count) / 100,
+    potencia: d.potencia,
+    probabilidadeMedia: Math.round(d.prob / d.count),
+  })).sort((a, b) => b.probabilidadeMedia - a.probabilidadeMedia);
   
   return {
     forecast30,
@@ -530,7 +585,14 @@ export function getForecastData(proposals: Proposal[]) {
     altaProbabilidade,
     emRisco,
     distribuicao,
-    pipelinePonderado: forecast90
+    pipelinePonderado: forecast90,
+    // Novos campos: Contratos
+    receitaConfirmada,
+    potenciaConfirmada,
+    totalContratos,
+    ticketMedioContrato,
+    totalPropostasAbertas: abertos.length,
+    distribuicaoPorEtapa,
   };
 }
 
