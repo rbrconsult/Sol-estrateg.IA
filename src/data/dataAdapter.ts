@@ -609,22 +609,14 @@ export function getForecastData(proposals: Proposal[]) {
   // Taxa de Conversão = Fechados / Iniciados
   const taxaConversao = totalNegociosIniciados > 0 ? (totalContratos / totalNegociosIniciados) * 100 : 0;
 
-  // SLA médio (dias entre criação da proposta e aceite/fechamento)
+  // SLA médio (dias entre criação da proposta e aceite — tsProposta → tsSync)
   const temposFechamento = ganhos.map(p => {
-    const criacao = new Date(p.dataCriacaoProposta || p.dataCriacaoProjeto || p.ultimaAtualizacao);
-    const fechamento = new Date(p.ultimaAtualizacao || p.dataCriacaoProposta);
-    if (isNaN(criacao.getTime()) || isNaN(fechamento.getTime())) return -1;
-    const dias = (fechamento.getTime() - criacao.getTime()) / (1000 * 60 * 60 * 24);
-    // Se criação e fechamento são iguais (sem data separada), tentar usar dataCriacaoProjeto como início
-    if (dias === 0 && p.dataCriacaoProjeto && p.dataCriacaoProjeto !== p.dataCriacaoProposta) {
-      const inicio = new Date(p.dataCriacaoProjeto);
-      if (!isNaN(inicio.getTime())) {
-        const diasAlt = (fechamento.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24);
-        if (diasAlt > 0 && diasAlt < 365) return diasAlt;
-      }
-    }
-    return Math.max(0, dias);
-  }).filter(d => d >= 0 && d < 365);
+    const criacao = new Date(p.dataCriacaoProposta);
+    const aceite = new Date(p.ultimaAtualizacao);
+    if (isNaN(criacao.getTime()) || isNaN(aceite.getTime())) return -1;
+    const dias = (aceite.getTime() - criacao.getTime()) / (1000 * 60 * 60 * 24);
+    return dias >= 0 && dias < 365 ? dias : -1;
+  }).filter(d => d >= 0);
   const slaFechamentoDias = temposFechamento.length > 0
     ? temposFechamento.reduce((a, b) => a + b, 0) / temposFechamento.length
     : 0;
