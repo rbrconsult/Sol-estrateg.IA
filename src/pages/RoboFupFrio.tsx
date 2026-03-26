@@ -272,6 +272,13 @@ export default function RoboFupFrio() {
         </Card>
       </div>
 
+
+      {/* BLOCO 4.5 — Estudo de Rotas FUP 1→8 */}
+      <RouteStudy records={records} />
+
+      {/* BLOCO 4.6 — Heatmap */}
+      <HeatmapChart records={records.filter(r => (r.followupCount || 0) >= 1)} title="Melhor Horário e Dia (FUP)" dateField="lastFollowupDate" />
+
       {/* BLOCO 4 — Por Status Anterior */}
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Performance por Etapa de Entrada</CardTitle></CardHeader>
