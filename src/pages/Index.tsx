@@ -287,13 +287,13 @@ const Index = () => {
 
           <ExecutiveKPIs
             receitaPrevista={kpis.receitaPrevista}
-            valorGanho={comercialKpis.valorFechado || kpis.valorGanho}
+            valorGanho={comercialKpis.valorFechado > 0 ? comercialKpis.valorFechado : kpis.valorGanho}
             taxaConversao={kpis.taxaConversao}
             ticketMedio={kpis.ticketMedio}
             totalPropostas={kpis.totalNegocios}
             negociosAbertos={kpis.negociosAbertos}
             valorPipeline={kpis.valorPipeline}
-            negociosGanhos={comercialKpis.fechados || kpis.negociosGanhos}
+            negociosGanhos={comercialKpis.fechados}
           />
 
           <div className="grid gap-6 lg:grid-cols-3">
