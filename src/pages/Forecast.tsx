@@ -435,45 +435,87 @@ export default function Forecast() {
           {/* Tabela de Contratos */}
           <Card>
             <CardHeader>
-              <CardTitle>Contratos Fechados</CardTitle>
+              <CardTitle>Contratos & Cobrança</CardTitle>
             </CardHeader>
             <CardContent>
               {(() => {
+                const ETAPAS_COBRANCA = new Set(['COBRANÇA', 'COBRANCA']);
                 const contratos = filteredProposals
                   .filter(p => p.status === 'Ganho')
-                  .sort((a, b) => b.valorProposta - a.valorProposta);
+                  .sort((a, b) => {
+                    // Ganho confirmado (status_proposta explícito) primeiro
+                    const aConfirm = (a.faseSM || '').toLowerCase().includes('ganho') || (a.faseSM || '').toLowerCase().includes('fechado') ? 1 : 0;
+                    const bConfirm = (b.faseSM || '').toLowerCase().includes('ganho') || (b.faseSM || '').toLowerCase().includes('fechado') ? 1 : 0;
+                    if (bConfirm !== aConfirm) return bConfirm - aConfirm;
+                    return b.valorProposta - a.valorProposta;
+                  });
                 if (contratos.length === 0) {
                   return <p className="text-sm text-muted-foreground py-4 text-center">Nenhum contrato fechado no período</p>;
                 }
+
+                const isGanhoConfirmado = (p: typeof contratos[0]) => {
+                  const fase = (p.faseSM || '').toLowerCase();
+                  return fase.includes('ganho') || fase.includes('fechado') || fase.includes('vencido');
+                };
+
+                const ganhoCount = contratos.filter(isGanhoConfirmado).length;
+                const cobrancaCount = contratos.filter(p => ETAPAS_COBRANCA.has((p.etapa || '').toUpperCase()) && !isGanhoConfirmado(p)).length;
+
                 return (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Responsável</TableHead>
-                        <TableHead>Etapa</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead className="text-right">Potência</TableHead>
-                        <TableHead className="text-right">Data Proposta</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {contratos.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell className="font-medium max-w-[200px] truncate">{c.nomeProposta || c.nomeCliente || c.projetoId}</TableCell>
-                          <TableCell>{c.responsavel || '—'}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(c.valorProposta)}</TableCell>
-                          <TableCell className="text-right">{c.potenciaSistema > 0 ? `${formatNumber(c.potenciaSistema)} kWh` : '—'}</TableCell>
-                          <TableCell className="text-right text-muted-foreground text-xs">
-                            {c.dataCriacaoProposta ? new Date(c.dataCriacaoProposta).toLocaleDateString('pt-BR') : '—'}
-                          </TableCell>
+                  <>
+                    <div className="flex gap-3 mb-4 text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500" />
+                        Ganho Confirmado ({ganhoCount})
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        Em Cobrança ({cobrancaCount})
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Responsável</TableHead>
+                          <TableHead>Etapa</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead className="text-right">Potência</TableHead>
+                          <TableHead className="text-right">Data Proposta</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {contratos.map((c) => {
+                          const confirmado = isGanhoConfirmado(c);
+                          const emCobranca = ETAPAS_COBRANCA.has((c.etapa || '').toUpperCase());
+                          return (
+                            <TableRow key={c.id}>
+                              <TableCell>
+                                {confirmado ? (
+                                  <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 text-xs">Ganho</Badge>
+                                ) : emCobranca ? (
+                                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 text-xs">Cobrança</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium max-w-[200px] truncate">{c.nomeProposta || c.nomeCliente || c.projetoId}</TableCell>
+                              <TableCell>{c.responsavel || '—'}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(c.valorProposta)}</TableCell>
+                              <TableCell className="text-right">{c.potenciaSistema > 0 ? `${formatNumber(c.potenciaSistema)} kWh` : '—'}</TableCell>
+                              <TableCell className="text-right text-muted-foreground text-xs">
+                                {c.dataCriacaoProposta ? new Date(c.dataCriacaoProposta).toLocaleDateString('pt-BR') : '—'}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </>
                 );
               })()}
             </CardContent>
