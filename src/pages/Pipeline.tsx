@@ -68,19 +68,47 @@ const Pipeline = () => {
     return filteredProposals.filter(p => p.status === 'Perdido');
   }, [filteredProposals, statusView]);
 
-  // Leads ativos do DS Thread (sem desqualificados) + filtros globais aplicados
+  // Leads ativos do DS Thread + filtros globais aplicados de forma explícita
   const threadLeads = useMemo(() => {
     if (!makeRecords?.length) return [];
-    const ativos = makeRecords.filter(r => {
+
+    const { from, to } = gf.effectiveDateRange;
+    const search = gf.filters.searchTerm.trim().toLowerCase();
+
+    return makeRecords.filter((r) => {
       const statusUp = (r.makeStatus || '').toUpperCase();
       if (STATUS_EXCLUIR.has(statusUp)) return false;
-      const etapa = (r.etapaFunil || '').toUpperCase();
-      if (etapa === 'DECLINIO' || etapa === 'DECLÍNIO') return false;
+
+      const etapaUp = (r.etapaFunil || '').toUpperCase();
+      if (etapaUp === 'DECLINIO' || etapaUp === 'DECLÍNIO') return false;
+
+      if (from || to) {
+        const dateStr = r.data_envio;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return false;
+
+        if (from) {
+          const fromStart = new Date(from);
+          fromStart.setHours(0, 0, 0, 0);
+          if (d < fromStart) return false;
+        }
+
+        if (to) {
+          const toEnd = new Date(to);
+          toEnd.setHours(23, 59, 59, 999);
+          if (d > toEnd) return false;
+        }
+      }
+
+      if (gf.filters.temperatura !== 'todas' && (r.makeTemperatura || '').toUpperCase() !== gf.filters.temperatura) return false;
+      if (gf.filters.etapa !== 'todas' && etapaUp !== gf.filters.etapa.toUpperCase()) return false;
+      if (gf.filters.status !== 'todos' && (r.makeStatus || '').toUpperCase() !== gf.filters.status.toUpperCase()) return false;
+      if (search && !(r.nome || '').toLowerCase().includes(search)) return false;
+
       return true;
     });
-    // Aplicar filtros globais (período, temperatura, busca, etapa, status)
-    return gf.filterRecords(ativos);
-  }, [makeRecords, gf.filterRecords]);
+  }, [makeRecords, gf.effectiveDateRange, gf.filters]);
 
   // Contagens por status
   const counts = useMemo(() => ({
