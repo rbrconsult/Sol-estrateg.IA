@@ -101,10 +101,56 @@ Dos 187 leads com `followup_count >= 1`, apenas **12 possuem `respondeu = true`*
 
 ---
 
-## 7. Recomendações
+## 7. Correção Sugerida — Campo `respondeu` no Make.com
+
+### Problema
+O campo `respondeu` no DS Thread só é marcado como `true` quando o lead atinge o status `QUALIFICADO`. Se o lead **responde** uma mensagem do FUP Frio mas **não é qualificado**, ele aparece como "ignorou" — distorcendo métricas de reativação.
+
+### Solução Proposta
+
+**No cenário Make de recebimento de mensagens WhatsApp**, criar um trigger que:
+
+1. **Detecte respostas de leads com `followupCount >= 1`**
+2. **Atualize no DS Thread:**
+   - `respondeu = TRUE`
+   - `data_resposta = <timestamp atual no formato ISO 8601>`
+3. **Desacople "respondeu" de "qualificado":**
+   - `respondeu` = o lead enviou qualquer mensagem de volta (evento de engajamento)
+   - `QUALIFICADO` = o lead passou pelo critério de qualificação (evento de conversão)
+
+### Lógica sugerida (pseudocódigo Make)
+
+```
+SE mensagem_recebida.telefone EXISTE no DS Thread
+  E DS Thread[telefone].followupCount >= 1
+  E DS Thread[telefone].respondeu != TRUE
+ENTÃO
+  ATUALIZAR DS Thread[telefone]:
+    respondeu = TRUE
+    data_resposta = NOW() em ISO 8601
+    status_resposta = "respondeu_fup"
+```
+
+### Impacto Esperado
+- Métricas de reativação refletirão dados reais
+- Taxa de resposta por etapa FUP (1→8) será mensurável
+- Estudo de Rotas poderá identificar quais gatilhos (Urgência, Prova Social, Escassez etc.) geram engajamento real
+- Diferenciação entre "respondeu mas não qualificou" vs. "ignorou completamente"
+
+### Campos a preencher no DS Thread
+| Campo | Valor | Quando |
+|-------|-------|--------|
+| `respondeu` | `TRUE` | Qualquer resposta WhatsApp recebida |
+| `data_resposta` | `ISO 8601 timestamp` | Momento da 1ª resposta |
+| `status_resposta` | `"respondeu_fup"` | Resposta durante sequência FUP |
+
+---
+
+## 8. Recomendações Gerais
 
 1. **Mapear campos TS** no `cron-sync` para preencher `data_qualificacao` e `data_entrada`
 2. **Padronizar formato de datas** no DS Thread (ISO 8601)
-3. **Preencher `data_resposta`** via automação Make quando lead responde
+3. **Implementar trigger de `respondeu`** conforme seção 7 acima
 4. **Limpar datas futuras** (>hoje) e datas anteriores a 01/01/2026 se fora do escopo
 5. **Preencher `historico[]`** corretamente no webhook de mensagens
+6. **Preencher `data_resposta`** via automação Make quando lead responde (qualquer robô)
