@@ -506,20 +506,20 @@ export function getMonthlyData(proposals: Proposal[]) {
 
 // Forecast - Previsão de receita
 export function getForecastData(proposals: Proposal[]) {
-  const hoje = new Date();
   const abertos = proposals.filter(p => p.status === 'Aberto');
+  const ganhos = proposals.filter(p => p.status === 'Ganho');
   
-  // Previsão 30 dias
+  // Previsão 30 dias (alta confiança: prob >= 70%)
   const forecast30 = abertos
     .filter(p => p.probabilidade >= 70)
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
-  // Previsão 60 dias
+  // Previsão 60 dias (média + alta: prob >= 40%)
   const forecast60 = abertos
     .filter(p => p.probabilidade >= 40)
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
-  // Previsão 90 dias
+  // Previsão 90 dias (todo pipeline aberto)
   const forecast90 = abertos
     .reduce((acc, p) => acc + (p.valorProposta * p.probabilidade / 100), 0);
   
@@ -548,6 +548,32 @@ export function getForecastData(proposals: Proposal[]) {
     { faixa: '51-75%', quantidade: abertos.filter(p => p.probabilidade > 50 && p.probabilidade <= 75).length, valor: abertos.filter(p => p.probabilidade > 50 && p.probabilidade <= 75).reduce((a, p) => a + p.valorProposta, 0) },
     { faixa: '76-100%', quantidade: abertos.filter(p => p.probabilidade > 75).length, valor: abertos.filter(p => p.probabilidade > 75).reduce((a, p) => a + p.valorProposta, 0) }
   ];
+
+  // === Contratos (Ganhos) ===
+  const receitaConfirmada = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
+  const potenciaConfirmada = ganhos.reduce((acc, p) => acc + p.potenciaSistema, 0);
+  const totalContratos = ganhos.length;
+  const ticketMedioContrato = totalContratos > 0 ? receitaConfirmada / totalContratos : 0;
+
+  // Distribuição por etapa (para visão detalhada)
+  const etapaMap = new Map<string, { count: number; valor: number; potencia: number; prob: number }>();
+  abertos.forEach(p => {
+    const etapa = p.etapa || 'SEM ETAPA';
+    const curr = etapaMap.get(etapa) || { count: 0, valor: 0, potencia: 0, prob: 0 };
+    curr.count++;
+    curr.valor += p.valorProposta;
+    curr.potencia += p.potenciaSistema;
+    curr.prob += p.probabilidade;
+    etapaMap.set(etapa, curr);
+  });
+  const distribuicaoPorEtapa = Array.from(etapaMap.entries()).map(([etapa, d]) => ({
+    etapa,
+    quantidade: d.count,
+    valor: d.valor,
+    valorPonderado: d.valor * (d.prob / d.count) / 100,
+    potencia: d.potencia,
+    probabilidadeMedia: Math.round(d.prob / d.count),
+  })).sort((a, b) => b.probabilidadeMedia - a.probabilidadeMedia);
   
   return {
     forecast30,
@@ -559,7 +585,14 @@ export function getForecastData(proposals: Proposal[]) {
     altaProbabilidade,
     emRisco,
     distribuicao,
-    pipelinePonderado: forecast90
+    pipelinePonderado: forecast90,
+    // Novos campos: Contratos
+    receitaConfirmada,
+    potenciaConfirmada,
+    totalContratos,
+    ticketMedioContrato,
+    totalPropostasAbertas: abertos.length,
+    distribuicaoPorEtapa,
   };
 }
 
