@@ -37,10 +37,9 @@ interface MakeResponse {
  * "5"=Aceita/Ganha → Ganho
  * fase_sm OPERACIONAL → Ganho (pós-venda)
  */
-export function mapStatusProposta(statusProposta: string, faseSM?: string): 'Aberto' | 'Ganho' | 'Perdido' {
+export function mapStatusProposta(statusProposta: string, _faseSM?: string): 'Aberto' | 'Ganho' | 'Perdido' {
   if (statusProposta === '5') return 'Ganho';
   if (statusProposta === '3' || statusProposta === '4') return 'Perdido';
-  if ((faseSM || '').toUpperCase() === 'OPERACIONAL') return 'Ganho';
   return 'Aberto';
 }
 
