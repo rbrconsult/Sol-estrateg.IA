@@ -241,33 +241,35 @@ export default function Leads() {
       "NEGOCIAÇÃO": { label: "Negociação", maxDias: 7 },
     };
 
-    // SLA por etapa: tempo desde data_envio para leads ativos
+    // SLA por etapa: usa SOMENTE dataEntrada (sem fallback para evitar distorções)
     const ativos = filtered.filter(r => r.makeStatus && !["PERDIDO", "DESQUALIFICADO", "GANHO"].includes(r.makeStatus.toUpperCase()));
     const etapaSLA = Object.entries(SLA_ETAPA).map(([etapa, config]) => {
       const leads = ativos.filter(r => getEtapaLabel(r) === etapa);
-      const tempos = leads.map(r => {
-        const d = safeDate(r.data_envio || r.dataEntrada);
+      const comData = leads.filter(r => !!r.dataEntrada);
+      const tempos = comData.map(r => {
+        const d = safeDate(r.dataEntrada);
         if (!d) return 0;
         return Math.max(0, (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
       }).filter(t => t > 0 && t < 365);
       const media = tempos.length > 0 ? tempos.reduce((a, b) => a + b, 0) / tempos.length : 0;
       const foraDoSLA = tempos.filter(t => t > config.maxDias).length;
-      return { etapa, ...config, quantidade: leads.length, media: Math.round(media * 10) / 10, foraDoSLA };
+      const semData = leads.length - comData.length;
+      return { etapa, ...config, quantidade: leads.length, media: Math.round(media * 10) / 10, foraDoSLA, semData, comDados: tempos.length };
     }).filter(e => e.quantidade > 0);
 
     const totalForaSLA = etapaSLA.reduce((a, e) => a + e.foraDoSLA, 0);
 
-    // SLA robôs
-    const comResposta = filtered.filter(r => r.data_envio && r.data_resposta);
+    // SLA robôs: usa dataEntrada → data_resposta (ambos devem existir)
+    const comResposta = filtered.filter(r => r.dataEntrada && r.data_resposta);
     const temposRobo = comResposta.map(r => {
-      const envio = safeDate(r.data_envio);
+      const envio = safeDate(r.dataEntrada);
       const resp = safeDate(r.data_resposta);
       if (!envio || !resp) return -1;
       return Math.max(0, (resp.getTime() - envio.getTime()) / (1000 * 60 * 60));
     }).filter(h => h >= 0 && h < 720);
     const mediaRoboHoras = temposRobo.length > 0 ? temposRobo.reduce((a, b) => a + b, 0) / temposRobo.length : 0;
 
-    // SLA 1º atendimento (data_entrada → data de qualificação/resposta)
+    // SLA 1º atendimento (data_entrada → data_resposta)
     const comQualif = filtered.filter(r => r.dataEntrada && r.data_resposta);
     const temposAtend = comQualif.map(r => {
       const entrada = safeDate(r.dataEntrada);
@@ -279,7 +281,11 @@ export default function Leads() {
     const dentroSLA24h = temposAtend.filter(d => d <= 1).length;
     const taxaSLA24h = temposAtend.length > 0 ? (dentroSLA24h / temposAtend.length) * 100 : 0;
 
-    return { etapaSLA, totalForaSLA, mediaRoboHoras, mediaAtend, taxaSLA24h, dentroSLA24h, temposAtendCount: temposAtend.length };
+    // Flag: dados insuficientes
+    const totalComEntrada = filtered.filter(r => !!r.dataEntrada).length;
+    const dadosInsuficientes = temposAtend.length === 0;
+
+    return { etapaSLA, totalForaSLA, mediaRoboHoras, mediaAtend, taxaSLA24h, dentroSLA24h, temposAtendCount: temposAtend.length, dadosInsuficientes, totalComEntrada, totalLeads: filtered.length };
   }, [filtered]);
 
   /* ── Robot Insights (MakeRecord only) ── */
@@ -520,40 +526,58 @@ export default function Leads() {
             </div>
           </div>
           <div className="p-6 space-y-6">
+            {/* Aviso de dados insuficientes */}
+            {slaData.dadosInsuficientes && (
+              <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Dados insuficientes para SLA de 1º Atendimento</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    O DS Thread não possui o campo <code className="bg-muted px-1 rounded text-[10px]">data_qualificacao</code> preenchido junto com <code className="bg-muted px-1 rounded text-[10px]">respondeu = true</code>.
+                    {slaData.totalLeads - slaData.totalComEntrada > 0 && (
+                      <> Além disso, <strong>{slaData.totalLeads - slaData.totalComEntrada}</strong> leads estão sem <code className="bg-muted px-1 rounded text-[10px]">data_entrada</code>.</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[
                 {
                   label: "Tempo Médio 1º Atendimento",
-                  value: slaData.mediaAtend > 0 ? `${slaData.mediaAtend.toFixed(1)}d` : "—",
-                  sub: `${slaData.temposAtendCount} leads`,
-                  status: slaData.mediaAtend <= 1 ? "ok" : slaData.mediaAtend <= 3 ? "warning" : "overdue" as const,
+                  value: slaData.temposAtendCount > 0 ? `${slaData.mediaAtend.toFixed(1)}d` : "—",
+                  sub: slaData.temposAtendCount > 0 ? `${slaData.temposAtendCount} leads` : "Sem dados no DS",
+                  status: slaData.temposAtendCount === 0 ? "nodata" : slaData.mediaAtend <= 1 ? "ok" : slaData.mediaAtend <= 3 ? "warning" : "overdue" as const,
                 },
                 {
                   label: "Dentro SLA 24h",
-                  value: `${slaData.taxaSLA24h.toFixed(0)}%`,
-                  sub: `${slaData.dentroSLA24h} de ${slaData.temposAtendCount}`,
-                  status: slaData.taxaSLA24h >= 80 ? "ok" : slaData.taxaSLA24h >= 50 ? "warning" : "overdue" as const,
+                  value: slaData.temposAtendCount > 0 ? `${slaData.taxaSLA24h.toFixed(0)}%` : "—",
+                  sub: slaData.temposAtendCount > 0 ? `${slaData.dentroSLA24h} de ${slaData.temposAtendCount}` : "Sem dados no DS",
+                  status: slaData.temposAtendCount === 0 ? "nodata" : slaData.taxaSLA24h >= 80 ? "ok" : slaData.taxaSLA24h >= 50 ? "warning" : "overdue" as const,
                 },
                 {
                   label: "SLA Robôs (resp.)",
                   value: slaData.mediaRoboHoras > 0 ? `${slaData.mediaRoboHoras.toFixed(1)}h` : "—",
-                  sub: `${kpis.responderam} responderam`,
-                  status: slaData.mediaRoboHoras <= 4 ? "ok" : slaData.mediaRoboHoras <= 12 ? "warning" : "overdue" as const,
+                  sub: kpis.responderam > 0 ? `${kpis.responderam} responderam` : "Sem dados no DS",
+                  status: slaData.mediaRoboHoras === 0 ? "nodata" : slaData.mediaRoboHoras <= 4 ? "ok" : slaData.mediaRoboHoras <= 12 ? "warning" : "overdue" as const,
                 },
               ].map((kpi, i) => (
                 <div key={i} className={cn(
                   "rounded-lg p-3 border",
+                  kpi.status === "nodata" ? "border-border/50 bg-muted/30" :
                   kpi.status === "ok" ? "border-primary/20 bg-primary/5" :
                   kpi.status === "warning" ? "border-warning/30 bg-warning/5" :
                   "border-destructive/30 bg-destructive/5"
                 )}>
                   <div className="flex items-center gap-1.5 mb-2">
-                    {kpi.status === "ok" ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> :
+                    {kpi.status === "nodata" ? <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" /> :
+                     kpi.status === "ok" ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> :
                      kpi.status === "warning" ? <Clock className="h-3.5 w-3.5 text-warning" /> :
                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{kpi.label}</span>
                   </div>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">{kpi.value}</p>
+                  <p className={cn("text-2xl font-bold tabular-nums", kpi.status === "nodata" ? "text-muted-foreground" : "text-foreground")}>{kpi.value}</p>
                   <p className="text-[10px] text-muted-foreground mt-1">{kpi.sub}</p>
                 </div>
               ))}
@@ -564,26 +588,32 @@ export default function Leads() {
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-medium">SLA por Etapa do Funil</p>
                 <div className="space-y-2">
                   {slaData.etapaSLA.map((e, i) => {
-                    const status = e.media <= e.maxDias * 0.6 ? "ok" : e.media <= e.maxDias ? "warning" : "overdue";
-                    const pct = Math.min((e.media / e.maxDias) * 100, 150);
+                    const hasData = e.comDados > 0;
+                    const status = !hasData ? "nodata" : e.media <= e.maxDias * 0.6 ? "ok" : e.media <= e.maxDias ? "warning" : "overdue";
+                    const pct = hasData ? Math.min((e.media / e.maxDias) * 100, 150) : 0;
                     return (
                       <div key={i} className="flex items-center gap-3">
                         <span className="w-32 text-[11px] text-muted-foreground truncate">{e.label}</span>
                         <div className="flex-1 h-5 rounded bg-secondary/50 overflow-hidden relative">
-                          <div
-                            className={cn(
-                              "h-full rounded transition-all duration-700",
-                              status === "ok" ? "bg-primary/60" : status === "warning" ? "bg-warning/60" : "bg-destructive/60"
-                            )}
-                            style={{ width: `${Math.min(pct, 100)}%` }}
-                          />
+                          {hasData && (
+                            <div
+                              className={cn(
+                                "h-full rounded transition-all duration-700",
+                                status === "ok" ? "bg-primary/60" : status === "warning" ? "bg-warning/60" : "bg-destructive/60"
+                              )}
+                              style={{ width: `${Math.min(pct, 100)}%` }}
+                            />
+                          )}
                           <div className="absolute top-0 h-full w-px bg-foreground/30" style={{ left: `${Math.min((e.maxDias / (e.maxDias * 1.5)) * 100, 100)}%` }} />
                         </div>
-                        <span className={cn("text-xs font-bold w-12 text-right tabular-nums", status === "ok" ? "text-primary" : status === "warning" ? "text-warning" : "text-destructive")}>
-                          {e.media}d
+                        <span className={cn("text-xs font-bold w-12 text-right tabular-nums",
+                          !hasData ? "text-muted-foreground" :
+                          status === "ok" ? "text-primary" : status === "warning" ? "text-warning" : "text-destructive")}>
+                          {hasData ? `${e.media}d` : "—"}
                         </span>
                         <span className="text-[10px] text-muted-foreground w-16 text-right">SLA: {e.maxDias}d</span>
                         {e.foraDoSLA > 0 && <span className="text-[10px] font-semibold text-destructive w-12 text-right">{e.foraDoSLA} fora</span>}
+                        {e.semData > 0 && <span className="text-[10px] text-muted-foreground w-20 text-right" title="Leads sem data_entrada no DS">⚠ {e.semData} s/ data</span>}
                       </div>
                     );
                   })}
