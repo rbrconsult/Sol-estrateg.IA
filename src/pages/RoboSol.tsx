@@ -8,7 +8,8 @@ import { Bot, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { format, parseISO } from 'date-fns';
-import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -232,10 +233,10 @@ function deriveSolData(records: MakeRecord[]) {
 export default function RoboSol() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const allRecords = makeRecords || [];
+  const gf = useGlobalFilters();
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
 
@@ -272,9 +273,9 @@ export default function RoboSol() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setCanal={pf.setCanal} setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setCanal={gf.setCanal} setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa} setStatus={gf.setStatus}
         canais={canais}
         config={{ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
       />

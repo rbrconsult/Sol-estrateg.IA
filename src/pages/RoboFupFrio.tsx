@@ -8,7 +8,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Repeat, RefreshCcw } from 'lucide-react';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { useLead360 } from '@/contexts/Lead360Context';
-import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
@@ -119,10 +120,10 @@ export default function RoboFupFrio() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
+  const gf = useGlobalFilters();
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
 
   const fupData = useMemo(() => deriveFupData(records), [records]);
 
@@ -165,9 +166,9 @@ export default function RoboFupFrio() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setCanal={pf.setCanal} setSearchTerm={pf.setSearchTerm} setTemperatura={pf.setTemperatura} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setCanal={gf.setCanal} setSearchTerm={gf.setSearchTerm} setTemperatura={gf.setTemperatura} setEtapa={gf.setEtapa} setStatus={gf.setStatus}
         canais={canais}
         config={{ showPeriodo: true, showCanal: true, showSearch: true, showTemperatura: true, showEtapa: true, showStatus: true }}
       />

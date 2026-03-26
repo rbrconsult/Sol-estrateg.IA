@@ -80,10 +80,29 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
 
-  // Funil combinado DS Thread + DS Comercial
+  // C1: Apply global date filter to makeRecords
+  const filteredMakeRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+
+  // Filter comercial records by global date range
+  const filteredComercialRecords = useMemo(() => {
+    if (!comercialRecords?.length) return [];
+    const { from, to } = gf.effectiveDateRange;
+    if (!from && !to) return comercialRecords;
+    return comercialRecords.filter(r => {
+      const dateStr = r.tsProposta || r.tsSync;
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return false;
+      if (from) { const f = new Date(from); f.setHours(0,0,0,0); if (d < f) return false; }
+      if (to) { const t = new Date(to); t.setHours(23,59,59,999); if (d > t) return false; }
+      return true;
+    });
+  }, [comercialRecords, gf.effectiveDateRange]);
+
+  // Funil combinado DS Thread + DS Comercial (filtered)
   const combinedFunnelData = useMemo(() => {
     const threadCounts: Record<string, number> = {};
-    for (const r of makeRecords || []) {
+    for (const r of filteredMakeRecords) {
       let etapa = (r.etapaFunil || 'TRAFEGO PAGO').toUpperCase();
       if (etapa === 'PROSPECAO') etapa = 'PROSPECÇÃO';
       if (etapa === 'QUALIFICACAO') etapa = 'QUALIFICAÇÃO';
@@ -91,7 +110,7 @@ const Index = () => {
       threadCounts[etapa] = (threadCounts[etapa] || 0) + 1;
     }
     const comercialCounts: Record<string, { qty: number; valor: number }> = {};
-    for (const r of comercialRecords || []) {
+    for (const r of filteredComercialRecords) {
       let etapa = (r.etapaSM || '').toUpperCase();
       if (CONTRATO_AGRUPADOS.has(etapa)) etapa = 'CONTRATO ASSINADO';
       if (!etapa) etapa = 'PROPOSTA';
@@ -106,10 +125,7 @@ const Index = () => {
       valor: threadStages.has(etapa) ? 0 : (comercialCounts[etapa]?.valor || 0),
       taxaConversao: 0,
     })).filter(d => d.quantidade > 0);
-  }, [makeRecords, comercialRecords]);
-
-  // C1: Apply global date filter to makeRecords
-  const filteredMakeRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+  }, [filteredMakeRecords, filteredComercialRecords]);
 
   // ── KPIs do DS Thread (MQL, SQL) — now filtered by period ──
   const threadKpis = useMemo(() => {
@@ -130,10 +146,9 @@ const Index = () => {
     return { mql, sql, total: records.length, contatados, criadosHoje };
   }, [filteredMakeRecords]);
 
-  // ── KPIs do DS Comercial (Agendamentos, Fechados) — also filtered ──
+  // ── KPIs do DS Comercial (Agendamentos, Fechados) — filtered by global date ──
   const comercialKpis = useMemo(() => {
-    const records = comercialRecords || [];
-    // TODO: apply date filtering to comercial records when dataCriacaoProposta is available
+    const records = filteredComercialRecords;
     const agendamentos = records.filter(r =>
       ['CONTATO REALIZADO', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'PROPOSTA'].includes(r.etapaSM?.toUpperCase())
     ).length;
@@ -145,7 +160,7 @@ const Index = () => {
     const fechados = ganhos.length;
     const valorFechado = ganhos.reduce((acc, r) => acc + r.valorProposta, 0);
     return { agendamentos, fechados, valorFechado, emInstalacao: emInstalacao.length };
-  }, [comercialRecords]);
+  }, [filteredComercialRecords]);
 
   const meta = useMemo(() => {
     const saved = localStorage.getItem(STORAGE_KEY);

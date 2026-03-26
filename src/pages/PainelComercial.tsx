@@ -25,7 +25,8 @@ import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 /* ── helpers ───────────────────────────────────────────── */
 
@@ -244,16 +245,8 @@ function deriveSummary(records: MakeRecord[]) {
   return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios };
 }
 
-/* ── report history mock (these come from Make, not DS) ── */
-
-const mensagensReports = [
-  { id: 1, tipo: "executivo", titulo: "Relatório Executivo Diário", enviadoPara: "Diretoria", data: "16/03/2026 07:00", status: "enviado" },
-  { id: 2, tipo: "closer", titulo: "Performance por Closer", enviadoPara: "Gerente Comercial", data: "16/03/2026 07:05", status: "enviado" },
-  { id: 3, tipo: "robos", titulo: "Relatório dos Robôs", enviadoPara: "Gerente + Diretor", data: "16/03/2026 07:10", status: "enviado" },
-  { id: 4, tipo: "campanha", titulo: "Campanha + Insights", enviadoPara: "Diretoria + MKT", data: "10/03/2026 08:00", status: "enviado" },
-  { id: 5, tipo: "executivo", titulo: "Relatório Executivo Diário", enviadoPara: "Diretoria", data: "15/03/2026 07:00", status: "enviado" },
-  { id: 6, tipo: "robos", titulo: "Relatório dos Robôs", enviadoPara: "Gerente + Diretor", data: "15/03/2026 07:10", status: "falhou" },
-];
+/* ── report history — empty, will be populated from real data ── */
+const mensagensReports: { id: number; tipo: string; titulo: string; enviadoPara: string; data: string; status: string }[] = [];
 
 /* ── component ─────────────────────────────────────────── */
 
@@ -265,13 +258,14 @@ export default function PainelComercial() {
   const { selectedOrgName } = useOrgFilter();
 
   const allRecords = makeRecords || [];
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const gf = useGlobalFilters();
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const filteredProposals = useMemo(() => gf.filterProposals(proposals), [proposals, gf.filterProposals]);
 
   const alerts = useMemo(() => deriveAlerts(records), [records]);
   const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
   const summary = useMemo(() => deriveSummary(records), [records]);
-  const forecastData = useMemo(() => proposals.length > 0 ? getForecastData(proposals) : null, [proposals]);
+  const forecastData = useMemo(() => filteredProposals.length > 0 ? getForecastData(filteredProposals) : null, [filteredProposals]);
 
   const handleOpenLead = (lead: CloserLead) => {
     openLead360({
@@ -314,9 +308,9 @@ export default function PainelComercial() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa} setStatus={gf.setStatus}
         config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
       />
 

@@ -13,7 +13,8 @@ import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Repeat, Users, DollarSign, Clock, Zap, TrendingUp, MessageSquare, Target, RefreshCcw,
 } from "lucide-react";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
@@ -153,10 +154,10 @@ export default function AnalistaFollowup() {
   const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
   const { openLead360 } = useLead360();
   const allRecords = makeRecords || [];
+  const gf = useGlobalFilters();
 
   const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const pf = usePageFilters({ showPeriodo: true, showCanal: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
 
   const d = useMemo(() => deriveFupData(records), [records]);
 
@@ -189,9 +190,9 @@ export default function AnalistaFollowup() {
       </div>
 
       <PageFloatingFilter
-        filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
-        setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
-        setCanal={pf.setCanal} setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
+        filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
+        setPeriodo={gf.setPeriodo} setDateFrom={gf.setDateFrom} setDateTo={gf.setDateTo}
+        setCanal={gf.setCanal} setTemperatura={gf.setTemperatura} setSearchTerm={gf.setSearchTerm} setEtapa={gf.setEtapa} setStatus={gf.setStatus}
         canais={canais}
         config={{ showPeriodo: true, showCanal: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
       />
