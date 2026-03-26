@@ -229,7 +229,7 @@ function deriveSolData(records: MakeRecord[]) {
 
   return {
     kpis: { conversasIniciadas: total, taxaResposta: +taxaResposta.toFixed(1), leadsQualificados: qualificados, taxaQualificacao: +taxaQualificacao.toFixed(1), leadsDesqualificados: desqualificados, emQualificacao, scoreMedio, temperatureMedia: tempMedia },
-    funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, heatmap, evolucaoDiaria, leadsRecentes,
+    funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, evolucaoDiaria, leadsRecentes,
   };
 }
 
