@@ -429,7 +429,53 @@ export default function Forecast() {
             </CardContent>
           </Card>
 
-          {/* Comparativo Previsto vs Confirmado */}
+          {/* Tabela de Contratos */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Contratos Fechados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const contratos = filteredProposals
+                  .filter(p => p.status === 'Ganho')
+                  .sort((a, b) => b.valorProposta - a.valorProposta);
+                if (contratos.length === 0) {
+                  return <p className="text-sm text-muted-foreground py-4 text-center">Nenhum contrato fechado no período</p>;
+                }
+                return (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead>Etapa</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="text-right">Potência</TableHead>
+                        <TableHead className="text-right">Data Proposta</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {contratos.map((c) => (
+                        <TableRow key={c.id}>
+                          <TableCell className="font-medium max-w-[200px] truncate">{c.nomeProposta || c.nomeCliente || c.projetoId}</TableCell>
+                          <TableCell>{c.responsavel || '—'}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(c.valorProposta)}</TableCell>
+                          <TableCell className="text-right">{c.potenciaSistema > 0 ? `${formatNumber(c.potenciaSistema)} kWh` : '—'}</TableCell>
+                          <TableCell className="text-right text-muted-foreground text-xs">
+                            {c.dataCriacaoProposta ? new Date(c.dataCriacaoProposta).toLocaleDateString('pt-BR') : '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Previsto vs Confirmado</CardTitle>
