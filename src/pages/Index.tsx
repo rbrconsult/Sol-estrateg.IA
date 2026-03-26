@@ -305,7 +305,7 @@ const Index = () => {
                 topVendedor={topVendedor}
                 funnelBottleneck={funnelBottleneck}
               />
-              <GoalProgress valorFechado={comercialKpis.valorFechado || kpis.valorGanho} receitaPrevista={kpis.receitaPrevista} />
+              <GoalProgress valorFechado={comercialKpis.valorFechado > 0 ? comercialKpis.valorFechado : kpis.valorGanho} receitaPrevista={kpis.receitaPrevista} />
             </div>
             <HealthScore proposals={filteredProposals} kpis={kpis} vendedorPerformance={vendedorPerformance} />
           </div>
