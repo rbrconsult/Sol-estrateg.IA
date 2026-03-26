@@ -170,7 +170,45 @@ Remover `LEAD_FRIO` da função `isDesqualificado()` ou criar uma terceira class
 
 ---
 
-## 9. Recomendações Gerais
+## 9. Pipeline (Kanban)
+
+| Campo/Lógica | Problema | Impacto |
+|-------|----------|---------|
+| `CONTRATO_AGRUPADOS` (linha 24-29) | Constante definida mas **nunca usada** | Código morto; agrupamento de etapas pós-contrato não ocorre |
+| Thread leads sem filtro global | `threadLeads` não passa por `gf.filterProposals()` (linha 72-81 vs 59-61) | Leads pré-venda ignoram filtro de período, busca, temperatura e etapa |
+| `counts.abertos` inflado | Soma `filteredProposals` (filtrado) + `threadLeads.length` (não filtrado) — linha 85 | Contador "Abertos" mostra total errado quando filtros estão ativos |
+| `valorProposta: 0` hardcoded | Todos os thread leads têm valor R$0 (linha 114) | Totais financeiros nas colunas pré-venda zerados; distorce visão de pipeline |
+| `potenciaSistema: 0` hardcoded | Idem (linha 115) | kWp total das colunas pré-venda sempre zero |
+| `origemLead: ''` | Thread leads sem origem (linha 130) | Impossível filtrar/analisar leads por canal no Kanban |
+| `probabilidade: 50` hardcoded | Todos os thread leads com 50% (linha 131) | Se usado no Forecast, previsão financeira será genérica |
+| `temperatura` cast `as any` | Type safety quebrada (linha 123) | Possível crash se valor inesperado |
+| Badges de origem ausentes | Projeto prevê badges "SOL SDR" / "Solar Market" mas não estão implementados | Usuário não distingue origem do lead visualmente |
+| `etapaFunil` normalização parcial | Só converte PROSPECAO, QUALIFICACAO, SOL SDR (linhas 98-101) | Outras variações de etapa caem em TRAFEGO PAGO incorretamente |
+
+**DS de origem:** DS Thread (etapas 1-6), DS Comercial (etapas 7-9)
+
+**⚠️ Bug crítico:** Thread leads não são filtrados pelos filtros globais (período, busca, temperatura), mas leads comerciais sim. Quando o usuário filtra por "últimos 7 dias", os cards pré-venda mostram **todos** os leads do DS Thread, enquanto os cards comerciais mostram apenas os do período selecionado.
+
+**Correção sugerida:**
+1. Aplicar `gf.filterProposals()` nos thread leads convertidos, ou criar filtro equivalente sobre `makeRecords` antes da conversão
+2. Remover `CONTRATO_AGRUPADOS` ou implementar o agrupamento pretendido
+3. Implementar badges visuais de origem (SOL SDR / Solar Market) nos ProjectCards
+4. Mapear `origemLead` a partir de `canal_origem` do DS Thread
+
+---
+
+## 10. Recomendações Gerais
+
+1. **Mapear campos TS** no `cron-sync` para preencher `data_qualificacao` e `data_entrada`
+2. **Padronizar formato de datas** no DS Thread (ISO 8601)
+3. **Implementar trigger de `respondeu`** conforme seção 7 acima
+4. **Limpar datas futuras** (>hoje) e datas anteriores a 01/01/2026 se fora do escopo
+5. **Preencher `historico[]`** corretamente no webhook de mensagens
+6. **Preencher `data_resposta`** via automação Make quando lead responde (qualquer robô)
+7. **Revisar classificação `LEAD_FRIO`** — não deve ser tratado como desqualificado na página de Qualificação
+8. **Mover URLs de webhook** para configuração dinâmica (organization_configs) em vez de hardcoded
+9. **Filtrar thread leads** pelos mesmos filtros globais aplicados aos leads comerciais no Pipeline
+10. **Implementar badges de origem** (SOL SDR / Solar Market) no Kanban conforme especificação
 
 1. **Mapear campos TS** no `cron-sync` para preencher `data_qualificacao` e `data_entrada`
 2. **Padronizar formato de datas** no DS Thread (ISO 8601)
