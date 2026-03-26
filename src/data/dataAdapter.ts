@@ -560,11 +560,24 @@ export function getForecastData(proposals: Proposal[]) {
     { faixa: '76-100%', quantidade: abertos.filter(p => p.probabilidade > 75).length, valor: abertos.filter(p => p.probabilidade > 75).reduce((a, p) => a + p.valorProposta, 0) }
   ];
 
-  // === Contratos (Ganhos) ===
-  const receitaConfirmada = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
-  const potenciaConfirmada = ganhos.reduce((acc, p) => acc + p.potenciaSistema, 0);
-  const totalContratos = ganhos.length;
-  const ticketMedioContrato = totalContratos > 0 ? receitaConfirmada / totalContratos : 0;
+  // === Contratos / Receita ===
+  // Receita Confirmada = somente etapa COBRANÇA (faturamento real)
+  const ETAPAS_COBRANCA = new Set(['COBRANÇA', 'COBRANCA']);
+  const emCobranca = ganhos.filter(p => ETAPAS_COBRANCA.has((p.etapa || '').toUpperCase()));
+  const receitaConfirmada = emCobranca.reduce((acc, p) => acc + p.valorProposta, 0);
+  const potenciaConfirmada = emCobranca.reduce((acc, p) => acc + p.potenciaSistema, 0);
+  const totalCobranca = emCobranca.length;
+  const ticketMedioCobranca = totalCobranca > 0 ? receitaConfirmada / totalCobranca : 0;
+
+  // Propostas Aceitas = todos os Ganhos (aceite de proposta / fase_sm)
+  const propostasAceitas = ganhos;
+  const totalPropostasAceitas = propostasAceitas.length;
+  const valorPropostasAceitas = propostasAceitas.reduce((a, p) => a + p.valorProposta, 0);
+  const ticketMedioAceitas = totalPropostasAceitas > 0 ? valorPropostasAceitas / totalPropostasAceitas : 0;
+
+  // Manter compat
+  const totalContratos = totalPropostasAceitas;
+  const ticketMedioContrato = ticketMedioAceitas;
 
   // === Funil Contrato → Receita ===
   // Negócios Iniciados = propostas criadas no SM (todos os registros com valor > 0 ou etapa >= PROPOSTA)
