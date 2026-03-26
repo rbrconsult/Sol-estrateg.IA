@@ -69,7 +69,7 @@ function getSolStage(etapa: string, status: string): string {
 
 // ─── Main Hook ───
 export function useBIData(dateRange?: DateRange) {
-  const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useEnrichedProposals();
+  const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useOrgFilteredProposals();
   const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
 
   // Filter by date range
