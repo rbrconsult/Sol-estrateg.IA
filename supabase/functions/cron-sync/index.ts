@@ -207,9 +207,17 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
     };
 
     // CRITICAL: Only set data_entrada if we have a real parsed value
-    // This prevents overwriting existing DB values with null on each sync
+    // AND it falls within a valid range (2020-01-01 to tomorrow)
     if (parsedDataEntrada) {
-      record.data_entrada = parsedDataEntrada;
+      const parsedDate = new Date(parsedDataEntrada);
+      const minDate = new Date('2020-01-01T00:00:00Z');
+      const maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + 1);
+      if (parsedDate >= minDate && parsedDate <= maxDate) {
+        record.data_entrada = parsedDataEntrada;
+      } else {
+        console.warn(`[${creds.orgName}] Rejecting data_entrada out of range: ${parsedDataEntrada} for phone ${phone}`);
+      }
     }
 
     return record;
