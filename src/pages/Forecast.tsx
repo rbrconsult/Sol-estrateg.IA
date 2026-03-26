@@ -3,7 +3,7 @@ import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { getForecastData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
-import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3 } from "lucide-react";
+import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
