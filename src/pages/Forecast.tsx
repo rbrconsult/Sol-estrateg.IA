@@ -505,8 +505,8 @@ export default function Forecast() {
                               <TableCell>
                                 <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
                               </TableCell>
-                              <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(c.valorProposta)}</TableCell>
-                              <TableCell className="text-right">{c.potenciaSistema > 0 ? `${formatNumber(c.potenciaSistema)} kWh` : '—'}</TableCell>
+                              <TableCell className="text-right font-semibold">{formatCurrencyFull(c.valorProposta)}</TableCell>
+                              <TableCell className="text-right">{c.potenciaSistema > 0 ? `${c.potenciaSistema.toFixed(2)} kWh` : '—'}</TableCell>
                               <TableCell className="text-right text-muted-foreground text-xs">
                                 {c.dataCriacaoProposta ? new Date(c.dataCriacaoProposta).toLocaleDateString('pt-BR') : '—'}
                               </TableCell>
