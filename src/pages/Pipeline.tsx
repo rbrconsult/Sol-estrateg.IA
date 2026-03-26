@@ -68,17 +68,19 @@ const Pipeline = () => {
     return filteredProposals.filter(p => p.status === 'Perdido');
   }, [filteredProposals, statusView]);
 
-  // Leads ativos do DS Thread (sem desqualificados)
+  // Leads ativos do DS Thread (sem desqualificados) + filtros globais aplicados
   const threadLeads = useMemo(() => {
     if (!makeRecords?.length) return [];
-    return makeRecords.filter(r => {
+    const ativos = makeRecords.filter(r => {
       const statusUp = (r.makeStatus || '').toUpperCase();
       if (STATUS_EXCLUIR.has(statusUp)) return false;
       const etapa = (r.etapaFunil || '').toUpperCase();
       if (etapa === 'DECLINIO' || etapa === 'DECLÍNIO') return false;
       return true;
     });
-  }, [makeRecords]);
+    // Aplicar filtros globais (período, temperatura, busca, etapa, status)
+    return gf.filterRecords(ativos);
+  }, [makeRecords, gf.filterRecords]);
 
   // Contagens por status
   const counts = useMemo(() => ({
