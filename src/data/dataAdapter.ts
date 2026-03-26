@@ -171,7 +171,7 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
   return records.map((item, index) => {
     const status = mapStatus(item.statusProposta, item.etapaSM);
     const etapa = item.etapaSM?.trim() || 'TRAFEGO PAGO';
-    const ultimaAtualizacao = parseDate(item.tsProposta) || new Date().toISOString().split('T')[0];
+    const ultimaAtualizacao = parseDate(item.tsSync) || parseDate(item.tsProposta) || new Date().toISOString().split('T')[0];
     const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao);
     const etiquetas = (item.etiquetas || '').trim();
 
