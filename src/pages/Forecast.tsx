@@ -406,7 +406,8 @@ export default function Forecast() {
                   { etapa: 'Qualificados', quantidade: forecastData.totalLeadsQualificados, valor: forecastData.valorLeadsQualificados },
                   { etapa: 'Propostas', quantidade: forecastData.totalPropostasGeradas, valor: forecastData.valorPropostasGeradas },
                   { etapa: 'Negócios', quantidade: forecastData.totalNegociosIniciados, valor: forecastData.valorNegociosIniciados },
-                  { etapa: 'Fechados', quantidade: forecastData.totalContratos, valor: forecastData.receitaConfirmada },
+                  { etapa: 'Aceitas', quantidade: forecastData.totalPropostasAceitas, valor: forecastData.valorPropostasAceitas },
+                  { etapa: 'Cobrança', quantidade: forecastData.totalCobranca, valor: forecastData.receitaConfirmada },
                 ]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="etapa" stroke="hsl(var(--muted-foreground))" />
