@@ -343,7 +343,7 @@ export default function Forecast() {
                 </div>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-300">{forecastData.totalPropostasAceitas}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formatCurrencyAbbrev(forecastData.valorPropostasAceitas)} · TM {formatCurrencyAbbrev(forecastData.ticketMedioAceitas)}
+                  {formatCurrencyFull(forecastData.valorPropostasAceitas)} · TM {formatCurrencyFull(forecastData.ticketMedioAceitas)}
                 </p>
               </CardContent>
             </Card>
@@ -357,9 +357,9 @@ export default function Forecast() {
                   <DollarSign className="h-4 w-4" />
                   <span className="text-xs font-medium">Receita Confirmada</span>
                 </div>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrencyAbbrev(forecastData.receitaConfirmada)}</p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrencyFull(forecastData.receitaConfirmada)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {forecastData.totalCobranca} Aceitas · TM {formatCurrencyAbbrev(forecastData.ticketMedioCobranca)}
+                  {forecastData.totalCobranca} Aceitas · TM {formatCurrencyFull(forecastData.ticketMedioCobranca)}
                 </p>
               </CardContent>
             </Card>
@@ -370,7 +370,7 @@ export default function Forecast() {
                   <Zap className="h-4 w-4" />
                   <span className="text-xs font-medium">Potência Confirmada</span>
                 </div>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{forecastData.potenciaConfirmada.toFixed(2)} kWh</p>
                 <p className="text-xs text-muted-foreground mt-1">Somente Propostas Aceitas</p>
               </CardContent>
             </Card>
