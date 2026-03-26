@@ -45,6 +45,20 @@ function TempBadge({ temp }: { temp: string }) {
   return <Badge className={`${c} text-xs`}>{temp}</Badge>;
 }
 
+function KPICardAnimated({ label, value, suffix, color, pulse }: { label: string; value: number; suffix?: string; color: string; pulse?: boolean }) {
+  const anim = useAnimatedNumber(value);
+  return (
+    <Card className={pulse ? 'ring-1 ring-info/50' : ''}>
+      <CardContent className="p-3 text-center">
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+        <p className={`text-xl font-bold ${color}`}>
+          {suffix === '%' ? anim.toFixed(1) : Math.round(anim).toLocaleString('pt-BR')}{suffix || ''}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function deriveSolData(records: MakeRecord[]) {
   const solRecords = records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.followupCount ?? 0) === 0));
   const total = solRecords.length;
