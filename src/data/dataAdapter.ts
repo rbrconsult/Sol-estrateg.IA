@@ -153,8 +153,8 @@ export function adaptComercialData(records: ComercialRecord[]): Proposal[] {
     const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao);
     const etiquetas = (item.etiquetas || '').trim();
 
-    // Probabilidade derivada de status
-    let probabilidade = status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : 50;
+    // Probabilidade derivada de etapa + status
+    let probabilidade = calcularProbabilidadePorEtapa(etapa, status);
 
     return {
       id: item.projetoId || `PROP-${String(index).padStart(4, '0')}`,
