@@ -443,9 +443,9 @@ export default function Forecast() {
                 const contratos = filteredProposals
                   .filter(p => p.status === 'Ganho')
                   .sort((a, b) => {
-                    // Ganho confirmado (status_proposta explícito) primeiro
-                    const aConfirm = (a.faseSM || '').toLowerCase().includes('ganho') || (a.faseSM || '').toLowerCase().includes('fechado') ? 1 : 0;
-                    const bConfirm = (b.faseSM || '').toLowerCase().includes('ganho') || (b.faseSM || '').toLowerCase().includes('fechado') ? 1 : 0;
+                    // Ganho confirmado (status_proposta = 5) primeiro
+                    const aConfirm = (a.statusProposta === '5' || a.statusProposta === 'Ganho') ? 1 : 0;
+                    const bConfirm = (b.statusProposta === '5' || b.statusProposta === 'Ganho') ? 1 : 0;
                     if (bConfirm !== aConfirm) return bConfirm - aConfirm;
                     return b.valorProposta - a.valorProposta;
                   });
@@ -454,8 +454,7 @@ export default function Forecast() {
                 }
 
                 const isGanhoConfirmado = (p: typeof contratos[0]) => {
-                  const fase = (p.faseSM || '').toLowerCase();
-                  return fase.includes('ganho') || fase.includes('fechado') || fase.includes('vencido');
+                  return p.statusProposta === '5' || (p.statusProposta || '').toLowerCase() === 'ganho';
                 };
 
                 const ganhoCount = contratos.filter(isGanhoConfirmado).length;
