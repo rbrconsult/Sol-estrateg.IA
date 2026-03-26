@@ -116,7 +116,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 7d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast7)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWp · prob ≥ 90%</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWh · prob ≥ 90%</p>
               </CardContent>
             </Card>
             <Card>
@@ -126,7 +126,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 14d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast14)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWp · prob ≥ 70%</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWh · prob ≥ 70%</p>
               </CardContent>
             </Card>
             <Card>
@@ -136,7 +136,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 21d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast21)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWp · prob ≥ 40%</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWh · prob ≥ 40%</p>
               </CardContent>
             </Card>
             <Card>
@@ -146,7 +146,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 28d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast28)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWp · todo pipeline</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWh · todo pipeline</p>
               </CardContent>
             </Card>
             <Card>
@@ -167,7 +167,7 @@ export default function Forecast() {
             <Tabs value={pipelineMode} onValueChange={(v) => setPipelineMode(v as any)}>
               <TabsList>
                 <TabsTrigger value="receita">R$ Receita</TabsTrigger>
-                <TabsTrigger value="potencia">kWp Potência</TabsTrigger>
+                <TabsTrigger value="potencia">kWh Potência</TabsTrigger>
                 <TabsTrigger value="ambos">Ambos</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -278,7 +278,7 @@ export default function Forecast() {
                         </TableCell>
                         <TableCell className="text-right">{formatCurrencyAbbrev(row.valor)}</TableCell>
                         <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(row.valorPonderado)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(row.potencia)} kWp</TableCell>
+                        <TableCell className="text-right">{formatNumber(row.potencia)} kWh</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -317,7 +317,7 @@ export default function Forecast() {
                   <Zap className="h-4 w-4" />
                   <span className="text-xs font-medium">Potência Confirmada</span>
                 </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatNumber(forecastData.potenciaConfirmada)} kWp</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
                 <p className="text-xs text-muted-foreground mt-1">Instalação contratada</p>
               </CardContent>
             </Card>
