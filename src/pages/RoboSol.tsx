@@ -24,7 +24,7 @@ function useAnimatedNumber(target: number, duration = 1200) {
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const COLORS_MOTIVOS = ['hsl(var(--destructive))', 'hsl(var(--warning))', 'hsl(var(--info))', 'hsl(var(--chart-5))', 'hsl(var(--muted-foreground))'];
-const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
 
 function SLAGauge({ pct, status }: { pct: number; status: string }) {
   const color = status === 'dentro' ? 'hsl(var(--success))' : status === 'depende' ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
