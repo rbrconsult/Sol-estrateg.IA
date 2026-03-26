@@ -44,8 +44,8 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
       { title: "Painel Comercial", icon: Zap, path: "/painel-comercial", moduleKey: "painel-comercial" },
-      { title: "Propostas", icon: FileCheck, path: "/forecast", moduleKey: "forecast" },
-      { title: "Contratos", icon: Handshake, path: "/contratos", moduleKey: "pipeline" },
+      { title: "Forecast", icon: FileCheck, path: "/forecast", moduleKey: "forecast" },
+      { title: "Contratos Fechados", icon: Handshake, path: "/contratos-fechados", moduleKey: "pipeline" },
       { title: "Vendedores", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
       { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes" },
       
