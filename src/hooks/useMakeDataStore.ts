@@ -116,6 +116,8 @@ function rowToMakeRecord(r: any): MakeRecord {
     representante: r.representante || undefined,
     dataProposta: r.data_proposta || undefined,
     dataFechamento: r.data_fechamento || undefined,
+    sentimentoResposta: r.sentimento_resposta || undefined,
+    interesseDetectado: r.interesse_detectado || undefined,
   };
 }
 
