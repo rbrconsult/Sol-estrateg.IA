@@ -160,6 +160,7 @@ const Pipeline = () => {
         origemLead: r.canalOrigem || '',
         probabilidade: 50,
         motivoPerda: '',
+        faseSM: '',
         makeStatus: r.makeStatus,
         makeTemperatura: r.makeTemperatura,
         makeScore: r.makeScore,
