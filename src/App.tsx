@@ -16,6 +16,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
 import Forecast from "./pages/Forecast";
+import Contratos from "./pages/Contratos";
 import Performance from "./pages/Performance";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
