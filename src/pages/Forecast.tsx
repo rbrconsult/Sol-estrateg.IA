@@ -338,35 +338,37 @@ export default function Forecast() {
                   <CheckCircle2 className="h-4 w-4" />
                   <span className="text-xs font-medium">Propostas Aceitas</span>
                 </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{forecastData.totalContratos}</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{forecastData.totalPropostasAceitas}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formatCurrencyAbbrev(forecastData.receitaConfirmada)} · TM {formatCurrencyAbbrev(forecastData.ticketMedioContrato)}
+                  {formatCurrencyAbbrev(forecastData.valorPropostasAceitas)} · TM {formatCurrencyAbbrev(forecastData.ticketMedioAceitas)}
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Row 2: Receita + Indicadores */}
+          {/* Row 2: Receita Confirmada (Cobrança) + Indicadores */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-green-500/30 bg-green-500/5">
+            <Card className="border-emerald-600/30 bg-emerald-600/5">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
                   <DollarSign className="h-4 w-4" />
                   <span className="text-xs font-medium">Receita Confirmada</span>
                 </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatCurrencyAbbrev(forecastData.receitaConfirmada)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Contratos assinados</p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrencyAbbrev(forecastData.receitaConfirmada)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {forecastData.totalCobranca} em Cobrança · TM {formatCurrencyAbbrev(forecastData.ticketMedioCobranca)}
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="border-green-500/30 bg-green-500/5">
+            <Card className="border-emerald-600/30 bg-emerald-600/5">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
                   <Zap className="h-4 w-4" />
                   <span className="text-xs font-medium">Potência Confirmada</span>
                 </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
-                <p className="text-xs text-muted-foreground mt-1">Instalação contratada</p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
+                <p className="text-xs text-muted-foreground mt-1">Somente Cobrança</p>
               </CardContent>
             </Card>
 
@@ -377,7 +379,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Taxa de Conversão</span>
                 </div>
                 <p className="text-2xl font-bold">{formatPercent(forecastData.taxaConversao)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Fechados / Iniciados</p>
+                <p className="text-xs text-muted-foreground mt-1">Aceitas / Iniciados</p>
               </CardContent>
             </Card>
 
