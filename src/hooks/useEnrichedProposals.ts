@@ -4,7 +4,6 @@ import { useMakeComercialData, ComercialRecord } from '@/hooks/useMakeComercialD
 import { useMakeDataStore } from '@/hooks/useMakeDataStore';
 import { adaptComercialData, enrichProposalsWithMake, Proposal } from '@/data/dataAdapter';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
 export interface EnrichedData {
   proposals: Proposal[];
@@ -51,7 +50,6 @@ async function fetchGanhosFallback(): Promise<ComercialRecord[]> {
 }
 
 export function useEnrichedProposals(): EnrichedData {
-  const { user } = useAuth();
   const {
     data: comercialRecords,
     isLoading: comercialLoading,
@@ -70,7 +68,7 @@ export function useEnrichedProposals(): EnrichedData {
     queryKey: ['ganhos-fallback'],
     queryFn: fetchGanhosFallback,
     staleTime: 1000 * 60 * 10,
-    enabled: !!user,
+    enabled: !!comercialRecords,
   });
 
   const result = useMemo(() => {
