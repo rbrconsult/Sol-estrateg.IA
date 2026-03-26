@@ -169,9 +169,15 @@ export function useMakeDataStore() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  let selectedOrgId: string | null = null;
+  try {
+    const orgFilter = useOrgFilter();
+    selectedOrgId = orgFilter.selectedOrgId;
+  } catch {}
+
   const query = useQuery({
-    queryKey: ['make-data-store'],
-    queryFn: fetchLeadsFromDB,
+    queryKey: ['make-data-store', selectedOrgId],
+    queryFn: () => fetchLeadsFromDB(selectedOrgId),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchInterval: 1000 * 60 * 5,
