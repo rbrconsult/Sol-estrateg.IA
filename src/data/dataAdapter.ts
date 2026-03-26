@@ -1107,8 +1107,12 @@ export function enrichProposalsWithMake(proposals: Proposal[], makeRecords: Make
     // Flatten all historico from all matches
     const allHistorico = matches.flatMap(m => m.historico || []);
     
+    // Enrich nomeCliente with Make name if available
+    const nomeCliente = primary.nome || p.nomeCliente;
+
     return {
       ...p,
+      nomeCliente,
       temperatura,
       solScore,
       solQualificado,

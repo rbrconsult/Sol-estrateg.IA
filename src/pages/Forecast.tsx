@@ -469,6 +469,7 @@ export default function Forecast() {
                         <TableRow>
                           <TableHead>Status</TableHead>
                           <TableHead>Cliente</TableHead>
+                          <TableHead>Projeto</TableHead>
                           <TableHead>Responsável</TableHead>
                           <TableHead>Etapa</TableHead>
                           <TableHead className="text-right">Valor</TableHead>
@@ -480,6 +481,8 @@ export default function Forecast() {
                         {contratos.map((c) => {
                           const confirmado = isGanhoConfirmado(c);
                           const emCobranca = ETAPAS_COBRANCA.has((c.etapa || '').toUpperCase());
+                          const clienteName = c.makeNome || c.nomeCliente || '—';
+                          const projetoName = c.nomeProposta || c.projetoId || '—';
                           return (
                             <TableRow key={c.id}>
                               <TableCell>
@@ -491,7 +494,8 @@ export default function Forecast() {
                                   <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
                                 )}
                               </TableCell>
-                              <TableCell className="font-medium max-w-[200px] truncate">{c.nomeProposta || c.nomeCliente || c.projetoId}</TableCell>
+                              <TableCell className="font-medium max-w-[180px] truncate" title={clienteName}>{clienteName}</TableCell>
+                              <TableCell className="max-w-[200px] truncate text-muted-foreground text-xs" title={projetoName}>{projetoName}</TableCell>
                               <TableCell>{c.responsavel || '—'}</TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="text-xs">{c.etapa}</Badge>
