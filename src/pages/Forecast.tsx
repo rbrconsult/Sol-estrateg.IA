@@ -37,10 +37,25 @@ export default function Forecast() {
     );
   }
 
-  if (error || !forecastData) {
+  if (error) {
     return (
       <div className="p-6">
-        <p className="text-destructive">Erro ao carregar dados</p>
+        <p className="text-destructive">Erro ao carregar dados: {(error as Error)?.message}</p>
+      </div>
+    );
+  }
+
+  if (!forecastData) {
+    return (
+      <div className="p-6 space-y-4">
+        <h1 className="text-2xl font-bold">Forecast & Contratos</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Target className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-lg">Nenhuma proposta encontrada para o período selecionado</p>
+            <p className="text-muted-foreground text-sm mt-1">Ajuste os filtros para visualizar dados</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
