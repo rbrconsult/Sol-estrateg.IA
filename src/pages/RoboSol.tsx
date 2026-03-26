@@ -104,7 +104,7 @@ function deriveSolData(records: MakeRecord[]) {
     .filter(r => (r.makeTemperatura || '').toUpperCase() === 'QUENTE')
     .sort((a, b) => (parseInt(b.makeScore || '0') || 0) - (parseInt(a.makeScore || '0') || 0))
     .slice(0, 5)
-    .map(r => ({ nome: r.nome || 'Lead', cidade: r.canalOrigem || '—', score: parseInt(r.makeScore || '0') || 0, canal: r.canalOrigem || 'Direto' }));
+    .map(r => ({ nome: r.nome || 'Lead', cidade: r.cidade || '—', score: parseInt(r.makeScore || '0') || 0, canal: r.canalOrigem || 'Direto' }));
 
   // Disqualification reasons from codigoStatus
   const desqualReasons: Record<string, number> = {};
