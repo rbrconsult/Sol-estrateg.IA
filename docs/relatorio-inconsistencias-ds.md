@@ -209,12 +209,3 @@ Remover `LEAD_FRIO` da função `isDesqualificado()` ou criar uma terceira class
 8. **Mover URLs de webhook** para configuração dinâmica (organization_configs) em vez de hardcoded
 9. **Filtrar thread leads** pelos mesmos filtros globais aplicados aos leads comerciais no Pipeline
 10. **Implementar badges de origem** (SOL SDR / Solar Market) no Kanban conforme especificação
-
-1. **Mapear campos TS** no `cron-sync` para preencher `data_qualificacao` e `data_entrada`
-2. **Padronizar formato de datas** no DS Thread (ISO 8601)
-3. **Implementar trigger de `respondeu`** conforme seção 7 acima
-4. **Limpar datas futuras** (>hoje) e datas anteriores a 01/01/2026 se fora do escopo
-5. **Preencher `historico[]`** corretamente no webhook de mensagens
-6. **Preencher `data_resposta`** via automação Make quando lead responde (qualquer robô)
-7. **Revisar classificação `LEAD_FRIO`** — não deve ser tratado como desqualificado na página de Qualificação
-8. **Mover URLs de webhook** para configuração dinâmica (organization_configs) em vez de hardcoded
