@@ -80,10 +80,26 @@ const Index = () => {
   const kpis = useMemo(() => getKPIs(filteredProposals), [filteredProposals]);
   const vendedorPerformance = useMemo(() => getVendedorPerformance(filteredProposals), [filteredProposals]);
 
-  // Funil combinado DS Thread + DS Comercial
+  // Filter comercial records by global date range
+  const filteredComercialRecords = useMemo(() => {
+    if (!comercialRecords?.length) return [];
+    const { from, to } = gf.effectiveDateRange;
+    if (!from && !to) return comercialRecords;
+    return comercialRecords.filter(r => {
+      const dateStr = r.dataCriacaoProposta || r.dataUltimaAtualizacao;
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return false;
+      if (from) { const f = new Date(from); f.setHours(0,0,0,0); if (d < f) return false; }
+      if (to) { const t = new Date(to); t.setHours(23,59,59,999); if (d > t) return false; }
+      return true;
+    });
+  }, [comercialRecords, gf.effectiveDateRange]);
+
+  // Funil combinado DS Thread + DS Comercial (filtered)
   const combinedFunnelData = useMemo(() => {
     const threadCounts: Record<string, number> = {};
-    for (const r of makeRecords || []) {
+    for (const r of filteredMakeRecords) {
       let etapa = (r.etapaFunil || 'TRAFEGO PAGO').toUpperCase();
       if (etapa === 'PROSPECAO') etapa = 'PROSPECÇÃO';
       if (etapa === 'QUALIFICACAO') etapa = 'QUALIFICAÇÃO';
@@ -91,7 +107,7 @@ const Index = () => {
       threadCounts[etapa] = (threadCounts[etapa] || 0) + 1;
     }
     const comercialCounts: Record<string, { qty: number; valor: number }> = {};
-    for (const r of comercialRecords || []) {
+    for (const r of filteredComercialRecords) {
       let etapa = (r.etapaSM || '').toUpperCase();
       if (CONTRATO_AGRUPADOS.has(etapa)) etapa = 'CONTRATO ASSINADO';
       if (!etapa) etapa = 'PROPOSTA';
@@ -106,7 +122,7 @@ const Index = () => {
       valor: threadStages.has(etapa) ? 0 : (comercialCounts[etapa]?.valor || 0),
       taxaConversao: 0,
     })).filter(d => d.quantidade > 0);
-  }, [makeRecords, comercialRecords]);
+  }, [filteredMakeRecords, filteredComercialRecords]);
 
   // C1: Apply global date filter to makeRecords
   const filteredMakeRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
