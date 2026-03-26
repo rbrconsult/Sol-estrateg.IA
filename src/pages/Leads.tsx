@@ -241,33 +241,35 @@ export default function Leads() {
       "NEGOCIAÇÃO": { label: "Negociação", maxDias: 7 },
     };
 
-    // SLA por etapa: tempo desde data_envio para leads ativos
+    // SLA por etapa: usa SOMENTE dataEntrada (sem fallback para evitar distorções)
     const ativos = filtered.filter(r => r.makeStatus && !["PERDIDO", "DESQUALIFICADO", "GANHO"].includes(r.makeStatus.toUpperCase()));
     const etapaSLA = Object.entries(SLA_ETAPA).map(([etapa, config]) => {
       const leads = ativos.filter(r => getEtapaLabel(r) === etapa);
-      const tempos = leads.map(r => {
-        const d = safeDate(r.data_envio || r.dataEntrada);
+      const comData = leads.filter(r => !!r.dataEntrada);
+      const tempos = comData.map(r => {
+        const d = safeDate(r.dataEntrada);
         if (!d) return 0;
         return Math.max(0, (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
       }).filter(t => t > 0 && t < 365);
       const media = tempos.length > 0 ? tempos.reduce((a, b) => a + b, 0) / tempos.length : 0;
       const foraDoSLA = tempos.filter(t => t > config.maxDias).length;
-      return { etapa, ...config, quantidade: leads.length, media: Math.round(media * 10) / 10, foraDoSLA };
+      const semData = leads.length - comData.length;
+      return { etapa, ...config, quantidade: leads.length, media: Math.round(media * 10) / 10, foraDoSLA, semData, comDados: tempos.length };
     }).filter(e => e.quantidade > 0);
 
     const totalForaSLA = etapaSLA.reduce((a, e) => a + e.foraDoSLA, 0);
 
-    // SLA robôs
-    const comResposta = filtered.filter(r => r.data_envio && r.data_resposta);
+    // SLA robôs: usa dataEntrada → data_resposta (ambos devem existir)
+    const comResposta = filtered.filter(r => r.dataEntrada && r.data_resposta);
     const temposRobo = comResposta.map(r => {
-      const envio = safeDate(r.data_envio);
+      const envio = safeDate(r.dataEntrada);
       const resp = safeDate(r.data_resposta);
       if (!envio || !resp) return -1;
       return Math.max(0, (resp.getTime() - envio.getTime()) / (1000 * 60 * 60));
     }).filter(h => h >= 0 && h < 720);
     const mediaRoboHoras = temposRobo.length > 0 ? temposRobo.reduce((a, b) => a + b, 0) / temposRobo.length : 0;
 
-    // SLA 1º atendimento (data_entrada → data de qualificação/resposta)
+    // SLA 1º atendimento (data_entrada → data_resposta)
     const comQualif = filtered.filter(r => r.dataEntrada && r.data_resposta);
     const temposAtend = comQualif.map(r => {
       const entrada = safeDate(r.dataEntrada);
@@ -279,7 +281,11 @@ export default function Leads() {
     const dentroSLA24h = temposAtend.filter(d => d <= 1).length;
     const taxaSLA24h = temposAtend.length > 0 ? (dentroSLA24h / temposAtend.length) * 100 : 0;
 
-    return { etapaSLA, totalForaSLA, mediaRoboHoras, mediaAtend, taxaSLA24h, dentroSLA24h, temposAtendCount: temposAtend.length };
+    // Flag: dados insuficientes
+    const totalComEntrada = filtered.filter(r => !!r.dataEntrada).length;
+    const dadosInsuficientes = temposAtend.length === 0;
+
+    return { etapaSLA, totalForaSLA, mediaRoboHoras, mediaAtend, taxaSLA24h, dentroSLA24h, temposAtendCount: temposAtend.length, dadosInsuficientes, totalComEntrada, totalLeads: filtered.length };
   }, [filtered]);
 
   /* ── Robot Insights (MakeRecord only) ── */
