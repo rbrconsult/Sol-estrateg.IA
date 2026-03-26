@@ -261,7 +261,7 @@ export default function RoboSol() {
     );
   }
 
-  const { kpis, funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, heatmap, evolucaoDiaria, leadsRecentes } = d;
+  const { kpis, funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, evolucaoDiaria, leadsRecentes } = d;
 
   return (
     <div className="space-y-6 pb-10">
