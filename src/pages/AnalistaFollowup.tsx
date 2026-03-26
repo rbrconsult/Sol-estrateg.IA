@@ -13,7 +13,8 @@ import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Repeat, Users, DollarSign, Clock, Zap, TrendingUp, MessageSquare, Target, RefreshCcw,
 } from "lucide-react";
-import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
