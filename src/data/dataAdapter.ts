@@ -33,6 +33,7 @@ export interface Proposal {
   origemLead: string;
   probabilidade: number;
   motivoPerda: string;
+  faseSM: string;
   // Campos enriquecidos do Make Data Store
   makeStatus?: string;
   makeTemperatura?: string;
