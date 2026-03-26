@@ -564,6 +564,55 @@ export function getForecastData(proposals: Proposal[]) {
   const totalContratos = ganhos.length;
   const ticketMedioContrato = totalContratos > 0 ? receitaConfirmada / totalContratos : 0;
 
+  // === Funil Contrato → Receita ===
+  // Negócios Iniciados = propostas criadas no SM (todos os registros com valor > 0 ou etapa >= PROPOSTA)
+  const ETAPAS_POS_PROPOSTA = new Set([
+    'PROPOSTA', 'NEGOCIAÇÃO', 'NEGOCIACAO', 'CONTRATO ASSINADO',
+    'COBRANÇA', 'COBRANCA', 'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
+    'APROVAÇÃO DE FINANCIAMENTO', 'APROVACAO DE FINANCIAMENTO',
+    'ELABORAÇÃO DE CONTRATO', 'ELABORACAO DE CONTRATO',
+    'CONTRATO ENVIADO', 'AGUARDANDO DOCUMENTOS', 'RECEBIMENTO DO CLIENTE (F)',
+  ]);
+  const negociosIniciados = proposals.filter(p => {
+    const etapaUp = (p.etapa || '').toUpperCase();
+    return ETAPAS_POS_PROPOSTA.has(etapaUp) || p.valorProposta > 0;
+  });
+  const totalNegociosIniciados = negociosIniciados.length;
+  const valorNegociosIniciados = negociosIniciados.reduce((a, p) => a + p.valorProposta, 0);
+  const ticketMedioIniciados = totalNegociosIniciados > 0 ? valorNegociosIniciados / totalNegociosIniciados : 0;
+
+  // Leads Qualificados (etapa QUALIFICADO, QUALIFICAÇÃO ou posterior)
+  const ETAPAS_QUALIFICADO = new Set([
+    'QUALIFICAÇÃO', 'QUALIFICACAO', 'QUALIFICADO', 'CONTATO REALIZADO',
+    ...ETAPAS_POS_PROPOSTA,
+  ]);
+  const leadsQualificados = proposals.filter(p => {
+    const etapaUp = (p.etapa || '').toUpperCase();
+    return ETAPAS_QUALIFICADO.has(etapaUp);
+  });
+  const totalLeadsQualificados = leadsQualificados.length;
+  const valorLeadsQualificados = leadsQualificados.reduce((a, p) => a + p.valorProposta, 0);
+
+  // Propostas Geradas (criadas no SM = têm nomeProposta ou valorProposta > 0)
+  const propostasGeradas = proposals.filter(p => p.valorProposta > 0 || (p.nomeProposta && p.nomeProposta.trim().length > 0));
+  const totalPropostasGeradas = propostasGeradas.length;
+  const valorPropostasGeradas = propostasGeradas.reduce((a, p) => a + p.valorProposta, 0);
+  const ticketMedioPropostas = totalPropostasGeradas > 0 ? valorPropostasGeradas / totalPropostasGeradas : 0;
+
+  // Taxa de Conversão = Fechados / Iniciados
+  const taxaConversao = totalNegociosIniciados > 0 ? (totalContratos / totalNegociosIniciados) * 100 : 0;
+
+  // SLA médio (dias entre criação da proposta e aceite/fechamento)
+  const temposFechamento = ganhos.map(p => {
+    const criacao = new Date(p.dataCriacaoProposta || p.dataCriacaoProjeto);
+    const fechamento = new Date(p.ultimaAtualizacao);
+    if (isNaN(criacao.getTime()) || isNaN(fechamento.getTime())) return -1;
+    return Math.max(0, (fechamento.getTime() - criacao.getTime()) / (1000 * 60 * 60 * 24));
+  }).filter(d => d >= 0 && d < 365);
+  const slaFechamentoDias = temposFechamento.length > 0
+    ? temposFechamento.reduce((a, b) => a + b, 0) / temposFechamento.length
+    : 0;
+
   // Distribuição por etapa (para visão detalhada)
   const etapaMap = new Map<string, { count: number; valor: number; potencia: number; prob: number }>();
   abertos.forEach(p => {
