@@ -10,6 +10,8 @@ import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import HeatmapChart from '@/components/robo/HeatmapChart';
+import RouteStudy from '@/components/robo/RouteStudy';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
@@ -269,6 +271,13 @@ export default function RoboFupFrio() {
           </CardContent>
         </Card>
       </div>
+
+
+      {/* BLOCO 4.5 — Estudo de Rotas FUP 1→8 */}
+      <RouteStudy records={records} />
+
+      {/* BLOCO 4.6 — Heatmap */}
+      <HeatmapChart records={records.filter(r => (r.followupCount || 0) >= 1)} title="Melhor Horário e Dia (FUP)" dateField="lastFollowupDate" />
 
       {/* BLOCO 4 — Por Status Anterior */}
       <Card>

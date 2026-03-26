@@ -10,6 +10,7 @@ import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { format, parseISO } from 'date-fns';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import HeatmapChart from '@/components/robo/HeatmapChart';
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -23,7 +24,7 @@ function useAnimatedNumber(target: number, duration = 1200) {
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const COLORS_MOTIVOS = ['hsl(var(--destructive))', 'hsl(var(--warning))', 'hsl(var(--info))', 'hsl(var(--chart-5))', 'hsl(var(--muted-foreground))'];
-const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
 
 function SLAGauge({ pct, status }: { pct: number; status: string }) {
   const color = status === 'dentro' ? 'hsl(var(--success))' : status === 'depende' ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
@@ -167,18 +168,6 @@ function deriveSolData(records: MakeRecord[]) {
     .slice(-17)
     .map(([dia, d]) => ({ dia: dia.slice(5), ...d }));
 
-  // Heatmap (7 days x 24 hours) from data_envio timestamps
-  const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
-  solRecords.forEach(r => {
-    try {
-      const raw = r.data_envio || ""; const parts = raw.match(/\d+/g); const d = parts && parts.length >= 5 ? new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]), parseInt(parts[3]), parseInt(parts[4])) : new Date(raw);
-      if (isNaN(d.getTime())) return;
-      const day = d.getDay(); // 0=Sun
-      const hour = d.getHours();
-      const mapDay = day === 0 ? 6 : day - 1; // Mon=0
-      heatmap[mapDay][hour]++;
-    } catch { /* skip */ }
-  });
 
   // Daily evolution
   const evolByDay: Record<string, { recebidos: number; qualificados: number }> = {};
@@ -240,7 +229,7 @@ function deriveSolData(records: MakeRecord[]) {
 
   return {
     kpis: { conversasIniciadas: total, taxaResposta: +taxaResposta.toFixed(1), leadsQualificados: qualificados, taxaQualificacao: +taxaQualificacao.toFixed(1), leadsDesqualificados: desqualificados, emQualificacao, scoreMedio, temperatureMedia: tempMedia },
-    funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, heatmap, evolucaoDiaria, leadsRecentes,
+    funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, evolucaoDiaria, leadsRecentes,
   };
 }
 
@@ -272,7 +261,7 @@ export default function RoboSol() {
     );
   }
 
-  const { kpis, funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, heatmap, evolucaoDiaria, leadsRecentes } = d;
+  const { kpis, funil, tempDist, topQuentes, motivos, perfCanal, volumeMensagens, mensagensPorDia, slaData, evolucaoDiaria, leadsRecentes } = d;
 
   return (
     <div className="space-y-6 pb-10">
@@ -470,35 +459,7 @@ export default function RoboSol() {
       </Card>
 
       {/* Heatmap */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Melhor Horário e Dia</CardTitle></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <div className="min-w-[600px]">
-              <div className="flex gap-1 mb-1 pl-12">
-                {Array.from({ length: 24 }, (_, i) => (
-                  <div key={i} className="flex-1 text-center text-[9px] text-muted-foreground">{i}h</div>
-                ))}
-              </div>
-              {heatmap.map((row, di) => {
-                const maxV = Math.max(...heatmap.flat(), 1);
-                return (
-                  <div key={di} className="flex gap-1 mb-1 items-center">
-                    <span className="text-xs text-muted-foreground w-10 text-right shrink-0">{diasSemana[di]}</span>
-                    {row.map((v, hi) => {
-                      const opacity = v / maxV;
-                      return (
-                        <div key={hi} className="flex-1 h-5 rounded-sm" title={`${diasSemana[di]} ${hi}h: ${v}`}
-                          style={{ backgroundColor: `hsl(var(--primary) / ${Math.max(opacity, 0.05)})` }} />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <HeatmapChart records={records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.followupCount ?? 0) === 0))} dateField="data_envio" />
 
       {/* Evolução Diária */}
       {evolucaoDiaria.length > 0 && (

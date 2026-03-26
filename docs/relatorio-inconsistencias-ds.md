@@ -57,7 +57,8 @@
 | `status_resposta` | Depende de `'respondeu'` — OK quando preenchido | Reativações calculadas corretamente quando presente |
 | `cidade` | Nem sempre preenchido | Coluna "Cidade" na tabela de leads ativos mostra "—" |
 | `data_resposta` | Vazio | Impossível calcular tempo entre FUPs |
-| `lastFollowupDate` | Parcialmente preenchido | "Última resposta" mostra "—" em vários leads |
+| `lastFollowupDate` | Parcialmente preenchido (~40%) | Heatmap de horários e "Última resposta" afetados |
+| `data_envio` (fallback) | Formato inconsistente | Heatmap usa como fallback quando `lastFollowupDate` vazio |
 
 **DS de origem:** DS Thread (filtrado por `followupCount >= 1`)
 
