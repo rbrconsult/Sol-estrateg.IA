@@ -138,22 +138,34 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch all records from Make Data Store
+    // Fetch all records from Make Data Store with retry on 429
     const allRecords: any[] = [];
     let offset = 0;
     const limit = 100;
     let hasMore = true;
+    const authValue = makeApiKey.startsWith("Token ") ? makeApiKey : `Token ${makeApiKey}`;
+
+    async function fetchWithRetry(url: string, maxRetries = 4): Promise<Response> {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const res = await fetch(url, {
+          headers: { "Authorization": authValue, "Content-Type": "application/json" },
+        });
+        if (res.status === 429 && attempt < maxRetries) {
+          const wait = Math.min(2000 * Math.pow(2, attempt), 16000);
+          console.log(`429 rate limited, retrying in ${wait}ms (attempt ${attempt + 1}/${maxRetries})...`);
+          await res.text(); // consume body
+          await new Promise(r => setTimeout(r, wait));
+          continue;
+        }
+        return res;
+      }
+      throw new Error("Max retries exceeded");
+    }
 
     while (hasMore) {
       const apiUrl = `https://us2.make.com/api/v2/data-stores/${dataStoreId}/data?teamId=${makeTeamId}&pg[limit]=${limit}&pg[offset]=${offset}`;
 
-      const authValue = makeApiKey.startsWith("Token ") ? makeApiKey : `Token ${makeApiKey}`;
-      const makeRes = await fetch(apiUrl, {
-        headers: {
-          "Authorization": authValue,
-          "Content-Type": "application/json",
-        },
-      });
+      const makeRes = await fetchWithRetry(apiUrl);
 
       if (!makeRes.ok) {
         const errorText = await makeRes.text();
