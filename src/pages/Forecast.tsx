@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { getForecastData } from "@/data/dataAdapter";
+import { getForecastData, Proposal } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from "@/lib/formatters";
-import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent } from "lucide-react";
+import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent, X, Phone, Mail, MapPin, User, Hash, Thermometer, MessageSquare } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { HelpButton } from "@/components/HelpButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +12,8 @@ import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
