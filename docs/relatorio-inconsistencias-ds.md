@@ -187,13 +187,28 @@ Remover `LEAD_FRIO` da função `isDesqualificado()` ou criar uma terceira class
 
 **DS de origem:** DS Thread (etapas 1-6), DS Comercial (etapas 7-9)
 
-**⚠️ Bug crítico:** Thread leads não são filtrados pelos filtros globais (período, busca, temperatura), mas leads comerciais sim. Quando o usuário filtra por "últimos 7 dias", os cards pré-venda mostram **todos** os leads do DS Thread, enquanto os cards comerciais mostram apenas os do período selecionado.
+**✅ Bug corrigido (26/03/2026):** Thread leads agora passam por filtragem explícita de período (`effectiveDateRange`), busca e temperatura dentro do componente Pipeline. A contagem "Abertos" reflete corretamente o filtro ativo (ex: filtro "Hoje" mostra ~19 leads em vez de 1015).
 
-**Correção sugerida:**
-1. Aplicar `gf.filterProposals()` nos thread leads convertidos, ou criar filtro equivalente sobre `makeRecords` antes da conversão
+**Pendências remanescentes:**
+1. ~~Aplicar filtro global nos thread leads~~ → **Resolvido**
 2. Remover `CONTRATO_AGRUPADOS` ou implementar o agrupamento pretendido
 3. Implementar badges visuais de origem (SOL SDR / Solar Market) nos ProjectCards
 4. Mapear `origemLead` a partir de `canal_origem` do DS Thread
+5. `valorProposta` e `potenciaSistema` hardcoded como 0 — precisam vir do DS Thread se disponíveis
+6. `probabilidade: 50` hardcoded — implementar cálculo baseado em temperatura/score
+
+### 9.2 Pipeline — Histórico de Conversa nos Cards
+
+**Status:** Dados mapeados, mas conteúdo real indisponível.
+
+O campo `makeHistorico` é populado no card sintético a partir do array `historico[]` do `MakeRecord`, e `makeUltimaMensagem` exibe a última mensagem. Porém, o DS Thread no Make.com **não envia o conteúdo real das mensagens** — o `historico[]` é reconstruído de forma sintética (mensagem inicial + FUPs + resposta detectada).
+
+**Correção sugerida no Make.com:**
+1. No cenário de qualificação do DS Thread, adicionar um módulo que capture o `historico_json` (array de `{remetente, mensagem, timestamp}`) da conversa real do WhatsApp
+2. Enviar esse campo no webhook de sync para o Supabase (`leads_consolidados`)
+3. O frontend já está preparado para consumir esse array — bastaria o dado chegar preenchido
+
+**Impacto da ausência:** Usuários veem "última mensagem" genérica ou vazia nos cards do Kanban, perdendo contexto de qualificação que seria valioso para decisões rápidas de priorização.
 
 ---
 
