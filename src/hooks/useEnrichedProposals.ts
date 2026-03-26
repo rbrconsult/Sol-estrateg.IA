@@ -4,7 +4,6 @@ import { useMakeComercialData, ComercialRecord } from '@/hooks/useMakeComercialD
 import { useMakeDataStore } from '@/hooks/useMakeDataStore';
 import { adaptComercialData, enrichProposalsWithMake, Proposal } from '@/data/dataAdapter';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
 export interface EnrichedData {
   proposals: Proposal[];
