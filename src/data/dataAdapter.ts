@@ -556,9 +556,10 @@ export function getForecastData(proposals: Proposal[]) {
   // Receita Confirmada = somente etapa COBRANÇA (faturamento real)
   const ETAPAS_COBRANCA = new Set(['COBRANÇA', 'COBRANCA']);
   const emCobranca = ganhos.filter(p => ETAPAS_COBRANCA.has((p.etapa || '').toUpperCase()));
-  const receitaConfirmada = emCobranca.reduce((acc, p) => acc + p.valorProposta, 0);
-  const potenciaConfirmada = emCobranca.reduce((acc, p) => acc + p.potenciaSistema, 0);
-  const totalCobranca = emCobranca.length;
+  // Receita e Potência Confirmada = Propostas Aceitas (status_proposta=5)
+  const receitaConfirmada = ganhos.reduce((acc, p) => acc + p.valorProposta, 0);
+  const potenciaConfirmada = ganhos.reduce((acc, p) => acc + p.potenciaSistema, 0);
+  const totalCobranca = ganhos.length;
   const ticketMedioCobranca = totalCobranca > 0 ? receitaConfirmada / totalCobranca : 0;
 
   // Propostas Aceitas = todos os Ganhos (aceite de proposta / fase_sm)

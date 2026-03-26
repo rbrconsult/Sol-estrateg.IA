@@ -359,7 +359,7 @@ export default function Forecast() {
                 </div>
                 <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrencyAbbrev(forecastData.receitaConfirmada)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {forecastData.totalCobranca} em Cobrança · TM {formatCurrencyAbbrev(forecastData.ticketMedioCobranca)}
+                  {forecastData.totalCobranca} Aceitas · TM {formatCurrencyAbbrev(forecastData.ticketMedioCobranca)}
                 </p>
               </CardContent>
             </Card>
@@ -371,7 +371,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Potência Confirmada</span>
                 </div>
                 <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
-                <p className="text-xs text-muted-foreground mt-1">Somente Cobrança</p>
+                <p className="text-xs text-muted-foreground mt-1">Somente Propostas Aceitas</p>
               </CardContent>
             </Card>
 
@@ -393,7 +393,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">SLA Fechamento</span>
                 </div>
                 <p className="text-2xl font-bold">{forecastData.slaFechamentoDias > 0 ? `${Math.round(forecastData.slaFechamentoDias)}d` : '—'}</p>
-                <p className="text-xs text-muted-foreground mt-1">Iniciado → Aceita (média)</p>
+                <p className="text-xs text-muted-foreground mt-1">Proposta → Aceite (média)</p>
               </CardContent>
             </Card>
           </div>
