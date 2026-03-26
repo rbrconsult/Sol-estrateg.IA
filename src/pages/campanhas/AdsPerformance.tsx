@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
 import { KPICard } from '@/components/campanhas/KPICard';
 import { EmptyState } from '@/components/campanhas/EmptyState';
 import { formatCurrencyAbbrev, formatNumber, formatPercent } from '@/lib/formatters';
