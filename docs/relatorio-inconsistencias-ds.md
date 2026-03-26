@@ -146,7 +146,31 @@ ENTÃO
 
 ---
 
-## 8. Recomendações Gerais
+## 8. Qualificação
+
+| Campo | Problema | Impacto |
+|-------|----------|---------|
+| `data_entrada` / `data_envio` | 622 leads sem data | Leads excluídos quando filtro de período ativo (linha 137: `if (!dateStr) return false`) |
+| `makeStatus` | Valores inconsistentes entre DS Thread e DS Comercial | Classificação QUALIFICADO/DESQUALIFICADO pode divergir da realidade |
+| `codigoStatus` | `LEAD_FRIO` tratado como desqualificado (linha 41) | Leads frios no FUP que deveriam ser "ativos" aparecem como desqualificados |
+| `etapaFunil` vs `etapa` vs `etapaSm` | Três campos usados para determinar qualificação (linhas 112-122) | Ambiguidade: lead pode ser qualificado por um campo e desqualificado por outro |
+| `temperatura` | Nem sempre preenchido | Badge de temperatura ausente na lista de leads |
+| `score` | Formato inconsistente (string vs number) | Exibido como string sem validação |
+| `cidade` | ~65% preenchido | Filtro de busca por cidade falha para 35% dos leads |
+| `canalOrigem` | Nem sempre preenchido | Webhook envia `canal_origem: ""` para o Make |
+| Webhooks hardcoded | URLs de webhook fixas no código (linhas 20-21) | Se Make mudar URLs, página quebra silenciosamente sem erro visível |
+
+**DS de origem:** DS Thread (classificação), DS Comercial (status proposta)
+
+**⚠️ Problema lógico identificado:**  
+A função `isDesqualificado()` trata `LEAD_FRIO` como desqualificado (`codigo === "LEAD_FRIO"`, linha 41). Porém, leads com `codigoStatus = LEAD_FRIO` são justamente os candidatos ao Robô FUP Frio. Isso significa que leads que **deveriam estar ativos** para requalificação aparecem como "desqualificados" na contagem e são filtrados da visualização padrão.
+
+**Correção sugerida:**  
+Remover `LEAD_FRIO` da função `isDesqualificado()` ou criar uma terceira classificação "EM_REATIVACAO" para distinguir leads frios em processo de FUP de leads efetivamente descartados.
+
+---
+
+## 9. Recomendações Gerais
 
 1. **Mapear campos TS** no `cron-sync` para preencher `data_qualificacao` e `data_entrada`
 2. **Padronizar formato de datas** no DS Thread (ISO 8601)
@@ -154,3 +178,5 @@ ENTÃO
 4. **Limpar datas futuras** (>hoje) e datas anteriores a 01/01/2026 se fora do escopo
 5. **Preencher `historico[]`** corretamente no webhook de mensagens
 6. **Preencher `data_resposta`** via automação Make quando lead responde (qualquer robô)
+7. **Revisar classificação `LEAD_FRIO`** — não deve ser tratado como desqualificado na página de Qualificação
+8. **Mover URLs de webhook** para configuração dinâmica (organization_configs) em vez de hardcoded
