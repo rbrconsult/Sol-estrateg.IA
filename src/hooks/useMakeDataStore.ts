@@ -117,20 +117,25 @@ function rowToMakeRecord(r: any): MakeRecord {
   };
 }
 
-/** Fetch leads from leads_consolidados table */
-async function fetchLeadsFromDB(): Promise<MakeRecord[]> {
-  // Fetch all records (paginate beyond 1000 limit)
+/** Fetch leads from leads_consolidados table, optionally filtered by org */
+async function fetchLeadsFromDB(orgId?: string | null): Promise<MakeRecord[]> {
   const allRows: any[] = [];
   let from = 0;
   const pageSize = 1000;
   let hasMore = true;
 
   while (hasMore) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('leads_consolidados')
       .select('*')
       .range(from, from + pageSize - 1)
       .order('data_entrada', { ascending: false });
+
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching leads_consolidados:', error);
