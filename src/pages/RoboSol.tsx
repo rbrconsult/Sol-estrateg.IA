@@ -10,6 +10,7 @@ import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { format, parseISO } from 'date-fns';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import HeatmapChart from '@/components/robo/HeatmapChart';
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
