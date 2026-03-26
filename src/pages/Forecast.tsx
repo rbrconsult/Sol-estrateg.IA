@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { getForecastData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
+import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from "@/lib/formatters";
 import { TrendingUp, Target, Calendar, RefreshCw, FileCheck, DollarSign, Zap, BarChart3, Users, CheckCircle2, Clock, ArrowRight, Percent } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { HelpButton } from "@/components/HelpButton";
