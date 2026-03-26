@@ -282,28 +282,19 @@ export default function RoboSol() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Conversas iniciadas', value: kpis.conversasIniciadas, color: 'text-warning' },
-          { label: 'Taxa de resposta', value: kpis.taxaResposta, suffix: '%', color: 'text-primary' },
-          { label: 'Leads qualificados', value: kpis.leadsQualificados, color: 'text-primary' },
-          { label: 'Taxa qualificação', value: kpis.taxaQualificacao, suffix: '%', color: 'text-warning' },
-          { label: 'Desqualificados', value: kpis.leadsDesqualificados, color: 'text-destructive/70' },
-          { label: 'Em qualificação', value: kpis.emQualificacao, color: 'text-info', pulse: true },
-          { label: 'Score médio', value: kpis.scoreMedio, color: 'text-warning' },
-          { label: 'Temp. média', value: 0, text: kpis.temperatureMedia, color: 'text-warning' },
-        ].map((k, i) => {
-          const anim = useAnimatedNumber(k.value);
-          return (
-            <Card key={i} className={k.pulse ? 'ring-1 ring-info/50' : ''}>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground mb-1">{k.label}</p>
-                <p className={`text-xl font-bold ${k.color}`}>
-                  {k.text || (k.suffix === '%' ? anim.toFixed(1) : Math.round(anim).toLocaleString('pt-BR'))}{k.suffix || ''}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
+        <KPICardAnimated label="Conversas iniciadas" value={kpis.conversasIniciadas} color="text-warning" />
+        <KPICardAnimated label="Taxa de resposta" value={kpis.taxaResposta} suffix="%" color="text-primary" />
+        <KPICardAnimated label="Leads qualificados" value={kpis.leadsQualificados} color="text-primary" />
+        <KPICardAnimated label="Taxa qualificação" value={kpis.taxaQualificacao} suffix="%" color="text-warning" />
+        <KPICardAnimated label="Desqualificados" value={kpis.leadsDesqualificados} color="text-destructive/70" />
+        <KPICardAnimated label="Em qualificação" value={kpis.emQualificacao} color="text-info" pulse />
+        <KPICardAnimated label="Score médio" value={kpis.scoreMedio} color="text-warning" />
+        <Card>
+          <CardContent className="p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Temp. média</p>
+            <p className="text-xl font-bold text-warning">{kpis.temperatureMedia}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Funil */}
