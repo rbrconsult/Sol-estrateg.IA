@@ -98,7 +98,8 @@ const App = () => (
               <Route path="/forecast" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Forecast /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Contratos → redireciona para Forecast (propostas ganhas) */}
-              <Route path="/contratos" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Contratos /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/contratos-fechados" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Contratos /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/contratos" element={<Navigate to="/contratos-fechados" replace />} />
 
               {/* Vendedores */}
               <Route path="/performance" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Performance /></ModuleGuard></MainLayout></ProtectedRoute>} />
