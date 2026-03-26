@@ -8,7 +8,8 @@ import { Bot, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { format, parseISO } from 'date-fns';
-import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
