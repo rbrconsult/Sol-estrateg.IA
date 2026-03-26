@@ -78,13 +78,7 @@ export const etapasPipeline = [
   'Fechamento'
 ];
 
-/** Etapas que indicam status "Ganho" (pós-venda) */
-const GANHO_ETAPAS = [
-  'CONTRATO ASSINADO', 'COBRANÇA', 'COBRANCA', 'ANÁLISE DOCUMENTOS', 'ANALISE DOCUMENTOS',
-  'APROVAÇÃO DE FINANCIAMENTO', 'APROVACAO DE FINANCIAMENTO',
-  'ELABORAÇÃO DE CONTRATO', 'ELABORACAO DE CONTRATO',
-  'CONTRATO ENVIADO', 'AGUARDANDO DOCUMENTOS',
-];
+/** Etapas que indicam status "Perdido" — GANHO é determinado SOMENTE por status_proposta === '5' */
 
 /** Etapas que indicam status "Perdido" */
 const PERDIDO_ETAPAS = ['PERDIDO', 'DECLÍNIO', 'DECLINIO', 'CANCELADO'];
