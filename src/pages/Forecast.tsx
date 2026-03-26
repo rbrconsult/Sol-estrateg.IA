@@ -335,7 +335,7 @@ export default function Forecast() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={[
-                  { label: 'Receita Prevista (90d)', valor: forecastData.forecast90, tipo: 'previsto' },
+                  { label: 'Receita Prevista (28d)', valor: forecastData.forecast28, tipo: 'previsto' },
                   { label: 'Receita Confirmada', valor: forecastData.receitaConfirmada, tipo: 'confirmado' },
                 ]}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
