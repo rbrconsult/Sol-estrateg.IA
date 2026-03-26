@@ -116,7 +116,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 7d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast7)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWp · prob ≥ 90%</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWh · prob ≥ 90%</p>
               </CardContent>
             </Card>
             <Card>
@@ -126,7 +126,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 14d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast14)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWp · prob ≥ 70%</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWh · prob ≥ 70%</p>
               </CardContent>
             </Card>
             <Card>
@@ -136,7 +136,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 21d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast21)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWp · prob ≥ 40%</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWh · prob ≥ 40%</p>
               </CardContent>
             </Card>
             <Card>
@@ -146,7 +146,7 @@ export default function Forecast() {
                   <span className="text-xs font-medium">Forecast 28d</span>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast28)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWp · todo pipeline</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWh · todo pipeline</p>
               </CardContent>
             </Card>
             <Card>
@@ -167,7 +167,7 @@ export default function Forecast() {
             <Tabs value={pipelineMode} onValueChange={(v) => setPipelineMode(v as any)}>
               <TabsList>
                 <TabsTrigger value="receita">R$ Receita</TabsTrigger>
-                <TabsTrigger value="potencia">kWp Potência</TabsTrigger>
+                <TabsTrigger value="potencia">kWh Potência</TabsTrigger>
                 <TabsTrigger value="ambos">Ambos</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -184,11 +184,16 @@ export default function Forecast() {
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="periodo" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                    {(pipelineMode === "receita" || pipelineMode === "ambos") && (
+                      <YAxis yAxisId="receita" stroke="hsl(var(--primary))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                    )}
+                    {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
+                      <YAxis yAxisId="potencia" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(v) => `${formatNumber(v)} kWh`} />
+                    )}
                     <Tooltip
                       formatter={(value: number, name: string) => [
-                        name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWp`,
-                        name === 'receita' ? 'Receita' : 'Potência'
+                        name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWh`,
+                        name === 'receita' ? 'R$ Receita' : 'kWh Potência'
                       ]}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
@@ -196,11 +201,12 @@ export default function Forecast() {
                         borderRadius: '8px'
                       }}
                     />
+                    <Legend formatter={(value) => value === 'receita' ? 'R$ Receita' : 'kWh Potência'} />
                     {(pipelineMode === "receita" || pipelineMode === "ambos") && (
-                      <Bar dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="receita" />
+                      <Bar yAxisId="receita" dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="receita" />
                     )}
                     {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
-                      <Bar dataKey="potencia" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="potencia" />
+                      <Bar yAxisId="potencia" dataKey="potencia" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="potencia" />
                     )}
                   </BarChart>
                 </ResponsiveContainer>
@@ -229,7 +235,7 @@ export default function Forecast() {
                     </Pie>
                     <Legend />
                     <Tooltip
-                      formatter={(value: number) => formatCurrencyAbbrev(value)}
+                      formatter={(value: number) => `R$ ${formatCurrencyAbbrev(value)}`}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
@@ -272,7 +278,7 @@ export default function Forecast() {
                         </TableCell>
                         <TableCell className="text-right">{formatCurrencyAbbrev(row.valor)}</TableCell>
                         <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(row.valorPonderado)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(row.potencia)} kWp</TableCell>
+                        <TableCell className="text-right">{formatNumber(row.potencia)} kWh</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -311,7 +317,7 @@ export default function Forecast() {
                   <Zap className="h-4 w-4" />
                   <span className="text-xs font-medium">Potência Confirmada</span>
                 </div>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatNumber(forecastData.potenciaConfirmada)} kWp</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatNumber(forecastData.potenciaConfirmada)} kWh</p>
                 <p className="text-xs text-muted-foreground mt-1">Instalação contratada</p>
               </CardContent>
             </Card>
