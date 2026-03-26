@@ -245,16 +245,8 @@ function deriveSummary(records: MakeRecord[]) {
   return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios };
 }
 
-/* ── report history mock (these come from Make, not DS) ── */
-
-const mensagensReports = [
-  { id: 1, tipo: "executivo", titulo: "Relatório Executivo Diário", enviadoPara: "Diretoria", data: "16/03/2026 07:00", status: "enviado" },
-  { id: 2, tipo: "closer", titulo: "Performance por Closer", enviadoPara: "Gerente Comercial", data: "16/03/2026 07:05", status: "enviado" },
-  { id: 3, tipo: "robos", titulo: "Relatório dos Robôs", enviadoPara: "Gerente + Diretor", data: "16/03/2026 07:10", status: "enviado" },
-  { id: 4, tipo: "campanha", titulo: "Campanha + Insights", enviadoPara: "Diretoria + MKT", data: "10/03/2026 08:00", status: "enviado" },
-  { id: 5, tipo: "executivo", titulo: "Relatório Executivo Diário", enviadoPara: "Diretoria", data: "15/03/2026 07:00", status: "enviado" },
-  { id: 6, tipo: "robos", titulo: "Relatório dos Robôs", enviadoPara: "Gerente + Diretor", data: "15/03/2026 07:10", status: "falhou" },
-];
+/* ── report history — empty, will be populated from real data ── */
+const mensagensReports: { id: number; tipo: string; titulo: string; enviadoPara: string; data: string; status: string }[] = [];
 
 /* ── component ─────────────────────────────────────────── */
 
