@@ -50,7 +50,6 @@ async function fetchGanhosFallback(): Promise<ComercialRecord[]> {
 }
 
 export function useEnrichedProposals(): EnrichedData {
-  const { user } = useAuth();
   const {
     data: comercialRecords,
     isLoading: comercialLoading,
