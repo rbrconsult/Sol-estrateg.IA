@@ -472,6 +472,7 @@ export default function Forecast() {
                         <TableRow>
                           <TableHead>Status</TableHead>
                           <TableHead>Cliente</TableHead>
+                          <TableHead>ID Projeto</TableHead>
                           <TableHead>Projeto</TableHead>
                           <TableHead>Responsável</TableHead>
                           <TableHead>Etapa</TableHead>
@@ -498,6 +499,7 @@ export default function Forecast() {
                                 )}
                               </TableCell>
                               <TableCell className="font-medium max-w-[180px] truncate" title={clienteName}>{clienteName}</TableCell>
+                              <TableCell className="text-muted-foreground text-xs" title={c.projetoId || ''}>{c.projetoId || '—'}</TableCell>
                               <TableCell className="max-w-[200px] truncate text-muted-foreground text-xs" title={projetoName}>{projetoName}</TableCell>
                               <TableCell>{c.responsavel || '—'}</TableCell>
                               <TableCell>
@@ -570,7 +572,7 @@ export default function Forecast() {
               <>
                 <SheetHeader>
                   <SheetTitle className="text-left text-lg">{clienteName}</SheetTitle>
-                  <p className="text-xs text-muted-foreground">{c.nomeProposta || c.projetoId}</p>
+                  <p className="text-xs text-muted-foreground">Projeto #{c.projetoId || '—'} · {c.nomeProposta || '—'}</p>
                 </SheetHeader>
 
                 <div className="mt-4 space-y-1">
