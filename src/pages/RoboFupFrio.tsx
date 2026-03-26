@@ -8,7 +8,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Repeat, RefreshCcw } from 'lucide-react';
 import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
 import { useLead360 } from '@/contexts/Lead360Context';
-import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
