@@ -97,7 +97,7 @@ export default function Admin() {
   }, [userRole, authLoading, navigate, hasAccess]);
 
   useEffect(() => {
-    if (userRole === 'super_admin') {
+    if (userRole === 'super_admin' || hasAccess('admin')) {
       fetchData();
       fetchSettings();
       fetchOrganizationsList();
