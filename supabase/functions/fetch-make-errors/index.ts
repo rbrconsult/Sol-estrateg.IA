@@ -173,11 +173,11 @@ Deno.serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_ANON_KEY_ENV = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const token = authHeader?.replace("Bearer ", "") ?? "";
 
-    // Allow cron/service calls: check if token matches anon or service role key
-    // Also allow if apikey header is present (Supabase client calls)
-    const isServiceCall = !!apiKeyHeader || token === SUPABASE_SERVICE_ROLE_KEY;
+    // Allow cron/service calls: token matches anon key, service role key, or apikey header present
+    const isServiceCall = !!apiKeyHeader || token === SUPABASE_SERVICE_ROLE_KEY || token === SUPABASE_ANON_KEY_ENV;
 
     if (!isServiceCall) {
       // Validate as user JWT
