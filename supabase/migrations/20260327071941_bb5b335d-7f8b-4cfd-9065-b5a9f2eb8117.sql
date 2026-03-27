@@ -1,0 +1,1 @@
+UPDATE public.app_settings SET value = 'RBRbot' WHERE key = 'krolic_instance_name';
