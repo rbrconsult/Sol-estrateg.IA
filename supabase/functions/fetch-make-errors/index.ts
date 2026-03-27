@@ -175,13 +175,20 @@ Deno.serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const token = authHeader?.replace("Bearer ", "") ?? "";
 
-    // Allow cron/service calls: check if token matches anon or service role key
-    // Also allow if apikey header is present (Supabase client calls)
-    const isServiceCall = !!apiKeyHeader || token === SUPABASE_SERVICE_ROLE_KEY;
+    // Decode JWT payload to check role (anon/service_role = cron, otherwise user)
+    let isServiceCall = !!apiKeyHeader;
+    try {
+      const payloadB64 = token.split(".")[1];
+      if (payloadB64) {
+        const payload = JSON.parse(atob(payloadB64));
+        if (payload.role === "anon" || payload.role === "service_role") {
+          isServiceCall = true;
+        }
+      }
+    } catch { /* not a valid JWT, will validate as user */ }
 
     if (!isServiceCall) {
-      // Validate as user JWT
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? apiKeyHeader ?? "";
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? apiKeyHeader ?? token;
       const anonClient = createClient(SUPABASE_URL, anonKey, {
         global: { headers: { Authorization: authHeader! } },
       });
