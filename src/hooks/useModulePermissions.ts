@@ -33,6 +33,14 @@ export const MODULE_DEFINITIONS = [
   // Admin
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
   { key: 'admin', label: 'Admin', description: 'Painel Administrativo', path: '/admin' },
+  // Admin — Sub-módulos
+  { key: 'admin-filiais', label: 'Filiais', description: 'Gestão de Organizações', path: '/admin' },
+  { key: 'admin-usuarios', label: 'Usuários', description: 'CRUD de Usuários', path: '/admin' },
+  { key: 'admin-modulos', label: 'Módulos', description: 'Permissões por Módulo', path: '/admin' },
+  { key: 'admin-seguranca', label: 'Segurança & Logs', description: 'Auditoria e Acessos', path: '/admin' },
+  { key: 'admin-sessoes', label: 'Sessões Ativas', description: 'Controle de Sessões', path: '/admin' },
+  { key: 'admin-whatsapp', label: 'WhatsApp Config', description: 'Configurações WhatsApp', path: '/admin' },
+  { key: 'admin-skills', label: 'Skills / Edges', description: 'Edge Functions & DS', path: '/admin' },
 ] as const;
 
 export type ModuleKey = typeof MODULE_DEFINITIONS[number]['key'];
