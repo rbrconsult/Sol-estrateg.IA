@@ -11,7 +11,7 @@ export const MODULE_DEFINITIONS = [
   // Comercial
   { key: 'pipeline', label: 'Pipeline', description: 'Kanban Visual', path: '/pipeline' },
   { key: 'painel-comercial', label: 'Painel Comercial', description: 'Visão Comercial', path: '/painel-comercial' },
-  { key: 'forecast', label: 'Propostas', description: 'Previsão de Receita', path: '/forecast' },
+  { key: 'forecast', label: 'Forecast', description: 'Previsão de Receita', path: '/forecast' },
   { key: 'vendedores', label: 'Vendedores', description: 'Performance', path: '/vendedores' },
   { key: 'comissoes', label: 'Comissões', description: 'Gestão de Comissões', path: '/comissoes' },
   // Inteligência
@@ -32,6 +32,7 @@ export const MODULE_DEFINITIONS = [
   { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
   // Admin
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
+  { key: 'admin', label: 'Admin', description: 'Painel Administrativo', path: '/admin' },
 ] as const;
 
 export type ModuleKey = typeof MODULE_DEFINITIONS[number]['key'];
@@ -55,12 +56,10 @@ export function useModulePermissions() {
       return map;
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30, // 30s — garante que mudanças reflitam rápido
   });
 
   const hasAccess = (moduleKey: string): boolean => {
-    // Super admins always have full access
-    if (userRole === 'super_admin') return true;
     // If no permissions set for this module, default to true (all access)
     if (!permissions || permissions[moduleKey] === undefined) return true;
     return permissions[moduleKey];
