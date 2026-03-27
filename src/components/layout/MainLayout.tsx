@@ -74,10 +74,13 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       <GlobalPageControls />
 
-      {/* Floating "Novidades" button — bottom right */}
+      {/* Floating "Novidades" button — bottom left, above sidebar */}
       <Link
         to="/roadmap"
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border border-border/50 bg-card/90 backdrop-blur-sm px-3 py-2 text-xs text-muted-foreground hover:text-primary hover:border-primary/40 shadow-sm transition-all"
+        className={cn(
+          "fixed z-50 flex items-center gap-2 rounded-full border border-border/50 bg-card/90 backdrop-blur-sm px-3 py-2 text-xs text-muted-foreground hover:text-primary hover:border-primary/40 shadow-sm transition-all",
+          isMobile ? "bottom-5 left-5" : "bottom-5 left-56"
+        )}
       >
         <Rocket className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Novidades</span>

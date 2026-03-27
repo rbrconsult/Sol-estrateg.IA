@@ -235,7 +235,8 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-1.5 border-t border-border/50 space-y-1">
+        <div className="p-1.5 border-t border-border/50 space-y-0.5">
+          {/* Admin link */}
           {(userRole === "super_admin" || hasAccess("admin")) && hasAccess("admin") && (
             isCollapsed ? (
               <Tooltip>
@@ -268,56 +269,88 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
             )
           )}
 
-          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "px-2.5")}>
-            <ThemeToggle />
-          </div>
-
-          {!isCollapsed && (
-            <>
-              <div className="px-2.5 py-1">
-                <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
-              {userRole && (
-                   <p className={`text-[10px] font-semibold ${
-                     userRole === 'super_admin' ? 'text-warning' :
-                     userRole === 'diretor' ? 'text-amber-400' :
-                     userRole === 'gerente' ? 'text-blue-400' :
-                     userRole === 'closer' ? 'text-green-400' :
-                     'text-muted-foreground'
-                   }`}>
-                     {userRole === 'super_admin' ? 'Super Admin' :
-                      userRole === 'diretor' ? 'Diretor' :
-                      userRole === 'gerente' ? 'Gerente' :
-                      userRole === 'closer' ? 'Closer' :
-                      userRole === 'admin' ? 'Admin' : 'Usuário'}
-                   </p>
-                 )}
+          {/* User card — compact identity block */}
+          {!isCollapsed ? (
+            <div className="rounded-lg border border-border/30 bg-muted/20 px-2.5 py-2 space-y-1.5">
+              {/* Row 1: Avatar circle + name/role + theme toggle */}
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase",
+                  userRole === 'super_admin' ? 'bg-warning/20 text-warning' :
+                  userRole === 'diretor' ? 'bg-amber-400/20 text-amber-400' :
+                  userRole === 'gerente' ? 'bg-blue-400/20 text-blue-400' :
+                  userRole === 'closer' ? 'bg-green-400/20 text-green-400' :
+                  'bg-muted text-muted-foreground'
+                )}>
+                  {user?.email?.charAt(0) || '?'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-muted-foreground truncate leading-tight">{user?.email}</p>
+                  {userRole && (
+                    <p className={cn(
+                      "text-[10px] font-semibold leading-tight",
+                      userRole === 'super_admin' ? 'text-warning' :
+                      userRole === 'diretor' ? 'text-amber-400' :
+                      userRole === 'gerente' ? 'text-blue-400' :
+                      userRole === 'closer' ? 'text-green-400' :
+                      'text-muted-foreground'
+                    )}>
+                      {userRole === 'super_admin' ? 'Super Admin' :
+                       userRole === 'diretor' ? 'Diretor' :
+                       userRole === 'gerente' ? 'Gerente' :
+                       userRole === 'closer' ? 'Closer' :
+                       userRole === 'admin' ? 'Admin' : 'Usuário'}
+                    </p>
+                  )}
+                </div>
+                <ThemeToggle />
               </div>
 
-              {onResetOnboarding && (
+              {/* Row 2: Action buttons inline */}
+              <div className="flex items-center gap-1">
+                {onResetOnboarding && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onResetOnboarding}
+                    className="flex-1 text-muted-foreground hover:text-primary hover:bg-primary/10 text-[10px] h-6 px-2"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Tour
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onResetOnboarding}
-                  className="w-full text-muted-foreground hover:text-primary hover:bg-primary/10 justify-start text-xs h-7"
+                  onClick={handleSignOut}
+                  className="flex-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-[10px] h-6 px-2"
                 >
-                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                  Refazer Tour
+                  <LogOut className="h-3 w-3 mr-1" />
+                  Sair
                 </Button>
-              )}
-            </>
+              </div>
+            </div>
+          ) : (
+            /* Collapsed: just icons stacked */
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center justify-center">
+                <ThemeToggle />
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleSignOut}
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">Sair</TooltipContent>
+              </Tooltip>
+            </div>
           )}
-
-          <Button
-            variant="ghost"
-            onClick={handleSignOut}
-            className={cn(
-              "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs h-7",
-              isCollapsed && "justify-center"
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-1.5">Sair</span>}
-          </Button>
         </div>
       </aside>
     </TooltipProvider>
