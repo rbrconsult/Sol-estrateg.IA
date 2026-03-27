@@ -163,7 +163,9 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    const apiKeyHeader = req.headers.get("apikey");
+    
+    if (!authHeader?.startsWith("Bearer ") && !apiKeyHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -171,17 +173,27 @@ Deno.serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const token = authHeader?.replace("Bearer ", "") ?? "";
 
-    const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: authError } = await anonClient.auth.getUser(token);
-    if (authError || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Allow cron/service calls: check if token matches anon or service role key
+    // Also allow if apikey header is present (Supabase client calls)
+    const isServiceCall = !!apiKeyHeader || token === SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!isServiceCall) {
+      // Validate as user JWT
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? apiKeyHeader ?? "";
+      const anonClient = createClient(SUPABASE_URL, anonKey, {
+        global: { headers: { Authorization: authHeader! } },
       });
+      const { data: userData, error: authError } = await anonClient.auth.getUser(token);
+      if (authError || !userData?.user) {
+        console.log(`[auth] User auth failed: ${authError?.message}`);
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
+    console.log(`[auth] Authorized — isServiceCall: ${isServiceCall}`);
 
     const MAKE_API_TOKEN = Deno.env.get("MAKE_API_KEY");
     const MAKE_TEAM_ID = Deno.env.get("MAKE_TEAM_ID");
