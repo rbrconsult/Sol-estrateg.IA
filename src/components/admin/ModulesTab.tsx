@@ -16,7 +16,7 @@ const MODULE_GROUPS = [
   { label: 'Comercial', icon: '💼', keys: ['pipeline', 'painel-comercial', 'forecast', 'vendedores', 'comissoes', 'time-comercial'] },
   { label: 'Campanhas', icon: '📢', keys: ['ads-performance', 'midia-receita', 'ga4'] },
   { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'jornada-lead', 'sla-monitor', 'reports'] },
-  { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda'] },
+  { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda', 'admin'] },
 ];
 
 interface UserBasic {
