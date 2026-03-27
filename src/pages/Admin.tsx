@@ -795,7 +795,7 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4 max-w-lg">
                     <div className="space-y-2">
-                      <Label>API Key (Token)</Label>
+                      <Label>Token Krolic</Label>
                       <div className="flex gap-2">
                         <Input
                           type={showApiKey ? "text" : "password"}

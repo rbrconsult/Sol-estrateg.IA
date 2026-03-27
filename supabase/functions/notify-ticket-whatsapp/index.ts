@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       config[s.key] = s.value;
     }
 
-    const apiKey = config.evolution_api_key;
+    const apiKey = config.krolic_api_token;
     const centralNumber = config.central_whatsapp_number;
 
     if (!apiKey) {
