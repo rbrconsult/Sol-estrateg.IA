@@ -59,6 +59,7 @@ interface UserSession {
 
 export default function Admin() {
   const { user, userRole, loading: authLoading, startImpersonation } = useAuth();
+  const { hasAccess } = useModulePermissions();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([]);
