@@ -35,8 +35,16 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Dashboard", icon: Presentation, path: "/dashboard", moduleKey: "conferencia" },
       { title: "Leads", icon: Users, path: "/leads", moduleKey: "leads" },
+    ],
+  },
+  {
+    label: "SDR / Qualificação",
+    items: [
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
       { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
+      { title: "Qualificar", icon: Sparkles, path: "/qualificacao", moduleKey: "qualificacao" },
+      { title: "Desqualificar", icon: Eraser, path: "/sanitizacao", moduleKey: "qualificacao" },
+      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "monitoramento" },
     ],
   },
   {
@@ -48,7 +56,6 @@ const menuGroups: MenuGroup[] = [
       { title: "Contratos Fechados", icon: Handshake, path: "/contratos-fechados", moduleKey: "pipeline" },
       { title: "Vendedores", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
       { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes" },
-      
     ],
   },
   {
@@ -80,8 +87,6 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
-      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "monitoramento" },
-      { title: "Qualificação", icon: Sparkles, path: "/qualificacao", moduleKey: "qualificacao" },
       { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
     ],
   },
