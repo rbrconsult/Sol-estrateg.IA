@@ -60,8 +60,6 @@ export function useModulePermissions() {
   });
 
   const hasAccess = (moduleKey: string): boolean => {
-    // Super admins always have full access
-    if (userRole === 'super_admin') return true;
     // If no permissions set for this module, default to true (all access)
     if (!permissions || permissions[moduleKey] === undefined) return true;
     return permissions[moduleKey];
