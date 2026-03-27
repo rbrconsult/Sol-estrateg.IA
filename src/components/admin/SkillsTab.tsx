@@ -19,7 +19,7 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
     category: 'whatsapp',
     status: 'active',
     dependencies: ['Krolic API (app_settings)', 'profiles.phone', 'central_whatsapp_number'],
-    notes: 'Usa getClaims (⚠️ pode falhar — migrar para getUser). Lê config de app_settings: evolution_api_url, evolution_api_key, evolution_instance_name',
+    notes: 'Usa getClaims (⚠️ pode falhar — migrar para getUser). Lê config de app_settings: krolic_api_url, krolic_api_token, krolic_instance_name',
   },
   {
     name: 'send-whatsapp-alert',
