@@ -339,9 +339,9 @@ Deno.serve(async (req) => {
       const { data: settings } = await supabase
         .from("app_settings")
         .select("key, value")
-        .in("key", ["evolution_api_key", "central_whatsapp_number"]);
+        .in("key", ["krolic_api_token", "central_whatsapp_number"]);
 
-      const apiKey = settings?.find((s: any) => s.key === "evolution_api_key")?.value;
+      const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
       const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
 
       if (apiKey && centralNumber && newRecords.length > 0) {

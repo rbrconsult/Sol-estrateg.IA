@@ -465,9 +465,9 @@ export default function Admin() {
       if (error) throw error;
       const settings: Record<string, string> = {};
       (data as any[])?.forEach((s: any) => { settings[s.key] = s.value; });
-      setEvolutionUrl(settings.evolution_api_url || '');
-      setEvolutionKey(settings.evolution_api_key || '');
-      setEvolutionInstance(settings.evolution_instance_name || '');
+      setEvolutionUrl(settings.krolic_api_url || '');
+      setEvolutionKey(settings.krolic_api_token || '');
+      setEvolutionInstance(settings.krolic_instance_name || '');
       setCentralNumber(settings.central_whatsapp_number || '');
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -480,9 +480,9 @@ export default function Admin() {
     setSettingsSaving(true);
     try {
       const updates = [
-        { key: 'evolution_api_url', value: evolutionUrl },
-        { key: 'evolution_api_key', value: evolutionKey },
-        { key: 'evolution_instance_name', value: evolutionInstance },
+        { key: 'krolic_api_url', value: evolutionUrl },
+        { key: 'krolic_api_token', value: evolutionKey },
+        { key: 'krolic_instance_name', value: evolutionInstance },
         { key: 'central_whatsapp_number', value: centralNumber },
       ];
       for (const u of updates) {
@@ -795,7 +795,7 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4 max-w-lg">
                     <div className="space-y-2">
-                      <Label>API Key (Token)</Label>
+                      <Label>Token Krolic</Label>
                       <div className="flex gap-2">
                         <Input
                           type={showApiKey ? "text" : "password"}

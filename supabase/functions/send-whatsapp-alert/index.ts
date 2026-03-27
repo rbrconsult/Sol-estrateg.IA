@@ -43,9 +43,9 @@ Deno.serve(async (req) => {
     const { data: settings } = await supabaseAdmin
       .from("app_settings")
       .select("key, value")
-      .in("key", ["evolution_api_key"]);
+      .in("key", ["krolic_api_token"]);
 
-    const apiKey = settings?.find((s: any) => s.key === "evolution_api_key")?.value;
+    const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "Krolic API key not configured" }), {
         status: 500,
