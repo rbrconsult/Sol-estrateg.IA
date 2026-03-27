@@ -465,9 +465,9 @@ export default function Admin() {
       if (error) throw error;
       const settings: Record<string, string> = {};
       (data as any[])?.forEach((s: any) => { settings[s.key] = s.value; });
-      setEvolutionUrl(settings.evolution_api_url || '');
-      setEvolutionKey(settings.evolution_api_key || '');
-      setEvolutionInstance(settings.evolution_instance_name || '');
+      setEvolutionUrl(settings.krolic_api_url || '');
+      setEvolutionKey(settings.krolic_api_token || '');
+      setEvolutionInstance(settings.krolic_instance_name || '');
       setCentralNumber(settings.central_whatsapp_number || '');
     } catch (error) {
       console.error('Error fetching settings:', error);
