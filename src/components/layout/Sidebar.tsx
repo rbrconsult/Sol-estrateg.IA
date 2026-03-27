@@ -236,7 +236,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
 
         {/* Footer */}
         <div className="p-1.5 border-t border-border/50 space-y-1">
-          {userRole === "super_admin" && hasAccess("admin") && (
+          {(userRole === "super_admin" || hasAccess("admin")) && hasAccess("admin") && (
             isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>

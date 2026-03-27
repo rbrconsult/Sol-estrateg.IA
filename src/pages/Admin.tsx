@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useModulePermissions } from '@/hooks/useModulePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,6 +59,7 @@ interface UserSession {
 
 export default function Admin() {
   const { user, userRole, loading: authLoading, startImpersonation } = useAuth();
+  const { hasAccess } = useModulePermissions();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([]);
@@ -88,14 +90,14 @@ export default function Admin() {
   const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && userRole !== 'super_admin') {
-      toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
+    if (!authLoading && userRole !== 'super_admin' && !hasAccess('admin')) {
+      toast.error('Acesso negado.');
       navigate('/selecao');
     }
-  }, [userRole, authLoading, navigate]);
+  }, [userRole, authLoading, navigate, hasAccess]);
 
   useEffect(() => {
-    if (userRole === 'super_admin') {
+    if (userRole === 'super_admin' || hasAccess('admin')) {
       fetchData();
       fetchSettings();
       fetchOrganizationsList();
@@ -601,28 +603,36 @@ export default function Admin() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="organizations" className="space-y-4">
+        <Tabs defaultValue={hasAccess('admin-filiais') ? 'organizations' : hasAccess('admin-usuarios') ? 'users' : 'time-comercial'} className="space-y-4">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="organizations">Filiais</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="modules">Módulos</TabsTrigger>
-            <TabsTrigger value="seguranca" className="flex items-center gap-1">
-              <Fingerprint className="h-3.5 w-3.5" />
-              Segurança & Logs
-            </TabsTrigger>
-            <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-1">
-              <MessageSquare className="h-3.5 w-3.5" />
-              WhatsApp
-            </TabsTrigger>
-            <TabsTrigger value="time-comercial" className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
-              Time Comercial
-            </TabsTrigger>
-            <TabsTrigger value="skills" className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5" />
-              Skills / Edges
-            </TabsTrigger>
+            {hasAccess('admin-filiais') && <TabsTrigger value="organizations">Filiais</TabsTrigger>}
+            {hasAccess('admin-usuarios') && <TabsTrigger value="users">Usuários</TabsTrigger>}
+            {hasAccess('admin-modulos') && <TabsTrigger value="modules">Módulos</TabsTrigger>}
+            {hasAccess('admin-seguranca') && (
+              <TabsTrigger value="seguranca" className="flex items-center gap-1">
+                <Fingerprint className="h-3.5 w-3.5" />
+                Segurança & Logs
+              </TabsTrigger>
+            )}
+            {hasAccess('admin-sessoes') && <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>}
+            {hasAccess('admin-whatsapp') && (
+              <TabsTrigger value="settings" className="flex items-center gap-1">
+                <MessageSquare className="h-3.5 w-3.5" />
+                WhatsApp
+              </TabsTrigger>
+            )}
+            {hasAccess('time-comercial') && (
+              <TabsTrigger value="time-comercial" className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                Time Comercial
+              </TabsTrigger>
+            )}
+            {hasAccess('admin-skills') && (
+              <TabsTrigger value="skills" className="flex items-center gap-1">
+                <Zap className="h-3.5 w-3.5" />
+                Skills / Edges
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="users">
