@@ -480,9 +480,9 @@ export default function Admin() {
     setSettingsSaving(true);
     try {
       const updates = [
-        { key: 'evolution_api_url', value: evolutionUrl },
-        { key: 'evolution_api_key', value: evolutionKey },
-        { key: 'evolution_instance_name', value: evolutionInstance },
+        { key: 'krolic_api_url', value: evolutionUrl },
+        { key: 'krolic_api_token', value: evolutionKey },
+        { key: 'krolic_instance_name', value: evolutionInstance },
         { key: 'central_whatsapp_number', value: centralNumber },
       ];
       for (const u of updates) {
