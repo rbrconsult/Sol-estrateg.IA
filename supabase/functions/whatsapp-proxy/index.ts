@@ -8,11 +8,13 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate webhook secret
+  // Validate webhook secret (header, bearer token, or query param fallback)
   const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
+  const url = new URL(req.url);
   const incomingSecret =
     req.headers.get("x-webhook-secret") ||
-    req.headers.get("authorization")?.replace("Bearer ", "");
+    req.headers.get("authorization")?.replace("Bearer ", "") ||
+    url.searchParams.get("secret");
 
   if (!WEBHOOK_SECRET || incomingSecret !== WEBHOOK_SECRET) {
     console.warn("🚫 Webhook rejected: invalid secret");
