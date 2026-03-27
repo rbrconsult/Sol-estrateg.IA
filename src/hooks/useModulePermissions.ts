@@ -11,7 +11,7 @@ export const MODULE_DEFINITIONS = [
   // Comercial
   { key: 'pipeline', label: 'Pipeline', description: 'Kanban Visual', path: '/pipeline' },
   { key: 'painel-comercial', label: 'Painel Comercial', description: 'Visão Comercial', path: '/painel-comercial' },
-  { key: 'forecast', label: 'Propostas', description: 'Previsão de Receita', path: '/forecast' },
+  { key: 'forecast', label: 'Forecast', description: 'Previsão de Receita', path: '/forecast' },
   { key: 'vendedores', label: 'Vendedores', description: 'Performance', path: '/vendedores' },
   { key: 'comissoes', label: 'Comissões', description: 'Gestão de Comissões', path: '/comissoes' },
   // Inteligência
