@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 const MODULE_GROUPS = [
   { label: 'Pré-venda', icon: '📥', keys: ['conferencia', 'leads', 'robo-sol', 'robo-fup-frio'] },
   { label: 'Comercial', icon: '💼', keys: ['pipeline', 'painel-comercial', 'forecast', 'vendedores', 'comissoes', 'time-comercial'] },
+  { label: 'SDR / Qualificação', icon: '🤖', keys: ['robo-sol', 'robo-fup-frio', 'qualificacao', 'sanitizacao', 'reprocessamento'] },
   { label: 'Campanhas', icon: '📢', keys: ['ads-performance', 'midia-receita', 'ga4'] },
   { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'jornada-lead', 'sla-monitor', 'reports'] },
-  { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda'] },
+  { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'ajuda'] },
   { label: 'Admin', icon: '🔐', keys: ['admin', 'admin-filiais', 'admin-usuarios', 'admin-modulos', 'admin-seguranca', 'admin-sessoes', 'admin-whatsapp', 'admin-skills'] },
 ];
 
