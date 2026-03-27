@@ -90,11 +90,11 @@ export default function Admin() {
   const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && userRole !== 'super_admin') {
-      toast.error('Acesso negado. Apenas super admins podem acessar esta página.');
+    if (!authLoading && userRole !== 'super_admin' && !hasAccess('admin')) {
+      toast.error('Acesso negado.');
       navigate('/selecao');
     }
-  }, [userRole, authLoading, navigate]);
+  }, [userRole, authLoading, navigate, hasAccess]);
 
   useEffect(() => {
     if (userRole === 'super_admin') {
