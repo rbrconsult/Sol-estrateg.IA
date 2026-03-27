@@ -10,6 +10,20 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Validate webhook secret
+  const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
+  const incomingSecret =
+    req.headers.get("x-webhook-secret") ||
+    req.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!WEBHOOK_SECRET || incomingSecret !== WEBHOOK_SECRET) {
+    console.warn("🚫 Webhook rejected: invalid secret");
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const payload = await req.json();
     console.log("Webhook received - event:", payload?.event);

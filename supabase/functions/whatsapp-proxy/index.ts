@@ -8,7 +8,21 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Always respond 200 to avoid Evolution API retries / cascading redelivery
+  // Validate webhook secret
+  const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
+  const incomingSecret =
+    req.headers.get("x-webhook-secret") ||
+    req.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!WEBHOOK_SECRET || incomingSecret !== WEBHOOK_SECRET) {
+    console.warn("🚫 Webhook rejected: invalid secret");
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Always respond 200 to avoid retries / cascading redelivery
   const ok200 = (body: Record<string, unknown>) =>
     new Response(JSON.stringify(body), {
       status: 200,
@@ -25,7 +39,10 @@ Deno.serve(async (req) => {
     try {
       const res = await fetch(targetUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-webhook-secret": WEBHOOK_SECRET,
+        },
         body: JSON.stringify(payload),
       });
       const body = await res.text();
