@@ -27,5 +27,3 @@ project_id = "xffzjdulkdgyicsllznp"
     verify_jwt = false
   [functions.cron-sync]
     verify_jwt = false
-  [functions.webhook-make-error]
-    verify_jwt = false
