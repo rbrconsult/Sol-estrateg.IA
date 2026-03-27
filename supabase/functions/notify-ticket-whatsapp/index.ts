@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       .from("app_settings")
       .select("key, value")
       .in("key", [
-        "evolution_api_key",
+        "krolic_api_token",
         "central_whatsapp_number",
       ]);
 
