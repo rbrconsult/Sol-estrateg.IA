@@ -212,10 +212,9 @@ export default function Qualificacao() {
       const res = await fetch(WEBHOOK_QUALIFICAR, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          telefone: telefoneFormatado, nome: manualName.trim() || "", etapa_funil: "MANUAL",
-          cidade: "", email: "", valor_conta: "", score: "", temperatura: "", canal_origem: "manual",
-          vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
-          mensagem: comMensagem,
+          telefone: telefoneFormatado, project_id: "", chatId: "", contactId: "",
+          nome: manualName.trim() || "", score: "", valor_conta: "",
+          mensagem: comMensagem, closer_sm_id: vendor.sm_id, closer_krolik_id: vendor.krolik_id,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

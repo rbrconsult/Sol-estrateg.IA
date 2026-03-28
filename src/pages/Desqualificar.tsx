@@ -95,9 +95,7 @@ export default function Desqualificar() {
       const res = await fetch(WEBHOOK_DESQUALIFICAR, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          telefone: telefoneFormatado, nome: manualDesqName.trim() || "", etapa_funil: "MANUAL",
-          cidade: "", email: "", valor_conta: "", score: "", temperatura: "", canal_origem: "manual",
-          vendedor: "", vendedor_sm_id: null, vendedor_krolik_id: null,
+          telefone: telefoneFormatado, project_id: "", chatId: "", nome: manualDesqName.trim() || "",
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
