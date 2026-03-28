@@ -60,6 +60,7 @@ export default function Qualificacao() {
   const [manualSending, setManualSending] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchSending, setBatchSending] = useState(false);
+  const [comMensagem, setComMensagem] = useState(true);
 
   const [krolicMembers, setKrolicMembers] = useState<KrolicMember[]>([]);
   const [batchVendor, setBatchVendor] = useState<string>("roleta");
@@ -190,6 +191,7 @@ export default function Qualificacao() {
             cidade: lead.cidade || "", email: lead.email || "", valor_conta: lead.valorConta || "",
             score: lead.makeScore || "", temperatura: lead.makeTemperatura || "", canal_origem: lead.canalOrigem || "",
             vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
+            mensagem: comMensagem,
           }),
         });
         if (res.ok) success++;
@@ -214,6 +216,7 @@ export default function Qualificacao() {
           telefone: telefoneFormatado, nome: manualName.trim() || "", etapa_funil: "MANUAL",
           cidade: "", email: "", valor_conta: "", score: "", temperatura: "", canal_origem: "manual",
           vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
+          mensagem: comMensagem,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -359,7 +362,11 @@ export default function Qualificacao() {
             <span className="text-xs text-muted-foreground">
               {selected.size > 0 ? `${selected.size} selecionado(s)` : `${filtered.length} leads`}
             </span>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-3">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <Checkbox checked={comMensagem} onCheckedChange={(v) => setComMensagem(!!v)} className="h-3.5 w-3.5" />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Com mensagem</span>
+              </label>
               <Select value={batchVendor} onValueChange={setBatchVendor}>
                 <SelectTrigger className="w-40 h-8 text-xs">
                   <Shuffle className="h-3.5 w-3.5 mr-1.5" /><SelectValue />
