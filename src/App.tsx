@@ -42,6 +42,7 @@ import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
 import Qualificacao from "./pages/Qualificacao";
+import DesqualificarPage from "./pages/Desqualificar";
 import Reprocessamento from "./pages/Reprocessamento";
 import OrgConfigPage from "./pages/admin/OrgConfigPage";
 import PreVenda from "./pages/solar/PreVenda";
