@@ -87,6 +87,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
+      { title: "Sanitizar", icon: Eraser, path: "/sanitizacao", moduleKey: "monitoramento" },
       { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
     ],
   },
