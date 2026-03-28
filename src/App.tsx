@@ -128,7 +128,8 @@ const App = () => (
               <Route path="/followup" element={<ProtectedRoute><MainLayout><AnalistaFollowup /></MainLayout></ProtectedRoute>} />
               <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="qualificacao"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/desqualificar" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="qualificacao"><DesqualificarPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasVisaoGeral /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/meta" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><MetaAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />

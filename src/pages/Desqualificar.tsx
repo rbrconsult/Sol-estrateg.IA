@@ -46,17 +46,12 @@ export default function Desqualificar() {
 
   const allLeads = useMemo(() => {
     if (!records) return [];
-    return records
-      .filter((r) => {
-        if (!gf.dateRange?.from || !gf.dateRange?.to) return true;
-        const d = new Date(r.dataEntrada || r.created_at || "");
-        return d >= gf.dateRange.from && d <= gf.dateRange.to;
-      })
-      .map((r) => ({
-        ...r,
-        _desqualificado: isDesqualificado(r),
-      }));
-  }, [records, gf.dateRange]);
+    const filtered = gf.filterRecords(records);
+    return filtered.map((r) => ({
+      ...r,
+      _desqualificado: isDesqualificado(r),
+    }));
+  }, [records, gf]);
 
   const filtered = useMemo(() => {
     let list = allLeads;
