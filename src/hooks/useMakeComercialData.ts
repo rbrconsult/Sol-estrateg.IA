@@ -22,72 +22,68 @@ export interface ComercialRecord {
   tsSync: string;
 }
 
-interface MakeResponse {
-  data: any[];
-  count: number;
-  lastUpdate: string;
-  error?: string;
-}
-
-/** Mapeia status_proposta numérico para status legível
- * "1"=Rascunho → Aberto
- * "2"=Enviada/Aberta → Aberto
- * "3"=Perdida → Perdido
- * "4"=Cancelada → Perdido
- * "5"=Aceita/Ganha → Ganho
- * fase_sm OPERACIONAL → Ganho (pós-venda)
- */
+/** Mapeia status_proposta numérico para status legível */
 export function mapStatusProposta(statusProposta: string, _faseSM?: string): 'Aberto' | 'Ganho' | 'Perdido' {
   if (statusProposta === '5') return 'Ganho';
   if (statusProposta === '3' || statusProposta === '4') return 'Perdido';
   return 'Aberto';
 }
 
-function parseRecords(raw: any[]): ComercialRecord[] {
-  return raw.map((r) => {
-    const d = r.data || r;
-    const statusProposta = String(d.status_proposta || '');
-    const faseSM = String(d.fase_sm || '');
+/** Read comercial data from leads_consolidados (local DB) instead of Make API */
+async function fetchComercialFromDB(orgId?: string | null): Promise<ComercialRecord[]> {
+  const allRows: any[] = [];
+  let from = 0;
+  const pageSize = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    let query = supabase
+      .from('leads_consolidados')
+      .select('*')
+      .not('etapa_sm', 'is', null)
+      .range(from, from + pageSize - 1)
+      .order('data_proposta', { ascending: false });
+
+    if (orgId) {
+      query = query.eq('organization_id', orgId);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching comercial from leads_consolidados:', error);
+      throw new Error(error.message);
+    }
+
+    if (data && data.length > 0) {
+      allRows.push(...data);
+      hasMore = data.length === pageSize;
+      from += pageSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allRows.map((r) => {
+    const statusProposta = String(r.status_proposta || '');
+    const faseSM = String(r.etapa_sm || '');
     return {
-      projetoId: String(d.projeto_id || r.key || ''),
-      telefone: String(d.telefone || ''),
-      etapaSM: String(d.etapa_sm || ''),
+      projetoId: String(r.project_id || ''),
+      telefone: String(r.telefone || ''),
+      etapaSM: String(r.etapa_sm || ''),
       faseSM,
-      responsavel: String(d.responsavel || ''),
-      responsavelId: String(d.responsavel_id || ''),
-      representante: String(d.representante || ''),
-      etiquetas: String(d.etiquetas || ''),
-      nomeProposta: String(d.nome_proposta || ''),
-      valorProposta: Number(d.valor_proposta) || 0,
-      potenciaSistema: parseFloat(String(d.potencia_sistema || '0').replace(',', '.')) || 0,
-      tsProposta: String(d.ts_proposta || ''),
+      responsavel: String(r.responsavel || r.closer_atribuido || ''),
+      responsavelId: '',
+      representante: String(r.representante || ''),
+      etiquetas: '',
+      nomeProposta: String(r.nome || ''),
+      valorProposta: Number(r.valor_proposta) || 0,
+      potenciaSistema: r.potencia_sistema ? Number(r.potencia_sistema) : 0,
+      tsProposta: String(r.data_proposta || ''),
       statusProposta,
       status: mapStatusProposta(statusProposta, faseSM),
-      tsSync: String(d.ts_sync || ''),
+      tsSync: String(r.synced_at || r.updated_at || ''),
     };
   });
-}
-
-async function fetchComercialData(orgOverride?: string | null): Promise<ComercialRecord[]> {
-  const body: Record<string, string> = {};
-  if (orgOverride) {
-    body.org_id = orgOverride;
-  }
-
-  const { data, error } = await supabase.functions.invoke<MakeResponse>('fetch-make-comercial', {
-    body: Object.keys(body).length > 0 ? body : undefined,
-  });
-
-  if (error) {
-    console.error('Error fetching comercial data:', error);
-    throw new Error(error.message || 'Failed to fetch comercial data');
-  }
-
-  if (!data || data.error) {
-    throw new Error(data?.error || 'No data returned');
-  }
-
-  return parseRecords(data.data);
 }
 
 export function useMakeComercialData() {
@@ -100,8 +96,8 @@ export function useMakeComercialData() {
 
   return useQuery({
     queryKey: ['make-comercial-data', selectedOrgId],
-    queryFn: () => fetchComercialData(selectedOrgId),
-    staleTime: 1000 * 60 * 10,
+    queryFn: () => fetchComercialFromDB(selectedOrgId),
+    staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
     retry: 1,
