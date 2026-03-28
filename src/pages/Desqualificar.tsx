@@ -74,10 +74,7 @@ export default function Desqualificar() {
         const res = await fetch(WEBHOOK_DESQUALIFICAR, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telefone: telefoneFormatado, nome: lead.nome || "", etapa_funil: lead.etapaFunil || "",
-            cidade: lead.cidade || "", email: lead.email || "", valor_conta: lead.valorConta || "",
-            score: lead.makeScore || "", temperatura: lead.makeTemperatura || "", canal_origem: lead.canalOrigem || "",
-            vendedor: "", vendedor_sm_id: null, vendedor_krolik_id: null,
+            telefone: telefoneFormatado, project_id: lead.projectId || "", chatId: "", nome: lead.nome || "",
           }),
         });
         if (res.ok) success++;
