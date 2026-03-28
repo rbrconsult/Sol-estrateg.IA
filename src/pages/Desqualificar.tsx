@@ -170,9 +170,25 @@ export default function Desqualificar() {
               <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
               <Input placeholder="Nome do lead" value={manualDesqName} onChange={(e) => setManualDesqName(e.target.value)} disabled={manualDesqSending} />
             </div>
-            <Button onClick={sendManualDesqualificar} disabled={manualDesqSending || !manualDesqPhone.trim()} className="shrink-0 gap-1.5" variant="destructive">
-              {manualDesqSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />} Desqualificar
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button disabled={manualDesqSending || !manualDesqPhone.trim()} className="shrink-0 gap-1.5" variant="destructive">
+                  {manualDesqSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />} Desqualificar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar desqualificação</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Deseja desqualificar o lead <strong>{manualDesqPhone}</strong>?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={sendManualDesqualificar} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardContent>
       </Card>
