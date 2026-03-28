@@ -362,7 +362,11 @@ export default function Qualificacao() {
             <span className="text-xs text-muted-foreground">
               {selected.size > 0 ? `${selected.size} selecionado(s)` : `${filtered.length} leads`}
             </span>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-3">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <Checkbox checked={comMensagem} onCheckedChange={(v) => setComMensagem(!!v)} className="h-3.5 w-3.5" />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Com mensagem</span>
+              </label>
               <Select value={batchVendor} onValueChange={setBatchVendor}>
                 <SelectTrigger className="w-40 h-8 text-xs">
                   <Shuffle className="h-3.5 w-3.5 mr-1.5" /><SelectValue />
