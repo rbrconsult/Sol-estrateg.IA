@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const WEBHOOK_URL = "https://hook.us2.make.com/wkesyljs4735mb4vwoo5v033ni9eirho";
+const WEBHOOK_URL = "https://hook.us2.make.com/8wf2jqadbefbhq51ool915bj1yi9fuup";
 
 function isDesqualificado(r: MakeRecord): boolean {
   const status = (r.makeStatus || "").toUpperCase();
