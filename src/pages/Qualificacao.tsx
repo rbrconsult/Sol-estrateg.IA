@@ -60,6 +60,7 @@ export default function Qualificacao() {
   const [manualSending, setManualSending] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchSending, setBatchSending] = useState(false);
+  const [comMensagem, setComMensagem] = useState(true);
 
   const [krolicMembers, setKrolicMembers] = useState<KrolicMember[]>([]);
   const [batchVendor, setBatchVendor] = useState<string>("roleta");
