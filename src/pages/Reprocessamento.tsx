@@ -84,7 +84,7 @@ export default function Reprocessamento() {
       try {
         const res = await fetch(WEBHOOK_URL, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ numero: formatted }),
+          body: JSON.stringify({ telefone: formatted }),
         });
         if (res.ok) { success++; setSentSet((s) => new Set(s).add(lead.telefone || "")); }
       } catch {}
