@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const WEBHOOK_URL = "https://hook.us2.make.com/wkesyljs4735mb4vwoo5v033ni9eirho";
+const WEBHOOK_URL = "https://hook.us2.make.com/8wf2jqadbefbhq51ool915bj1yi9fuup";
 
 function isDesqualificado(r: MakeRecord): boolean {
   const status = (r.makeStatus || "").toUpperCase();
@@ -84,7 +84,7 @@ export default function Reprocessamento() {
       try {
         const res = await fetch(WEBHOOK_URL, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ numero: formatted }),
+          body: JSON.stringify({ telefone: formatted }),
         });
         if (res.ok) { success++; setSentSet((s) => new Set(s).add(lead.telefone || "")); }
       } catch {}
@@ -103,7 +103,7 @@ export default function Reprocessamento() {
     try {
       const res = await fetch(WEBHOOK_URL, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ numero: formatted }),
+        body: JSON.stringify({ telefone: formatted }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       toast.success(`Reprocessamento enviado para ${formatted}`);

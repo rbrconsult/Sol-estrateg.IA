@@ -14,7 +14,7 @@ import {
   Phone, MapPin, Thermometer, RefreshCw, XCircle,
 } from "lucide-react";
 
-const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/1rxirj4qss3mglk6lqcf1bswxyvkk3wq";
+const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/rejr7k2xlpr4taxfss1jrnt8oc2s5nsd";
 
 const isDesqualificado = (r: MakeRecord): boolean => {
   const status = (r.makeStatus || "").toUpperCase();
@@ -74,10 +74,7 @@ export default function Desqualificar() {
         const res = await fetch(WEBHOOK_DESQUALIFICAR, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telefone: telefoneFormatado, nome: lead.nome || "", etapa_funil: lead.etapaFunil || "",
-            cidade: lead.cidade || "", email: lead.email || "", valor_conta: lead.valorConta || "",
-            score: lead.makeScore || "", temperatura: lead.makeTemperatura || "", canal_origem: lead.canalOrigem || "",
-            vendedor: "", vendedor_sm_id: null, vendedor_krolik_id: null,
+            telefone: telefoneFormatado, project_id: lead.projectId || "", chatId: "", nome: lead.nome || "",
           }),
         });
         if (res.ok) success++;
@@ -98,9 +95,7 @@ export default function Desqualificar() {
       const res = await fetch(WEBHOOK_DESQUALIFICAR, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          telefone: telefoneFormatado, nome: manualDesqName.trim() || "", etapa_funil: "MANUAL",
-          cidade: "", email: "", valor_conta: "", score: "", temperatura: "", canal_origem: "manual",
-          vendedor: "", vendedor_sm_id: null, vendedor_krolik_id: null,
+          telefone: telefoneFormatado, project_id: "", chatId: "", nome: manualDesqName.trim() || "",
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

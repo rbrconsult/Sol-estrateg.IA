@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
+const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/f7p3lu6ilb796udaaowyc0bst0nxai16";
 
 function classifyLead(r: MakeRecord): string {
   return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
@@ -188,11 +188,9 @@ export default function Qualificacao() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telefone: telefoneFormatado, nome: lead.nome || "", etapa_funil: lead.etapaFunil || "",
-            cidade: lead.cidade || "", email: lead.email || "", valor_conta: lead.valorConta || "",
-            score: lead.makeScore || "", temperatura: lead.makeTemperatura || "", canal_origem: lead.canalOrigem || "",
-            vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
-            mensagem: comMensagem,
+            telefone: telefoneFormatado, project_id: lead.projectId || "", chatId: "", contactId: "",
+            nome: lead.nome || "", score: lead.makeScore || "", valor_conta: lead.valorConta || "",
+            mensagem: comMensagem, closer_sm_id: vendor.sm_id, closer_krolik_id: vendor.krolik_id,
           }),
         });
         if (res.ok) success++;
@@ -214,10 +212,9 @@ export default function Qualificacao() {
       const res = await fetch(WEBHOOK_QUALIFICAR, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          telefone: telefoneFormatado, nome: manualName.trim() || "", etapa_funil: "MANUAL",
-          cidade: "", email: "", valor_conta: "", score: "", temperatura: "", canal_origem: "manual",
-          vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
-          mensagem: comMensagem,
+          telefone: telefoneFormatado, project_id: "", chatId: "", contactId: "",
+          nome: manualName.trim() || "", score: "", valor_conta: "",
+          mensagem: comMensagem, closer_sm_id: vendor.sm_id, closer_krolik_id: vendor.krolik_id,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
