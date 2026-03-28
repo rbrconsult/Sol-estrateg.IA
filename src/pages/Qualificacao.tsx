@@ -377,15 +377,26 @@ export default function Qualificacao() {
                   {krolicMembers.map((m) => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button
-                size="sm"
-                disabled={selected.size === 0 || batchSending}
-                onClick={sendBatch}
-                className="gap-1.5"
-              >
-                {batchSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                Qualificar ({selected.size})
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" disabled={selected.size === 0 || batchSending} className="gap-1.5">
+                    {batchSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                    Qualificar ({selected.size})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar qualificação</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Deseja qualificar <strong>{selected.size}</strong> lead(s)?{comMensagem ? " Uma mensagem será enviada." : " Sem envio de mensagem."}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={sendBatch}>Confirmar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </CardHeader>

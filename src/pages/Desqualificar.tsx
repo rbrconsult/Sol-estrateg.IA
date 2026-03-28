@@ -192,16 +192,26 @@ export default function Desqualificar() {
               {selected.size > 0 ? `${selected.size} selecionado(s)` : `${filtered.length} leads`}
             </span>
             <div className="ml-auto">
-              <Button
-                size="sm"
-                variant="destructive"
-                disabled={selected.size === 0 || batchSending}
-                onClick={sendBatch}
-                className="gap-1.5"
-              >
-                {batchSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
-                Desqualificar ({selected.size})
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive" disabled={selected.size === 0 || batchSending} className="gap-1.5">
+                    {batchSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+                    Desqualificar ({selected.size})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar desqualificação</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Deseja desqualificar <strong>{selected.size}</strong> lead(s)? Esta ação será enviada ao webhook.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={sendBatch} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </CardHeader>
