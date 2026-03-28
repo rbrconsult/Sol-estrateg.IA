@@ -14,7 +14,7 @@ import {
   Phone, MapPin, Thermometer, RefreshCw, XCircle,
 } from "lucide-react";
 
-const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/1rxirj4qss3mglk6lqcf1bswxyvkk3wq";
+const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/rejr7k2xlpr4taxfss1jrnt8oc2s5nsd";
 
 const isDesqualificado = (r: MakeRecord): boolean => {
   const status = (r.makeStatus || "").toUpperCase();
