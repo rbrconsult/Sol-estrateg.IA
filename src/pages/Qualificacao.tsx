@@ -191,6 +191,7 @@ export default function Qualificacao() {
             cidade: lead.cidade || "", email: lead.email || "", valor_conta: lead.valorConta || "",
             score: lead.makeScore || "", temperatura: lead.makeTemperatura || "", canal_origem: lead.canalOrigem || "",
             vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
+            mensagem: comMensagem,
           }),
         });
         if (res.ok) success++;
