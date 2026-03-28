@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/kg2hsdttkmvxq5j2tgeigu0kyv9ucyql";
+const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/f7p3lu6ilb796udaaowyc0bst0nxai16";
 
 function classifyLead(r: MakeRecord): string {
   return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
