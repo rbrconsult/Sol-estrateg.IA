@@ -188,11 +188,9 @@ export default function Qualificacao() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telefone: telefoneFormatado, nome: lead.nome || "", etapa_funil: lead.etapaFunil || "",
-            cidade: lead.cidade || "", email: lead.email || "", valor_conta: lead.valorConta || "",
-            score: lead.makeScore || "", temperatura: lead.makeTemperatura || "", canal_origem: lead.canalOrigem || "",
-            vendedor: vendor.nome, vendedor_sm_id: vendor.sm_id, vendedor_krolik_id: vendor.krolik_id,
-            mensagem: comMensagem,
+            telefone: telefoneFormatado, project_id: lead.projectId || "", chatId: "", contactId: "",
+            nome: lead.nome || "", score: lead.makeScore || "", valor_conta: lead.valorConta || "",
+            mensagem: comMensagem, closer_sm_id: vendor.sm_id, closer_krolik_id: vendor.krolik_id,
           }),
         });
         if (res.ok) success++;
