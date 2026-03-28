@@ -43,7 +43,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
       { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
       { title: "Qualificar", icon: Sparkles, path: "/qualificacao", moduleKey: "qualificacao" },
-      { title: "Desqualificar", icon: Eraser, path: "/sanitizacao", moduleKey: "qualificacao" },
+      { title: "Desqualificar", icon: Eraser, path: "/desqualificar", moduleKey: "qualificacao" },
       { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "monitoramento" },
     ],
   },
@@ -87,6 +87,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
+      { title: "Sanitizar", icon: Eraser, path: "/sanitizacao", moduleKey: "monitoramento" },
       { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
     ],
   },
