@@ -16,16 +16,16 @@ interface Props {
 /** Map scenario names to operational categories */
 function detectFolder(name: string): string {
   const n = name.toLowerCase();
+  // Fluxo de Segurança (check first - specific names)
+  if (n.includes("qualificar") || n.includes("desqualificar") || n.includes("reprocessar")) return "🛡️ Fluxo de Segurança";
+  // Sync (check before Auth to catch "webhook solar")
+  if (n.includes("sync") || n.includes("transfer") || n.includes("webhook")) return "🔄 Sync / Integrações";
   // Canal de Aquisição
   if (n.includes("capture") || n.includes("captura") || n.includes("inbound") || n.includes("fluxo 1") || n.includes("fluxo 2")) return "📥 Canal de Aquisição";
   // Robô
   if (n.includes("agent") || n.includes("robo") || n.includes("sdr") || n.includes("fup") || n.includes("reativacao")) return "🤖 Robô";
   // Auth
-  if (n.includes("auth") || n.includes("grap") || n.includes("solar")) return "🔐 Auth";
-  // Fluxo de Segurança
-  if (n.includes("qualificar") || n.includes("desqualificar") || n.includes("reprocessar")) return "🛡️ Fluxo de Segurança";
-  // Sync
-  if (n.includes("sync") || n.includes("transfer")) return "🔄 Sync / Integrações";
+  if (n.includes("auth") || n.includes("grap") || n.includes("solarmarket")) return "🔐 Auth";
   return "⚙️ Outros";
 }
 
