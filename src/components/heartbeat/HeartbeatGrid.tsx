@@ -13,23 +13,28 @@ interface Props {
   isLoading: boolean;
 }
 
-/** Map scenario names to Make.com folder groups */
+/** Map scenario names to operational categories */
 function detectFolder(name: string): string {
   const n = name.toLowerCase();
-  if (n.includes("captura de leads") || n.includes("fluxo 1") || n.includes("fluxo 2")) return "📥 Captura de Leads";
-  if (n.includes("robo sdr") || n.includes("qualificar lead") || n.includes("reativacao") || n.includes("fup frio") || n.includes("desqualificar")) return "🤖 SDR / Qualificação";
-  if (n.includes("meta ads") || n.includes("google ads") || n.includes("meta capi") || n.includes("coletor openai")) return "📊 Ads & Marketing";
-  if (n.includes("sol comercial") || n.includes("webhook") || n.includes("contrato") || n.includes("perdido") || n.includes("proposta")) return "💼 Comercial / CRM";
-  if (n.includes("sync") || n.includes("auth") || n.includes("graphql") || n.includes("integration") || n.includes("ocr") || n.includes("lista de projetos | solar")) return "🔄 Integrações / Sync";
+  // Canal de Aquisição
+  if (n.includes("capture") || n.includes("captura") || n.includes("inbound") || n.includes("fluxo 1") || n.includes("fluxo 2")) return "📥 Canal de Aquisição";
+  // Robô
+  if (n.includes("agent") || n.includes("robo") || n.includes("sdr") || n.includes("fup") || n.includes("reativacao")) return "🤖 Robô";
+  // Auth
+  if (n.includes("auth") || n.includes("grap") || n.includes("solar")) return "🔐 Auth";
+  // Fluxo de Segurança
+  if (n.includes("qualificar") || n.includes("desqualificar") || n.includes("reprocessar")) return "🛡️ Fluxo de Segurança";
+  // Sync
+  if (n.includes("sync") || n.includes("transfer")) return "🔄 Sync / Integrações";
   return "⚙️ Outros";
 }
 
 const FOLDER_ORDER = [
-  "📥 Captura de Leads",
-  "🤖 SDR / Qualificação",
-  "📊 Ads & Marketing",
-  "💼 Comercial / CRM",
-  "🔄 Integrações / Sync",
+  "📥 Canal de Aquisição",
+  "🤖 Robô",
+  "🔐 Auth",
+  "🛡️ Fluxo de Segurança",
+  "🔄 Sync / Integrações",
   "⚙️ Outros",
 ];
 
