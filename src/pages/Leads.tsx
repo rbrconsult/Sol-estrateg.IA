@@ -776,7 +776,7 @@ export default function Leads() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {["Nome", "Telefone", "Etapa", "Status", "Cidade", "Temp.", "Score", "Closer", "FUP", "Data"].map(h => (
+                  {["Nome", "Telefone", "Canal", "Etapa", "Status", "Temp.", "Score", "Msgs IA", "Closer", "FUP", "Data"].map(h => (
                     <th key={h} className="px-3 py-2.5 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -784,35 +784,33 @@ export default function Leads() {
               <tbody>
                 {tableLeads.map((r, i) => {
                   const isExpanded = expandedLead === (r.telefone + i);
-                  const temp = normalizeTemp(r.makeTemperatura);
                   const closer = normalizeCloser(r.closerAtribuido);
                   return (
                     <>
                       <tr
                         key={r.telefone + i}
                         className="border-b border-border/20 transition-colors hover:bg-secondary/30 cursor-pointer"
-                        onClick={() => setExpandedLead(isExpanded ? null : r.telefone + i)}
+                        onClick={() => setDrawerLead(r)}
                       >
                         <td className="px-3 py-2.5 font-medium text-foreground text-xs">
                           <div className="flex items-center gap-1.5">
-                            {isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}
                             {r.nome || '—'}
+                            {r.dsSource === 'sol_leads' && <span className="text-[9px] bg-primary/10 text-primary px-1 rounded">v2</span>}
                           </div>
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground text-xs font-mono">{r.telefone || '—'}</td>
+                        <td className="px-3 py-2.5"><CanalOrigemBadge canal={r.canalOrigem} /></td>
                         <td className="px-3 py-2.5">
                           <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", getEtapaLabel(r) === "SEM ETAPA" ? "bg-secondary text-muted-foreground" : "bg-primary/10 text-primary")}>
                             {getEtapaLabel(r)}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{r.makeStatus || '—'}</td>
-                        <td className="px-3 py-2.5 text-xs text-muted-foreground">{r.cidade || '—'}</td>
-                        <td className="px-3 py-2.5">
-                          {temp ? <TempDot temp={temp} /> : <span className="text-xs text-muted-foreground/50">—</span>}
-                        </td>
+                        <td className="px-3 py-2.5"><TemperatureBadge temperatura={r.makeTemperatura} /></td>
                         <td className="px-3 py-2.5 text-xs font-semibold text-foreground tabular-nums">
                           {r.makeScore && parseFloat(r.makeScore) > 0 ? parseFloat(r.makeScore).toFixed(1) : "—"}
                         </td>
+                        <td className="px-3 py-2.5 text-xs text-muted-foreground tabular-nums">{r.totalMensagensIa || '—'}</td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{closer || '—'}</td>
                         <td className="px-3 py-2.5">
                           <span className={cn(
