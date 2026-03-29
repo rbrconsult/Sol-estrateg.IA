@@ -90,9 +90,9 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch scenarios [${scenariosRes.status}]: ${errText}`);
     }
     const scenariosData = await scenariosRes.json();
-    const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? []).map(
-      (s: any) => ({ id: s.id, name: s.name })
-    );
+    const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? [])
+      .filter((s: any) => s.isActive === true || s.scheduling?.type === "indefinitely")
+      .map((s: any) => ({ id: s.id, name: s.name }));
 
     console.log(`Found ${scenarios.length} scenarios`);
 
