@@ -128,11 +128,15 @@ export default function Leads() {
   const queryClient = useQueryClient();
   const { data: makeRecords, isLoading, error, forceSync } = useMakeDataStore();
   const { selectedOrgName } = useOrgFilter();
+  const solActions = useSolActions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEtapa, setFilterEtapa] = useState("todas");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterCloser, setFilterCloser] = useState("todos");
+  const [filterCanal, setFilterCanal] = useState("todos");
+  const [filterDsSource, setFilterDsSource] = useState("todos");
   const [expandedLead, setExpandedLead] = useState<string | null>(null);
+  const [drawerLead, setDrawerLead] = useState<MakeRecord | null>(null);
   const [tableLimit, setTableLimit] = useState(50);
   const pf = useGlobalFilters();
 
