@@ -41,9 +41,26 @@ export interface MakeRecord {
   potenciaSistema?: number;
   representante?: string;
   dataProposta?: string;
-    dataFechamento?: string;
-    sentimentoResposta?: string;
-    interesseDetectado?: string;
+  dataFechamento?: string;
+  sentimentoResposta?: string;
+  interesseDetectado?: string;
+  // v2 fields
+  acrescimoCarga?: string;
+  prazoDecisao?: string;
+  formaPagamento?: string;
+  preferenciaContato?: string;
+  chatId?: string;
+  contactId?: string;
+  resumoConversa?: string;
+  totalMensagensIa?: number;
+  totalAudiosEnviados?: number;
+  custoOpenai?: number;
+  custoElevenlabs?: number;
+  custoTotalUsd?: number;
+  qualificadoPor?: string;
+  aguardandoContaLuz?: boolean;
+  transferidoComercial?: boolean;
+  dsSource?: string;
 }
 
 /** Normalize phone: keep only digits, strip leading country code 55 if 12+ digits */
