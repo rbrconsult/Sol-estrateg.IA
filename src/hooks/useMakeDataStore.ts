@@ -135,6 +135,23 @@ function rowToMakeRecord(r: any): MakeRecord {
     dataFechamento: r.data_fechamento || undefined,
     sentimentoResposta: r.sentimento_resposta || undefined,
     interesseDetectado: r.interesse_detectado || undefined,
+    // v2 fields
+    acrescimoCarga: r.acrescimo_carga || undefined,
+    prazoDecisao: r.prazo_decisao || undefined,
+    formaPagamento: r.forma_pagamento || undefined,
+    preferenciaContato: r.preferencia_contato || undefined,
+    chatId: r.chat_id || undefined,
+    contactId: r.contact_id || undefined,
+    resumoConversa: r.resumo_conversa || undefined,
+    totalMensagensIa: r.total_mensagens_ia ?? undefined,
+    totalAudiosEnviados: r.total_audios_enviados ?? undefined,
+    custoOpenai: r.custo_openai ? Number(r.custo_openai) : undefined,
+    custoElevenlabs: r.custo_elevenlabs ? Number(r.custo_elevenlabs) : undefined,
+    custoTotalUsd: r.custo_total_usd ? Number(r.custo_total_usd) : undefined,
+    qualificadoPor: r.qualificado_por || undefined,
+    aguardandoContaLuz: r.aguardando_conta_luz ?? undefined,
+    transferidoComercial: r.transferido_comercial ?? undefined,
+    dsSource: r.ds_source || 'ds_thread',
   };
 }
 
