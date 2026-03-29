@@ -101,12 +101,15 @@ function computeHealth(entries: HeartbeatEntry[], monitoredIds: Set<number>, mon
     });
   }
 
-  // Show ALL scenarios with recent activity (48h), not just monitored ones
-  const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
-  const active = result.filter((s) => {
-    const lastExec = s.lastSuccess || s.lastError;
-    return lastExec && new Date(lastExec).getTime() >= cutoff48h;
-  });
+  // Only show scenarios that are in the monitored list (synced from active Make scenarios)
+  // If no monitored list exists, fall back to 48h activity filter
+  const active = monitoredIds.size > 0
+    ? result.filter((s) => monitoredIds.has(s.scenario_id))
+    : result.filter((s) => {
+        const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
+        const lastExec = s.lastSuccess || s.lastError;
+        return lastExec && new Date(lastExec).getTime() >= cutoff48h;
+      });
 
   // Sort: monitored first (in configured order), then others alphabetically
   return active.sort((a, b) => {
