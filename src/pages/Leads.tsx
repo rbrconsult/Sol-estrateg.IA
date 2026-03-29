@@ -829,7 +829,7 @@ export default function Leads() {
                       </tr>
                       {isExpanded && r.historico.length > 0 && (
                         <tr key={`${r.telefone}${i}-timeline`}>
-                          <td colSpan={10} className="px-6 py-4 bg-secondary/20">
+                          <td colSpan={11} className="px-6 py-4 bg-secondary/20">
                             <div className="space-y-2">
                               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <MessageSquare className="h-3 w-3" /> Histórico de interações
