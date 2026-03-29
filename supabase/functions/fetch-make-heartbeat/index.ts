@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     }
     const scenariosData = await scenariosRes.json();
     const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? [])
-      .filter((s: any) => s.isActive === true || s.scheduling?.type === "indefinitely")
+      .filter((s: any) => (s.isActive === true || s.scheduling?.type === "indefinitely") && (s.name ?? "").startsWith("SOL v2"))
       .map((s: any) => ({ id: s.id, name: s.name }));
 
     console.log(`Found ${scenarios.length} scenarios`);
