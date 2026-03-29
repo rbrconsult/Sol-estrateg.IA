@@ -262,50 +262,55 @@ Deno.serve(async (req) => {
       await incompleteRes.text();
     }
 
-    // 3. Error/warning logs from each scenario
+    // 3. Error/warning logs from each scenario (batched to avoid 429)
     const scenarioIds = Object.keys(scenarios).map(Number);
-    const logPromises = scenarioIds.map(async (sid) => {
-      try {
-        const logRes = await fetch(
-          `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=50`,
-          { headers: makeHeaders }
-        );
-        if (!logRes.ok) { await logRes.text(); return []; }
-        const logData = await logRes.json();
-        const scenarioInfo = scenarios[sid] ?? { name: `Scenario ${sid}`, modules: 0 };
+    const BATCH_SIZE = 2;
+    const BATCH_DELAY = 2000;
+    
+    for (let i = 0; i < scenarioIds.length; i += BATCH_SIZE) {
+      if (i > 0) await new Promise((r) => setTimeout(r, BATCH_DELAY));
+      const batch = scenarioIds.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(batch.map(async (sid) => {
+        try {
+          const logRes = await fetch(
+            `${MAKE_BASE}/scenarios/${sid}/logs?pg[limit]=50`,
+            { headers: makeHeaders }
+          );
+          if (!logRes.ok) { await logRes.text(); return []; }
+          const logData = await logRes.json();
+          const scenarioInfo = scenarios[sid] ?? { name: `Scenario ${sid}`, modules: 0 };
 
-        const errorLogs = (logData.scenarioLogs ?? [])
-          .filter((item: any) => item.status === 2 || item.status === 3)
-          .map((item: any) => {
-            const isWarning = item.status === 3;
-            return {
-              _rawLogId: item.id,
-              execution_id: String(item.id ?? `${sid}-${item.timestamp}`),
-              scenario_id: sid,
-              scenario_name: scenarioInfo.name,
-              module_name: "Unknown",
-              module_app: "Unknown",
-              failed_module_index: 0,
-              total_modules: scenarioInfo.modules,
-              error_type: isWarning ? "Warning" : "RuntimeError",
-              error_code: null,
-              error_message: "Error in execution",
-              attempts: 1,
-              execution_status: isWarning ? "warning" : "error_continued",
-              flow_category: detectCategory(scenarioInfo.name),
-              execution_duration_seconds: item.duration ? Math.round(item.duration / 1000) : null,
-              occurred_at: item.timestamp ?? new Date().toISOString(),
-            };
-          });
+          const errorLogs = (logData.scenarioLogs ?? [])
+            .filter((item: any) => item.status === 2 || item.status === 3)
+            .map((item: any) => {
+              const isWarning = item.status === 3;
+              return {
+                _rawLogId: item.id,
+                execution_id: String(item.id ?? `${sid}-${item.timestamp}`),
+                scenario_id: sid,
+                scenario_name: scenarioInfo.name,
+                module_name: "Unknown",
+                module_app: "Unknown",
+                failed_module_index: 0,
+                total_modules: scenarioInfo.modules,
+                error_type: isWarning ? "Warning" : "RuntimeError",
+                error_code: null,
+                error_message: "Error in execution",
+                attempts: 1,
+                execution_status: isWarning ? "warning" : "error_continued",
+                flow_category: detectCategory(scenarioInfo.name),
+                execution_duration_seconds: item.duration ? Math.round(item.duration / 1000) : null,
+                occurred_at: item.timestamp ?? new Date().toISOString(),
+              };
+            });
 
-        await enrichLogsWithModuleInfo(errorLogs, sid, makeHeaders, 5);
-        return errorLogs;
-      } catch { return []; }
-    });
-
-    const logResults = await Promise.all(logPromises);
-    for (const logs of logResults) {
-      records.push(...logs);
+          await enrichLogsWithModuleInfo(errorLogs, sid, makeHeaders, 2);
+          return errorLogs;
+        } catch { return []; }
+      }));
+      for (const logs of batchResults) {
+        records.push(...logs);
+      }
     }
 
     // 4. Upsert + track NEW records for alerting
