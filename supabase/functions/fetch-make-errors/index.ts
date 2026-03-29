@@ -214,8 +214,23 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Helper: fetch with retry on 429
+    async function fetchRetry(url: string, opts: RequestInit, retries = 3): Promise<Response> {
+      for (let attempt = 0; attempt < retries; attempt++) {
+        const res = await fetch(url, opts);
+        if (res.status === 429) {
+          const wait = Math.pow(2, attempt + 1) * 1000;
+          console.log(`429 rate limited, waiting ${wait}ms...`);
+          await new Promise((r) => setTimeout(r, wait));
+          continue;
+        }
+        return res;
+      }
+      return fetch(url, opts);
+    }
+
     // 1. Fetch scenarios
-    const scenariosRes = await fetch(
+    const scenariosRes = await fetchRetry(
       `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
       { headers: makeHeaders }
     );
