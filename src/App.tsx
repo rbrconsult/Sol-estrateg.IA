@@ -60,6 +60,8 @@ import CampanhasAdsPerformance from "./pages/campanhas/AdsPerformance";
 import CampanhasMidiaReceita from "./pages/campanhas/MidiaReceita";
 import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
 import TimeComercialPage from "./pages/TimeComercialPage";
+import SolAgent from "./pages/sol/SolAgent";
+import SolInsights from "./pages/sol/SolInsights";
 const queryClient = new QueryClient();
 
 const App = () => (
