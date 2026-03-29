@@ -19,8 +19,9 @@ export interface SolInsight {
 }
 
 export function useSolInsights() {
-  const { selectedOrgSlug } = useOrgFilter();
-  const franquiaId = selectedOrgSlug || "evolve_olimpia";
+  const { selectedOrgId, orgs } = useOrgFilter();
+  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
+  const franquiaId = (selectedOrg as any)?.slug || "evolve_olimpia";
   const queryClient = useQueryClient();
 
   const query = useQuery({

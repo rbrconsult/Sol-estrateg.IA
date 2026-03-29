@@ -20,8 +20,9 @@ export interface SolMetrica {
 }
 
 export function useSolMetricas(days = 7) {
-  const { selectedOrgSlug } = useOrgFilter();
-  const franquiaId = selectedOrgSlug || "evolve_olimpia";
+  const { selectedOrgId, orgs } = useOrgFilter();
+  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
+  const franquiaId = (selectedOrg as any)?.slug || "evolve_olimpia";
 
   return useQuery({
     queryKey: ["sol-metricas", franquiaId, days],
