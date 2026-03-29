@@ -20,12 +20,28 @@ export interface SolMetrica {
 }
 
 export function useSolMetricas(days = 7) {
-  const { selectedOrgId, orgs } = useOrgFilter();
-  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
-  const franquiaId = (selectedOrg as any)?.slug || "evolve_olimpia";
+  const { selectedOrgId } = useOrgFilter();
+
+  // First get the slug for the org
+  const slugQuery = useQuery({
+    queryKey: ["org-slug", selectedOrgId],
+    queryFn: async () => {
+      if (!selectedOrgId) return "evolve_olimpia";
+      const { data } = await supabase
+        .from("organizations")
+        .select("slug")
+        .eq("id", selectedOrgId)
+        .single();
+      return data?.slug || "evolve_olimpia";
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const franquiaId = slugQuery.data || "evolve_olimpia";
 
   return useQuery({
     queryKey: ["sol-metricas", franquiaId, days],
+    enabled: !!slugQuery.data,
     queryFn: async (): Promise<SolMetrica[]> => {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);

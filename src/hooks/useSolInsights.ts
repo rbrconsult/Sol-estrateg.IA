@@ -19,13 +19,29 @@ export interface SolInsight {
 }
 
 export function useSolInsights() {
-  const { selectedOrgId, orgs } = useOrgFilter();
-  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
-  const franquiaId = (selectedOrg as any)?.slug || "evolve_olimpia";
+  const { selectedOrgId } = useOrgFilter();
   const queryClient = useQueryClient();
+
+  // Get the slug for the org
+  const slugQuery = useQuery({
+    queryKey: ["org-slug", selectedOrgId],
+    queryFn: async () => {
+      if (!selectedOrgId) return "evolve_olimpia";
+      const { data } = await supabase
+        .from("organizations")
+        .select("slug")
+        .eq("id", selectedOrgId)
+        .single();
+      return data?.slug || "evolve_olimpia";
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const franquiaId = slugQuery.data || "evolve_olimpia";
 
   const query = useQuery({
     queryKey: ["sol-insights", franquiaId],
+    enabled: !!slugQuery.data,
     queryFn: async (): Promise<SolInsight[]> => {
       const { data, error } = await supabase
         .from("sol_insights")
