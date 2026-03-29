@@ -11,6 +11,10 @@ import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CanalOrigemBadge } from "@/components/sol/CanalOrigemBadge";
+import { TemperatureBadge } from "@/components/sol/TemperatureBadge";
+import { LeadDetailDrawer } from "@/components/sol/LeadDetailDrawer";
+import { useSolActions } from "@/hooks/useSolActions";
 
 /* ───────── animated counter ───────── */
 function useAnimatedNumber(target: number, duration = 1200, isDecimal = false) {
