@@ -458,6 +458,24 @@ export default function Leads() {
               {closers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={filterCanal} onValueChange={setFilterCanal}>
+            <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Canal" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos Canais</SelectItem>
+              <SelectItem value="META_ADS">Meta Ads</SelectItem>
+              <SelectItem value="GOOGLE_ADS">Google Ads</SelectItem>
+              <SelectItem value="SITE_ORGANICO">Site</SelectItem>
+              <SelectItem value="INBOUND_WHATSAPP">WhatsApp</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterDsSource} onValueChange={setFilterDsSource}>
+            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Origem" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">v1 + v2</SelectItem>
+              <SelectItem value="ds_thread">v1 (Thread)</SelectItem>
+              <SelectItem value="sol_leads">v2 (SOL)</SelectItem>
+            </SelectContent>
+          </Select>
         </section>
 
         {/* ══════ KPIs ══════ */}
