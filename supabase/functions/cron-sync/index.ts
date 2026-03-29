@@ -91,6 +91,8 @@ interface OrgCredentials {
   makeApiKey: string;
   makeDatastoreId: string;
   makeComercialDsId: string;
+  makeSolLeadsDsId: string;
+  makeSolMetricasDsId: string;
   makeTeamId: string;
 }
 
@@ -103,7 +105,7 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
   const { data: allConfigs } = await supabase
     .from('organization_configs')
     .select('organization_id, config_key, config_value')
-    .in('config_key', ['make_api_key', 'ds_leads_site_geral', 'ds_thread_id', 'ds_comercial', 'make_team_id']);
+    .in('config_key', ['make_api_key', 'ds_leads_site_geral', 'ds_thread_id', 'ds_comercial', 'make_team_id', 'ds_sol_leads', 'ds_sol_metricas']);
 
   const configMap: Record<string, Record<string, string>> = {};
   allConfigs?.forEach((c: any) => {
@@ -122,9 +124,10 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       orgId: org.id,
       orgName: org.name,
       makeApiKey: cfg.make_api_key || globalApiKey,
-      // Prioritize thread DS (64798) as source of truth for SOL/FUP journey and statuses
       makeDatastoreId: cfg.ds_thread_id || cfg.ds_leads_site_geral || globalDsId,
       makeComercialDsId: cfg.ds_comercial || globalComercialDsId,
+      makeSolLeadsDsId: cfg.ds_sol_leads || '86887',
+      makeSolMetricasDsId: cfg.ds_sol_metricas || '86891',
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
   }).filter((o: OrgCredentials) => o.makeApiKey);
