@@ -640,21 +640,30 @@ export type Database = {
       }
       leads_consolidados: {
         Row: {
+          acrescimo_carga: string | null
+          aguardando_conta_luz: boolean | null
           campanha: string | null
           canal_origem: string | null
+          chat_id: string | null
           cidade: string | null
           closer_atribuido: string | null
           codigo_status: string | null
+          contact_id: string | null
           created_at: string | null
+          custo_elevenlabs: number | null
+          custo_openai: number | null
+          custo_total_usd: number | null
           data_agendamento: string | null
           data_entrada: string | null
           data_fechamento: string | null
           data_proposta: string | null
           data_qualificacao: string | null
+          ds_source: string | null
           email: string | null
           etapa: string | null
           etapa_sm: string | null
           followup_count: number | null
+          forma_pagamento: string | null
           id: string
           imovel: string | null
           interesse_detectado: string | null
@@ -662,10 +671,14 @@ export type Database = {
           nome: string | null
           organization_id: string | null
           potencia_sistema: number | null
+          prazo_decisao: string | null
+          preferencia_contato: string | null
           project_id: string | null
+          qualificado_por: string | null
           representante: string | null
           respondeu: boolean | null
           responsavel: string | null
+          resumo_conversa: string | null
           robo: string | null
           score: number | null
           sentimento_resposta: string | null
@@ -675,26 +688,38 @@ export type Database = {
           telefone: string
           temperatura: string | null
           tempo_resposta_seg: number | null
+          total_audios_enviados: number | null
+          total_mensagens_ia: number | null
+          transferido_comercial: boolean | null
           updated_at: string | null
           valor_conta: string | null
           valor_proposta: number | null
         }
         Insert: {
+          acrescimo_carga?: string | null
+          aguardando_conta_luz?: boolean | null
           campanha?: string | null
           canal_origem?: string | null
+          chat_id?: string | null
           cidade?: string | null
           closer_atribuido?: string | null
           codigo_status?: string | null
+          contact_id?: string | null
           created_at?: string | null
+          custo_elevenlabs?: number | null
+          custo_openai?: number | null
+          custo_total_usd?: number | null
           data_agendamento?: string | null
           data_entrada?: string | null
           data_fechamento?: string | null
           data_proposta?: string | null
           data_qualificacao?: string | null
+          ds_source?: string | null
           email?: string | null
           etapa?: string | null
           etapa_sm?: string | null
           followup_count?: number | null
+          forma_pagamento?: string | null
           id?: string
           imovel?: string | null
           interesse_detectado?: string | null
@@ -702,10 +727,14 @@ export type Database = {
           nome?: string | null
           organization_id?: string | null
           potencia_sistema?: number | null
+          prazo_decisao?: string | null
+          preferencia_contato?: string | null
           project_id?: string | null
+          qualificado_por?: string | null
           representante?: string | null
           respondeu?: boolean | null
           responsavel?: string | null
+          resumo_conversa?: string | null
           robo?: string | null
           score?: number | null
           sentimento_resposta?: string | null
@@ -715,26 +744,38 @@ export type Database = {
           telefone: string
           temperatura?: string | null
           tempo_resposta_seg?: number | null
+          total_audios_enviados?: number | null
+          total_mensagens_ia?: number | null
+          transferido_comercial?: boolean | null
           updated_at?: string | null
           valor_conta?: string | null
           valor_proposta?: number | null
         }
         Update: {
+          acrescimo_carga?: string | null
+          aguardando_conta_luz?: boolean | null
           campanha?: string | null
           canal_origem?: string | null
+          chat_id?: string | null
           cidade?: string | null
           closer_atribuido?: string | null
           codigo_status?: string | null
+          contact_id?: string | null
           created_at?: string | null
+          custo_elevenlabs?: number | null
+          custo_openai?: number | null
+          custo_total_usd?: number | null
           data_agendamento?: string | null
           data_entrada?: string | null
           data_fechamento?: string | null
           data_proposta?: string | null
           data_qualificacao?: string | null
+          ds_source?: string | null
           email?: string | null
           etapa?: string | null
           etapa_sm?: string | null
           followup_count?: number | null
+          forma_pagamento?: string | null
           id?: string
           imovel?: string | null
           interesse_detectado?: string | null
@@ -742,10 +783,14 @@ export type Database = {
           nome?: string | null
           organization_id?: string | null
           potencia_sistema?: number | null
+          prazo_decisao?: string | null
+          preferencia_contato?: string | null
           project_id?: string | null
+          qualificado_por?: string | null
           representante?: string | null
           respondeu?: boolean | null
           responsavel?: string | null
+          resumo_conversa?: string | null
           robo?: string | null
           score?: number | null
           sentimento_resposta?: string | null
@@ -755,6 +800,9 @@ export type Database = {
           telefone?: string
           temperatura?: string | null
           tempo_resposta_seg?: number | null
+          total_audios_enviados?: number | null
+          total_mensagens_ia?: number | null
+          transferido_comercial?: boolean | null
           updated_at?: string | null
           valor_conta?: string | null
           valor_proposta?: number | null
@@ -1169,6 +1217,105 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sol_insights: {
+        Row: {
+          acao_sugerida: string | null
+          categoria: string | null
+          created_at: string | null
+          dados: Json | null
+          descricao: string
+          expires_at: string | null
+          franquia_id: string
+          id: string
+          robo: string | null
+          severidade: string | null
+          tipo: string
+          titulo: string
+          visualizado: boolean | null
+        }
+        Insert: {
+          acao_sugerida?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          dados?: Json | null
+          descricao: string
+          expires_at?: string | null
+          franquia_id?: string
+          id?: string
+          robo?: string | null
+          severidade?: string | null
+          tipo: string
+          titulo: string
+          visualizado?: boolean | null
+        }
+        Update: {
+          acao_sugerida?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          dados?: Json | null
+          descricao?: string
+          expires_at?: string | null
+          franquia_id?: string
+          id?: string
+          robo?: string | null
+          severidade?: string | null
+          tipo?: string
+          titulo?: string
+          visualizado?: boolean | null
+        }
+        Relationships: []
+      }
+      sol_metricas: {
+        Row: {
+          custo_elevenlabs_usd: number | null
+          custo_make_usd: number | null
+          custo_openai_usd: number | null
+          custo_total_usd: number | null
+          data: string
+          franquia_id: string
+          id: string
+          leads_desqualificados: number | null
+          leads_novos: number | null
+          leads_qualificados: number | null
+          robo: string
+          synced_at: string | null
+          total_audios: number | null
+          total_mensagens: number | null
+        }
+        Insert: {
+          custo_elevenlabs_usd?: number | null
+          custo_make_usd?: number | null
+          custo_openai_usd?: number | null
+          custo_total_usd?: number | null
+          data: string
+          franquia_id?: string
+          id: string
+          leads_desqualificados?: number | null
+          leads_novos?: number | null
+          leads_qualificados?: number | null
+          robo?: string
+          synced_at?: string | null
+          total_audios?: number | null
+          total_mensagens?: number | null
+        }
+        Update: {
+          custo_elevenlabs_usd?: number | null
+          custo_make_usd?: number | null
+          custo_openai_usd?: number | null
+          custo_total_usd?: number | null
+          data?: string
+          franquia_id?: string
+          id?: string
+          leads_desqualificados?: number | null
+          leads_novos?: number | null
+          leads_qualificados?: number | null
+          robo?: string
+          synced_at?: string | null
+          total_audios?: number | null
+          total_mensagens?: number | null
+        }
+        Relationships: []
       }
       support_tickets: {
         Row: {
