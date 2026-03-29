@@ -907,6 +907,37 @@ export default function Leads() {
             Sol Estrateg.IA × Leads
           </p>
         </footer>
+
+        {/* ══════ Lead Detail Drawer ══════ */}
+        <LeadDetailDrawer
+          lead={drawerLead}
+          open={!!drawerLead}
+          onClose={() => setDrawerLead(null)}
+          onQualificar={(l) => {
+            solActions.qualificar.mutate({
+              telefone: l.telefone,
+              project_id: l.projectId,
+              chatId: l.chatId || "",
+              contactId: l.contactId || "",
+              nome: l.nome,
+              score: l.makeScore ? parseFloat(l.makeScore) : undefined,
+              valor_conta: l.valorConta,
+              mensagem: true,
+            });
+          }}
+          onDesqualificar={(l) => {
+            solActions.desqualificar.mutate({
+              telefone: l.telefone,
+              project_id: l.projectId,
+              chatId: l.chatId || "",
+              nome: l.nome,
+            });
+          }}
+          onReprocessar={(l) => {
+            solActions.reprocessar.mutate({ telefone: l.telefone });
+          }}
+          actionsLoading={solActions.isLoading}
+        />
       </div>
     </div>
   );
