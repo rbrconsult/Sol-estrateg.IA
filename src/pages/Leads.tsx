@@ -192,9 +192,11 @@ export default function Leads() {
       if (filterEtapa !== "todas" && getEtapaLabel(r) !== filterEtapa) return false;
       if (filterStatus !== "todos" && r.makeStatus !== filterStatus) return false;
       if (filterCloser !== "todos" && normalizeCloser(r.closerAtribuido) !== filterCloser) return false;
+      if (filterCanal !== "todos" && (r.canalOrigem || "").toUpperCase() !== filterCanal) return false;
+      if (filterDsSource !== "todos" && (r.dsSource || "ds_thread") !== filterDsSource) return false;
       return true;
     });
-  }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser]);
+  }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser, filterCanal, filterDsSource]);
 
   /* ── KPIs ── */
   const kpis = useMemo(() => {
