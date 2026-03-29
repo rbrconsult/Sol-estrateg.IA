@@ -636,6 +636,8 @@ async function syncSolMetricas(supabase: any, creds: OrgCredentials): Promise<an
 
       orgResult.dataStore = await syncDataStore(supabase, creds);
       orgResult.comercial = await syncComercialDS(supabase, creds);
+      orgResult.solLeads = await syncSolLeads(supabase, creds);
+      orgResult.solMetricas = await syncSolMetricas(supabase, creds);
       orgResult.heartbeat = await syncHeartbeat(supabase, creds);
 
       results[creds.orgName] = orgResult;
