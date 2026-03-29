@@ -27,3 +27,5 @@ project_id = "xffzjdulkdgyicsllznp"
     verify_jwt = false
   [functions.cron-sync]
     verify_jwt = false
+  [functions.sol-actions]
+    verify_jwt = false

@@ -143,6 +143,8 @@ const App = () => (
               <Route path="/campanhas/receita" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasMidiaReceita /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/ga4" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GA4Campanhas /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/time-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="time-comercial"><TimeComercialPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/sol/agent" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><SolAgent /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/sol/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><SolInsights /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
