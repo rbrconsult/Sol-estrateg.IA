@@ -436,7 +436,152 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   return { scenarios: scenarios.length, records: dedupRecords.length, upserted: upsertedHB };
 }
 
-Deno.serve(async (req) => {
+/** Sync sol_leads DS (86887) → leads_consolidados with ds_source='sol_leads' */
+async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> {
+  if (!creds.makeSolLeadsDsId) return { skipped: true, reason: 'no sol_leads DS id' };
+
+  const makeHeaders = { Authorization: `Token ${creds.makeApiKey}`, "Content-Type": "application/json" };
+  const allRecords: any[] = [];
+  let offset = 0;
+  const limit = 100;
+  let hasMore = true;
+
+  while (hasMore) {
+    const apiUrl = `${MAKE_BASE}/data-stores/${creds.makeSolLeadsDsId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+    const makeRes = await fetchWithRetry(apiUrl, { headers: makeHeaders });
+    if (!makeRes.ok) {
+      const errorText = await makeRes.text();
+      console.error(`[${creds.orgName}] sol_leads DS error:`, makeRes.status, errorText);
+      return { error: `API error ${makeRes.status}` };
+    }
+    const makeData = await makeRes.json();
+    const records = makeData?.records || makeData?.data || [];
+    if (Array.isArray(records)) allRecords.push(...records);
+    hasMore = Array.isArray(records) && records.length === limit;
+    offset += limit;
+  }
+
+  console.log(`[${creds.orgName}] sol_leads DS: ${allRecords.length} records fetched`);
+
+  const leadsToUpsert = allRecords.map((r) => {
+    const d = r.data || r;
+    const phone = normalizePhone(String(d.telefone || r.key || ''));
+
+    const record: Record<string, any> = {
+      telefone: phone,
+      nome: String(d.nome_lead || d.nome || '') || null,
+      email: String(d.email_lead || d.email || '') || null,
+      cidade: String(d.cidade || '') || null,
+      canal_origem: String(d.canal_origem || '') || null,
+      status: String(d.status_lead || d.status || 'novo').toUpperCase(),
+      score: parseInt(d.score_icp || d.score) || null,
+      temperatura: String(d.temperatura || '').toUpperCase() || null,
+      valor_conta: String(d.valor_conta_energia || d.valor_conta || '') || null,
+      imovel: String(d.tipo_imovel || d.imovel || '') || null,
+      acrescimo_carga: String(d.acrescimo_carga || '') || null,
+      prazo_decisao: String(d.prazo_decisao || '') || null,
+      forma_pagamento: String(d.forma_pagamento || '') || null,
+      preferencia_contato: String(d.preferencia_contato || '') || null,
+      resumo_conversa: String(d.resumo_conversa || '') || null,
+      total_mensagens_ia: parseInt(d.total_mensagens_ia) || 0,
+      total_audios_enviados: parseInt(d.total_audios_enviados) || 0,
+      custo_openai: parseFloat(d.custo_openai) || 0,
+      custo_elevenlabs: parseFloat(d.custo_elevenlabs) || 0,
+      custo_total_usd: parseFloat(d.custo_total_usd) || 0,
+      chat_id: String(d.chatId || d.chat_id || '') || null,
+      contact_id: String(d.contactId || d.contact_id || '') || null,
+      project_id: String(d.projectId || d.project_id || '') || null,
+      qualificado_por: String(d.qualificado_por || '') || null,
+      data_entrada: parseDate(d.ts_cadastro || d.data_criacao),
+      data_qualificacao: parseDate(d.ts_qualificado || d.data_qualificacao),
+      robo: 'sol',
+      ds_source: 'sol_leads',
+      organization_id: creds.orgId,
+      synced_at: new Date().toISOString(),
+    };
+
+    return record;
+  }).filter((l: any) => l.telefone);
+
+  let upsertedLeads = 0;
+  for (let i = 0; i < leadsToUpsert.length; i += 50) {
+    const batch = leadsToUpsert.slice(i, i + 50);
+    const { error } = await supabase
+      .from("leads_consolidados")
+      .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
+    if (error) console.error(`[${creds.orgName}] sol_leads upsert error:`, error.message);
+    else upsertedLeads += batch.length;
+  }
+
+  console.log(`[${creds.orgName}] sol_leads: upserted ${upsertedLeads} records`);
+  return { fetched: allRecords.length, upserted: upsertedLeads };
+}
+
+/** Sync sol_metricas DS (86891) → sol_metricas table */
+async function syncSolMetricas(supabase: any, creds: OrgCredentials): Promise<any> {
+  if (!creds.makeSolMetricasDsId) return { skipped: true, reason: 'no sol_metricas DS id' };
+
+  const makeHeaders = { Authorization: `Token ${creds.makeApiKey}`, "Content-Type": "application/json" };
+  const allRecords: any[] = [];
+  let offset = 0;
+  const limit = 100;
+  let hasMore = true;
+
+  while (hasMore) {
+    const apiUrl = `${MAKE_BASE}/data-stores/${creds.makeSolMetricasDsId}/data?pg[limit]=${limit}&pg[offset]=${offset}`;
+    const makeRes = await fetchWithRetry(apiUrl, { headers: makeHeaders });
+    if (!makeRes.ok) {
+      const errorText = await makeRes.text();
+      console.error(`[${creds.orgName}] sol_metricas DS error:`, makeRes.status, errorText);
+      return { error: `API error ${makeRes.status}` };
+    }
+    const makeData = await makeRes.json();
+    const records = makeData?.records || makeData?.data || [];
+    if (Array.isArray(records)) allRecords.push(...records);
+    hasMore = Array.isArray(records) && records.length === limit;
+    offset += limit;
+  }
+
+  console.log(`[${creds.orgName}] sol_metricas DS: ${allRecords.length} records`);
+
+  // Get org slug for franquia_id
+  const { data: orgData } = await supabase.from('organizations').select('slug').eq('id', creds.orgId).single();
+  const franquiaId = orgData?.slug || 'evolve_olimpia';
+
+  const metricsToUpsert = allRecords.map((r) => {
+    const d = r.data || r;
+    return {
+      id: String(r.key || d.id || `${d.data}_${franquiaId}_${d.robo || 'sdr'}`),
+      data: d.data || new Date().toISOString().split('T')[0],
+      robo: d.robo || 'sdr',
+      franquia_id: franquiaId,
+      leads_novos: parseInt(d.leads_novos) || 0,
+      leads_qualificados: parseInt(d.leads_qualificados) || 0,
+      leads_desqualificados: parseInt(d.leads_desqualificados) || 0,
+      total_mensagens: parseInt(d.total_mensagens) || 0,
+      total_audios: parseInt(d.total_audios) || 0,
+      custo_openai_usd: parseFloat(d.custo_openai_usd) || 0,
+      custo_elevenlabs_usd: parseFloat(d.custo_elevenlabs_usd) || 0,
+      custo_make_usd: parseFloat(d.custo_make_usd) || 0,
+      custo_total_usd: parseFloat(d.custo_total_usd) || 0,
+      synced_at: new Date().toISOString(),
+    };
+  });
+
+  let upserted = 0;
+  for (let i = 0; i < metricsToUpsert.length; i += 50) {
+    const batch = metricsToUpsert.slice(i, i + 50);
+    const { error } = await supabase
+      .from("sol_metricas")
+      .upsert(batch, { onConflict: "id", ignoreDuplicates: false });
+    if (error) console.error(`[${creds.orgName}] sol_metricas upsert error:`, error.message);
+    else upserted += batch.length;
+  }
+
+  return { fetched: allRecords.length, upserted };
+}
+
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
