@@ -66,7 +66,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
           </div>
           {score > 0 && (
             <div className="flex items-center gap-3 mt-3">
-              <ScoreGauge score={score} size={48} />
+              <ScoreGauge score={score} size="md" />
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase">Score ICP</p>
                 <p className="text-lg font-bold text-foreground">{score.toFixed(0)}</p>
