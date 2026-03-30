@@ -544,66 +544,18 @@ export default function Admin() {
           {/* PESSOAS — Usuários + Time Comercial */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="pessoas" className="space-y-6">
-            {/* Usuários */}
-            {hasAccess('admin-usuarios') && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Usuários</CardTitle>
-                    <CardDescription>Gestão de acessos à plataforma</CardDescription>
-                  </div>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Novo Usuário
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Função</TableHead>
-                        <TableHead>Cadastrado</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((u) => (
-                        <TableRow key={u.id}>
-                          <TableCell className="font-medium">{u.full_name || '-'}</TableCell>
-                          <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                          <TableCell>{getRoleBadge(u.role)}</TableCell>
-                          <TableCell className="text-sm">{formatDate(u.created_at)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => setImpersonateTarget(u)} disabled={u.id === user?.id || impersonateLoading === u.id} className="h-8 w-8 text-primary" title="Impersonar">
-                                {impersonateLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => openEditDialog(u)} className="h-8 w-8" title="Editar">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setNewPassword(''); setIsPasswordDialogOpen(true); }} className="h-8 w-8 text-purple-500" title="Alterar Senha">
-                                <Key className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => invalidateAllUserSessions(u.id)} disabled={u.id === user?.id} className="h-8 w-8 text-orange-500" title="Desconectar">
-                                <Ban className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }} disabled={u.id === user?.id} className="h-8 w-8 text-destructive" title="Excluir">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Time Comercial */}
-            {hasAccess('time-comercial') && <TimeComercialTab />}
+            <PessoasTab
+              users={users}
+              organizations={organizations}
+              onRefreshUsers={fetchUsers}
+              onImpersonate={(u) => setImpersonateTarget(u)}
+              onEditUser={(u) => openEditDialog(u)}
+              onResetPassword={(u) => { setSelectedUser(u); setNewPassword(''); setIsPasswordDialogOpen(true); }}
+              onDeleteUser={(u) => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}
+              onInvalidateSessions={invalidateAllUserSessions}
+              currentUserId={user?.id || null}
+              impersonateLoading={impersonateLoading}
+            />
           </TabsContent>
 
           {/* ═══════════════════════════════════════════ */}
