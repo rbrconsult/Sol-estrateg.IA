@@ -30,13 +30,18 @@ interface OrgInfo {
   slug: string;
 }
 
+import { Archive } from "lucide-react";
+
 const CATEGORIES = [
   { value: "general", label: "General", icon: Settings, color: "bg-muted text-muted-foreground" },
   { value: "webhook", label: "Webhook", icon: Webhook, color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  { value: "datastore", label: "Datastore", icon: Database, color: "bg-green-500/20 text-green-400 border-green-500/30" },
+  { value: "datastore", label: "Datastore v2", icon: Database, color: "bg-green-500/20 text-green-400 border-green-500/30" },
+  { value: "datastore_legado", label: "DS Legado", icon: Archive, color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
   { value: "api", label: "API", icon: Key, color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
   { value: "responsavel", label: "Responsável", icon: UsersIcon, color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
+  { value: "responsavel_nome", label: "Resp. Nome", icon: UsersIcon, color: "bg-amber-500/10 text-amber-300 border-amber-500/20" },
   { value: "campanhas", label: "Campanhas", icon: Megaphone, color: "bg-pink-500/20 text-pink-400 border-pink-500/30" },
+  { value: "make", label: "Make", icon: Webhook, color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
 ];
 
 export default function OrgConfigPage() {
