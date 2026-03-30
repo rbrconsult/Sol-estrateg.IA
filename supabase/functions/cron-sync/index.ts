@@ -436,7 +436,7 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   return { scenarios: scenarios.length, records: dedupRecords.length, upserted: upsertedHB };
 }
 
-/** Sync sol_leads DS (86887) → leads_consolidados with ds_source='sol_leads' */
+/** Sync sol_leads DS (87418) → leads_consolidados with ds_source='sol_leads' */
 async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeSolLeadsDsId) return { skipped: true, reason: 'no sol_leads DS id' };
 
