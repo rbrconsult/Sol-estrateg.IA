@@ -480,7 +480,7 @@ export function PessoasTab({
                           </>
                         )}
                         {/* Team-only member actions */}
-                        {!userObj && teamObj && isSuperAdmin && (
+                        {!userObj && teamObj && canManagePeople && (
                           <>
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar SM" onClick={() => openTeamEdit(teamObj)}>
                               <Pencil className="h-3.5 w-3.5" />
