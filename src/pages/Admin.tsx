@@ -474,49 +474,50 @@ export default function Admin() {
           {/* CONFIG GLOBAL — Krolic, Cenários, DS, Skills */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="config-global" className="space-y-6">
-            {/* Krolic / WhatsApp */}
+            {/* Krolic / WhatsApp — Compact */}
             {hasAccess('admin-whatsapp') && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
                     Krolic API (WhatsApp Bot SOL)
                   </CardTitle>
-                  <CardDescription>Credenciais globais da Krolic para o robô SOL</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   {settingsLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                    <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
                   ) : (
-                    <div className="space-y-4 max-w-lg">
-                      <div className="space-y-2">
-                        <Label>Token Krolic</Label>
-                        <div className="flex gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Token</Label>
+                        <div className="flex gap-1">
                           <Input
+                            className="h-8 text-xs"
                             type={showApiKey ? "text" : "password"}
                             value={showApiKey ? evolutionKey : maskApiKey(evolutionKey)}
                             onChange={(e) => { setShowApiKey(true); setEvolutionKey(e.target.value); }}
                             onFocus={() => setShowApiKey(true)}
                             placeholder="Chave da API"
                           />
-                          <Button type="button" variant="outline" size="icon" onClick={() => setShowApiKey(!showApiKey)}>
-                            <Eye className="h-4 w-4" />
+                          <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowApiKey(!showApiKey)}>
+                            <Eye className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Nome da Instância</Label>
-                        <Input value={evolutionInstance} onChange={(e) => setEvolutionInstance(e.target.value)} placeholder="Nome da instância" />
+                      <div className="space-y-1">
+                        <Label className="text-xs">Instância</Label>
+                        <Input className="h-8 text-xs" value={evolutionInstance} onChange={(e) => setEvolutionInstance(e.target.value)} placeholder="Nome" />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Número da Central (WhatsApp)</Label>
-                        <Input value={centralNumber} onChange={(e) => setCentralNumber(e.target.value)} placeholder="5517999999999" />
-                        <p className="text-xs text-muted-foreground">Formato: código do país + DDD + número</p>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Central WhatsApp</Label>
+                        <div className="flex gap-1">
+                          <Input className="h-8 text-xs" value={centralNumber} onChange={(e) => setCentralNumber(e.target.value)} placeholder="5517999999999" />
+                          <Button onClick={handleSaveSettings} disabled={settingsSaving} size="sm" className="h-8 gap-1 shrink-0">
+                            {settingsSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                            Salvar
+                          </Button>
+                        </div>
                       </div>
-                      <Button onClick={handleSaveSettings} disabled={settingsSaving} className="gap-2">
-                        {settingsSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Salvar
-                      </Button>
                     </div>
                   )}
                 </CardContent>

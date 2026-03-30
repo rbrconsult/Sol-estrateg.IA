@@ -133,10 +133,18 @@ export function PessoasTab({
 
     // First, process all SOL users
     for (const u of users) {
-      const teamMatch = teamMembers.find(
-        tm => tm.email && u.email && tm.email.toLowerCase() === u.email.toLowerCase()
-      );
-      if (teamMatch) matchedTeamEmails.add(teamMatch.email!.toLowerCase());
+      // Match by email OR by name (time_comercial often has no email)
+      const teamMatch = teamMembers.find(tm => {
+        if (tm.email && u.email && tm.email.toLowerCase() === u.email.toLowerCase()) return true;
+        if (u.full_name && tm.nome && u.full_name.toLowerCase().includes(tm.nome.toLowerCase().split(' ')[0])) {
+          // fuzzy: first name match
+          return tm.nome.toLowerCase() === u.full_name.toLowerCase() ||
+                 u.full_name.toLowerCase().includes(tm.nome.toLowerCase()) ||
+                 tm.nome.toLowerCase().includes(u.full_name.toLowerCase());
+        }
+        return false;
+      });
+      if (teamMatch) matchedTeamEmails.add(teamMatch.id); // use ID for matching instead
 
       people.push({
         id: u.id,
@@ -157,9 +165,9 @@ export function PessoasTab({
       });
     }
 
-    // Then, add team members without SOL login
+    // Then, add team members NOT matched to any SOL user
     for (const tm of teamMembers) {
-      if (tm.email && matchedTeamEmails.has(tm.email.toLowerCase())) continue;
+      if (matchedTeamEmails.has(tm.id)) continue;
       
       people.push({
         id: `tm-${tm.id}`,
