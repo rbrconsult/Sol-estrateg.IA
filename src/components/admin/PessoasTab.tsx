@@ -409,7 +409,7 @@ export function PessoasTab({
     setMessageTarget(null);
   }
 
-
+  function openPromote(person: UnifiedPerson) {
     const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
     setPromoteTarget(person);
     setPromoteForm({
