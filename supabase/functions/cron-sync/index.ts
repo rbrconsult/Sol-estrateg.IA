@@ -191,7 +191,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       closer_atribuido: String(d.closer_atribuido || '') || null,
       temperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || null,
       score: parseInt(d.Score || d.score) || null,
-      status: STATUS_NORMALIZATION[String(d.status || 'novo').toUpperCase()] || String(d.status || 'novo').toUpperCase(),
+      status: STATUS_NORMALIZATION[String(d.status || 'TRAFEGO_PAGO').toUpperCase()] || String(d.status || 'TRAFEGO_PAGO').toUpperCase(),
       codigo_status: String(d.codigo_status || '').toUpperCase() || null,
       etapa: String(d.etapa_funil || d.etapa || '') || null,
       responsavel: String(d.responsavel || '') || null,
