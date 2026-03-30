@@ -348,10 +348,12 @@ export function PessoasTab({
                   </SelectContent>
                 </Select>
               )}
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Novo
-              </Button>
+              {canManagePeople && (
+                <Button onClick={() => setIsCreateOpen(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Novo
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
