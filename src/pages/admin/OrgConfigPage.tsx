@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff, Check, X, Loader2,
-  Settings, Webhook, Database, Key, Users as UsersIcon, Search, Megaphone,
+  Settings, Webhook, Database, Key, Users as UsersIcon, Search, Megaphone, Archive,
 } from "lucide-react";
 
 interface OrgConfig {
