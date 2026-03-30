@@ -116,6 +116,9 @@ export function PessoasTab({
 
   // WhatsApp sending state
   const [whatsappSending, setWhatsappSending] = useState<string | null>(null);
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+  const [messageTarget, setMessageTarget] = useState<UnifiedPerson | null>(null);
+  const [customMessage, setCustomMessage] = useState('');
 
   useEffect(() => { fetchTeamMembers(); }, []);
 
