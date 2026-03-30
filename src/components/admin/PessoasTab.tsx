@@ -490,14 +490,16 @@ export function PessoasTab({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
                         {p.role && (
-                          <Badge variant="outline" className={`text-[10px] w-fit ${ROLE_COLORS[p.role] || ''}`}>
+                          <Badge variant="outline" className={`text-[10px] ${ROLE_COLORS[p.role] || ''}`}>
                             {p.role}
                           </Badge>
                         )}
-                        {p.cargo && p.cargo.toLowerCase() !== p.role?.toLowerCase() && (
-                          <span className="text-xs text-muted-foreground">{p.cargo}</span>
+                        {p.cargo && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {p.cargo}
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
