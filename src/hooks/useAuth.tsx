@@ -25,6 +25,8 @@ interface AuthContextType {
   impersonationInfo: ImpersonationInfo | null;
   startImpersonation: (targetUserId: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
+  mustChangePassword: boolean;
+  setMustChangePassword: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
