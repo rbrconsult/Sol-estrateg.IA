@@ -517,7 +517,7 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
 
-/** Sync sol_metricas DS (86891) → sol_metricas table */
+/** Sync sol_metricas DS (87422) → sol_metricas table */
 async function syncSolMetricas(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeSolMetricasDsId) return { skipped: true, reason: 'no sol_metricas DS id' };
 

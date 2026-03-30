@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     // Fallback to global secrets
     if (!makeApiKey) makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
     if (!dataStoreId) dataStoreId = (Deno.env.get("MAKE_COMERCIAL_DATASTORE_ID") || "").trim();
-    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1437295").trim();
+    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1934898").trim();
 
     if (!makeApiKey || !dataStoreId) {
       return new Response(

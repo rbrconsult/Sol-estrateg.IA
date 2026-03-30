@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 const WEBHOOKS: Record<string, string> = {
-  qualificar: "https://hook.us2.make.com/f7p3lu6ilb796udaaowyc0bst0nxai16",
-  desqualificar: "https://hook.us2.make.com/rejr7k2xlpr4taxfss1jrnt8oc2s5nsd",
-  reprocessar: "https://hook.us2.make.com/8wf2jqadbefbhq51ool915bj1yi9fuup",
+  qualificar: "https://hook.us2.make.com/oxaip1d1e946l7hmtyhpr1aic626o92m",
+  desqualificar: "https://hook.us2.make.com/joonk1hj7ubqeogtq1hxwymncruxslbl",
+  reprocessar: "https://hook.us2.make.com/m6zaweontguh6vqsfvid3g73bxb1qg44",
 };
 
 Deno.serve(async (req) => {
