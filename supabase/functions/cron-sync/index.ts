@@ -343,9 +343,9 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   }
 
   const scenariosData = await scenariosRes.json();
-  const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? []).map(
-    (s: any) => ({ id: s.id, name: s.name })
-  );
+  const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? [])
+    .filter((s: any) => s.isActive === true)
+    .map((s: any) => ({ id: s.id, name: s.name }));
 
   // Auto-update monitored_scenario_ids in app_settings
   const monitoredPayload = scenarios.map((s) => ({ id: s.id, name: s.name }));
