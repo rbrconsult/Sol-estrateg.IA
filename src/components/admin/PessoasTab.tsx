@@ -94,6 +94,7 @@ export function PessoasTab({
   const { userRole } = useAuth();
   const { orgs } = useOrgFilter();
   const isSuperAdmin = userRole === 'super_admin';
+  const canManagePeople = isSuperAdmin || userRole === 'diretor';
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);

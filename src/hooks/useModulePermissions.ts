@@ -32,6 +32,7 @@ export const MODULE_DEFINITIONS = [
   { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
   // Admin
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
+  { key: 'admin-pessoas', label: 'Gestão de Pessoas', description: 'Criar e gerir usuários', path: '/admin' },
   { key: 'admin', label: 'Admin', description: 'Painel Administrativo', path: '/admin' },
   // Admin — Sub-módulos
   { key: 'admin-filiais', label: 'Filiais', description: 'Gestão de Organizações', path: '/admin' },
