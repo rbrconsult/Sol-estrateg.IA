@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonationInfo, setImpersonationInfo] = useState<ImpersonationInfo | null>(null);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   // Check for impersonation state on load
   useEffect(() => {
