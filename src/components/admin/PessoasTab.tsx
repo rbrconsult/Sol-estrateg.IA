@@ -109,6 +109,14 @@ export function PessoasTab({
   const [teamForm, setTeamForm] = useState({ nome: '', cargo: '', telefone: '', email: '', franquia_id: '', ativo: true, krolic: true, sm_id: '', krolik_id: '', krolik_setor_id: '' });
   const [teamSaving, setTeamSaving] = useState(false);
 
+  // Promote team member to SOL user state
+  const [promoteTarget, setPromoteTarget] = useState<UnifiedPerson | null>(null);
+  const [promoteForm, setPromoteForm] = useState({ email: '', telefone: '', role: 'closer' as string });
+  const [promoteLoading, setPromoteLoading] = useState(false);
+
+  // WhatsApp sending state
+  const [whatsappSending, setWhatsappSending] = useState<string | null>(null);
+
   useEffect(() => { fetchTeamMembers(); }, []);
 
   async function fetchTeamMembers() {
