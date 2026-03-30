@@ -427,7 +427,7 @@ export function PessoasTab({
                         <Switch
                           checked={p.hasKrolic}
                           onCheckedChange={() => toggleKrolic(p)}
-                          disabled={!isSuperAdmin}
+                          disabled={!canManagePeople}
                         />
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
