@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
     let dsMetaAdsId = "";
     let dsGoogleAdsId = "";
     let dsProducaoId = "";
-    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1437295").trim();
+    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1934898").trim();
 
     if (effectiveOrgId) {
       const { data: orgConfigs } = await supabase

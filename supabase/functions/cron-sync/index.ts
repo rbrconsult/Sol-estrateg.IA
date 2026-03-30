@@ -81,6 +81,8 @@ function parseDate(value: any): string | null {
 /** Status normalization — reclassify orphaned/ambiguous statuses */
 const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
+  'NOVO': 'TRAFEGO_PAGO',
+  'QUALIFICANDO': 'EM_QUALIFICACAO',
 };
 
 const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';
@@ -126,8 +128,8 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       makeApiKey: cfg.make_api_key || globalApiKey,
       makeDatastoreId: cfg.ds_thread_id || cfg.ds_leads_site_geral || globalDsId,
       makeComercialDsId: cfg.ds_comercial || globalComercialDsId,
-      makeSolLeadsDsId: cfg.ds_sol_leads || '86887',
-      makeSolMetricasDsId: cfg.ds_sol_metricas || '86891',
+      makeSolLeadsDsId: cfg.ds_sol_leads || '87418',
+      makeSolMetricasDsId: cfg.ds_sol_metricas || '87422',
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
   }).filter((o: OrgCredentials) => o.makeApiKey);
@@ -189,7 +191,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
       closer_atribuido: String(d.closer_atribuido || '') || null,
       temperatura: String(d.Temperatura || d.temperatura || '').toUpperCase() || null,
       score: parseInt(d.Score || d.score) || null,
-      status: STATUS_NORMALIZATION[String(d.status || 'novo').toUpperCase()] || String(d.status || 'novo').toUpperCase(),
+      status: STATUS_NORMALIZATION[String(d.status || 'TRAFEGO_PAGO').toUpperCase()] || String(d.status || 'TRAFEGO_PAGO').toUpperCase(),
       codigo_status: String(d.codigo_status || '').toUpperCase() || null,
       etapa: String(d.etapa_funil || d.etapa || '') || null,
       responsavel: String(d.responsavel || '') || null,
@@ -436,7 +438,7 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   return { scenarios: scenarios.length, records: dedupRecords.length, upserted: upsertedHB };
 }
 
-/** Sync sol_leads DS (86887) → leads_consolidados with ds_source='sol_leads' */
+/** Sync sol_leads DS (87418) → leads_consolidados with ds_source='sol_leads' */
 async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeSolLeadsDsId) return { skipped: true, reason: 'no sol_leads DS id' };
 
@@ -473,7 +475,7 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
       email: String(d.email_lead || d.email || '') || null,
       cidade: String(d.cidade || '') || null,
       canal_origem: String(d.canal_origem || '') || null,
-      status: String(d.status_lead || d.status || 'novo').toUpperCase(),
+      status: String(d.status_lead || d.status || 'TRAFEGO_PAGO').toUpperCase(),
       score: parseInt(d.score_icp || d.score) || null,
       temperatura: String(d.temperatura || '').toUpperCase() || null,
       valor_conta: String(d.valor_conta_energia || d.valor_conta || '') || null,
@@ -517,7 +519,7 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
 
-/** Sync sol_metricas DS (86891) → sol_metricas table */
+/** Sync sol_metricas DS (87422) → sol_metricas table */
 async function syncSolMetricas(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeSolMetricasDsId) return { skipped: true, reason: 'no sol_metricas DS id' };
 
