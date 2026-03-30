@@ -4,12 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Activity, Plus, Trash2, Save, Loader2, GripVertical, Search } from "lucide-react";
+import { Activity, Plus, Trash2, Save, Loader2, Search, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface MonitoredScenario {
   id: number;
   name: string;
+  isActive?: boolean;
 }
 
 export default function MonitoredScenariosSettings() {
@@ -58,16 +60,9 @@ export default function MonitoredScenariosSettings() {
 
   const addScenario = async () => {
     const id = parseInt(newId);
-    if (!id) {
-      toast.error("Preencha o ID do cenário");
-      return;
-    }
-    if (scenarios.some((s) => s.id === id)) {
-      toast.error("Cenário já existe na lista");
-      return;
-    }
+    if (!id) { toast.error("Preencha o ID do cenário"); return; }
+    if (scenarios.some((s) => s.id === id)) { toast.error("Cenário já existe"); return; }
 
-    // Try to find the name from make_heartbeat
     setSearching(true);
     try {
       const { data } = await supabase
@@ -75,13 +70,12 @@ export default function MonitoredScenariosSettings() {
         .select("scenario_name")
         .eq("scenario_id", id)
         .limit(1);
-
       const name = (data as any)?.[0]?.scenario_name || `Cenário #${id}`;
-      setScenarios([...scenarios, { id, name }]);
+      setScenarios([...scenarios, { id, name, isActive: true }]);
       setNewId("");
       toast.success(`Adicionado: ${name}`);
     } catch {
-      setScenarios([...scenarios, { id, name: `Cenário #${id}` }]);
+      setScenarios([...scenarios, { id, name: `Cenário #${id}`, isActive: true }]);
       setNewId("");
     } finally {
       setSearching(false);
@@ -91,6 +85,16 @@ export default function MonitoredScenariosSettings() {
   const removeScenario = (id: number) => {
     setScenarios(scenarios.filter((s) => s.id !== id));
   };
+
+  const activeCount = scenarios.filter(s => s.isActive !== false).length;
+  const inactiveCount = scenarios.filter(s => s.isActive === false).length;
+
+  // Sort: active first, then inactive
+  const sorted = [...scenarios].sort((a, b) => {
+    if ((a.isActive !== false) && (b.isActive === false)) return -1;
+    if ((a.isActive === false) && (b.isActive !== false)) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   if (loading) {
     return (
@@ -104,68 +108,85 @@ export default function MonitoredScenariosSettings() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Activity className="h-5 w-5 text-primary" />
-          Cenários Monitorados (Auto-Discovery)
+          <Activity className="h-4 w-4 text-primary" />
+          Cenários Monitorados
+          <Badge variant="outline" className="text-[10px] ml-1">{activeCount} ativos</Badge>
+          {inactiveCount > 0 && (
+            <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
+              {inactiveCount} inativos
+            </Badge>
+          )}
         </CardTitle>
-        <CardDescription>
-          Cenários são detectados automaticamente a cada sincronização do Heartbeat. Você pode adicionar manualmente ou remover da lista.
+        <CardDescription className="text-xs">
+          Auto-discovery da pasta SOL v2 (folder 224162). Novos cenários são adicionados automaticamente.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Existing scenarios */}
-        <div className="space-y-2">
-          {scenarios.map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center gap-2 p-2 rounded-md border border-border bg-muted/30"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground font-mono w-20 shrink-0">
-                #{s.id}
-              </span>
-              <span className="text-sm flex-1 truncate">{s.name}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive"
-                onClick={() => removeScenario(s.id)}
+      <CardContent className="space-y-3">
+        <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+          {sorted.map((s) => {
+            const isActive = s.isActive !== false;
+            return (
+              <div
+                key={s.id}
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-sm ${
+                  isActive
+                    ? 'border-border bg-muted/30'
+                    : 'border-amber-500/30 bg-amber-500/5'
+                }`}
               >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
+                {isActive ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                )}
+                <span className="text-[10px] text-muted-foreground font-mono w-16 shrink-0">
+                  #{s.id}
+                </span>
+                <span className="flex-1 truncate text-xs">{s.name}</span>
+                {!isActive && (
+                  <Badge variant="secondary" className="text-[9px] bg-amber-500/20 text-amber-400 h-5">
+                    Inativo
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-destructive hover:text-destructive shrink-0"
+                  onClick={() => removeScenario(s.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            );
+          })}
           {scenarios.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhum cenário configurado. Adicione abaixo.
+            <p className="text-xs text-muted-foreground text-center py-4">
+              Nenhum cenário detectado. Execute o Heartbeat para popular automaticamente.
             </p>
           )}
         </div>
 
-        {/* Add new - only ID, name is auto-fetched */}
-        <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border">
-          <div className="space-y-1 flex-1">
-            <Label className="text-xs">Scenario ID</Label>
-            <Input
-              placeholder="Ex: 4347372"
-              value={newId}
-              onChange={(e) => setNewId(e.target.value.replace(/\D/g, ""))}
-              onKeyDown={(e) => e.key === "Enter" && addScenario()}
-            />
-          </div>
-          <div className="flex items-end">
-            <Button variant="outline" size="sm" onClick={addScenario} disabled={searching} className="gap-1">
-              {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-4 w-4" /> Buscar e Adicionar</>}
-            </Button>
-          </div>
+        {/* Manual add */}
+        <div className="flex gap-2 pt-2 border-t border-border">
+          <Input
+            className="h-8 text-xs w-32"
+            placeholder="Scenario ID"
+            value={newId}
+            onChange={(e) => setNewId(e.target.value.replace(/\D/g, ""))}
+            onKeyDown={(e) => e.key === "Enter" && addScenario()}
+          />
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={addScenario} disabled={searching}>
+            {searching ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+            Adicionar
+          </Button>
+          <div className="flex-1" />
+          <Button onClick={handleSave} disabled={saving} size="sm" className="h-8 text-xs gap-1">
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+            Salvar
+          </Button>
         </div>
-
-        {/* Save */}
-        <Button onClick={handleSave} disabled={saving} className="gap-2 w-full sm:w-auto">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Salvar Cenários
-        </Button>
       </CardContent>
     </Card>
   );

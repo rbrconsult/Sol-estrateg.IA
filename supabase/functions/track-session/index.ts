@@ -5,7 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Hash session token using Web Crypto API (SHA-256)
 async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(token)
@@ -14,13 +13,31 @@ async function hashToken(token: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
+// Resolve IP to city using free ipapi.co service
+async function resolveIpCity(ip: string): Promise<string | null> {
+  if (!ip || ip === 'unknown' || ip.startsWith('127.') || ip.startsWith('10.') || ip.startsWith('192.168.')) {
+    return null;
+  }
+  try {
+    const res = await fetch(`https://ipapi.co/${ip}/json/`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.error) return null;
+    const parts = [data.city, data.region, data.country_code].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Auth check - validate the Bearer token
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -34,7 +51,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Verify the token is valid
     const anonClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -58,13 +74,18 @@ Deno.serve(async (req) => {
                        'unknown'
     const user_agent = req.headers.get('user-agent') || 'unknown'
 
-    // Hash the token before any DB operation
     const hashedToken = await hashToken(session_token)
 
     console.log(`Track session: action=${action}, user_id=${user_id}, ip=${ip_address}`)
 
+    // Resolve city in background for login (non-blocking for validate)
+    let ip_city: string | null = null;
     if (action === 'login') {
-      // Invalidate all other active sessions for this user
+      ip_city = await resolveIpCity(ip_address);
+    }
+
+    if (action === 'login') {
+      // Invalidate all other active sessions
       const { error: invalidateError } = await supabaseClient
         .from('user_sessions')
         .update({ is_active: false })
@@ -75,16 +96,18 @@ Deno.serve(async (req) => {
         console.error('Error invalidating sessions:', invalidateError)
       }
 
-      // Create new session with hashed token
+      // Build session data — include ip_city if resolved
+      const sessionData: any = {
+        user_id,
+        session_token: hashedToken,
+        ip_address: ip_city ? `${ip_address} (${ip_city})` : ip_address,
+        user_agent,
+        is_active: true
+      };
+
       const { error: sessionError } = await supabaseClient
         .from('user_sessions')
-        .insert({
-          user_id,
-          session_token: hashedToken,
-          ip_address,
-          user_agent,
-          is_active: true
-        })
+        .insert(sessionData)
 
       if (sessionError) {
         console.error('Error creating session:', sessionError)
@@ -96,7 +119,7 @@ Deno.serve(async (req) => {
         .insert({
           user_id,
           email,
-          ip_address,
+          ip_address: ip_city ? `${ip_address} (${ip_city})` : ip_address,
           user_agent,
           action: 'login'
         })
@@ -106,13 +129,12 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, ip_address }),
+        JSON.stringify({ success: true, ip_address, ip_city }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     if (action === 'logout') {
-      // Mark session as inactive using hashed token
       const { error: sessionError } = await supabaseClient
         .from('user_sessions')
         .update({ is_active: false })
@@ -123,7 +145,6 @@ Deno.serve(async (req) => {
         console.error('Error deactivating session:', sessionError)
       }
 
-      // Log access
       const { error: logError } = await supabaseClient
         .from('access_logs')
         .insert({
@@ -145,7 +166,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'validate') {
-      // Check if session is still valid using hashed token
       const { data, error } = await supabaseClient
         .from('user_sessions')
         .select('is_active')
@@ -160,7 +180,6 @@ Deno.serve(async (req) => {
         )
       }
 
-      // Update last activity
       await supabaseClient
         .from('user_sessions')
         .update({ last_activity: new Date().toISOString() })
