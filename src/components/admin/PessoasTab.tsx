@@ -578,9 +578,21 @@ export function PessoasTab({
                             </Button>
                           </>
                         )}
+                        {/* WhatsApp welcome for SOL users */}
+                        {userObj && p.phone && canManagePeople && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500" title="Enviar acesso WhatsApp"
+                            onClick={() => handleSendWhatsApp(p)}
+                            disabled={whatsappSending === p.id}>
+                            {whatsappSending === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
                         {/* Team-only member actions */}
                         {!userObj && teamObj && canManagePeople && (
                           <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Promover a Usuário SOL"
+                              onClick={() => openPromote(p)}>
+                              <ArrowUpCircle className="h-3.5 w-3.5" />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar SM" onClick={() => openTeamEdit(teamObj)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
