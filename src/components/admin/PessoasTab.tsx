@@ -358,7 +358,7 @@ export function PessoasTab({
     const cleanPhone = phone.replace(/\D/g, '');
     if (!cleanPhone) { toast.error('Telefone não informado'); return; }
     const pwd = password || 'Sol1.3strat3g51@';
-    const message = `🌞 *Seja bem-vindo(a) à SOL Estrateg.IA!*\n\nOlá ${name}! 👋\n\nSeu acesso foi criado com sucesso.\n\n🔐 *Credenciais de acesso:*\n📧 Email: ${email}\n🔑 Senha: ${pwd}\n\n🌐 Acesse: ${window.location.origin}\n\n⚠️ Recomendamos alterar sua senha no primeiro acesso.\n\nQualquer dúvida, estamos à disposição!`;
+    const message = `🌞 *Seja bem-vindo(a) à SOL Estrateg.IA!*\n\nOlá ${name}! 👋\n\nSeu acesso foi criado com sucesso.\n\n🔐 *Credenciais de acesso:*\n📧 Email: ${email}\n🔑 Senha: ${pwd}\n\n🌐 Acesse: https://solestrategia.com.br\n\n⚠️ Recomendamos alterar sua senha no primeiro acesso.\n\nQualquer dúvida, estamos à disposição!`;
     try {
       await supabase.functions.invoke('send-whatsapp-alert', {
         body: { phone: cleanPhone, message }
