@@ -1,0 +1,1 @@
+UPDATE time_comercial SET cargo = 'Closer' WHERE cargo IS NULL OR cargo = '' OR cargo = 'Gerente Comercial';
