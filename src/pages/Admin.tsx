@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Plus, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, Globe, Lock } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
@@ -35,6 +35,7 @@ interface UserWithRole {
   full_name: string | null;
   created_at: string;
   role: string;
+  phone?: string;
 }
 
 interface AccessLog {
@@ -83,7 +84,6 @@ export default function Admin() {
   // Settings state
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
-  const [evolutionUrl, setEvolutionUrl] = useState('');
   const [evolutionKey, setEvolutionKey] = useState('');
   const [evolutionInstance, setEvolutionInstance] = useState('');
   const [centralNumber, setCentralNumber] = useState('');
@@ -133,13 +133,9 @@ export default function Admin() {
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (profilesError) throw profilesError;
 
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-
+      const { data: roles, error: rolesError } = await supabase.from('user_roles').select('*');
       if (rolesError) throw rolesError;
 
       const usersWithRoles = profiles?.map(profile => ({
@@ -160,53 +156,30 @@ export default function Admin() {
 
   const fetchAccessLogs = async () => {
     try {
-      const { data, error } = await supabase
-        .from('access_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
+      const { data, error } = await supabase.from('access_logs').select('*').order('created_at', { ascending: false }).limit(100);
       if (error) throw error;
       setAccessLogs(data || []);
     } catch (error) {
       console.error('Error fetching access logs:', error);
-      toast.error('Erro ao carregar logs de acesso');
     }
   };
 
   const fetchSessions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_sessions')
-        .select('*')
-        .order('last_activity', { ascending: false });
-
+      const { data, error } = await supabase.from('user_sessions').select('*').order('last_activity', { ascending: false });
       if (error) throw error;
       setSessions(data || []);
     } catch (error) {
       console.error('Error fetching sessions:', error);
-      toast.error('Erro ao carregar sessões');
     }
   };
 
   const invalidateSession = async (sessionId: string, userId: string) => {
     try {
-      const { error } = await supabase
-        .from('user_sessions')
-        .update({ is_active: false })
-        .eq('id', sessionId);
-
+      const { error } = await supabase.from('user_sessions').update({ is_active: false }).eq('id', sessionId);
       if (error) throw error;
-
-      // Log the action
       const userEmail = users.find(u => u.id === userId)?.email;
-      await supabase.from('access_logs').insert({
-        user_id: userId,
-        email: userEmail,
-        action: 'session_invalidated',
-        ip_address: 'admin_action'
-      });
-
+      await supabase.from('access_logs').insert({ user_id: userId, email: userEmail, action: 'session_invalidated', ip_address: 'admin_action' });
       toast.success('Sessão invalidada com sucesso');
       fetchSessions();
     } catch (error) {
@@ -217,22 +190,10 @@ export default function Admin() {
 
   const invalidateAllUserSessions = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('user_sessions')
-        .update({ is_active: false })
-        .eq('user_id', userId)
-        .eq('is_active', true);
-
+      const { error } = await supabase.from('user_sessions').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
       if (error) throw error;
-
       const userEmail = users.find(u => u.id === userId)?.email;
-      await supabase.from('access_logs').insert({
-        user_id: userId,
-        email: userEmail,
-        action: 'all_sessions_invalidated',
-        ip_address: 'admin_action'
-      });
-
+      await supabase.from('access_logs').insert({ user_id: userId, email: userEmail, action: 'all_sessions_invalidated', ip_address: 'admin_action' });
       toast.success('Todas as sessões do usuário foram invalidadas');
       fetchSessions();
     } catch (error) {
@@ -241,84 +202,27 @@ export default function Admin() {
     }
   };
 
-  // CRUD Functions
-  const handleCreateUser = async () => {
-    if (!formData.email || !formData.password) {
-      toast.error('Email e senha são obrigatórios');
-      return;
-    }
-    
-    setFormLoading(true);
-    try {
-      // Create user via Supabase Auth Admin API (edge function)
-      const { data, error } = await supabase.functions.invoke('manage-users', {
-        body: { 
-          action: 'create',
-          email: formData.email,
-          password: formData.password,
-          full_name: formData.full_name,
-          role: formData.role,
-          organization_id: formData.organization_id,
-          phone: formData.phone
-        }
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      toast.success('Usuário criado com sucesso!');
-      setIsCreateDialogOpen(false);
-      setFormData({ email: '', password: '', full_name: '', role: 'user', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
-      fetchUsers();
-    } catch (error: any) {
-      console.error('Error creating user:', error);
-      toast.error(error.message || 'Erro ao criar usuário');
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
   const handleUpdateRole = async () => {
     if (!selectedUser) return;
-    
     setFormLoading(true);
     try {
-      // Update role in user_roles table
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .update({ role: formData.role })
-        .eq('user_id', selectedUser.id);
-
+      const { error: roleError } = await supabase.from('user_roles').update({ role: formData.role }).eq('user_id', selectedUser.id);
       if (roleError) throw roleError;
 
-      // Update full_name and phone in profiles
       const profileUpdates: Record<string, any> = {};
       if (formData.full_name !== selectedUser.full_name) profileUpdates.full_name = formData.full_name;
       if (formData.phone) profileUpdates.phone = formData.phone;
-      
       if (Object.keys(profileUpdates).length > 0) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update(profileUpdates)
-          .eq('id', selectedUser.id);
-
+        const { error: profileError } = await supabase.from('profiles').update(profileUpdates).eq('id', selectedUser.id);
         if (profileError) throw profileError;
       }
 
-      // Log the action
-      await supabase.from('access_logs').insert({
-        user_id: selectedUser.id,
-        email: selectedUser.email,
-        action: 'role_updated',
-        ip_address: 'admin_action'
-      });
-
+      await supabase.from('access_logs').insert({ user_id: selectedUser.id, email: selectedUser.email, action: 'role_updated', ip_address: 'admin_action' });
       toast.success('Usuário atualizado com sucesso!');
       setIsEditDialogOpen(false);
       setSelectedUser(null);
       fetchUsers();
     } catch (error: any) {
-      console.error('Error updating user:', error);
       toast.error(error.message || 'Erro ao atualizar usuário');
     } finally {
       setFormLoading(false);
@@ -327,25 +231,16 @@ export default function Admin() {
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    
     setFormLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-users', {
-        body: { 
-          action: 'delete',
-          userId: selectedUser.id
-        }
-      });
-
+      const { data, error } = await supabase.functions.invoke('manage-users', { body: { action: 'delete', userId: selectedUser.id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
       toast.success('Usuário excluído com sucesso!');
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
       fetchUsers();
     } catch (error: any) {
-      console.error('Error deleting user:', error);
       toast.error(error.message || 'Erro ao excluir usuário');
     } finally {
       setFormLoading(false);
@@ -354,120 +249,68 @@ export default function Admin() {
 
   const openEditDialog = (u: UserWithRole) => {
     setSelectedUser(u);
-    setFormData({ 
-      email: u.email, 
-      password: '', 
-      full_name: u.full_name || '', 
-      role: u.role as AppRole,
-      organization_id: '00000000-0000-0000-0000-000000000001',
-      phone: (u as any).phone || ''
-    });
+    setFormData({ email: u.email, password: '', full_name: u.full_name || '', role: u.role as AppRole, organization_id: '00000000-0000-0000-0000-000000000001', phone: u.phone || '' });
     setIsEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (u: UserWithRole) => {
-    setSelectedUser(u);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const openPasswordDialog = (u: UserWithRole) => {
-    setSelectedUser(u);
-    setNewPassword('');
-    setIsPasswordDialogOpen(true);
-  };
-
   const handleResetPassword = async () => {
-    if (!selectedUser || !newPassword) {
-      toast.error('Nova senha é obrigatória');
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      toast.error('Senha deve ter no mínimo 6 caracteres');
-      return;
-    }
-    
+    if (!selectedUser || !newPassword) { toast.error('Nova senha é obrigatória'); return; }
+    if (newPassword.length < 6) { toast.error('Senha deve ter no mínimo 6 caracteres'); return; }
     setFormLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-users', {
-        body: { 
-          action: 'reset_password',
-          userId: selectedUser.id,
-          password: newPassword
-        }
-      });
-
+      const { data, error } = await supabase.functions.invoke('manage-users', { body: { action: 'reset_password', userId: selectedUser.id, password: newPassword } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
       toast.success('Senha alterada com sucesso!');
       setIsPasswordDialogOpen(false);
       setSelectedUser(null);
       setNewPassword('');
     } catch (error: any) {
-      console.error('Error resetting password:', error);
       toast.error(error.message || 'Erro ao alterar senha');
     } finally {
       setFormLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
-  };
+  const formatDate = (dateString: string) => format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
 
   const getActionBadge = (action: string) => {
-    switch (action) {
-      case 'login':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Login</Badge>;
-      case 'logout':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Logout</Badge>;
-      case 'session_invalidated':
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Sessão Invalidada</Badge>;
-      case 'all_sessions_invalidated':
-        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Todas Sessões Invalidadas</Badge>;
-      case 'role_updated':
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Role Atualizado</Badge>;
-      case 'user_created':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Usuário Criado</Badge>;
-      case 'user_deleted':
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Usuário Excluído</Badge>;
-      case 'password_reset':
-        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Senha Alterada</Badge>;
-      case 'user_impersonation':
-        return <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Impersonação</Badge>;
-      default:
-        return <Badge variant="outline">{action}</Badge>;
-    }
+    const map: Record<string, { bg: string; text: string; label: string }> = {
+      login: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Login' },
+      logout: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Logout' },
+      session_invalidated: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Sessão Invalidada' },
+      all_sessions_invalidated: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'Todas Sessões Invalidadas' },
+      role_updated: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Role Atualizado' },
+      user_created: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Usuário Criado' },
+      user_deleted: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Usuário Excluído' },
+      password_reset: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Senha Alterada' },
+      user_impersonation: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', label: 'Impersonação' },
+    };
+    const m = map[action];
+    if (m) return <Badge className={`${m.bg} ${m.text} border-${m.text.replace('text-', '')}/30`}>{m.label}</Badge>;
+    return <Badge variant="outline">{action}</Badge>;
   };
 
   const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'super_admin':
-        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Super Admin</Badge>;
-      case 'diretor':
-        return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Diretor</Badge>;
-      case 'gerente':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Gerente</Badge>;
-      case 'closer':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Closer</Badge>;
-      case 'admin':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Admin</Badge>;
-      default:
-        return <Badge variant="outline">Usuário</Badge>;
-    }
+    const map: Record<string, { bg: string; text: string; label: string }> = {
+      super_admin: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Super Admin' },
+      diretor: { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'Diretor' },
+      gerente: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Gerente' },
+      closer: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Closer' },
+      admin: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Admin' },
+    };
+    const m = map[role];
+    if (m) return <Badge className={`${m.bg} ${m.text}`}>{m.label}</Badge>;
+    return <Badge variant="outline">Usuário</Badge>;
   };
 
   const fetchSettings = async () => {
     setSettingsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('app_settings' as any)
-        .select('key, value');
+      const { data, error } = await supabase.from('app_settings' as any).select('key, value');
       if (error) throw error;
       const settings: Record<string, string> = {};
       (data as any[])?.forEach((s: any) => { settings[s.key] = s.value; });
-      setEvolutionUrl(settings.krolic_api_url || '');
       setEvolutionKey(settings.krolic_api_token || '');
       setEvolutionInstance(settings.krolic_instance_name || '');
       setCentralNumber(settings.central_whatsapp_number || '');
@@ -482,22 +325,17 @@ export default function Admin() {
     setSettingsSaving(true);
     try {
       const updates = [
-        { key: 'krolic_api_url', value: evolutionUrl },
         { key: 'krolic_api_token', value: evolutionKey },
         { key: 'krolic_instance_name', value: evolutionInstance },
         { key: 'central_whatsapp_number', value: centralNumber },
       ];
       for (const u of updates) {
-        const { error } = await supabase
-          .from('app_settings' as any)
-          .update({ value: u.value, updated_at: new Date().toISOString() })
-          .eq('key', u.key);
+        const { error } = await supabase.from('app_settings' as any).update({ value: u.value, updated_at: new Date().toISOString() }).eq('key', u.key);
         if (error) throw error;
       }
       toast.success('Configurações salvas com sucesso!');
     } catch (error: any) {
-      console.error('Error saving settings:', error);
-      toast.error('Erro ao salvar configurações: ' + (error.message || ''));
+      toast.error('Erro ao salvar: ' + (error.message || ''));
     } finally {
       setSettingsSaving(false);
     }
@@ -525,11 +363,19 @@ export default function Admin() {
     );
   }
 
-  if (userRole !== 'super_admin') {
-    return null;
-  }
+  if (userRole !== 'super_admin') return null;
 
   const activeSessions = sessions.filter(s => s.is_active);
+
+  // Determine default tab
+  const getDefaultTab = () => {
+    if (hasAccess('admin-whatsapp') || hasAccess('admin-skills')) return 'config-global';
+    if (hasAccess('admin-filiais')) return 'filiais';
+    if (hasAccess('admin-usuarios') || hasAccess('time-comercial')) return 'pessoas';
+    if (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) return 'seguranca';
+    if (hasAccess('admin-modulos')) return 'modulos';
+    return 'config-global';
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -545,7 +391,7 @@ export default function Admin() {
                 <Shield className="h-6 w-6 text-primary" />
                 Painel de Administração
               </h1>
-              <p className="text-muted-foreground">Gestão de acessos e usuários</p>
+              <p className="text-sm text-muted-foreground">Scale › SOL › Gestão</p>
             </div>
           </div>
           <Button onClick={refreshData} disabled={refreshing} variant="outline">
@@ -555,362 +401,322 @@ export default function Admin() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Total de Usuários
+                <Users className="h-4 w-4" /> Usuários
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{users.length}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">{users.length}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Filiais
+                <Building2 className="h-4 w-4" /> Filiais
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{organizations.length}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">{organizations.length}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                Sessões Ativas
+                <Activity className="h-4 w-4" /> Sessões Ativas
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-500">{activeSessions.length}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold text-green-500">{activeSessions.length}</div></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Logs de Acesso
+                <Shield className="h-4 w-4" /> Logs
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{accessLogs.length}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">{accessLogs.length}</div></CardContent>
           </Card>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue={hasAccess('admin-filiais') ? 'organizations' : hasAccess('admin-usuarios') ? 'users' : 'time-comercial'} className="space-y-4">
+        {/* Tabs — 5 grupos */}
+        <Tabs defaultValue={getDefaultTab()} className="space-y-4">
           <TabsList className="flex-wrap">
-            {hasAccess('admin-filiais') && <TabsTrigger value="organizations">Filiais</TabsTrigger>}
-            {hasAccess('admin-usuarios') && <TabsTrigger value="users">Usuários</TabsTrigger>}
-            {hasAccess('admin-modulos') && <TabsTrigger value="modules">Módulos</TabsTrigger>}
-            {hasAccess('admin-seguranca') && (
-              <TabsTrigger value="seguranca" className="flex items-center gap-1">
-                <Fingerprint className="h-3.5 w-3.5" />
-                Segurança & Logs
+            {(hasAccess('admin-whatsapp') || hasAccess('admin-skills')) && (
+              <TabsTrigger value="config-global" className="flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5" />
+                Config Global
               </TabsTrigger>
             )}
-            {hasAccess('admin-sessoes') && <TabsTrigger value="sessions">Sessões Ativas</TabsTrigger>}
-            {hasAccess('admin-whatsapp') && (
-              <TabsTrigger value="settings" className="flex items-center gap-1">
-                <MessageSquare className="h-3.5 w-3.5" />
-                WhatsApp
+            {hasAccess('admin-filiais') && (
+              <TabsTrigger value="filiais" className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                Filiais
               </TabsTrigger>
             )}
-            {hasAccess('time-comercial') && (
-              <TabsTrigger value="time-comercial" className="flex items-center gap-1">
+            {(hasAccess('admin-usuarios') || hasAccess('time-comercial')) && (
+              <TabsTrigger value="pessoas" className="flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5" />
-                Time Comercial
+                Pessoas
               </TabsTrigger>
             )}
-            {hasAccess('admin-skills') && (
-              <TabsTrigger value="skills" className="flex items-center gap-1">
-                <Zap className="h-3.5 w-3.5" />
-                Skills / Edges
+            {(hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
+              <TabsTrigger value="seguranca" className="flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5" />
+                Segurança
+              </TabsTrigger>
+            )}
+            {hasAccess('admin-modulos') && (
+              <TabsTrigger value="modulos" className="flex items-center gap-1.5">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Módulos
               </TabsTrigger>
             )}
           </TabsList>
 
-          <TabsContent value="users">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Usuários Cadastrados</CardTitle>
-                  <CardDescription>Lista de todos os usuários do sistema</CardDescription>
-                </div>
-                <Button onClick={() => {
-                  setFormData({ email: '', password: '', full_name: '', role: 'closer', organization_id: '00000000-0000-0000-0000-000000000001', phone: '' });
-                  setIsCreateDialogOpen(true);
-                }}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Novo Usuário
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Função</TableHead>
-                      <TableHead>Cadastrado em</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.email}</TableCell>
-                        <TableCell>{u.full_name || '-'}</TableCell>
-                        <TableCell>{getRoleBadge(u.role)}</TableCell>
-                        <TableCell>{formatDate(u.created_at)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                            onClick={() => setImpersonateTarget(u)}
-                              disabled={u.id === user?.id || impersonateLoading === u.id}
-                              className="h-8 w-8 text-primary hover:text-primary"
-                              title="Impersonar Usuário"
-                            >
-                              {impersonateLoading === u.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(u)}
-                              className="h-8 w-8"
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openPasswordDialog(u)}
-                              className="h-8 w-8 text-purple-500 hover:text-purple-600"
-                              title="Alterar Senha"
-                            >
-                              <Key className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => invalidateAllUserSessions(u.id)}
-                              disabled={u.id === user?.id}
-                              className="h-8 w-8 text-orange-500 hover:text-orange-600"
-                              title="Desconectar"
-                            >
-                              <Ban className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openDeleteDialog(u)}
-                              disabled={u.id === user?.id}
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              title="Excluir"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          {/* ═══════════════════════════════════════════ */}
+          {/* CONFIG GLOBAL — Krolic, Cenários, DS, Skills */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="config-global" className="space-y-6">
+            {/* Krolic / WhatsApp */}
+            {hasAccess('admin-whatsapp') && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Krolic API (WhatsApp Bot SOL)
+                  </CardTitle>
+                  <CardDescription>Credenciais globais da Krolic para o robô SOL</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {settingsLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : (
+                    <div className="space-y-4 max-w-lg">
+                      <div className="space-y-2">
+                        <Label>Token Krolic</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type={showApiKey ? "text" : "password"}
+                            value={showApiKey ? evolutionKey : maskApiKey(evolutionKey)}
+                            onChange={(e) => { setShowApiKey(true); setEvolutionKey(e.target.value); }}
+                            onFocus={() => setShowApiKey(true)}
+                            placeholder="Chave da API"
+                          />
+                          <Button type="button" variant="outline" size="icon" onClick={() => setShowApiKey(!showApiKey)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nome da Instância</Label>
+                        <Input value={evolutionInstance} onChange={(e) => setEvolutionInstance(e.target.value)} placeholder="Nome da instância" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Número da Central (WhatsApp)</Label>
+                        <Input value={centralNumber} onChange={(e) => setCentralNumber(e.target.value)} placeholder="5517999999999" />
+                        <p className="text-xs text-muted-foreground">Formato: código do país + DDD + número</p>
+                      </div>
+                      <Button onClick={handleSaveSettings} disabled={settingsSaving} className="gap-2">
+                        {settingsSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Salvar
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cenários Monitorados */}
+            {hasAccess('admin-whatsapp') && <MonitoredScenariosSettings />}
+
+            {/* DataStores Descobertos */}
+            {hasAccess('admin-whatsapp') && <DiscoveredDataStores />}
+
+            {/* Skills / Edge Functions */}
+            {hasAccess('admin-skills') && <SkillsTab />}
           </TabsContent>
 
-          <TabsContent value="modules">
-            <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
-          </TabsContent>
-
-          <TabsContent value="organizations">
+          {/* ═══════════════════════════════════════════ */}
+          {/* FILIAIS */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="filiais">
             <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
           </TabsContent>
 
-          <TabsContent value="seguranca">
-            <div className="space-y-6">
-              {/* Login Analytics */}
-              <LoginAnalyticsTab
-                accessLogs={accessLogs}
-                sessions={sessions}
-                onInvalidateAllSessions={invalidateAllUserSessions}
-              />
-
-              {/* Access Logs Table */}
+          {/* ═══════════════════════════════════════════ */}
+          {/* PESSOAS — Usuários + Time Comercial */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="pessoas" className="space-y-6">
+            {/* Usuários */}
+            {hasAccess('admin-usuarios') && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Logs de Acesso</CardTitle>
-                  <CardDescription>Histórico completo de acessos e ações no sistema</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Usuários</CardTitle>
+                    <CardDescription>Gestão de acessos à plataforma</CardDescription>
+                  </div>
+                  <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Novo Usuário
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Nome</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Ação</TableHead>
-                        <TableHead>IP</TableHead>
-                        <TableHead>Navegador</TableHead>
-                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Função</TableHead>
+                        <TableHead>Cadastrado</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {accessLogs.map((log) => (
-                        <TableRow key={log.id}>
-                          <TableCell className="font-medium">{log.email || '-'}</TableCell>
-                          <TableCell>{getActionBadge(log.action)}</TableCell>
-                          <TableCell>{log.ip_address || 'N/A'}</TableCell>
-                          <TableCell>{parseUserAgent(log.user_agent)}</TableCell>
-                          <TableCell>{formatDate(log.created_at)}</TableCell>
-                        </TableRow>
-                      ))}
-                      {accessLogs.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                            Nenhum log de acesso
+                      {users.map((u) => (
+                        <TableRow key={u.id}>
+                          <TableCell className="font-medium">{u.full_name || '-'}</TableCell>
+                          <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                          <TableCell>{getRoleBadge(u.role)}</TableCell>
+                          <TableCell className="text-sm">{formatDate(u.created_at)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => setImpersonateTarget(u)} disabled={u.id === user?.id || impersonateLoading === u.id} className="h-8 w-8 text-primary" title="Impersonar">
+                                {impersonateLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => openEditDialog(u)} className="h-8 w-8" title="Editar">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setNewPassword(''); setIsPasswordDialogOpen(true); }} className="h-8 w-8 text-purple-500" title="Alterar Senha">
+                                <Key className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => invalidateAllUserSessions(u.id)} disabled={u.id === user?.id} className="h-8 w-8 text-orange-500" title="Desconectar">
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }} disabled={u.id === user?.id} className="h-8 w-8 text-destructive" title="Excluir">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      )}
+                      ))}
                     </TableBody>
                   </Table>
                 </CardContent>
               </Card>
-            </div>
+            )}
+
+            {/* Time Comercial */}
+            {hasAccess('time-comercial') && <TimeComercialTab />}
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                   Configurações da Krolic API (WhatsApp)
-                </CardTitle>
-                <CardDescription>Configure as credenciais da Krolic para envio de notificações via WhatsApp</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {settingsLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-                ) : (
-                  <div className="space-y-4 max-w-lg">
-                    <div className="space-y-2">
-                      <Label>Token Krolic</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type={showApiKey ? "text" : "password"}
-                          value={showApiKey ? evolutionKey : maskApiKey(evolutionKey)}
-                          onChange={(e) => { setShowApiKey(true); setEvolutionKey(e.target.value); }}
-                          onFocus={() => setShowApiKey(true)}
-                          placeholder="Chave da API"
-                        />
-                        <Button type="button" variant="outline" size="icon" onClick={() => setShowApiKey(!showApiKey)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Nome da Instância</Label>
-                      <Input value={evolutionInstance} onChange={(e) => setEvolutionInstance(e.target.value)} placeholder="Nome da instância" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Número da Central (WhatsApp)</Label>
-                      <Input value={centralNumber} onChange={(e) => setCentralNumber(e.target.value)} placeholder="5517999999999" />
-                      <p className="text-xs text-muted-foreground">Formato: código do país + DDD + número (ex: 5517997335222)</p>
-                    </div>
-                    <Button onClick={handleSaveSettings} disabled={settingsSaving} className="gap-2">
-                      {settingsSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Salvar Configurações
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            <MonitoredScenariosSettings />
-            <DiscoveredDataStores />
+          {/* ═══════════════════════════════════════════ */}
+          {/* SEGURANÇA — Analytics + Logs + Sessões */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="seguranca" className="space-y-6">
+            {hasAccess('admin-seguranca') && (
+              <>
+                <LoginAnalyticsTab accessLogs={accessLogs} sessions={sessions} onInvalidateAllSessions={invalidateAllUserSessions} />
 
-            {/* Requisitos para WhatsApp Funcionar */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Requisitos para WhatsApp Funcionar
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                    <div className="rounded-full bg-green-500/10 p-2"><MessageSquare className="h-4 w-4 text-green-500" /></div>
-                    <div>
-                      <p className="text-sm font-medium">1. Krolic API configurada</p>
-                      <p className="text-xs text-muted-foreground">
-                        API Key, Nome da Instância e Número Central preenchidos acima.<br/>
-                        Endpoint fixo: <code>https://api.camkrolik.com.br/core/v2/api/chats/send-text</code>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                    <div className="rounded-full bg-green-500/10 p-2"><ArrowLeft className="h-4 w-4 text-green-500" /></div>
-                    <div>
-                      <p className="text-sm font-medium">2. Endpoint de envio correto</p>
-                      <p className="text-xs text-muted-foreground">
-                        <code>POST https://api.camkrolik.com.br/core/v2/api/chats/send-text</code><br/>
-                        Header: <code>access-token: {'{api_key}'}</code><br/>
-                        Body: <code>{`{ "number": "5517...", "message": "...", "forceSend": true, "verifyContact": true }`}</code>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                    <div className="rounded-full bg-yellow-500/10 p-2"><Shield className="h-4 w-4 text-yellow-500" /></div>
-                    <div>
-                      <p className="text-sm font-medium">3. Auth da Edge Function</p>
-                      <p className="text-xs text-muted-foreground">
-                        <code>notify-ticket-whatsapp</code> e <code>send-whatsapp-alert</code> usam <code>getUser()</code> para validação.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                    <div className="rounded-full bg-cyan-500/10 p-2"><Zap className="h-4 w-4 text-cyan-500" /></div>
-                    <div>
-                      <p className="text-sm font-medium">4. Webhook de recebimento</p>
-                      <p className="text-xs text-muted-foreground">
-                        Krolic API → <code>whatsapp-proxy</code> → <code>whatsapp-webhook</code><br/>
-                        Config na Krolic: Webhook by Events desabilitado, apenas MESSAGES_UPSERT ativo.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                    <div className="rounded-full bg-orange-500/10 p-2"><Activity className="h-4 w-4 text-orange-500" /></div>
-                    <div>
-                      <p className="text-sm font-medium">5. Número Central</p>
-                      <p className="text-xs text-muted-foreground">
-                        <code>central_whatsapp_number</code> configurado acima. Recebe cópia de todas as notificações de chamados.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Logs de Acesso</CardTitle>
+                    <CardDescription>Histórico completo de ações no sistema</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Ação</TableHead>
+                          <TableHead>IP</TableHead>
+                          <TableHead>Navegador</TableHead>
+                          <TableHead>Data/Hora</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {accessLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="font-medium">{log.email || '-'}</TableCell>
+                            <TableCell>{getActionBadge(log.action)}</TableCell>
+                            <TableCell>{log.ip_address || 'N/A'}</TableCell>
+                            <TableCell>{parseUserAgent(log.user_agent)}</TableCell>
+                            <TableCell>{formatDate(log.created_at)}</TableCell>
+                          </TableRow>
+                        ))}
+                        {accessLogs.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum log de acesso</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {/* Sessões Ativas */}
+            {hasAccess('admin-sessoes') && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Fingerprint className="h-5 w-5" />
+                    Sessões Ativas
+                  </CardTitle>
+                  <CardDescription>{activeSessions.length} sessões ativas no momento</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuário</TableHead>
+                        <TableHead>IP</TableHead>
+                        <TableHead>Navegador</TableHead>
+                        <TableHead>Última Atividade</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessions.slice(0, 50).map((s) => {
+                        const sessionUser = users.find(u => u.id === s.user_id);
+                        return (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-medium">{sessionUser?.full_name || sessionUser?.email || s.user_id.slice(0, 8)}</TableCell>
+                            <TableCell>{s.ip_address || 'N/A'}</TableCell>
+                            <TableCell>{parseUserAgent(s.user_agent)}</TableCell>
+                            <TableCell>{formatDate(s.last_activity)}</TableCell>
+                            <TableCell>
+                              <Badge className={s.is_active ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'}>
+                                {s.is_active ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {s.is_active && (
+                                <Button variant="ghost" size="sm" onClick={() => invalidateSession(s.id, s.user_id)} className="text-destructive text-xs">
+                                  <Ban className="h-3 w-3 mr-1" /> Invalidar
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
-          <TabsContent value="time-comercial">
-            <TimeComercialTab />
-          </TabsContent>
-
-          <TabsContent value="skills">
-            <SkillsTab />
+          {/* ═══════════════════════════════════════════ */}
+          {/* MÓDULOS */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="modulos">
+            <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
           </TabsContent>
         </Tabs>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* DIALOGS */}
+        {/* ═══════════════════════════════════════════ */}
 
         {/* Create User Wizard */}
         <UserCreationWizard
@@ -925,33 +731,21 @@ export default function Admin() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Editar Usuário</DialogTitle>
-              <DialogDescription>Atualize os dados do usuário {selectedUser?.email}</DialogDescription>
+              <DialogDescription>Atualize os dados de {selectedUser?.email}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit_phone">Telefone (WhatsApp)</Label>
-                <Input
-                  id="edit_phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="5511999999999"
-                />
+                <Label>Telefone (WhatsApp)</Label>
+                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="5511999999999" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit_full_name">Nome Completo</Label>
-                <Input
-                  id="edit_full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder="Nome do usuário"
-                />
+                <Label>Nome Completo</Label>
+                <Input value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} placeholder="Nome do usuário" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit_role">Função</Label>
+                <Label>Função</Label>
                 <Select value={formData.role} onValueChange={(value: AppRole) => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                     <SelectItem value="diretor">Diretor</SelectItem>
@@ -966,7 +760,7 @@ export default function Admin() {
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleUpdateRole} disabled={formLoading}>
                 {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Salvar Alterações
+                Salvar
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -978,17 +772,12 @@ export default function Admin() {
             <AlertDialogHeader>
               <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir o usuário <strong>{selectedUser?.email}</strong>? 
-                Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir <strong>{selectedUser?.email}</strong>? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleDeleteUser} 
-                disabled={formLoading}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
+              <AlertDialogAction onClick={handleDeleteUser} disabled={formLoading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 {formLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Excluir
               </AlertDialogAction>
@@ -1001,18 +790,12 @@ export default function Admin() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Alterar Senha</DialogTitle>
-              <DialogDescription>Defina uma nova senha para {selectedUser?.email}</DialogDescription>
+              <DialogDescription>Nova senha para {selectedUser?.email}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="new_password">Nova Senha</Label>
-                <Input
-                  id="new_password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                />
+                <Label>Nova Senha</Label>
+                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
               </div>
             </div>
             <DialogFooter>
@@ -1024,32 +807,33 @@ export default function Admin() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      {/* Impersonation Confirmation Dialog */}
-      <AlertDialog open={!!impersonateTarget} onOpenChange={(open) => !open && setImpersonateTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Impersonação</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você será conectado como <strong>{impersonateTarget?.full_name || impersonateTarget?.email}</strong>. Sua sessão atual será preservada para restauração posterior.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (!impersonateTarget) return;
-                setImpersonateLoading(impersonateTarget.id);
-                await startImpersonation(impersonateTarget.id);
-                setImpersonateLoading(null);
-                setImpersonateTarget(null);
-              }}
-            >
-              {impersonateLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              Impersonar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
+        {/* Impersonation Confirmation */}
+        <AlertDialog open={!!impersonateTarget} onOpenChange={(open) => !open && setImpersonateTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Impersonação</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você será conectado como <strong>{impersonateTarget?.full_name || impersonateTarget?.email}</strong>. Sua sessão será preservada.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (!impersonateTarget) return;
+                  setImpersonateLoading(impersonateTarget.id);
+                  await startImpersonation(impersonateTarget.id);
+                  setImpersonateLoading(null);
+                  setImpersonateTarget(null);
+                }}
+              >
+                {impersonateLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Impersonar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
