@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Users, UserPlus, Pencil, Trash2, Key, Eye, Ban, Loader2, Search, Building2 } from 'lucide-react';
+import { Users, UserPlus, Pencil, Trash2, Key, Eye, Ban, Loader2, Search, Building2, ArrowUpCircle, MessageCircle, Send } from 'lucide-react';
 import { UserCreationWizard } from './UserCreationWizard';
 
 interface UserWithRole {
@@ -108,6 +108,14 @@ export function PessoasTab({
   const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
   const [teamForm, setTeamForm] = useState({ nome: '', cargo: '', telefone: '', email: '', franquia_id: '', ativo: true, krolic: true, sm_id: '', krolik_id: '', krolik_setor_id: '' });
   const [teamSaving, setTeamSaving] = useState(false);
+
+  // Promote team member to SOL user state
+  const [promoteTarget, setPromoteTarget] = useState<UnifiedPerson | null>(null);
+  const [promoteForm, setPromoteForm] = useState({ email: '', telefone: '', role: 'closer' as string });
+  const [promoteLoading, setPromoteLoading] = useState(false);
+
+  // WhatsApp sending state
+  const [whatsappSending, setWhatsappSending] = useState<string | null>(null);
 
   useEffect(() => { fetchTeamMembers(); }, []);
 
@@ -292,6 +300,97 @@ export function PessoasTab({
     if (error) { toast.error('Erro'); return; }
     toast.success(newVal ? 'Ativado' : 'Desativado');
     setTeamMembers(prev => prev.map(x => x.id === person.teamMemberId ? { ...x, ativo: newVal } : x));
+  }
+
+  async function handlePromote() {
+    if (!promoteTarget || !promoteForm.email) {
+      toast.error('Email é obrigatório');
+      return;
+    }
+    setPromoteLoading(true);
+    try {
+      const DEFAULT_PASSWORD = 'Sol1.3strat3g51@';
+      // Find org ID from franquia_id
+      const orgMatch = orgs.find(o => o.slug === promoteTarget.franquia_id);
+      const orgId = orgMatch?.id || '00000000-0000-0000-0000-000000000001';
+
+      // 1. Create user via manage-users
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'create',
+          email: promoteForm.email,
+          password: DEFAULT_PASSWORD,
+          full_name: promoteTarget.name,
+          role: promoteForm.role,
+          organization_id: orgId,
+          phone: promoteForm.telefone.replace(/\D/g, ''),
+        }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // 2. Update time_comercial with email + telefone
+      if (promoteTarget.teamMemberId) {
+        await supabase.from('time_comercial' as any).update({
+          email: promoteForm.email,
+          telefone: promoteForm.telefone.replace(/\D/g, '') || null,
+        }).eq('id', promoteTarget.teamMemberId);
+      }
+
+      // 3. Send WhatsApp welcome
+      if (promoteForm.telefone) {
+        const cleanPhone = promoteForm.telefone.replace(/\D/g, '');
+        await sendWhatsAppWelcome(cleanPhone, promoteTarget.name, promoteForm.email, DEFAULT_PASSWORD);
+      }
+
+      toast.success(`${promoteTarget.name} agora é usuário SOL!`);
+      setPromoteTarget(null);
+      onRefreshUsers();
+      fetchTeamMembers();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao promover');
+    } finally {
+      setPromoteLoading(false);
+    }
+  }
+
+  async function sendWhatsAppWelcome(phone: string, name: string, email: string, password?: string) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone) { toast.error('Telefone não informado'); return; }
+    const pwd = password || 'Sol1.3strat3g51@';
+    const message = `🌞 *Seja bem-vindo(a) à SOL Estrateg.IA!*\n\nOlá ${name}! 👋\n\nSeu acesso foi criado com sucesso.\n\n🔐 *Credenciais de acesso:*\n📧 Email: ${email}\n🔑 Senha: ${pwd}\n\n🌐 Acesse: ${window.location.origin}\n\n⚠️ Recomendamos alterar sua senha no primeiro acesso.\n\nQualquer dúvida, estamos à disposição!`;
+    try {
+      await supabase.functions.invoke('send-whatsapp-alert', {
+        body: { phone: cleanPhone, message }
+      });
+      toast.success(`WhatsApp enviado para ${name}`);
+    } catch {
+      toast.error('Erro ao enviar WhatsApp');
+    }
+  }
+
+  async function handleSendWhatsApp(person: UnifiedPerson) {
+    if (!person.phone && !person.email) {
+      toast.error('Sem telefone cadastrado');
+      return;
+    }
+    setWhatsappSending(person.id);
+    await sendWhatsAppWelcome(
+      person.phone || '',
+      person.name,
+      person.email || '',
+    );
+    setWhatsappSending(null);
+  }
+
+  function openPromote(person: UnifiedPerson) {
+    const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
+    setPromoteTarget(person);
+    setPromoteForm({
+      email: person.email || teamObj?.email || '',
+      telefone: person.phone || teamObj?.telefone || '',
+      role: 'closer',
+    });
   }
 
   const solUsers = filtered.filter(p => p.hasSOLAccess).length;
@@ -479,9 +578,21 @@ export function PessoasTab({
                             </Button>
                           </>
                         )}
+                        {/* WhatsApp welcome for SOL users */}
+                        {userObj && p.phone && canManagePeople && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500" title="Enviar acesso WhatsApp"
+                            onClick={() => handleSendWhatsApp(p)}
+                            disabled={whatsappSending === p.id}>
+                            {whatsappSending === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
                         {/* Team-only member actions */}
                         {!userObj && teamObj && canManagePeople && (
                           <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Promover a Usuário SOL"
+                              onClick={() => openPromote(p)}>
+                              <ArrowUpCircle className="h-3.5 w-3.5" />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar SM" onClick={() => openTeamEdit(teamObj)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -594,6 +705,61 @@ export function PessoasTab({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Promote team member to SOL user */}
+      <Dialog open={!!promoteTarget} onOpenChange={(open) => !open && setPromoteTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowUpCircle className="h-5 w-5 text-primary" />
+              Promover a Usuário SOL
+            </DialogTitle>
+          </DialogHeader>
+          {promoteTarget && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                <p className="font-medium">{promoteTarget.name}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {promoteTarget.smId && <Badge variant="outline" className="text-[10px]">SM: {promoteTarget.smId}</Badge>}
+                  {promoteTarget.franquia_id && <Badge variant="outline" className="text-[10px]">{getFranquiaLabel(promoteTarget.franquia_id)}</Badge>}
+                  {promoteTarget.hasKrolic && <Badge variant="outline" className="text-[10px]">Krolic ✓</Badge>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input type="email" value={promoteForm.email} onChange={e => setPromoteForm(f => ({ ...f, email: e.target.value }))} placeholder="usuario@empresa.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone (WhatsApp)</Label>
+                <Input value={promoteForm.telefone} onChange={e => setPromoteForm(f => ({ ...f, telefone: e.target.value }))} placeholder="5517991234567" />
+              </div>
+              <div className="space-y-2">
+                <Label>Função</Label>
+                <Select value={promoteForm.role} onValueChange={v => setPromoteForm(f => ({ ...f, role: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="diretor">Diretor</SelectItem>
+                    <SelectItem value="gerente">Gerente</SelectItem>
+                    <SelectItem value="closer">Closer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground space-y-1">
+                <p>🔑 Senha padrão: <code className="bg-muted px-1 rounded">Sol1.3strat3g51@</code></p>
+                <p>📱 Credenciais serão enviadas via WhatsApp automaticamente</p>
+                <p>📧 Email de verificação será enviado</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPromoteTarget(null)}>Cancelar</Button>
+            <Button onClick={handlePromote} disabled={promoteLoading || !promoteForm.email}>
+              {promoteLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowUpCircle className="h-4 w-4 mr-2" />}
+              Promover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
