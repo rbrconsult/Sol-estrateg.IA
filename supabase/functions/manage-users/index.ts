@@ -112,19 +112,17 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Update profile with phone and org
-        const profileUpdate: Record<string, any> = {};
+        // Update profile with phone, org, and force password change
+        const profileUpdate: Record<string, any> = { must_change_password: true };
         if (phone) profileUpdate.phone = phone;
         if (orgId !== '00000000-0000-0000-0000-000000000001') {
           profileUpdate.organization_id = orgId;
         }
         
-        if (Object.keys(profileUpdate).length > 0) {
-          await supabaseAdmin
-            .from('profiles')
-            .update(profileUpdate)
-            .eq('id', newUser.user.id);
-        }
+        await supabaseAdmin
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', newUser.user.id);
 
         // Update org membership to correct organization
         if (orgId !== '00000000-0000-0000-0000-000000000001') {

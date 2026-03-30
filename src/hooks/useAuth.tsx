@@ -25,6 +25,8 @@ interface AuthContextType {
   impersonationInfo: ImpersonationInfo | null;
   startImpersonation: (targetUserId: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
+  mustChangePassword: boolean;
+  setMustChangePassword: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonationInfo, setImpersonationInfo] = useState<ImpersonationInfo | null>(null);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   // Check for impersonation state on load
   useEffect(() => {
@@ -105,10 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           Promise.all([
             fetchUserRole(session.user.id),
             fetchOrganizationId(session.user.id),
+            checkMustChangePassword(session.user.id),
           ]).finally(() => setLoading(false));
         } else {
           setUserRole(null);
           setOrganizationId(null);
+          setMustChangePassword(false);
           setLoading(false);
         }
       }
@@ -122,9 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await Promise.all([
           fetchUserRole(session.user.id),
           fetchOrganizationId(session.user.id),
+          checkMustChangePassword(session.user.id),
         ]);
 
-        // Skip session validation if impersonating
         const isImpersonatingNow = !!localStorage.getItem(IMPERSONATION_KEY);
         if (!isImpersonatingNow) {
           const sessionToken = localStorage.getItem(SESSION_KEY);
@@ -135,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUserRole(null);
         setOrganizationId(null);
+        setMustChangePassword(false);
       }
 
       setLoading(false);
@@ -228,6 +234,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching organization:', error);
       setOrganizationId(null);
+    }
+  };
+
+  const checkMustChangePassword = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('must_change_password')
+        .eq('id', userId)
+        .single();
+      if (!error && data?.must_change_password) {
+        setMustChangePassword(true);
+      } else {
+        setMustChangePassword(false);
+      }
+    } catch {
+      setMustChangePassword(false);
     }
   };
 
@@ -364,7 +387,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{ 
       user, session, loading, signIn, signUp, signOut, userRole, organizationId,
-      isImpersonating, impersonationInfo, startImpersonation, stopImpersonation
+      isImpersonating, impersonationInfo, startImpersonation, stopImpersonation,
+      mustChangePassword, setMustChangePassword,
     }}>
       {children}
     </AuthContext.Provider>
