@@ -1,0 +1,1 @@
+UPDATE organization_configs SET config_category = 'responsavel' WHERE config_category = 'responsavel_nome';

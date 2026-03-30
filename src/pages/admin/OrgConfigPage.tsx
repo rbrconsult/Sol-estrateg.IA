@@ -37,7 +37,6 @@ const CATEGORIES = [
   { value: "webhook", label: "Webhooks", icon: Webhook, color: "text-blue-400" },
   { value: "api", label: "API", icon: Key, color: "text-purple-400" },
   { value: "responsavel", label: "Responsáveis", icon: UsersIcon, color: "text-amber-400" },
-  { value: "responsavel_nome", label: "Nomes Resp.", icon: UsersIcon, color: "text-amber-300" },
   { value: "campanhas", label: "Campanhas", icon: Megaphone, color: "text-pink-400" },
   { value: "make", label: "Make", icon: Zap, color: "text-orange-400" },
   { value: "general", label: "Geral", icon: Settings, color: "text-muted-foreground" },
