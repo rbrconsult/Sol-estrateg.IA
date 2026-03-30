@@ -445,7 +445,7 @@ export function PessoasTab({
                         <Switch
                           checked={p.isActive}
                           onCheckedChange={() => toggleAtivo(p)}
-                          disabled={!isSuperAdmin}
+                          disabled={!canManagePeople}
                         />
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
