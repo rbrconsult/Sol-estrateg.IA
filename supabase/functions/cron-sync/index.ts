@@ -126,8 +126,8 @@ async function getOrgCredentials(supabase: any): Promise<OrgCredentials[]> {
       makeApiKey: cfg.make_api_key || globalApiKey,
       makeDatastoreId: cfg.ds_thread_id || cfg.ds_leads_site_geral || globalDsId,
       makeComercialDsId: cfg.ds_comercial || globalComercialDsId,
-      makeSolLeadsDsId: cfg.ds_sol_leads || '86887',
-      makeSolMetricasDsId: cfg.ds_sol_metricas || '86891',
+      makeSolLeadsDsId: cfg.ds_sol_leads || '87418',
+      makeSolMetricasDsId: cfg.ds_sol_metricas || '87422',
       makeTeamId: cfg.make_team_id || globalTeamId,
     };
   }).filter((o: OrgCredentials) => o.makeApiKey);
