@@ -1,0 +1,1 @@
+UPDATE organization_configs SET config_value = '1934898', updated_at = now() WHERE config_key = 'make_team_id';
