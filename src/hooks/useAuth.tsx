@@ -127,9 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await Promise.all([
           fetchUserRole(session.user.id),
           fetchOrganizationId(session.user.id),
+          checkMustChangePassword(session.user.id),
         ]);
 
-        // Skip session validation if impersonating
         const isImpersonatingNow = !!localStorage.getItem(IMPERSONATION_KEY);
         if (!isImpersonatingNow) {
           const sessionToken = localStorage.getItem(SESSION_KEY);
@@ -140,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUserRole(null);
         setOrganizationId(null);
+        setMustChangePassword(false);
       }
 
       setLoading(false);
