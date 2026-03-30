@@ -705,6 +705,61 @@ export function PessoasTab({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Promote team member to SOL user */}
+      <Dialog open={!!promoteTarget} onOpenChange={(open) => !open && setPromoteTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowUpCircle className="h-5 w-5 text-primary" />
+              Promover a Usuário SOL
+            </DialogTitle>
+          </DialogHeader>
+          {promoteTarget && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                <p className="font-medium">{promoteTarget.name}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {promoteTarget.smId && <Badge variant="outline" className="text-[10px]">SM: {promoteTarget.smId}</Badge>}
+                  {promoteTarget.franquia_id && <Badge variant="outline" className="text-[10px]">{getFranquiaLabel(promoteTarget.franquia_id)}</Badge>}
+                  {promoteTarget.hasKrolic && <Badge variant="outline" className="text-[10px]">Krolic ✓</Badge>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input type="email" value={promoteForm.email} onChange={e => setPromoteForm(f => ({ ...f, email: e.target.value }))} placeholder="usuario@empresa.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone (WhatsApp)</Label>
+                <Input value={promoteForm.telefone} onChange={e => setPromoteForm(f => ({ ...f, telefone: e.target.value }))} placeholder="5517991234567" />
+              </div>
+              <div className="space-y-2">
+                <Label>Função</Label>
+                <Select value={promoteForm.role} onValueChange={v => setPromoteForm(f => ({ ...f, role: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="diretor">Diretor</SelectItem>
+                    <SelectItem value="gerente">Gerente</SelectItem>
+                    <SelectItem value="closer">Closer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground space-y-1">
+                <p>🔑 Senha padrão: <code className="bg-muted px-1 rounded">Sol1.3strat3g51@</code></p>
+                <p>📱 Credenciais serão enviadas via WhatsApp automaticamente</p>
+                <p>📧 Email de verificação será enviado</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPromoteTarget(null)}>Cancelar</Button>
+            <Button onClick={handlePromote} disabled={promoteLoading || !promoteForm.email}>
+              {promoteLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowUpCircle className="h-4 w-4 mr-2" />}
+              Promover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
