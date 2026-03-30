@@ -30,7 +30,7 @@ interface OrgInfo {
   slug: string;
 }
 
-import { Archive } from "lucide-react";
+
 
 const CATEGORIES = [
   { value: "general", label: "General", icon: Settings, color: "bg-muted text-muted-foreground" },
