@@ -116,6 +116,9 @@ export function PessoasTab({
 
   // WhatsApp sending state
   const [whatsappSending, setWhatsappSending] = useState<string | null>(null);
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+  const [messageTarget, setMessageTarget] = useState<UnifiedPerson | null>(null);
+  const [customMessage, setCustomMessage] = useState('');
 
   useEffect(() => { fetchTeamMembers(); }, []);
 
@@ -383,6 +386,29 @@ export function PessoasTab({
     setWhatsappSending(null);
   }
 
+  function openMessageDialog(person: UnifiedPerson) {
+    setMessageTarget(person);
+    setCustomMessage('');
+    setMessageDialogOpen(true);
+  }
+
+  async function handleSendCustomMessage() {
+    if (!messageTarget || !messageTarget.phone || !customMessage.trim()) return;
+    setWhatsappSending(messageTarget.id);
+    setMessageDialogOpen(false);
+    try {
+      const cleanPhone = messageTarget.phone.replace(/\D/g, '');
+      await supabase.functions.invoke('send-whatsapp-alert', {
+        body: { phone: cleanPhone, message: customMessage.trim() }
+      });
+      toast.success(`Mensagem enviada para ${messageTarget.name}`);
+    } catch {
+      toast.error('Erro ao enviar mensagem');
+    }
+    setWhatsappSending(null);
+    setMessageTarget(null);
+  }
+
   function openPromote(person: UnifiedPerson) {
     const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
     setPromoteTarget(person);
@@ -580,13 +606,22 @@ export function PessoasTab({
                             </Button>
                           </>
                         )}
-                        {/* WhatsApp welcome for SOL users */}
-                        {userObj && p.phone && canManagePeople && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500" title="Enviar acesso WhatsApp"
-                            onClick={() => handleSendWhatsApp(p)}
-                            disabled={whatsappSending === p.id}>
-                            {whatsappSending === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
-                          </Button>
+                        {/* WhatsApp message for anyone with phone */}
+                        {p.phone && canManagePeople && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-500" title="Enviar mensagem WhatsApp"
+                              onClick={() => openMessageDialog(p)}
+                              disabled={whatsappSending === p.id}>
+                              {whatsappSending === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                            </Button>
+                            {userObj && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600" title="Reenviar acesso"
+                                onClick={() => handleSendWhatsApp(p)}
+                                disabled={whatsappSending === p.id}>
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </>
                         )}
                         {/* Team-only member actions */}
                         {!userObj && teamObj && canManagePeople && (
@@ -758,6 +793,42 @@ export function PessoasTab({
             <Button onClick={handlePromote} disabled={promoteLoading || !promoteForm.email}>
               {promoteLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowUpCircle className="h-4 w-4 mr-2" />}
               Promover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send WhatsApp message dialog */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-emerald-500" />
+              Enviar Mensagem WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          {messageTarget && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="font-medium">{messageTarget.name}</p>
+                <p className="text-xs text-muted-foreground">{messageTarget.phone}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Mensagem</Label>
+                <textarea
+                  className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={customMessage}
+                  onChange={e => setCustomMessage(e.target.value)}
+                  placeholder="Digite a mensagem..."
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSendCustomMessage} disabled={!customMessage.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+              <Send className="h-4 w-4 mr-2" />
+              Enviar
             </Button>
           </DialogFooter>
         </DialogContent>
