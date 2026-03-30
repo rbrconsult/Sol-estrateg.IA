@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
+const FOLDER_ID = 224162; // SOL v2 folder
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Run promises sequentially in batches of `size` with delay between batches */
 async function batchedPromises<T>(fns: (() => Promise<T>)[], size: number, delayMs = 1500): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < fns.length; i += size) {
@@ -28,7 +28,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -65,24 +64,23 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Helper: fetch with retry on 429
     async function fetchWithRetry(url: string, opts: RequestInit, retries = 3): Promise<Response> {
       for (let attempt = 0; attempt < retries; attempt++) {
         const res = await fetch(url, opts);
         if (res.status === 429) {
-          const wait = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+          const wait = Math.pow(2, attempt + 1) * 1000;
           console.log(`429 rate limited, waiting ${wait}ms before retry...`);
           await delay(wait);
           continue;
         }
         return res;
       }
-      return fetch(url, opts); // final attempt
+      return fetch(url, opts);
     }
 
-    // 1. Fetch all scenarios
+    // 1. Fetch ALL scenarios from the SOL v2 folder (active + inactive)
     const scenariosRes = await fetchWithRetry(
-      `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
+      `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&folderId=${FOLDER_ID}&pg[limit]=200`,
       { headers: makeHeaders }
     );
     if (!scenariosRes.ok) {
@@ -90,16 +88,18 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch scenarios [${scenariosRes.status}]: ${errText}`);
     }
     const scenariosData = await scenariosRes.json();
-    const scenarios: { id: number; name: string }[] = (scenariosData.scenarios ?? [])
-      .filter((s: any) => s.isActive === true)
-      .map((s: any) => ({ id: s.id, name: s.name }));
+    const allScenarios: { id: number; name: string; isActive: boolean }[] = (scenariosData.scenarios ?? [])
+      .map((s: any) => ({ id: s.id, name: s.name, isActive: s.isActive === true }));
 
-    console.log(`Found ${scenarios.length} scenarios`);
+    const activeScenarios = allScenarios.filter(s => s.isActive);
+    const inactiveScenarios = allScenarios.filter(s => !s.isActive);
 
-    // 2. Fetch logs in batches of 2 with 1.5s delay between batches
+    console.log(`Folder ${FOLDER_ID}: ${allScenarios.length} total (${activeScenarios.length} active, ${inactiveScenarios.length} inactive)`);
+
+    // 2. Fetch logs only for ACTIVE scenarios
     const records: any[] = [];
 
-    const fetchFns = scenarios.map((scenario) => async () => {
+    const fetchFns = activeScenarios.map((scenario) => async () => {
       try {
         const res = await fetchWithRetry(
           `${MAKE_BASE}/scenarios/${scenario.id}/logs?pg[limit]=50`,
@@ -162,8 +162,8 @@ Deno.serve(async (req) => {
     const errors = records.filter((r) => r.status === "error").length;
     const warnings = records.filter((r) => r.status === "warning").length;
 
-    // 4. Auto-update monitored_scenario_ids with ALL discovered scenarios
-    const monitoredPayload = scenarios.map((s) => ({ id: s.id, name: s.name }));
+    // 4. Save ALL scenarios (active + inactive) with status to monitored_scenario_ids
+    const monitoredPayload = allScenarios.map((s) => ({ id: s.id, name: s.name, isActive: s.isActive }));
     const { error: settingsErr } = await supabase
       .from("app_settings")
       .upsert(
@@ -173,10 +173,10 @@ Deno.serve(async (req) => {
     if (settingsErr) {
       console.error("Failed to auto-update monitored scenarios:", settingsErr.message);
     } else {
-      console.log(`Auto-updated monitored_scenario_ids with ${monitoredPayload.length} scenarios`);
+      console.log(`Auto-updated monitored_scenario_ids: ${activeScenarios.length} active, ${inactiveScenarios.length} inactive`);
     }
 
-    // 5. Auto-discover Data Stores and save to app_settings
+    // 5. Auto-discover Data Stores
     try {
       const dsRes = await fetchWithRetry(
         `${MAKE_BASE}/data-stores?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
@@ -204,7 +204,9 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        scenarios: scenarios.length,
+        scenarios: allScenarios.length,
+        active: activeScenarios.length,
+        inactive: inactiveScenarios.length,
         success,
         errors,
         warnings,
