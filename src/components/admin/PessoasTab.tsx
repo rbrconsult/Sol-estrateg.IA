@@ -797,6 +797,42 @@ export function PessoasTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Send WhatsApp message dialog */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-emerald-500" />
+              Enviar Mensagem WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          {messageTarget && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="font-medium">{messageTarget.name}</p>
+                <p className="text-xs text-muted-foreground">{messageTarget.phone}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Mensagem</Label>
+                <textarea
+                  className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={customMessage}
+                  onChange={e => setCustomMessage(e.target.value)}
+                  placeholder="Digite a mensagem..."
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSendCustomMessage} disabled={!customMessage.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+              <Send className="h-4 w-4 mr-2" />
+              Enviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
