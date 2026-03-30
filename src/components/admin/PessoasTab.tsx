@@ -302,6 +302,97 @@ export function PessoasTab({
     setTeamMembers(prev => prev.map(x => x.id === person.teamMemberId ? { ...x, ativo: newVal } : x));
   }
 
+  async function handlePromote() {
+    if (!promoteTarget || !promoteForm.email) {
+      toast.error('Email é obrigatório');
+      return;
+    }
+    setPromoteLoading(true);
+    try {
+      const DEFAULT_PASSWORD = 'Sol1.3strat3g51@';
+      // Find org ID from franquia_id
+      const orgMatch = orgs.find(o => o.slug === promoteTarget.franquia_id);
+      const orgId = orgMatch?.id || '00000000-0000-0000-0000-000000000001';
+
+      // 1. Create user via manage-users
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'create',
+          email: promoteForm.email,
+          password: DEFAULT_PASSWORD,
+          full_name: promoteTarget.name,
+          role: promoteForm.role,
+          organization_id: orgId,
+          phone: promoteForm.telefone.replace(/\D/g, ''),
+        }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // 2. Update time_comercial with email + telefone
+      if (promoteTarget.teamMemberId) {
+        await supabase.from('time_comercial' as any).update({
+          email: promoteForm.email,
+          telefone: promoteForm.telefone.replace(/\D/g, '') || null,
+        }).eq('id', promoteTarget.teamMemberId);
+      }
+
+      // 3. Send WhatsApp welcome
+      if (promoteForm.telefone) {
+        const cleanPhone = promoteForm.telefone.replace(/\D/g, '');
+        await sendWhatsAppWelcome(cleanPhone, promoteTarget.name, promoteForm.email, DEFAULT_PASSWORD);
+      }
+
+      toast.success(`${promoteTarget.name} agora é usuário SOL!`);
+      setPromoteTarget(null);
+      onRefreshUsers();
+      fetchTeamMembers();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao promover');
+    } finally {
+      setPromoteLoading(false);
+    }
+  }
+
+  async function sendWhatsAppWelcome(phone: string, name: string, email: string, password?: string) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone) { toast.error('Telefone não informado'); return; }
+    const pwd = password || 'Sol1.3strat3g51@';
+    const message = `🌞 *Seja bem-vindo(a) à SOL Estrateg.IA!*\n\nOlá ${name}! 👋\n\nSeu acesso foi criado com sucesso.\n\n🔐 *Credenciais de acesso:*\n📧 Email: ${email}\n🔑 Senha: ${pwd}\n\n🌐 Acesse: ${window.location.origin}\n\n⚠️ Recomendamos alterar sua senha no primeiro acesso.\n\nQualquer dúvida, estamos à disposição!`;
+    try {
+      await supabase.functions.invoke('send-whatsapp-alert', {
+        body: { phone: cleanPhone, message }
+      });
+      toast.success(`WhatsApp enviado para ${name}`);
+    } catch {
+      toast.error('Erro ao enviar WhatsApp');
+    }
+  }
+
+  async function handleSendWhatsApp(person: UnifiedPerson) {
+    if (!person.phone && !person.email) {
+      toast.error('Sem telefone cadastrado');
+      return;
+    }
+    setWhatsappSending(person.id);
+    await sendWhatsAppWelcome(
+      person.phone || '',
+      person.name,
+      person.email || '',
+    );
+    setWhatsappSending(null);
+  }
+
+  function openPromote(person: UnifiedPerson) {
+    const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
+    setPromoteTarget(person);
+    setPromoteForm({
+      email: person.email || teamObj?.email || '',
+      telefone: person.phone || teamObj?.telefone || '',
+      role: 'closer',
+    });
+  }
+
   const solUsers = filtered.filter(p => p.hasSOLAccess).length;
   const teamOnly = filtered.filter(p => !p.hasSOLAccess).length;
 
