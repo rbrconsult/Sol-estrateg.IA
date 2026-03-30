@@ -475,7 +475,7 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
       email: String(d.email_lead || d.email || '') || null,
       cidade: String(d.cidade || '') || null,
       canal_origem: String(d.canal_origem || '') || null,
-      status: String(d.status_lead || d.status || 'novo').toUpperCase(),
+      status: String(d.status_lead || d.status || 'TRAFEGO_PAGO').toUpperCase(),
       score: parseInt(d.score_icp || d.score) || null,
       temperatura: String(d.temperatura || '').toUpperCase() || null,
       valor_conta: String(d.valor_conta_energia || d.valor_conta || '') || null,
