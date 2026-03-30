@@ -18,7 +18,7 @@ const MODULE_GROUPS = [
   { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'jornada-lead', 'sla-monitor', 'ads-performance', 'midia-receita'] },
   { label: 'Insights', icon: '📝', keys: ['reports'] },
   { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda'] },
-  { label: 'Admin', icon: '🔒', keys: ['time-comercial'] },
+  { label: 'Admin', icon: '🔒', keys: ['time-comercial', 'admin-pessoas'] },
 ];
 import type { Database } from '@/integrations/supabase/types';
 

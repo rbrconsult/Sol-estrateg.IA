@@ -94,6 +94,7 @@ export function PessoasTab({
   const { userRole } = useAuth();
   const { orgs } = useOrgFilter();
   const isSuperAdmin = userRole === 'super_admin';
+  const canManagePeople = isSuperAdmin || userRole === 'diretor';
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -347,10 +348,12 @@ export function PessoasTab({
                   </SelectContent>
                 </Select>
               )}
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Novo
-              </Button>
+              {canManagePeople && (
+                <Button onClick={() => setIsCreateOpen(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Novo
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -424,7 +427,7 @@ export function PessoasTab({
                         <Switch
                           checked={p.hasKrolic}
                           onCheckedChange={() => toggleKrolic(p)}
-                          disabled={!isSuperAdmin}
+                          disabled={!canManagePeople}
                         />
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
@@ -442,7 +445,7 @@ export function PessoasTab({
                         <Switch
                           checked={p.isActive}
                           onCheckedChange={() => toggleAtivo(p)}
-                          disabled={!isSuperAdmin}
+                          disabled={!canManagePeople}
                         />
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
@@ -477,7 +480,7 @@ export function PessoasTab({
                           </>
                         )}
                         {/* Team-only member actions */}
-                        {!userObj && teamObj && isSuperAdmin && (
+                        {!userObj && teamObj && canManagePeople && (
                           <>
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar SM" onClick={() => openTeamEdit(teamObj)}>
                               <Pencil className="h-3.5 w-3.5" />

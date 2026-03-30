@@ -88,15 +88,17 @@ export default function Admin() {
   const [centralNumber, setCentralNumber] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
 
+  const canAccessAdmin = userRole === 'super_admin' || hasAccess('admin') || (userRole === 'diretor' && hasAccess('admin-pessoas'));
+
   useEffect(() => {
-    if (!authLoading && userRole !== 'super_admin' && !hasAccess('admin')) {
+    if (!authLoading && !canAccessAdmin) {
       toast.error('Acesso negado.');
       navigate('/selecao');
     }
   }, [userRole, authLoading, navigate, hasAccess]);
 
   useEffect(() => {
-    if (userRole === 'super_admin' || hasAccess('admin')) {
+    if (canAccessAdmin) {
       fetchData();
       fetchSettings();
       fetchOrganizationsList();
@@ -450,7 +452,7 @@ export default function Admin() {
                 Filiais
               </TabsTrigger>
             )}
-            {(hasAccess('admin-usuarios') || hasAccess('time-comercial')) && (
+            {(hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) && (
               <TabsTrigger value="pessoas" className="flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5" />
                 Pessoas
