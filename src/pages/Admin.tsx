@@ -364,7 +364,7 @@ export default function Admin() {
     );
   }
 
-  if (userRole !== 'super_admin') return null;
+  if (!canAccessAdmin) return null;
 
   const activeSessions = sessions.filter(s => s.is_active);
 
