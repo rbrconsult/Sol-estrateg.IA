@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff, Check, X, Loader2,
-  Settings, Webhook, Database, Key, Users as UsersIcon, Search, Megaphone, Archive,
+  Settings, Webhook, Database, Key, Users as UsersIcon, Search, Megaphone,
+  Archive, ChevronDown, Zap, Shield,
 } from "lucide-react";
 
 interface OrgConfig {
@@ -30,19 +32,19 @@ interface OrgInfo {
   slug: string;
 }
 
-
-
 const CATEGORIES = [
-  { value: "general", label: "General", icon: Settings, color: "bg-muted text-muted-foreground" },
-  { value: "webhook", label: "Webhook", icon: Webhook, color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  { value: "datastore", label: "Datastore v2", icon: Database, color: "bg-green-500/20 text-green-400 border-green-500/30" },
-  { value: "datastore_legado", label: "DS Legado", icon: Archive, color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
-  { value: "api", label: "API", icon: Key, color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
-  { value: "responsavel", label: "Responsável", icon: UsersIcon, color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
-  { value: "responsavel_nome", label: "Resp. Nome", icon: UsersIcon, color: "bg-amber-500/10 text-amber-300 border-amber-500/20" },
-  { value: "campanhas", label: "Campanhas", icon: Megaphone, color: "bg-pink-500/20 text-pink-400 border-pink-500/30" },
-  { value: "make", label: "Make", icon: Webhook, color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
+  { value: "datastore", label: "Datastore v2", icon: Database, color: "text-emerald-400" },
+  { value: "webhook", label: "Webhooks", icon: Webhook, color: "text-blue-400" },
+  { value: "api", label: "API", icon: Key, color: "text-purple-400" },
+  { value: "responsavel", label: "Responsáveis", icon: UsersIcon, color: "text-amber-400" },
+  { value: "responsavel_nome", label: "Nomes Resp.", icon: UsersIcon, color: "text-amber-300" },
+  { value: "campanhas", label: "Campanhas", icon: Megaphone, color: "text-pink-400" },
+  { value: "make", label: "Make", icon: Zap, color: "text-orange-400" },
+  { value: "general", label: "Geral", icon: Settings, color: "text-muted-foreground" },
+  { value: "datastore_legado", label: "DS Legado", icon: Archive, color: "text-zinc-500" },
 ];
+
+const CATEGORY_ORDER = CATEGORIES.map(c => c.value);
 
 export default function OrgConfigPage() {
   const { orgId } = useParams<{ orgId: string }>();
@@ -56,16 +58,14 @@ export default function OrgConfigPage() {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [collapsedLegacy, setCollapsedLegacy] = useState(true);
 
-  // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ config_key: "", config_value: "", config_category: "general", is_secret: false });
 
-  // Add state
   const [isAdding, setIsAdding] = useState(false);
   const [addForm, setAddForm] = useState({ config_key: "", config_value: "", config_category: "general", is_secret: false });
 
-  // Delete state
   const [deleteTarget, setDeleteTarget] = useState<OrgConfig | null>(null);
 
   useEffect(() => {
@@ -89,7 +89,6 @@ export default function OrgConfigPage() {
     }
   };
 
-  // Filtered & grouped
   const filtered = useMemo(() => {
     return configs.filter((c) => {
       if (filterCategory !== "all" && c.config_category !== filterCategory) return false;
@@ -108,7 +107,16 @@ export default function OrgConfigPage() {
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(c);
     }
-    return groups;
+    // Sort by CATEGORY_ORDER
+    const sorted: [string, OrgConfig[]][] = [];
+    for (const key of CATEGORY_ORDER) {
+      if (groups[key]) sorted.push([key, groups[key]]);
+    }
+    // Any remaining
+    for (const [key, items] of Object.entries(groups)) {
+      if (!CATEGORY_ORDER.includes(key)) sorted.push([key, items]);
+    }
+    return sorted;
   }, [filtered]);
 
   const categoryCounts = useMemo(() => {
@@ -116,6 +124,12 @@ export default function OrgConfigPage() {
     configs.forEach((c) => { counts[c.config_category] = (counts[c.config_category] || 0) + 1; });
     return counts;
   }, [configs]);
+
+  const totalActive = useMemo(() => {
+    return configs.filter(c => c.config_category !== 'datastore_legado').length;
+  }, [configs]);
+
+  const totalLegacy = categoryCounts['datastore_legado'] || 0;
 
   // CRUD
   const handleAdd = async () => {
@@ -199,7 +213,7 @@ export default function OrgConfigPage() {
 
   if (loading) {
     return (
-      <div className="p-6a flex items-center justify-center min-h-[60vh]">
+      <div className="p-6 flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
@@ -216,47 +230,146 @@ export default function OrgConfigPage() {
     );
   }
 
+  const renderConfigTable = (items: OrgConfig[], catMeta: ReturnType<typeof getCatMeta>) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[240px]">Chave</TableHead>
+          <TableHead>Valor</TableHead>
+          <TableHead className="text-right w-[100px]">Ações</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((c) =>
+          editingId === c.id ? (
+            <TableRow key={c.id} className="bg-primary/5">
+              <TableCell>
+                <Input
+                  value={editForm.config_key}
+                  onChange={(e) => setEditForm({ ...editForm, config_key: e.target.value })}
+                  className="h-8 font-mono text-xs"
+                />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editForm.config_value}
+                    onChange={(e) => setEditForm({ ...editForm, config_value: e.target.value })}
+                    className="h-8 font-mono text-xs flex-1"
+                  />
+                  <Select value={editForm.config_category} onValueChange={(v) => setEditForm({ ...editForm, config_category: v })}>
+                    <SelectTrigger className="h-8 text-xs w-32"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((cat) => (
+                        <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Checkbox
+                      checked={editForm.is_secret}
+                      onCheckedChange={(v) => setEditForm({ ...editForm, is_secret: !!v })}
+                    />
+                    <span className="text-[10px] text-muted-foreground">Secreto</span>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUpdate(c.id)} disabled={saving}>
+                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(null)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            <TableRow key={c.id}>
+              <TableCell className="font-mono text-xs font-medium">{c.config_key}</TableCell>
+              <TableCell className="font-mono text-xs max-w-[400px]">
+                <span className="truncate block">
+                  {c.is_secret && !revealedSecrets.has(c.id) ? maskValue(c.config_value) : c.config_value}
+                </span>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-0.5">
+                  {c.is_secret && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleReveal(c.id)}>
+                      {revealedSecrets.has(c.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(c)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(c)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          )
+        )}
+      </TableBody>
+    </Table>
+  );
+
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-foreground truncate">
-            {org.name}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{org.slug}</code>
-            {" • "}{configs.length} configurações
-          </p>
+          <h1 className="text-2xl font-bold text-foreground truncate">{org.name}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs text-muted-foreground">{org.slug}</code>
+            <span className="text-xs text-muted-foreground">•</span>
+            <span className="text-xs text-muted-foreground">{totalActive} configs ativas</span>
+            {totalLegacy > 0 && (
+              <>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-zinc-500">{totalLegacy} legado</span>
+              </>
+            )}
+          </div>
         </div>
-        <Button onClick={() => { setIsAdding(true); setAddForm({ config_key: "", config_value: "", config_category: "general", is_secret: false }); }}>
+        <Button onClick={() => { setIsAdding(true); setAddForm({ config_key: "", config_value: "", config_category: "datastore", is_secret: false }); }}>
           <Plus className="h-4 w-4 mr-2" />Nova Config
         </Button>
       </div>
 
-      {/* Category summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-        {CATEGORIES.map((cat) => {
+      {/* Category filter pills */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setFilterCategory("all")}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+            filterCategory === "all"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border/50 bg-card text-muted-foreground hover:border-border"
+          }`}
+        >
+          Todas ({configs.length})
+        </button>
+        {CATEGORIES.filter(c => c.value !== 'datastore_legado').map((cat) => {
           const count = categoryCounts[cat.value] || 0;
+          if (count === 0) return null;
           const isActive = filterCategory === cat.value;
           return (
             <button
               key={cat.value}
               onClick={() => setFilterCategory(isActive ? "all" : cat.value)}
-              className={`flex items-center gap-2 p-3 rounded-lg border transition-all text-left ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                 isActive
-                  ? "border-primary/50 bg-primary/5 shadow-sm"
-                  : "border-border/40 bg-card hover:border-border"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/50 bg-card text-muted-foreground hover:border-border"
               }`}
             >
-              <cat.icon className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-foreground">{cat.label}</p>
-                <p className="text-lg font-bold text-foreground">{count}</p>
-              </div>
+              <cat.icon className={`h-3 w-3 ${cat.color}`} />
+              {cat.label}
+              <span className="opacity-60">({count})</span>
             </button>
           );
         })}
@@ -288,7 +401,7 @@ export default function OrgConfigPage() {
                 <Input
                   value={addForm.config_key}
                   onChange={(e) => setAddForm({ ...addForm, config_key: e.target.value })}
-                  placeholder="ex: resp_joao, ds_comercial"
+                  placeholder="ex: ds_sol_config, webhook_xyz"
                   className="font-mono text-sm"
                 />
               </div>
@@ -334,8 +447,8 @@ export default function OrgConfigPage() {
         </Card>
       )}
 
-      {/* Grouped configs */}
-      {Object.keys(grouped).length === 0 && !isAdding && (
+      {/* Empty state */}
+      {grouped.length === 0 && !isAdding && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Settings className="h-8 w-8 mb-3 opacity-40" />
@@ -348,104 +461,55 @@ export default function OrgConfigPage() {
         </Card>
       )}
 
-      {Object.entries(grouped).map(([category, items]) => {
-        const catMeta = getCatMeta(category);
-        return (
-          <Card key={category}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <catMeta.icon className="h-4 w-4" />
-                {catMeta.label}
-                <Badge variant="secondary" className="ml-auto text-[10px]">{items.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[250px]">Chave</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead className="text-right w-[120px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((c) =>
-                    editingId === c.id ? (
-                      <TableRow key={c.id} className="bg-primary/5">
-                        <TableCell>
-                          <Input
-                            value={editForm.config_key}
-                            onChange={(e) => setEditForm({ ...editForm, config_key: e.target.value })}
-                            className="h-8 font-mono text-xs"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={editForm.config_value}
-                              onChange={(e) => setEditForm({ ...editForm, config_value: e.target.value })}
-                              className="h-8 font-mono text-xs flex-1"
-                            />
-                            <Select value={editForm.config_category} onValueChange={(v) => setEditForm({ ...editForm, config_category: v })}>
-                              <SelectTrigger className="h-8 text-xs w-32"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {CATEGORIES.map((cat) => (
-                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Checkbox
-                                checked={editForm.is_secret}
-                                onCheckedChange={(v) => setEditForm({ ...editForm, is_secret: !!v })}
-                              />
-                              <span className="text-[10px] text-muted-foreground">Secreto</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUpdate(c.id)} disabled={saving}>
-                              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 text-green-500" />}
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(null)}>
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      <TableRow key={c.id}>
-                        <TableCell className="font-mono text-xs font-medium">{c.config_key}</TableCell>
-                        <TableCell className="font-mono text-xs max-w-[400px]">
-                          <span className="truncate block">
-                            {c.is_secret && !revealedSecrets.has(c.id) ? maskValue(c.config_value) : c.config_value}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-0.5">
-                            {c.is_secret && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleReveal(c.id)}>
-                                {revealedSecrets.has(c.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(c)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(c)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
+      {/* Active configs (non-legacy) */}
+      {grouped
+        .filter(([category]) => category !== 'datastore_legado')
+        .map(([category, items]) => {
+          const catMeta = getCatMeta(category);
+          return (
+            <Card key={category}>
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <catMeta.icon className={`h-4 w-4 ${catMeta.color}`} />
+                  {catMeta.label}
+                  <Badge variant="secondary" className="ml-auto text-[10px] font-mono">{items.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {renderConfigTable(items, catMeta)}
+              </CardContent>
+            </Card>
+          );
+        })}
+
+      {/* Legacy DS — collapsible */}
+      {grouped.some(([cat]) => cat === 'datastore_legado') && (
+        <Collapsible open={!collapsedLegacy} onOpenChange={(open) => setCollapsedLegacy(!open)}>
+          <Card className="border-zinc-800/50 bg-card/50">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-2 pt-4 px-4 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+                <CardTitle className="text-sm flex items-center gap-2 text-zinc-500">
+                  <Archive className="h-4 w-4" />
+                  DataStores Legado
+                  <Badge variant="outline" className="ml-1 text-[10px] font-mono border-zinc-700 text-zinc-500">
+                    {totalLegacy}
+                  </Badge>
+                  <span className="text-[10px] text-zinc-600 ml-1">— substituídos por v2</span>
+                  <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${!collapsedLegacy ? 'rotate-180' : ''}`} />
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="p-0">
+                {renderConfigTable(
+                  grouped.find(([cat]) => cat === 'datastore_legado')?.[1] || [],
+                  getCatMeta('datastore_legado')
+                )}
+              </CardContent>
+            </CollapsibleContent>
           </Card>
-        );
-      })}
+        </Collapsible>
+      )}
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
