@@ -165,9 +165,9 @@ export function PessoasTab({
       });
     }
 
-    // Then, add team members without SOL login
+    // Then, add team members NOT matched to any SOL user
     for (const tm of teamMembers) {
-      if (tm.email && matchedTeamEmails.has(tm.email.toLowerCase())) continue;
+      if (matchedTeamEmails.has(tm.id)) continue;
       
       people.push({
         id: `tm-${tm.id}`,
