@@ -237,6 +237,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkMustChangePassword = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('must_change_password')
+        .eq('id', userId)
+        .single();
+      if (!error && data?.must_change_password) {
+        setMustChangePassword(true);
+      } else {
+        setMustChangePassword(false);
+      }
+    } catch {
+      setMustChangePassword(false);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
