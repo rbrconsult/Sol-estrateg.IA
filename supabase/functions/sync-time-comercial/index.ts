@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     }
 
     const makeApiKey = Deno.env.get("MAKE_API_KEY");
-    const teamId = Deno.env.get("MAKE_TEAM_ID") || "1437295";
+    const teamId = Deno.env.get("MAKE_TEAM_ID") || "1934898";
     const key = `${franquia_id}_${krolik_id || sm_id || nome}`;
 
     const makePayload = {

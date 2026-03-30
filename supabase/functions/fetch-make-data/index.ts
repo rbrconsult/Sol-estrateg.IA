@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     const makeApiKey = (Deno.env.get("MAKE_API_KEY") || "").trim();
     const makeDataStoreId = (Deno.env.get("MAKE_DATASTORE_ID") || "").trim();
-    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1437295").trim();
+    const makeTeamId = (Deno.env.get("MAKE_TEAM_ID") || "1934898").trim();
 
     if (!makeApiKey || !makeDataStoreId) {
       console.error("Missing MAKE_API_KEY or MAKE_DATASTORE_ID");
