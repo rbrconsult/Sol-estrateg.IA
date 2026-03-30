@@ -394,7 +394,9 @@ export function PessoasTab({
                             {p.role}
                           </Badge>
                         )}
-                        {p.cargo && <span className="text-xs text-muted-foreground">{p.cargo}</span>}
+                        {p.cargo && p.cargo.toLowerCase() !== p.role?.toLowerCase() && (
+                          <span className="text-xs text-muted-foreground">{p.cargo}</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
