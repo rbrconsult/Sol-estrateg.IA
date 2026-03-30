@@ -189,7 +189,7 @@ function deriveSLAMetrics(records: MakeRecord[]) {
 function deriveLeadsByStage(records: MakeRecord[]) {
   const stages: Record<string, { qtd: number; alertas: number }> = {};
   records.forEach(r => {
-    const s = (r.makeStatus || 'NOVO').toUpperCase();
+    const s = (r.makeStatus || 'TRAFEGO_PAGO').toUpperCase();
     if (!stages[s]) stages[s] = { qtd: 0, alertas: 0 };
     stages[s].qtd++;
     // Alert if score high but status hasn't progressed
