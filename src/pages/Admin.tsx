@@ -88,8 +88,10 @@ export default function Admin() {
   const [centralNumber, setCentralNumber] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
 
+  const canAccessAdmin = userRole === 'super_admin' || hasAccess('admin') || (userRole === 'diretor' && hasAccess('admin-pessoas'));
+
   useEffect(() => {
-    if (!authLoading && userRole !== 'super_admin' && !hasAccess('admin')) {
+    if (!authLoading && !canAccessAdmin) {
       toast.error('Acesso negado.');
       navigate('/selecao');
     }
