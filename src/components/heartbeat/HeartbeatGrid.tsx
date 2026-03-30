@@ -18,23 +18,26 @@ function detectFolder(name: string): string {
   const n = name.toLowerCase();
   // Fluxo de Segurança (check first - specific names)
   if (n.includes("qualificar") || n.includes("desqualificar") || n.includes("reprocessar")) return "🛡️ Fluxo de Segurança";
-  // Sync (check before Auth to catch "webhook solar")
-  if (n.includes("sync") || n.includes("transfer") || n.includes("webhook")) return "🔄 Sync / Integrações";
-  // Canal de Aquisição
+  // Sync (check before others to catch "webhook solar", "sync sm")
+  if (n.includes("sync") || n.includes("transfer") || n.includes("webhook") || n.includes("timer transfer")) return "🔄 Sync / Integrações";
+  // Canal de Aquisição (captures + whatsapp inbound)
   if (n.includes("capture") || n.includes("captura") || n.includes("inbound") || n.includes("fluxo 1") || n.includes("fluxo 2")) return "📥 Canal de Aquisição";
-  // Robô
-  if (n.includes("agent") || n.includes("robo") || n.includes("sdr") || n.includes("fup") || n.includes("reativacao")) return "🤖 Robô";
+  // Agente (previously Robô)
+  if (n.includes("agent") || n.includes("robo") || n.includes("sdr") || n.includes("fup") || n.includes("reativacao")) return "🤖 Agente";
   // Auth
   if (n.includes("auth") || n.includes("grap") || n.includes("solarmarket")) return "🔐 Auth";
+  // OCR
+  if (n.includes("ocr")) return "📄 OCR";
   return "⚙️ Outros";
 }
 
 const FOLDER_ORDER = [
   "📥 Canal de Aquisição",
-  "🤖 Robô",
+  "🤖 Agente",
   "🔐 Auth",
   "🛡️ Fluxo de Segurança",
   "🔄 Sync / Integrações",
+  "📄 OCR",
   "⚙️ Outros",
 ];
 
