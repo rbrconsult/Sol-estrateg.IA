@@ -81,6 +81,8 @@ function parseDate(value: any): string | null {
 /** Status normalization — reclassify orphaned/ambiguous statuses */
 const STATUS_NORMALIZATION: Record<string, string> = {
   'AGUARDANDO_ACAO_MANUAL': 'EM_QUALIFICACAO',
+  'NOVO': 'TRAFEGO_PAGO',
+  'QUALIFICANDO': 'EM_QUALIFICACAO',
 };
 
 const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';

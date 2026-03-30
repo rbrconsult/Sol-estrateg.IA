@@ -58,13 +58,13 @@ const ALL_ETAPAS = [
 
 // Status = situação de resposta/atividade do lead (o que aconteceu)
 const ALL_STATUSES = [
-  'NOVO',
-  'RESPONDEU',
-  'NAO_RESPONDEU',
-  'AGUARDANDO',
+  'TRAFEGO_PAGO',
+  'EM_QUALIFICACAO',
+  'QUALIFICADO',
   'DESQUALIFICADO',
+  'FOLLOW_UP',
   'GANHO',
-  'PERDIDO',
+  'CONTRATO',
 ];
 
 export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {

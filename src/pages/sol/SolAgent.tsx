@@ -250,7 +250,7 @@ export default function SolAgent() {
                     <TableCell><CanalOrigemBadge canal={lead.canal_origem} /></TableCell>
                     <TableCell>
                       <Badge variant={(lead.status || "").toUpperCase() === "QUALIFICADO" ? "default" : "secondary"} className="text-[10px]">
-                        {lead.status || "NOVO"}
+                        {lead.status || "TRAFEGO_PAGO"}
                       </Badge>
                     </TableCell>
                     <TableCell><ScoreGauge score={lead.score} /></TableCell>
