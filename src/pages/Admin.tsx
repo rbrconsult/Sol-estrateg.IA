@@ -452,7 +452,7 @@ export default function Admin() {
                 Filiais
               </TabsTrigger>
             )}
-            {(hasAccess('admin-usuarios') || hasAccess('time-comercial')) && (
+            {(hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) && (
               <TabsTrigger value="pessoas" className="flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5" />
                 Pessoas
