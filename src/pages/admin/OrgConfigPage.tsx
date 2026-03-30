@@ -316,28 +316,53 @@ export default function OrgConfigPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-foreground truncate">{org.name}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <code className="bg-muted px-1.5 py-0.5 rounded text-xs text-muted-foreground">{org.slug}</code>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-muted-foreground">{totalActive} configs ativas</span>
-            {totalLegacy > 0 && (
-              <>
-                <span className="text-xs text-muted-foreground">•</span>
-                <span className="text-xs text-zinc-500">{totalLegacy} legado</span>
-              </>
-            )}
+      {/* Header — Filial Identity Card */}
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-2 bg-muted/40 border-b">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0 h-8 w-8">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Shield className="h-3.5 w-3.5" />
+            <span>Scale</span>
+            <ChevronDown className="h-3 w-3 -rotate-90" />
+            <span className="text-foreground font-medium">SOL</span>
+            <ChevronDown className="h-3 w-3 -rotate-90" />
+            <span className="text-foreground font-medium">{org.name}</span>
           </div>
         </div>
-        <Button onClick={() => { setIsAdding(true); setAddForm({ config_key: "", config_value: "", config_category: "datastore", is_secret: false }); }}>
-          <Plus className="h-4 w-4 mr-2" />Nova Config
-        </Button>
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <span className="text-2xl">☀️</span>
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-foreground truncate">{org.name}</h1>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <code className="bg-muted px-1.5 py-0.5 rounded text-[11px] text-muted-foreground font-mono">{org.slug}</code>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-xs text-emerald-400 font-medium">{totalActive} ativas</span>
+                </div>
+                {totalLegacy > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
+                    <span className="text-xs text-zinc-500">{totalLegacy} legado</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="text-xs" disabled>
+              <Zap className="h-3.5 w-3.5 mr-1.5" />
+              Scale Wizard
+            </Button>
+            <Button size="sm" onClick={() => { setIsAdding(true); setAddForm({ config_key: "", config_value: "", config_category: "datastore", is_secret: false }); }}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />Nova Config
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Category filter pills */}
