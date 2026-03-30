@@ -108,10 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           Promise.all([
             fetchUserRole(session.user.id),
             fetchOrganizationId(session.user.id),
+            checkMustChangePassword(session.user.id),
           ]).finally(() => setLoading(false));
         } else {
           setUserRole(null);
           setOrganizationId(null);
+          setMustChangePassword(false);
           setLoading(false);
         }
       }
