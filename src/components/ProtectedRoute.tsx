@@ -1,13 +1,14 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { ForcePasswordChangeModal } from '@/components/ForcePasswordChangeModal';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, mustChangePassword, setMustChangePassword } = useAuth();
 
   if (loading) {
     return (
@@ -21,5 +22,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {mustChangePassword && (
+        <ForcePasswordChangeModal
+          userId={user.id}
+          onComplete={() => setMustChangePassword(false)}
+        />
+      )}
+      {children}
+    </>
+  );
 }
