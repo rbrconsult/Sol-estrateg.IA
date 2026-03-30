@@ -669,13 +669,8 @@ export default function Admin() {
         {/* DIALOGS */}
         {/* ═══════════════════════════════════════════ */}
 
-        {/* Create User Wizard */}
-        <UserCreationWizard
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          onSuccess={fetchUsers}
-          organizations={organizations}
-        />
+
+
 
         {/* Edit User Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
