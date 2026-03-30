@@ -1118,6 +1118,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          must_change_password: boolean
           onboarding_completed: boolean
           organization_id: string | null
           phone: string | null
@@ -1128,6 +1129,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          must_change_password?: boolean
           onboarding_completed?: boolean
           organization_id?: string | null
           phone?: string | null
@@ -1138,6 +1140,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          must_change_password?: boolean
           onboarding_completed?: boolean
           organization_id?: string | null
           phone?: string | null
