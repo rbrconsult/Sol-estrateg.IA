@@ -386,7 +386,30 @@ export function PessoasTab({
     setWhatsappSending(null);
   }
 
-  function openPromote(person: UnifiedPerson) {
+  function openMessageDialog(person: UnifiedPerson) {
+    setMessageTarget(person);
+    setCustomMessage('');
+    setMessageDialogOpen(true);
+  }
+
+  async function handleSendCustomMessage() {
+    if (!messageTarget || !messageTarget.phone || !customMessage.trim()) return;
+    setWhatsappSending(messageTarget.id);
+    setMessageDialogOpen(false);
+    try {
+      const cleanPhone = messageTarget.phone.replace(/\D/g, '');
+      await supabase.functions.invoke('send-whatsapp-alert', {
+        body: { phone: cleanPhone, message: customMessage.trim() }
+      });
+      toast.success(`Mensagem enviada para ${messageTarget.name}`);
+    } catch {
+      toast.error('Erro ao enviar mensagem');
+    }
+    setWhatsappSending(null);
+    setMessageTarget(null);
+  }
+
+
     const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
     setPromoteTarget(person);
     setPromoteForm({
