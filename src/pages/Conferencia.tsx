@@ -145,7 +145,7 @@ export default function Conferencia() {
   const alertasData = realData?.alertas ?? [];
   const temperaturaPorEtapa = realData?.temperaturaPorEtapa ?? [];
   const tabelaLeads = realData?.tabelaLeads ?? [];
-  const slaMockData = realData?.slaMock ?? { primeiroAtendimento: { media: 0, pctDentro24h: 0, total: 0 }, porEtapa: [], robos: { tempoResposta: '—', leadsAguardando: 0, taxaResposta: 0 }, geralProposta: { mediaDias: 0 } };
+  const slaMetrics = realData?.slaMetrics ?? { primeiroAtendimento: { media: 0, pctDentro24h: 0, total: 0 }, porEtapa: [], robos: { tempoResposta: '—', leadsAguardando: 0, taxaResposta: 0 }, geralProposta: { mediaDias: 0 } };
   const robotInsightsData = realData?.robotInsights ?? { destaques: [], comparacao: { sol: { nome: 'SOL', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 }, fup: { nome: 'FUP', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 } }, funilMensagens: [], alertasUrgentes: [] };
   const scorePorOrigemData = realData?.scorePorOrigem ?? [];
   const monthlyEvolution = realData?.monthlyEvolution ?? [];
