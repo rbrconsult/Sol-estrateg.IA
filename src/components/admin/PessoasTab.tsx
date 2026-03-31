@@ -52,7 +52,7 @@ interface UnifiedPerson {
   smId: number | null;
   isActive: boolean;
   userId: string | null; // auth user id
-  teamMemberId: string | null; // time_comercial id
+  teamMemberId: string | null; // sol_equipe_sync key
   createdAt: string | null;
 }
 
