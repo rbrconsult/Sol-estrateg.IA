@@ -253,7 +253,7 @@ export default function SolAgent() {
                         {lead.status || "TRAFEGO_PAGO"}
                       </Badge>
                     </TableCell>
-                    <TableCell><ScoreGauge score={lead.score} /></TableCell>
+                    <TableCell><ScoreGauge score={parseInt(String(lead.score || '0')) || 0} /></TableCell>
                     <TableCell><TemperatureBadge temperatura={lead.temperatura} /></TableCell>
                     <TableCell className="text-right tabular-nums">{lead.total_mensagens_ia || 0}</TableCell>
                     <TableCell className="text-xs">
