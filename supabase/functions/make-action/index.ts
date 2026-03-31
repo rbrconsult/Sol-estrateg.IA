@@ -42,6 +42,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Role check: only super_admin can execute Make actions
+    const userId = claims.claims.sub;
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "super_admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Forbidden: super_admin role required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { action, executionId, recordId } = await req.json();
 
     if (!action || !executionId || !recordId) {
