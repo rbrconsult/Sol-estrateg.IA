@@ -43,7 +43,7 @@ function useLeadsSolSync() {
 
 export default function CampanhasAdsPerformance() {
   const { data: campaignData, isLoading: loadingCampaigns } = useCampaignMetrics();
-  const { data: leads, isLoading: loadingLeads } = useLeadsConsolidados();
+  const { data: leads, isLoading: loadingLeads } = useLeadsSolSync();
   const gf = useGlobalFilters();
   const [canalFilter, setCanalFilter] = useState('all');
 
