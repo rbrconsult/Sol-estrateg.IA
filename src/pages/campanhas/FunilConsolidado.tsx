@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowRight, DollarSign, Users, Target, TrendingUp, Clock } from 'lucide-react';
 import { formatCurrency, formatNumber, formatPct } from '@/hooks/useCampaignObs';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
+import { getStatusLabel } from '@/lib/leadClassification';
 
 const FUNNEL_STAGES = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'QUALIFICADO', 'GANHO', 'PERDIDO'];
 const STAGE_COLORS: Record<string, string> = {
