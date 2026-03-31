@@ -102,9 +102,10 @@ export function useSolEquipeInsert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (record: Record<string, any>) => {
+      const payload = { ...record, updated_by: "lovable", updated_at: new Date().toISOString() };
       const { error } = await supabase
         .from("sol_equipe_sync")
-        .insert({ ...record, updated_by: "lovable", updated_at: new Date().toISOString() });
+        .insert(payload as any);
       if (error) throw error;
     },
     onSuccess: () => {
