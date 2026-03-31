@@ -558,7 +558,7 @@ export default function Conferencia() {
               </div>
               <div className="flex justify-between text-[10px]">
                 <span className="text-muted-foreground">Proposta (média)</span>
-                <span className="font-semibold text-foreground">{slaMockData.geralProposta.mediaDias}d</span>
+                <span className="font-semibold text-foreground">{slaMetrics.geralProposta.mediaDias}d</span>
               </div>
             </div>
           </div>
