@@ -329,12 +329,12 @@ export function PessoasTab({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // 2. Update time_comercial with email + telefone
+      // 2. Update sol_equipe_sync
       if (promoteTarget.teamMemberId) {
-        await supabase.from('time_comercial' as any).update({
-          email: promoteForm.email,
-          telefone: promoteForm.telefone.replace(/\D/g, '') || null,
-        }).eq('id', promoteTarget.teamMemberId);
+        await supabase.from('sol_equipe_sync').update({
+          updated_by: 'lovable',
+          updated_at: new Date().toISOString(),
+        }).eq('key', promoteTarget.teamMemberId);
       }
 
       // 3. Send WhatsApp welcome
