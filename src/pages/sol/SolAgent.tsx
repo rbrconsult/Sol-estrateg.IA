@@ -242,9 +242,9 @@ export default function SolAgent() {
               </TableHeader>
               <TableBody>
                 {filtered.slice(0, 100).map(lead => (
-                  <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={lead.telefone} className="cursor-pointer hover:bg-muted/50">
                     <TableCell>
-                      <Checkbox checked={selected.has(lead.id)} onCheckedChange={() => toggleSelect(lead.id)} />
+                      <Checkbox checked={selected.has(lead.telefone)} onCheckedChange={() => toggleSelect(lead.telefone)} />
                     </TableCell>
                     <TableCell className="font-medium">{lead.nome || "—"}</TableCell>
                     <TableCell><CanalOrigemBadge canal={lead.canal_origem} /></TableCell>
