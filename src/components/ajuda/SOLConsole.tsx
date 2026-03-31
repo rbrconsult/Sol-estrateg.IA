@@ -32,6 +32,7 @@ const DS_IDS: Record<string, number> = {
   sol_metricas: 87422,
   sol_projetos: 87423,
   sol_campanhas: 87325,
+  sol_conversions: 87775,
 };
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
