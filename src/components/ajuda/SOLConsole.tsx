@@ -20,6 +20,10 @@ const WEBHOOKS: Record<string, { name: string; url: string; color: string }> = {
   sm_ganho: { name: "SM Ganho/Perdido", url: "https://hook.us2.make.com/m8kbskb6paqmmogmssi1euqexdgsecj2", color: "#06b6d4" },
   sm_etapa: { name: "SM Mudança Etapa", url: "https://hook.us2.make.com/9y86mx4u2fn7igbquvvqm8b8jlpxp6r0", color: "#06b6d4" },
   sm_proposta: { name: "SM Proposta Aceita", url: "https://hook.us2.make.com/2dad4pjofaloeejveumf5ku3ax9q5aj7", color: "#06b6d4" },
+  capi_meta: { name: "CAPI Meta", url: "https://hook.us2.make.com/43l0flcxsbnywco85spsmn37yxuunyw7", color: "#3b82f6" },
+  google_offline: { name: "Google Offline", url: "https://hook.us2.make.com/99tj7sj1t7qc9sk3y75i9ev79fv4kie9", color: "#ea4335" },
+  newsletter: { name: "Newsletter", url: "https://hook.us2.make.com/18xlh63euilo1xv6lr8b2mjqjm215k2p", color: "#14b8a6" },
+  ocr_conta_luz: { name: "OCR Conta de Luz", url: "https://hook.us2.make.com/4o8iy1q63hcte7v3iuphdathwa1lqhtl", color: "#f97316" },
 };
 
 const DS_IDS: Record<string, number> = {
@@ -32,6 +36,7 @@ const DS_IDS: Record<string, number> = {
   sol_metricas: 87422,
   sol_projetos: 87423,
   sol_campanhas: 87325,
+  sol_conversions: 87775,
 };
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
