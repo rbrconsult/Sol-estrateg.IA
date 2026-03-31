@@ -133,6 +133,10 @@ export default function Ajuda() {
             title="Simular Operação"
           />
         </TabsContent>
+
+        <TabsContent value="console" className="mt-4">
+          <SOLConsole />
+        </TabsContent>
       </Tabs>
     </div>
   );
