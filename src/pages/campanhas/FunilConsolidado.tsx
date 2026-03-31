@@ -147,7 +147,7 @@ export default function FunilConsolidado() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPICard label="Total Leads" value={formatNumber(rates.total)} icon={<Users className="h-4 w-4" />} />
+        <KPICard label="Leads Recebidos" value={formatNumber(rates.total)} icon={<Users className="h-4 w-4" />} />
         <KPICard label="Taxa Qualif." value={formatPct(rates.taxaQual)} icon={<Target className="h-4 w-4" />} />
         <KPICard label="Taxa Fecham." value={formatPct(rates.taxaFech)} icon={<TrendingUp className="h-4 w-4" />} />
         <KPICard label="Pipeline Valor" value={formatCurrency(rates.pipelineValor)} icon={<DollarSign className="h-4 w-4" />} />
