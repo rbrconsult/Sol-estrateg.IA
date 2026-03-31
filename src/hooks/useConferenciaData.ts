@@ -50,7 +50,7 @@ export interface TabelaLead {
   respondeu?: boolean;
   historico: { data: string; tipo: string; msg: string }[];
 }
-export interface SLAMock {
+export interface SLAMetricsData {
   primeiroAtendimento: { media: number; pctDentro24h: number; total: number };
   porEtapa: { etapa: string; slaDias: number; mediaDias: number; status: 'ok' | 'warning' | 'overdue' }[];
   robos: { tempoResposta: string; leadsAguardando: number; taxaResposta: number };
