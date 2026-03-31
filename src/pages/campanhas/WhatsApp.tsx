@@ -32,7 +32,7 @@ export default function WhatsAppPage() {
   const { periodo, setPeriodo, range } = usePeriodo();
   const franquiaId = useFranquiaId();
   const { data: metricas, isLoading: l1 } = useSolMetricasSync(30);
-  const { data: leads, isLoading: l2 } = useSolLeadsSyncHook();
+  const { data: leads, isLoading: l2 } = useSolLeadsSync();
 
   const isLoading = l1 || l2;
 
