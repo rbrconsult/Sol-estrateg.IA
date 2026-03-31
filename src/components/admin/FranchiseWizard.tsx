@@ -352,7 +352,7 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
                         <Input value={ds.name} onChange={e => updateDataStore(i, 'name', e.target.value)} placeholder="Ex: Comercial" className="h-8" />
                       </TableCell>
                       <TableCell>
-                        <Input value={ds.datastoreId} onChange={e => updateDataStore(i, 'datastoreId', e.target.value)} placeholder="Ex: 64798" className="h-8" />
+                        <Input value={ds.datastoreId} onChange={e => updateDataStore(i, 'datastoreId', e.target.value)} <Input value={ds.datastoreId} onChange={e => updateDataStore(i, 'datastoreId', e.target.value)} placeholder="Ex: 87418" className="h-8" /> className="h-8" />
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeDataStore(i)} disabled={dataStores.length === 1}>

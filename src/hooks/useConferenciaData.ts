@@ -158,7 +158,7 @@ function getStageAnchorDate(r: MakeRecord, stage: string): Date | null {
 
 /** Map Make status → Sol Pipeline stage */
 function getSolStageFromMake(r: MakeRecord): string {
-  // Prioritize etapa_sm from CRM DS 84404 if available
+  // Prioritize etapa_sm from CRM if available
   const etapaSm = (r.etapaSm || '').toUpperCase();
   if (etapaSm) {
     if (etapaSm.includes('CONTRATO') || etapaSm.includes('ASSINADO') || etapaSm.includes('COBRANÇA') || etapaSm.includes('GANHO')) return 'Fechado';

@@ -151,7 +151,7 @@ function rowToMakeRecord(r: any): MakeRecord {
     qualificadoPor: r.qualificado_por || undefined,
     aguardandoContaLuz: r.aguardando_conta_luz ?? undefined,
     transferidoComercial: r.transferido_comercial ?? undefined,
-    dsSource: r.ds_source || 'ds_thread',
+    dsSource: r.ds_source || 'sol_leads',
   };
 }
 
