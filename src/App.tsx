@@ -62,6 +62,9 @@ import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
 import TimeComercialPage from "./pages/TimeComercialPage";
 import SolAgent from "./pages/sol/SolAgent";
 import SolInsights from "./pages/sol/SolInsights";
+import SolConfigPage from "./pages/admin/SolConfigPage";
+import SolEquipePage from "./pages/admin/SolEquipePage";
+import SolFunisPage from "./pages/admin/SolFunisPage";
 const queryClient = new QueryClient();
 
 const App = () => (
