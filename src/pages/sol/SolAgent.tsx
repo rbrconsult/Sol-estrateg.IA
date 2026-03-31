@@ -62,7 +62,7 @@ export default function SolAgent() {
   const kpis = useMemo(() => {
     const all = leads || [];
     const today = new Date().toISOString().split("T")[0];
-    const todayLeads = all.filter(l => l.data_entrada?.startsWith(today));
+    const todayLeads = all.filter(l => l.ts_cadastro?.startsWith(today));
     const qualificados = all.filter(l => (l.status || "").toUpperCase() === "QUALIFICADO");
     const taxa = all.length > 0 ? ((qualificados.length / all.length) * 100).toFixed(0) : "0";
     const totalMsgs = all.reduce((acc, l) => acc + (l.total_mensagens_ia || 0), 0);
