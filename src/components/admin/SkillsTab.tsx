@@ -55,7 +55,7 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'fetch-make-comercial',
-    description: 'Busca dados do Data Store Comercial (DS 84404) com filtro por responsáveis da org.',
+    description: 'Busca dados do Data Store sol_qualificacao (DS 87715) com filtro por responsáveis da org.',
     category: 'data',
     status: 'active',
     dependencies: ['MAKE_API_KEY', 'MAKE_COMERCIAL_DATASTORE_ID', 'organization_configs', 'time_comercial'],
