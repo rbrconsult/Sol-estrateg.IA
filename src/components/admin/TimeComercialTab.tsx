@@ -259,7 +259,7 @@ export function TimeComercialTab() {
                     <Badge variant="outline">{getFranquiaLabel(m.franquia_id)}</Badge>
                   </TableCell>
                 )}
-                {!isSuperAdmin && <TableCell>{m.telefone || "—"}</TableCell>}
+                {!isSuperAdmin && <TableCell>{m.sm_id || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs">{m.sm_id || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs max-w-[120px] truncate">{m.krolik_id || "—"}</TableCell>}
                 {isSuperAdmin && (
