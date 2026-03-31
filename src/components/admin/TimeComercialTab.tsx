@@ -104,21 +104,22 @@ export function TimeComercialTab() {
     const payload: any = {
       nome: form.nome,
       cargo: form.cargo || null,
-      telefone: form.telefone || null,
-      email: form.email || null,
       franquia_id: form.franquia_id,
       ativo: form.ativo,
-      krolic: form.krolic,
+      krolik_ativo: form.krolic,
       sm_id: form.sm_id ? parseInt(form.sm_id) : null,
       krolik_id: form.krolik_id || null,
       krolik_setor_id: form.krolik_setor_id || null,
+      updated_by: 'lovable',
+      updated_at: new Date().toISOString(),
     };
 
     let error;
     if (editingId) {
-      ({ error } = await supabase.from("time_comercial" as any).update(payload).eq("id", editingId));
+      ({ error } = await supabase.from("sol_equipe_sync").update(payload).eq("key", editingId));
     } else {
-      ({ error } = await supabase.from("time_comercial" as any).insert(payload));
+      const key = `${form.franquia_id}_${form.nome.replace(/\s/g, '_')}`;
+      ({ error } = await supabase.from("sol_equipe_sync").insert({ ...payload, key } as any));
     }
 
     if (error) {
