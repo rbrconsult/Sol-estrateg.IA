@@ -94,10 +94,10 @@ export default function SolAgent() {
     }));
   }, [metricas]);
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (tel: string) => {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(telefone) ? next.delete(telefone) : next.add(telefone);
+      next.has(tel) ? next.delete(tel) : next.add(tel);
       return next;
     });
   };
