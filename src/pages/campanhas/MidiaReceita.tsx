@@ -72,17 +72,15 @@ export default function CampanhasMidiaReceita() {
 
     const leadsArr = leads || [];
     return [...invMap.values()].map(c => {
-      const matchingLeads = leadsArr.filter(l => l.campanha === c.campanha);
+      const matchingLeads = leadsArr.filter(l => l.canal_origem === c.campanha);
       const isFechado = (l: any) =>
-        l.etapa_sm?.toUpperCase()?.includes('CONTRATO') ||
-        l.status_proposta?.toUpperCase() === 'GANHO' ||
-        l.etapa_sm?.toUpperCase() === 'OPERACIONAL';
-      const isPipeline = (l: any) => !isFechado(l) && l.valor_proposta && l.valor_proposta > 0;
+        l.status?.toUpperCase() === 'GANHO';
+      const isPipeline = (l: any) => !isFechado(l) && l.valor_conta && parseFloat(l.valor_conta) > 0;
 
       const vendas = matchingLeads.filter(isFechado).length;
-      const receita = matchingLeads.filter(isFechado).reduce((s, l) => s + (Number(l.valor_proposta) || 0), 0);
-      const pipelineAtivo = matchingLeads.filter(isPipeline).reduce((s, l) => s + (Number(l.valor_proposta) || 0), 0);
-      const oportunidades = matchingLeads.filter(l => l.valor_proposta && l.valor_proposta > 0).length;
+      const receita = matchingLeads.filter(isFechado).reduce((s: number, l: any) => s + (parseFloat(l.valor_conta) || 0), 0);
+      const pipelineAtivo = matchingLeads.filter(isPipeline).reduce((s: number, l: any) => s + (parseFloat(l.valor_conta) || 0), 0);
+      const oportunidades = matchingLeads.filter((l: any) => l.valor_conta && parseFloat(l.valor_conta) > 0).length;
       const ticketMedio = vendas > 0 ? receita / vendas : 0;
       const cac = vendas > 0 ? c.investimento / vendas : 0;
       const roas = c.investimento > 0 ? receita / c.investimento : 0;

@@ -87,12 +87,12 @@ export default function CampanhasAdsPerformance() {
       m.count += 1;
     }
 
-    // Cross with leads_consolidados for qualificados
+    // Cross with sol_leads_sync for qualificados
     const leadsArr = leads || [];
     return [...map.values()].map(c => {
       const qualificados = leadsArr.filter(l =>
-        l.campanha === c.campanha &&
-        (l.status?.toUpperCase() === 'QUALIFICADO' || l.etapa?.toUpperCase()?.includes('QUALIFICADO'))
+        l.canal_origem === c.campanha &&
+        (l.status?.toUpperCase() === 'QUALIFICADO' || l.etapa_funil?.toUpperCase()?.includes('QUALIFICADO'))
       ).length;
       const cpc = c.cliques > 0 ? c.investimento / c.cliques : 0;
       const cpl = c.leads > 0 ? c.investimento / c.leads : 0;
