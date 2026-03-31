@@ -23,7 +23,7 @@ const VARIABLE_CATEGORIES: VariableCategory[] = [
     label: "Pré-venda / Leads",
     icon: "👥",
     variables: [
-      { key: "leads_gerados", label: "Leads Gerados", description: { key: "leads_gerados", label: "Leads Gerados", description: "Total de leads no sol_leads", example: "142" },, example: "142" },
+      { key: "leads_gerados", label: "Leads Gerados", description: "Total de leads no sol_leads", example: "142" },
       { key: "leads_qualificados", label: "Leads Qualificados", description: "Leads com status QUALIFICADO", example: "38" },
       { key: "taxa_qualificacao", label: "Taxa Qualificação", description: "% de qualificação sobre total", example: "26.8%" },
       { key: "taxa_resposta", label: "Taxa de Resposta", description: "% que responderam mensagens", example: "45.2%" },
