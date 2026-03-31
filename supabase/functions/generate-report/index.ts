@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
       orgSlug = orgData?.slug || "";
       if (orgSlug) {
         const { data: team } = await supabase
-          .from("time_comercial")
+          .from("sol_equipe_sync")
           .select("nome, sm_id")
           .eq("franquia_id", orgSlug)
           .eq("ativo", true);

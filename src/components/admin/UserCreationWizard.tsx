@@ -128,10 +128,8 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
         await supabase.from('user_module_permissions').insert(rows as any);
       }
 
-      // 3. Add to time_comercial if Krolic is active
+      // 3. Add to sol_equipe_sync if Krolic is active
       if (krolicAtivo && fullName) {
-        const orgSlug = selectedOrg ? organizations.find(o => o.id === organizationId) : null;
-        // Get org slug
         const { data: orgData } = await supabase
           .from('organizations')
           .select('slug')
@@ -139,15 +137,16 @@ export function UserCreationWizard({ open, onOpenChange, onSuccess, organization
           .single();
 
         if (orgData?.slug) {
-          await supabase.from('time_comercial').insert({
+          const key = `${orgData.slug}_${smId || fullName.replace(/\s/g, '_')}`;
+          await supabase.from('sol_equipe_sync').insert({
+            key,
             nome: fullName,
             franquia_id: orgData.slug,
             cargo,
-            telefone: phone.replace(/\D/g, ''),
-            email,
             ativo: true,
-            krolic: krolicAtivo,
+            krolik_ativo: krolicAtivo,
             sm_id: smId ? parseInt(smId) : null,
+            updated_by: 'lovable',
           } as any);
         }
       }
