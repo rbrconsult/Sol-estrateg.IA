@@ -746,7 +746,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       kpiCards, pipelineStages, origemLeads, fupFrio: fupFrioData,
       desqualMotivos, mensagens, sla: slaData, heatmap: heatmapData,
       taxaPorTentativa, solHoje, alertas, temperaturaPorEtapa: tempEtapa,
-      tabelaLeads, slaMock: slaMockData, robotInsights: robotInsightsData,
+      tabelaLeads, slaMetrics: slaMetricsData, robotInsights: robotInsightsData,
       scorePorOrigem, monthlyEvolution,
     };
   }, [allRecords]);

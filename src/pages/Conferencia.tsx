@@ -586,7 +586,7 @@ export default function Conferencia() {
 
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
-        <RobotInsightsMock data={robotInsightsData} />
+        <RobotInsights data={robotInsightsData} />
 
         {/* ══════ ROW 10 — Score por Origem ══════ */}
         <section className="mt-4">

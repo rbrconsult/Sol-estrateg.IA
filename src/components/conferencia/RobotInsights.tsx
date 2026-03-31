@@ -18,7 +18,7 @@ interface RobotData {
   alertasUrgentes: { tipo: "danger" | "warning" | "success" | "info"; titulo: string; desc: string }[];
 }
 
-export function RobotInsightsMock({ data }: { data: RobotData }) {
+export function RobotInsights({ data }: { data: RobotData }) {
   const maxFunil = data.funilMensagens[0]?.valor || 1;
 
   return (

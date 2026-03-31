@@ -471,9 +471,8 @@ export default function Leads() {
           <Select value={filterDsSource} onValueChange={setFilterDsSource}>
             <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Origem" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="todos">v1 + v2</SelectItem>
-              <SelectItem value="ds_thread">v1 (Thread)</SelectItem>
-              <SelectItem value="sol_leads">v2 (SOL)</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="sol_leads">SOL Leads</SelectItem>
             </SelectContent>
           </Select>
         </section>
