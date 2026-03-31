@@ -166,7 +166,7 @@ export default function Conferencia() {
     if (mins < 60) return `${Math.round(mins)}min`;
     if (mins < 1440) return `${(mins / 60).toFixed(1)}h`;
     return `${(mins / 1440).toFixed(1)}d`;
-  }, [slaMockData.primeiroAtendimento.media]);
+  }, [slaMetrics.primeiroAtendimento.media]);
 
   const maxPipeline = Math.max(...pipelineStages.map((s) => s.valor), 1);
   const maxShare = Math.max(...origemLeads.map((o) => o.share), 1);
