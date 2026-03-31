@@ -161,7 +161,7 @@ export default function Conferencia() {
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
   const primeiroAtendimentoLabel = useMemo(() => {
-    const mins = slaMockData.primeiroAtendimento.media;
+    const mins = slaMetrics.primeiroAtendimento.media;
     if (!mins || mins <= 0) return "—";
     if (mins < 60) return `${Math.round(mins)}min`;
     if (mins < 1440) return `${(mins / 60).toFixed(1)}h`;
