@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useOrgFilter } from '@/contexts/OrgFilterContext';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 
 export interface ComercialRecord {
   projetoId: string;
@@ -17,40 +17,36 @@ export interface ComercialRecord {
   potenciaSistema: number;
   tsProposta: string;
   statusProposta: string;
-  /** Status mapeado: 'Aberto' | 'Ganho' | 'Perdido' */
   status: 'Aberto' | 'Ganho' | 'Perdido';
   tsSync: string;
 }
 
-/** Mapeia status_proposta numérico para status legível */
-export function mapStatusProposta(statusProposta: string, _faseSM?: string): 'Aberto' | 'Ganho' | 'Perdido' {
-  if (statusProposta === '5') return 'Ganho';
-  if (statusProposta === '3' || statusProposta === '4') return 'Perdido';
+/** Mapeia status para status legível */
+export function mapStatusProposta(status: string): 'Aberto' | 'Ganho' | 'Perdido' {
+  const s = (status || '').toUpperCase();
+  if (s === 'GANHO') return 'Ganho';
+  if (s === 'PERDIDO' || s === 'DESQUALIFICADO') return 'Perdido';
   return 'Aberto';
 }
 
-/** Read comercial data from leads_consolidados (local DB) instead of Make API */
-async function fetchComercialFromDB(orgId?: string | null): Promise<ComercialRecord[]> {
+/** Read comercial data from sol_leads_sync (v2) — leads with closer assigned */
+async function fetchComercialFromSync(franquiaId: string): Promise<ComercialRecord[]> {
   const allRows: any[] = [];
   let from = 0;
   const pageSize = 1000;
   let hasMore = true;
 
   while (hasMore) {
-    let query = supabase
-      .from('leads_consolidados')
+    const { data, error } = await supabase
+      .from('sol_leads_sync')
       .select('*')
-      .not('etapa_sm', 'is', null)
-      .range(from, from + pageSize - 1)
-      .order('data_proposta', { ascending: false });
+      .eq('franquia_id', franquiaId)
+      .not('closer_nome', 'is', null)
+      .order('ts_cadastro', { ascending: false })
+      .range(from, from + pageSize - 1);
 
-    if (orgId) {
-      query = query.eq('organization_id', orgId);
-    }
-
-    const { data, error } = await query;
     if (error) {
-      console.error('Error fetching comercial from leads_consolidados:', error);
+      console.error('Error fetching comercial from sol_leads_sync:', error);
       throw new Error(error.message);
     }
 
@@ -64,39 +60,34 @@ async function fetchComercialFromDB(orgId?: string | null): Promise<ComercialRec
   }
 
   return allRows.map((r) => {
-    const statusProposta = String(r.status_proposta || '');
-    const faseSM = String(r.etapa_sm || '');
+    const status = (r.status || '').toUpperCase();
     return {
       projetoId: String(r.project_id || ''),
       telefone: String(r.telefone || ''),
-      etapaSM: String(r.etapa_sm || ''),
-      faseSM,
-      responsavel: String(r.responsavel || r.closer_atribuido || ''),
-      responsavelId: '',
-      representante: String(r.representante || ''),
+      etapaSM: String(r.etapa_funil || ''),
+      faseSM: String(r.etapa_funil || ''),
+      responsavel: String(r.closer_nome || ''),
+      responsavelId: String(r.closer_sm_id || ''),
+      representante: String(r.closer_nome || ''),
       etiquetas: '',
       nomeProposta: String(r.nome || ''),
-      valorProposta: Number(r.valor_proposta) || 0,
-      potenciaSistema: r.potencia_sistema ? Number(r.potencia_sistema) : 0,
-      tsProposta: String(r.data_proposta || ''),
-      statusProposta,
-      status: mapStatusProposta(statusProposta, faseSM),
-      tsSync: String(r.synced_at || r.updated_at || ''),
+      valorProposta: parseFloat(r.valor_conta || '0') || 0,
+      potenciaSistema: 0,
+      tsProposta: String(r.ts_qualificado || ''),
+      statusProposta: status,
+      status: mapStatusProposta(status),
+      tsSync: String(r.synced_at || ''),
     };
   });
 }
 
 export function useMakeComercialData() {
   const { user } = useAuth();
-  let selectedOrgId: string | null = null;
-  try {
-    const orgFilter = useOrgFilter();
-    selectedOrgId = orgFilter.selectedOrgId;
-  } catch {}
+  const franquiaId = useFranquiaId();
 
   return useQuery({
-    queryKey: ['make-comercial-data', selectedOrgId],
-    queryFn: () => fetchComercialFromDB(selectedOrgId),
+    queryKey: ['make-comercial-data', franquiaId],
+    queryFn: () => fetchComercialFromSync(franquiaId),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,

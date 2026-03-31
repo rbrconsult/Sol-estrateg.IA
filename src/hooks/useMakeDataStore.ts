@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCallback } from 'react';
-import { useOrgFilter } from '@/contexts/OrgFilterContext';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 
 export interface MakeInteraction {
   tipo: 'enviada' | 'recebida';
@@ -44,7 +44,6 @@ export interface MakeRecord {
   dataFechamento?: string;
   sentimentoResposta?: string;
   interesseDetectado?: string;
-  // v2 fields
   acrescimoCarga?: string;
   prazoDecisao?: string;
   formaPagamento?: string;
@@ -73,69 +72,36 @@ export function normalizePhone(phone: string): string {
   return digits;
 }
 
-/** Map a leads_consolidados row to MakeRecord */
+/** Map a sol_leads_sync row to MakeRecord */
 function rowToMakeRecord(r: any): MakeRecord {
-  const fupCount = r.followup_count ?? 0;
-  const robo = r.robo || (fupCount >= 1 ? 'fup_frio' : 'sol');
-
-  let statusResposta: string;
-  if (r.respondeu) {
-    statusResposta = 'respondeu';
-  } else if (r.codigo_status === 'NAO_RESPONDEU') {
-    statusResposta = 'ignorou';
-  } else {
-    statusResposta = 'aguardando';
-  }
-
-  // Build minimal historico from DB fields
-  const historico: MakeInteraction[] = [];
-  if (r.data_entrada) {
-    historico.push({ tipo: 'enviada', mensagem: 'Mensagem inicial enviada', data: r.data_entrada });
-  }
-  if (fupCount > 0 && r.last_followup_date) {
-    for (let i = 0; i < Math.min(fupCount, 3); i++) {
-      historico.push({ tipo: 'enviada', mensagem: `FUP Frio #${i + 1}`, data: r.last_followup_date });
-    }
-  }
-  if (r.respondeu && r.data_qualificacao) {
-    historico.push({ tipo: 'recebida', mensagem: 'Resposta do lead', data: r.data_qualificacao });
-  }
+  const fupCount = r.fup_followup_count ?? 0;
 
   return {
     telefone: r.telefone || '',
-    robo,
+    robo: 'sol',
     ultima_mensagem: '',
-    data_envio: r.data_entrada || r.last_followup_date || r.data_qualificacao || r.data_proposta || r.data_fechamento || '',
-    dataEntrada: r.data_entrada || undefined,
-    status_resposta: statusResposta as any,
-    data_resposta: r.respondeu ? (r.data_qualificacao || undefined) : undefined,
-    historico,
+    data_envio: r.ts_cadastro || r.ts_ultima_interacao || '',
+    dataEntrada: r.ts_cadastro || undefined,
+    status_resposta: r.transferido_comercial ? 'respondeu' : 'aguardando',
+    data_resposta: r.ts_qualificado || undefined,
+    historico: [],
     makeStatus: r.status || undefined,
     makeTemperatura: r.temperatura || undefined,
-    makeScore: r.score ? String(r.score) : undefined,
+    makeScore: r.score || undefined,
     nome: r.nome || '',
     cidade: r.cidade || '',
     valorConta: r.valor_conta || '',
-    imovel: r.imovel || '',
+    imovel: r.tipo_imovel || '',
     email: r.email || '',
     projectId: r.project_id || '',
     followupCount: fupCount,
-    lastFollowupDate: r.last_followup_date || '',
-    codigoStatus: r.codigo_status || '',
-    etapaFunil: r.etapa || undefined,
-    closerAtribuido: r.closer_atribuido || r.responsavel || undefined,
+    lastFollowupDate: r.ts_ultimo_fup || '',
+    codigoStatus: '',
+    etapaFunil: r.etapa_funil || undefined,
+    closerAtribuido: r.closer_nome || undefined,
     canalOrigem: r.canal_origem || undefined,
-    franquiaId: undefined,
-    campanhaNome: r.campanha || undefined,
-    etapaSm: r.etapa_sm || undefined,
-    statusProposta: r.status_proposta || undefined,
-    potenciaSistema: r.potencia_sistema ? Number(r.potencia_sistema) : undefined,
-    representante: r.representante || undefined,
-    dataProposta: r.data_proposta || undefined,
-    dataFechamento: r.data_fechamento || undefined,
-    sentimentoResposta: r.sentimento_resposta || undefined,
-    interesseDetectado: r.interesse_detectado || undefined,
-    // v2 fields
+    franquiaId: r.franquia_id || undefined,
+    campanhaNome: undefined,
     acrescimoCarga: r.acrescimo_carga || undefined,
     prazoDecisao: r.prazo_decisao || undefined,
     formaPagamento: r.forma_pagamento || undefined,
@@ -151,32 +117,27 @@ function rowToMakeRecord(r: any): MakeRecord {
     qualificadoPor: r.qualificado_por || undefined,
     aguardandoContaLuz: r.aguardando_conta_luz ?? undefined,
     transferidoComercial: r.transferido_comercial ?? undefined,
-    dsSource: r.ds_source || 'sol_leads',
+    dsSource: 'sol_leads',
   };
 }
 
-/** Fetch leads from leads_consolidados table, optionally filtered by org */
-async function fetchLeadsFromDB(orgId?: string | null): Promise<MakeRecord[]> {
+/** Fetch leads from sol_leads_sync table */
+async function fetchLeadsFromDB(franquiaId: string): Promise<MakeRecord[]> {
   const allRows: any[] = [];
   let from = 0;
   const pageSize = 1000;
   let hasMore = true;
 
   while (hasMore) {
-    let query = supabase
-      .from('leads_consolidados')
+    const { data, error } = await supabase
+      .from('sol_leads_sync')
       .select('*')
-      .range(from, from + pageSize - 1)
-      .order('data_entrada', { ascending: false });
-
-    if (orgId) {
-      query = query.eq('organization_id', orgId);
-    }
-
-    const { data, error } = await query;
+      .eq('franquia_id', franquiaId)
+      .order('ts_cadastro', { ascending: false })
+      .range(from, from + pageSize - 1);
 
     if (error) {
-      console.error('Error fetching leads_consolidados:', error);
+      console.error('Error fetching sol_leads_sync:', error);
       throw new Error(error.message);
     }
 
@@ -206,16 +167,11 @@ async function triggerCronSync(): Promise<void> {
 export function useMakeDataStore() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  let selectedOrgId: string | null = null;
-  try {
-    const orgFilter = useOrgFilter();
-    selectedOrgId = orgFilter.selectedOrgId;
-  } catch {}
+  const franquiaId = useFranquiaId();
 
   const query = useQuery({
-    queryKey: ['make-data-store', selectedOrgId],
-    queryFn: () => fetchLeadsFromDB(selectedOrgId),
+    queryKey: ['make-data-store', franquiaId],
+    queryFn: () => fetchLeadsFromDB(franquiaId),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchInterval: 1000 * 60 * 5,
