@@ -144,34 +144,32 @@ export function PessoasTab({
 
     // First, process all SOL users
     for (const u of users) {
-      // Match by email OR by name (time_comercial often has no email)
+      // Match by email OR by name (sol_equipe_sync may have no email)
       const teamMatch = teamMembers.find(tm => {
-        if (tm.email && u.email && tm.email.toLowerCase() === u.email.toLowerCase()) return true;
         if (u.full_name && tm.nome && u.full_name.toLowerCase().includes(tm.nome.toLowerCase().split(' ')[0])) {
-          // fuzzy: first name match
           return tm.nome.toLowerCase() === u.full_name.toLowerCase() ||
                  u.full_name.toLowerCase().includes(tm.nome.toLowerCase()) ||
                  tm.nome.toLowerCase().includes(u.full_name.toLowerCase());
         }
         return false;
       });
-      if (teamMatch) matchedTeamEmails.add(teamMatch.id); // use ID for matching instead
+      if (teamMatch) matchedTeamEmails.add(teamMatch.key);
 
       people.push({
         id: u.id,
         name: u.full_name || u.email,
         email: u.email,
-        phone: u.phone || teamMatch?.telefone || null,
+        phone: u.phone || null,
         role: u.role,
         cargo: teamMatch?.cargo || null,
         franquia_id: teamMatch?.franquia_id || null,
         hasSOLAccess: true,
-        hasKrolic: teamMatch?.krolic ?? false,
+        hasKrolic: teamMatch?.krolik_ativo ?? false,
         hasSM: !!teamMatch?.sm_id,
         smId: teamMatch?.sm_id || null,
         isActive: teamMatch?.ativo ?? true,
         userId: u.id,
-        teamMemberId: teamMatch?.id || null,
+        teamMemberId: teamMatch?.key || null,
         createdAt: u.created_at,
       });
     }
