@@ -124,11 +124,11 @@ export function PessoasTab({
   async function fetchTeamMembers() {
     setLoading(true);
     const { data, error } = await supabase
-      .from('time_comercial' as any)
+      .from('sol_equipe_sync')
       .select('*')
       .order('nome');
     if (error) console.error(error);
-    setTeamMembers((data as any as TeamMember[]) || []);
+    setTeamMembers((data || []).map((d: any) => ({ ...d, id: d.key })) as TeamMember[]);
     setLoading(false);
   }
 
