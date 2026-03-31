@@ -23,19 +23,15 @@ const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid h
 
 function useLeadsForReceita() {
   const { user } = useAuth();
-  let selectedOrgId: string | null = null;
-  try { const o = useOrgFilter(); selectedOrgId = o.selectedOrgId; } catch {}
+  const franquiaId = useFranquiaId();
 
   return useQuery({
-    queryKey: ['leads-consolidados-receita', selectedOrgId],
+    queryKey: ['sol-leads-receita', franquiaId],
     queryFn: async () => {
-      let query = supabase
-        .from('leads_consolidados')
-        .select('campanha, canal_origem, status, etapa, etapa_sm, status_proposta, valor_proposta');
-      if (selectedOrgId) {
-        query = query.eq('organization_id', selectedOrgId);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('sol_leads_sync')
+        .select('canal_origem, status, temperatura, closer_nome, etapa_funil, valor_conta')
+        .eq('franquia_id', franquiaId);
       if (error) throw error;
       return data || [];
     },

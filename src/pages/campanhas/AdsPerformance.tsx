@@ -22,21 +22,17 @@ import { formatCurrencyAbbrev, formatNumber, formatPercent } from '@/lib/formatt
 const COLORS = ['hsl(210,80%,55%)', 'hsl(35,90%,55%)', 'hsl(140,60%,45%)', 'hsl(0,70%,55%)', 'hsl(270,60%,55%)'];
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
-function useLeadsConsolidados() {
+function useLeadsSolSync() {
   const { user } = useAuth();
-  let selectedOrgId: string | null = null;
-  try { const o = useOrgFilter(); selectedOrgId = o.selectedOrgId; } catch {}
+  const franquiaId = useFranquiaId();
 
   return useQuery({
-    queryKey: ['leads-consolidados-campanhas', selectedOrgId],
+    queryKey: ['sol-leads-campanhas', franquiaId],
     queryFn: async () => {
-      let query = supabase
-        .from('leads_consolidados')
-        .select('campanha, canal_origem, status, etapa, valor_proposta, etapa_sm, status_proposta');
-      if (selectedOrgId) {
-        query = query.eq('organization_id', selectedOrgId);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('sol_leads_sync')
+        .select('canal_origem, status, temperatura, score, closer_nome, etapa_funil, valor_conta')
+        .eq('franquia_id', franquiaId);
       if (error) throw error;
       return data || [];
     },
