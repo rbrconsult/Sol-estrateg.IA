@@ -27,16 +27,15 @@ interface UserWithRole {
 
 interface TeamMember {
   id: string;
+  key: string;
   franquia_id: string;
   nome: string;
   cargo: string | null;
-  telefone: string | null;
-  email: string | null;
   ativo: boolean;
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
-  krolic: boolean;
+  krolik_ativo: boolean;
 }
 
 interface UnifiedPerson {
