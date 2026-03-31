@@ -502,7 +502,7 @@ export default function PainelComercial() {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">Qualificados</span>
+                            <span className="text-muted-foreground">SQL</span>
                             <span className="text-foreground font-medium">
                               {summary.qualificados} ({summary.total ? Math.round((summary.qualificados / summary.total) * 100) : 0}%)
                             </span>

@@ -149,8 +149,8 @@ export default function PreVenda() {
 
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="p-3"><p className="text-xs text-muted-foreground">Total Leads</p><p className="text-xl font-bold">{kpis.total}</p></Card>
-        <Card className="p-3"><p className="text-xs text-muted-foreground">Em Qualificação</p><p className="text-xl font-bold">{kpis.emQual}</p></Card>
+        <Card className="p-3"><p className="text-xs text-muted-foreground">Leads Recebidos</p><p className="text-xl font-bold">{kpis.total}</p></Card>
+        <Card className="p-3"><p className="text-xs text-muted-foreground">MQL</p><p className="text-xl font-bold">{kpis.emQual}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">Follow Up</p><p className="text-xl font-bold">{kpis.fup}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">Score Médio</p><p className="text-xl font-bold">{kpis.scoreMedio}</p></Card>
       </div>

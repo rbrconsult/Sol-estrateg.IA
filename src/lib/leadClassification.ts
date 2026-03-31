@@ -3,9 +3,30 @@
  * A2: getLeadStage — single source of truth for lead classification.
  * C3: getLeadOrigin — always use canal_origem.
  * M2: safeAvgScore — NaN-safe score calculation.
+ * L1: STATUS_LABELS — official label map for sol_leads_sync statuses.
  */
 
 import type { MakeRecord } from '@/hooks/useMakeDataStore';
+
+/**
+ * L1 — Official status → label map.
+ * Used across all pages that display funnel stages.
+ */
+export const STATUS_LABELS: Record<string, string> = {
+  TRAFEGO_PAGO: 'Leads Recebidos',
+  EM_QUALIFICACAO: 'MQL',
+  FOLLOW_UP: 'Follow Up',
+  QUALIFICADO: 'SQL',
+  GANHO: 'Ganho',
+  PERDIDO: 'Perdido',
+  DESQUALIFICADO: 'Desqualificado',
+  CONTRATO: 'Contrato',
+};
+
+/** Get the display label for a sol_leads_sync status */
+export function getStatusLabel(status: string): string {
+  return STATUS_LABELS[status] || status.replace(/_/g, ' ');
+}
 
 /**
  * A2 — Unified lead stage classification.

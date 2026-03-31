@@ -31,7 +31,7 @@ function FunnelBar({ label, value, maxValue, prevValue, color }: { label: string
   const convRate = prevValue && prevValue > 0 ? ((value / prevValue) * 100).toFixed(1) : null;
   return (
     <div className="flex items-center gap-3">
-      <div className="w-32 text-xs font-medium text-right">{label.replace(/_/g, ' ')}</div>
+      <div className="w-32 text-xs font-medium text-right">{getStatusLabel(label)}</div>
       <div className="flex-1 relative">
         <div className="h-10 rounded" style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: color, transition: 'width 0.6s ease' }}>
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-white">

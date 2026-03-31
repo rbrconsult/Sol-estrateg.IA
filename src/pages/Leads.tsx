@@ -479,7 +479,7 @@ export default function Leads() {
 
         {/* ══════ KPIs ══════ */}
         <section className="grid grid-cols-2 lg:grid-cols-7 gap-3 mt-4">
-          <KPICard label="Total Leads" value={kpis.total} />
+          <KPICard label="Leads Recebidos" value={kpis.total} />
           <KPICard label="Quentes" value={kpis.quentes} />
           <KPICard label="Mornos" value={kpis.mornos} />
           <KPICard label="Frios" value={kpis.frios} />
