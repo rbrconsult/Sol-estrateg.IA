@@ -186,22 +186,28 @@ const FREQ_1H = new Set([87419, 87420, 87421]);      // config, equipe, funis
 
 // ── Fetch from Make API ──
 async function fetchDS(dsId: number, token: string): Promise<{ key: string; data: Record<string, unknown> }[]> {
-  const url = `${MAKE_BASE}/${dsId}/data?teamId=${TEAM_ID}&pg[limit]=500`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Make API ${dsId}: ${res.status} — ${body}`);
+  const allRecords: { key: string; data: Record<string, unknown> }[] = [];
+  let offset = 0;
+  const limit = 100;
+
+  while (true) {
+    const url = `${MAKE_BASE}/${dsId}/data?teamId=${TEAM_ID}&pg[limit]=${limit}&pg[offset]=${offset}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Make API ${dsId}: ${res.status} — ${body}`);
+    }
+    const json = await res.json();
+    const records = json.records || json;
+    if (!Array.isArray(records) || records.length === 0) break;
+    allRecords.push(...records);
+    if (records.length < limit) break; // Last page
+    offset += limit;
   }
-  const json = await res.json();
-  // Make API returns { records: [...] } or directly an array
-  const records = json.records || json;
-  if (!Array.isArray(records)) {
-    console.warn(`DS ${dsId}: unexpected response shape`, typeof records);
-    return [];
-  }
-  return records;
+
+  return allRecords;
 }
 
 // ── Upsert to Supabase ──
