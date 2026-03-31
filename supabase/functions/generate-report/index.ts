@@ -237,9 +237,9 @@ Deno.serve(async (req) => {
       dsGoogleAdsId ? fetchMakeDS(dsGoogleAdsId, makeApiKey, makeTeamId) : Promise.resolve([]),
       dsProducaoId ? fetchMakeDS(dsProducaoId, makeApiKey, makeTeamId) : Promise.resolve([]),
       // Supabase tables
-      fetchSupabaseTable(supabase, "leads_consolidados",
-        "id, canal_origem, campanha, status, etapa, etapa_sm, status_proposta, valor_proposta, temperatura, score, responsavel, representante, data_entrada, data_qualificacao, data_agendamento, data_proposta, data_fechamento, closer_atribuido, respondeu",
-        orgFilter),
+      fetchSupabaseTable(supabase, "sol_leads_sync",
+        "telefone, nome, canal_origem, status, temperatura, score, closer_nome, etapa_funil, valor_conta, ts_cadastro, ts_qualificado, transferido_comercial",
+        orgSlug ? { franquia_id: orgSlug } : {}),
       fetchSupabaseTable(supabase, "campaign_metrics",
         "plataforma, campaign_name, campaign_id, data_referencia, spend, impressions, clicks, leads, ctr, cpc, cpl, roas, receita, conversions",
         orgFilter),
