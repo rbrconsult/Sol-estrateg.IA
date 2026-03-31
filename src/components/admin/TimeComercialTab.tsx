@@ -136,7 +136,7 @@ export function TimeComercialTab() {
 
   async function handleDelete() {
     if (!deleteId) return;
-    const { error } = await supabase.from("time_comercial" as any).delete().eq("id", deleteId);
+    const { error } = await supabase.from("sol_equipe_sync").delete().eq("key", deleteId);
     if (error) toast.error("Erro ao excluir");
     else {
       toast.success("Membro removido");
@@ -148,16 +148,16 @@ export function TimeComercialTab() {
   async function handleToggleAtivo(m: TeamMember) {
     const newAtivo = !m.ativo;
     const { error } = await supabase
-      .from("time_comercial" as any)
-      .update({ ativo: newAtivo })
-      .eq("id", m.id);
+      .from("sol_equipe_sync")
+      .update({ ativo: newAtivo, updated_by: 'lovable', updated_at: new Date().toISOString() })
+      .eq("key", m.key);
     if (error) {
       toast.error("Erro ao atualizar status");
       return;
     }
     toast.success(newAtivo ? "Ativado" : "Desativado");
     syncToMake({ ...m, ativo: newAtivo });
-    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, ativo: newAtivo } : x));
+    setMembers(prev => prev.map(x => x.key === m.key ? { ...x, ativo: newAtivo } : x));
   }
 
   async function syncToMake(member: any) {
