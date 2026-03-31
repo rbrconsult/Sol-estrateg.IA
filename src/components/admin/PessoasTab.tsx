@@ -407,11 +407,10 @@ export function PessoasTab({
   }
 
   function openPromote(person: UnifiedPerson) {
-    const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
     setPromoteTarget(person);
     setPromoteForm({
-      email: person.email || teamObj?.email || '',
-      telefone: person.phone || teamObj?.telefone || '',
+      email: person.email || '',
+      telefone: person.phone || '',
       role: 'closer',
     });
   }
