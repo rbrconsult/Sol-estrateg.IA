@@ -48,7 +48,7 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   // Data / Make
   {
     name: 'fetch-make-data',
-    description: 'Busca dados do Data Store thread_id (DS 64798) com filtro multi-tenant por org.',
+    description: 'Busca dados do Data Store sol_leads (DS 87418) com filtro multi-tenant por org.',
     category: 'data',
     status: 'active',
     dependencies: ['MAKE_API_KEY', 'MAKE_DATASTORE_ID', 'organization_configs', 'time_comercial'],
