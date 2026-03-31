@@ -193,7 +193,7 @@ export default function Leads() {
       if (filterStatus !== "todos" && r.makeStatus !== filterStatus) return false;
       if (filterCloser !== "todos" && normalizeCloser(r.closerAtribuido) !== filterCloser) return false;
       if (filterCanal !== "todos" && (r.canalOrigem || "").toUpperCase() !== filterCanal) return false;
-      if (filterDsSource !== "todos" && (r.dsSource || "ds_thread") !== filterDsSource) return false;
+      if (filterDsSource !== "todos" && (r.dsSource || "sol_leads") !== filterDsSource) return false;
       return true;
     });
   }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser, filterCanal, filterDsSource]);
