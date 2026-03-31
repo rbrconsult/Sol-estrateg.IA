@@ -61,14 +61,14 @@ export function TimeComercialTab() {
   async function fetchMembers() {
     setLoading(true);
     const { data, error } = await supabase
-      .from("time_comercial" as any)
+      .from("sol_equipe_sync")
       .select("*")
       .order("nome");
     if (error) {
-      toast.error("Erro ao carregar time comercial");
+      toast.error("Erro ao carregar equipe");
       console.error(error);
     }
-    setMembers((data as any as TeamMember[]) || []);
+    setMembers((data || []).map((d: any) => ({ ...d, id: d.key })) as TeamMember[]);
     setLoading(false);
   }
 
