@@ -57,6 +57,10 @@ export default function Ajuda() {
             <MessageSquare className="h-4 w-4" />
             Simular Operação
           </TabsTrigger>
+          <TabsTrigger value="console" className="gap-2">
+            <Terminal className="h-4 w-4" />
+            SOL Console
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="docs" className="mt-4 space-y-4">
