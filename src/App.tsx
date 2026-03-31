@@ -62,6 +62,9 @@ import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
 import TimeComercialPage from "./pages/TimeComercialPage";
 import SolAgent from "./pages/sol/SolAgent";
 import SolInsights from "./pages/sol/SolInsights";
+import SolConfigPage from "./pages/admin/SolConfigPage";
+import SolEquipePage from "./pages/admin/SolEquipePage";
+import SolFunisPage from "./pages/admin/SolFunisPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -145,6 +148,9 @@ const App = () => (
               <Route path="/time-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="time-comercial"><TimeComercialPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sol/agent" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><SolAgent /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sol/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><SolInsights /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/config" element={<ProtectedRoute><MainLayout><SolConfigPage /></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/equipe" element={<ProtectedRoute><MainLayout><SolEquipePage /></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><SolFunisPage /></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
