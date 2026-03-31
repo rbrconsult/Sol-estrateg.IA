@@ -249,19 +249,19 @@ export function PessoasTab({
     const payload: any = {
       nome: teamForm.nome,
       cargo: teamForm.cargo || null,
-      telefone: teamForm.telefone || null,
-      email: teamForm.email || null,
       franquia_id: teamForm.franquia_id,
       ativo: teamForm.ativo,
-      krolic: teamForm.krolic,
+      krolik_ativo: teamForm.krolic,
       sm_id: teamForm.sm_id ? parseInt(teamForm.sm_id) : null,
       krolik_id: teamForm.krolik_id || null,
       krolik_setor_id: teamForm.krolik_setor_id || null,
+      updated_by: 'lovable',
+      updated_at: new Date().toISOString(),
     };
 
     const { error } = editingTeamMember
-      ? await supabase.from('time_comercial' as any).update(payload).eq('id', editingTeamMember.id)
-      : await supabase.from('time_comercial' as any).insert(payload);
+      ? await supabase.from('sol_equipe_sync').update(payload).eq('key', editingTeamMember.key)
+      : await supabase.from('sol_equipe_sync').insert({ ...payload, key: `${teamForm.franquia_id}_${teamForm.nome.replace(/\s/g, '_')}` } as any);
 
     if (error) {
       toast.error('Erro ao salvar: ' + error.message);
