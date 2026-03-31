@@ -265,16 +265,16 @@ export function TimeComercialTab() {
                 {isSuperAdmin && (
                   <TableCell>
                     <Switch
-                      checked={m.krolic}
+                      checked={m.krolik_ativo}
                       onCheckedChange={async () => {
-                        const newVal = !m.krolic;
+                        const newVal = !m.krolik_ativo;
                         const { error } = await supabase
-                          .from("time_comercial" as any)
-                          .update({ krolic: newVal })
-                          .eq("id", m.id);
+                          .from("sol_equipe_sync")
+                          .update({ krolik_ativo: newVal, updated_by: 'lovable', updated_at: new Date().toISOString() })
+                          .eq("key", m.key);
                         if (error) { toast.error("Erro ao atualizar"); return; }
                         toast.success(newVal ? "Krolic ativado" : "Krolic desativado");
-                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, krolic: newVal } : x));
+                        setMembers(prev => prev.map(x => x.key === m.key ? { ...x, krolik_ativo: newVal } : x));
                       }}
                     />
                   </TableCell>
