@@ -48,14 +48,14 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   // Data / Make
   {
     name: 'fetch-make-data',
-    description: 'Busca dados do Data Store thread_id (DS 64798) com filtro multi-tenant por org.',
+    description: 'Busca dados do Data Store sol_leads (DS 87418) com filtro multi-tenant por org.',
     category: 'data',
     status: 'active',
     dependencies: ['MAKE_API_KEY', 'MAKE_DATASTORE_ID', 'organization_configs', 'time_comercial'],
   },
   {
     name: 'fetch-make-comercial',
-    description: 'Busca dados do Data Store Comercial (DS 84404) com filtro por responsáveis da org.',
+    description: 'Busca dados do Data Store sol_qualificacao (DS 87715) com filtro por responsáveis da org.',
     category: 'data',
     status: 'active',
     dependencies: ['MAKE_API_KEY', 'MAKE_COMERCIAL_DATASTORE_ID', 'organization_configs', 'time_comercial'],
@@ -109,11 +109,11 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'generate-report',
-    description: 'Gera relatórios com dados reais (Make DS thread + comercial + Meta Ads + Google Ads + Produção) + insights via Lovable AI.',
+    description: 'Gera relatórios com dados reais (DS v2: sol_leads + sol_qualificacao + sol_metricas + sol_equipe) + insights via Lovable AI.',
     category: 'ai',
     status: 'active',
-    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'organization_configs (ds_thread_id, ds_comercial, ds_meta_ads, ds_google_ads, ds_sol_producao)', 'time_comercial'],
-    notes: 'Busca 5 DS em paralelo: thread (64798), comercial (84404), Meta Ads (82051), Google Ads (82094), Produção (81973). Calcula KPIs de investimento, CPL, CAC, ROI e produção de robôs. Filtra por org/franquia_id.',
+    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'organization_configs (sol_leads, sol_qualificacao, sol_config, sol_equipe, sol_metricas)', 'time_comercial'],
+    notes: 'Busca DS v2 em paralelo: sol_leads (87418), sol_qualificacao (87715), sol_config (87419), sol_equipe (87420), sol_metricas (87422). Calcula KPIs de investimento, CPL, CAC, ROI e produção de robôs. Filtra por org/franquia_id.',
   },
   // Auth
   {

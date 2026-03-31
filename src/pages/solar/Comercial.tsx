@@ -322,7 +322,7 @@ export default function Comercial() {
       {!isLoading && !error && filtered.length === 0 && records && records.length === 0 && (
         <Alert className="border-muted">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Nenhum dado encontrado no Data Store 84404.</AlertDescription>
+          <AlertDescription><AlertDescription>Nenhum dado encontrado no Data Store comercial.</AlertDescription></AlertDescription>
         </Alert>
       )}
     </div>
