@@ -79,15 +79,15 @@ export function TimeComercialTab() {
   }
 
   function openEdit(m: TeamMember) {
-    setEditingId(m.id);
+    setEditingId(m.key);
     setForm({
       nome: m.nome,
       cargo: m.cargo || "",
-      telefone: m.telefone || "",
-      email: m.email || "",
+      telefone: "",
+      email: "",
       franquia_id: m.franquia_id,
       ativo: m.ativo,
-      krolic: m.krolic,
+      krolic: m.krolik_ativo,
       sm_id: m.sm_id?.toString() || "",
       krolik_id: m.krolik_id || "",
       krolik_setor_id: m.krolik_setor_id || "",
