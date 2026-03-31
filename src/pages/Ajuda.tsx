@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Search, MessageSquare, BookOpen } from "lucide-react";
+import { Search, MessageSquare, BookOpen, Terminal } from "lucide-react";
+import SOLConsole from "@/components/ajuda/SOLConsole";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,6 +56,10 @@ export default function Ajuda() {
           <TabsTrigger value="simulation" className="gap-2">
             <MessageSquare className="h-4 w-4" />
             Simular Operação
+          </TabsTrigger>
+          <TabsTrigger value="console" className="gap-2">
+            <Terminal className="h-4 w-4" />
+            SOL Console
           </TabsTrigger>
         </TabsList>
 
@@ -127,6 +132,10 @@ export default function Ajuda() {
             className="w-full h-[calc(100vh-12rem)] rounded-lg border border-border"
             title="Simular Operação"
           />
+        </TabsContent>
+
+        <TabsContent value="console" className="mt-4">
+          <SOLConsole />
         </TabsContent>
       </Tabs>
     </div>
