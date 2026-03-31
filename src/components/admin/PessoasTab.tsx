@@ -275,7 +275,7 @@ export function PessoasTab({
 
   async function handleTeamDelete() {
     if (!deleteTeamId) return;
-    const { error } = await supabase.from('time_comercial' as any).delete().eq('id', deleteTeamId);
+    const { error } = await supabase.from('sol_equipe_sync').delete().eq('key', deleteTeamId);
     if (error) toast.error('Erro ao excluir');
     else {
       toast.success('Removido');
@@ -287,19 +287,19 @@ export function PessoasTab({
   async function toggleKrolic(person: UnifiedPerson) {
     if (!person.teamMemberId) return;
     const newVal = !person.hasKrolic;
-    const { error } = await supabase.from('time_comercial' as any).update({ krolic: newVal }).eq('id', person.teamMemberId);
+    const { error } = await supabase.from('sol_equipe_sync').update({ krolik_ativo: newVal, updated_by: 'lovable', updated_at: new Date().toISOString() }).eq('key', person.teamMemberId);
     if (error) { toast.error('Erro'); return; }
     toast.success(newVal ? 'Krolic ativado' : 'Krolic desativado');
-    setTeamMembers(prev => prev.map(x => x.id === person.teamMemberId ? { ...x, krolic: newVal } : x));
+    setTeamMembers(prev => prev.map(x => x.key === person.teamMemberId ? { ...x, krolik_ativo: newVal } : x));
   }
 
   async function toggleAtivo(person: UnifiedPerson) {
     if (!person.teamMemberId) return;
     const newVal = !person.isActive;
-    const { error } = await supabase.from('time_comercial' as any).update({ ativo: newVal }).eq('id', person.teamMemberId);
+    const { error } = await supabase.from('sol_equipe_sync').update({ ativo: newVal, updated_by: 'lovable', updated_at: new Date().toISOString() }).eq('key', person.teamMemberId);
     if (error) { toast.error('Erro'); return; }
     toast.success(newVal ? 'Ativado' : 'Desativado');
-    setTeamMembers(prev => prev.map(x => x.id === person.teamMemberId ? { ...x, ativo: newVal } : x));
+    setTeamMembers(prev => prev.map(x => x.key === person.teamMemberId ? { ...x, ativo: newVal } : x));
   }
 
   async function handlePromote() {
