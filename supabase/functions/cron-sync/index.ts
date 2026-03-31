@@ -438,7 +438,7 @@ async function syncHeartbeat(supabase: any, creds: OrgCredentials): Promise<any>
   return { scenarios: scenarios.length, records: dedupRecords.length, upserted: upsertedHB };
 }
 
-/** Sync sol_leads DS (87418) → leads_consolidados with ds_source='sol_leads' */
+/** Sync sol_leads DS (87418) → sol_leads_sync */
 async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeSolLeadsDsId) return { skipped: true, reason: 'no sol_leads DS id' };
 
@@ -465,26 +465,32 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
 
   console.log(`[${creds.orgName}] sol_leads DS: ${allRecords.length} records fetched`);
 
+  // Get org slug for franquia_id
+  const { data: orgData } = await supabase.from('organizations').select('slug').eq('id', creds.orgId).single();
+  const franquiaId = orgData?.slug || 'evolve_olimpia';
+
   const leadsToUpsert = allRecords.map((r) => {
     const d = r.data || r;
     const phone = normalizePhone(String(d.telefone || r.key || ''));
 
-    const record: Record<string, any> = {
+    return {
       telefone: phone,
       nome: String(d.nome_lead || d.nome || '') || null,
       email: String(d.email_lead || d.email || '') || null,
       cidade: String(d.cidade || '') || null,
       canal_origem: String(d.canal_origem || '') || null,
       status: String(d.status_lead || d.status || 'TRAFEGO_PAGO').toUpperCase(),
-      score: parseInt(d.score_icp || d.score) || null,
+      score: String(d.score_icp || d.score || '') || null,
       temperatura: String(d.temperatura || '').toUpperCase() || null,
       valor_conta: String(d.valor_conta_energia || d.valor_conta || '') || null,
-      imovel: String(d.tipo_imovel || d.imovel || '') || null,
+      tipo_imovel: String(d.tipo_imovel || d.imovel || '') || null,
+      tipo_telhado: String(d.tipo_telhado || '') || null,
       acrescimo_carga: String(d.acrescimo_carga || '') || null,
       prazo_decisao: String(d.prazo_decisao || '') || null,
       forma_pagamento: String(d.forma_pagamento || '') || null,
       preferencia_contato: String(d.preferencia_contato || '') || null,
       resumo_conversa: String(d.resumo_conversa || '') || null,
+      resumo_qualificacao: String(d.resumo_qualificacao || '') || null,
       total_mensagens_ia: parseInt(d.total_mensagens_ia) || 0,
       total_audios_enviados: parseInt(d.total_audios_enviados) || 0,
       custo_openai: parseFloat(d.custo_openai) || 0,
@@ -493,29 +499,38 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
       chat_id: String(d.chatId || d.chat_id || '') || null,
       contact_id: String(d.contactId || d.contact_id || '') || null,
       project_id: String(d.projectId || d.project_id || '') || null,
+      identificador: String(d.identificador || '') || null,
       qualificado_por: String(d.qualificado_por || '') || null,
-      data_entrada: parseDate(d.ts_cadastro || d.data_criacao),
-      data_qualificacao: parseDate(d.ts_qualificado || d.data_qualificacao),
-      robo: 'sol',
-      ds_source: 'sol_leads',
-      organization_id: creds.orgId,
+      closer_nome: String(d.closer_nome || d.closer_atribuido || '') || null,
+      closer_sm_id: String(d.closer_sm_id || '') || null,
+      etapa_funil: String(d.etapa_funil || d.etapa || '') || null,
+      aguardando_conta_luz: !!d.aguardando_conta_luz,
+      transferido_comercial: !!d.transferido_comercial,
+      fup_followup_count: parseInt(d.fup_followup_count || d.followup_count) || 0,
+      valor_conta_confirmado_ocr: String(d.valor_conta_confirmado_ocr || '') || null,
+      ts_cadastro: d.ts_cadastro || d.data_criacao || null,
+      ts_ultima_interacao: d.ts_ultima_interacao || null,
+      ts_qualificado: d.ts_qualificado || d.data_qualificacao || null,
+      ts_desqualificado: d.ts_desqualificado || null,
+      ts_transferido: d.ts_transferido || null,
+      ts_pedido_conta_luz: d.ts_pedido_conta_luz || null,
+      ts_ultimo_fup: d.ts_ultimo_fup || null,
+      franquia_id: franquiaId,
       synced_at: new Date().toISOString(),
     };
-
-    return record;
   }).filter((l: any) => l.telefone);
 
   let upsertedLeads = 0;
   for (let i = 0; i < leadsToUpsert.length; i += 50) {
     const batch = leadsToUpsert.slice(i, i + 50);
     const { error } = await supabase
-      .from("leads_consolidados")
-      .upsert(batch, { onConflict: "telefone,organization_id", ignoreDuplicates: false });
-    if (error) console.error(`[${creds.orgName}] sol_leads upsert error:`, error.message);
+      .from("sol_leads_sync")
+      .upsert(batch, { onConflict: "telefone", ignoreDuplicates: false });
+    if (error) console.error(`[${creds.orgName}] sol_leads_sync upsert error:`, error.message);
     else upsertedLeads += batch.length;
   }
 
-  console.log(`[${creds.orgName}] sol_leads: upserted ${upsertedLeads} records`);
+  console.log(`[${creds.orgName}] sol_leads_sync: upserted ${upsertedLeads} records`);
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
 

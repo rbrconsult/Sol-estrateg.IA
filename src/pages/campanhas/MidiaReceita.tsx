@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
-import { useOrgFilter } from '@/contexts/OrgFilterContext';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 import { KPICard } from '@/components/campanhas/KPICard';
 import { EmptyState } from '@/components/campanhas/EmptyState';
 import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from '@/lib/formatters';
@@ -23,19 +23,15 @@ const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid h
 
 function useLeadsForReceita() {
   const { user } = useAuth();
-  let selectedOrgId: string | null = null;
-  try { const o = useOrgFilter(); selectedOrgId = o.selectedOrgId; } catch {}
+  const franquiaId = useFranquiaId();
 
   return useQuery({
-    queryKey: ['leads-consolidados-receita', selectedOrgId],
+    queryKey: ['sol-leads-receita', franquiaId],
     queryFn: async () => {
-      let query = supabase
-        .from('leads_consolidados')
-        .select('campanha, canal_origem, status, etapa, etapa_sm, status_proposta, valor_proposta');
-      if (selectedOrgId) {
-        query = query.eq('organization_id', selectedOrgId);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('sol_leads_sync')
+        .select('canal_origem, status, temperatura, closer_nome, etapa_funil, valor_conta')
+        .eq('franquia_id', franquiaId);
       if (error) throw error;
       return data || [];
     },
@@ -76,17 +72,15 @@ export default function CampanhasMidiaReceita() {
 
     const leadsArr = leads || [];
     return [...invMap.values()].map(c => {
-      const matchingLeads = leadsArr.filter(l => l.campanha === c.campanha);
+      const matchingLeads = leadsArr.filter(l => l.canal_origem === c.campanha);
       const isFechado = (l: any) =>
-        l.etapa_sm?.toUpperCase()?.includes('CONTRATO') ||
-        l.status_proposta?.toUpperCase() === 'GANHO' ||
-        l.etapa_sm?.toUpperCase() === 'OPERACIONAL';
-      const isPipeline = (l: any) => !isFechado(l) && l.valor_proposta && l.valor_proposta > 0;
+        l.status?.toUpperCase() === 'GANHO';
+      const isPipeline = (l: any) => !isFechado(l) && l.valor_conta && parseFloat(l.valor_conta) > 0;
 
       const vendas = matchingLeads.filter(isFechado).length;
-      const receita = matchingLeads.filter(isFechado).reduce((s, l) => s + (Number(l.valor_proposta) || 0), 0);
-      const pipelineAtivo = matchingLeads.filter(isPipeline).reduce((s, l) => s + (Number(l.valor_proposta) || 0), 0);
-      const oportunidades = matchingLeads.filter(l => l.valor_proposta && l.valor_proposta > 0).length;
+      const receita = matchingLeads.filter(isFechado).reduce((s: number, l: any) => s + (parseFloat(l.valor_conta) || 0), 0);
+      const pipelineAtivo = matchingLeads.filter(isPipeline).reduce((s: number, l: any) => s + (parseFloat(l.valor_conta) || 0), 0);
+      const oportunidades = matchingLeads.filter((l: any) => l.valor_conta && parseFloat(l.valor_conta) > 0).length;
       const ticketMedio = vendas > 0 ? receita / vendas : 0;
       const cac = vendas > 0 ? c.investimento / vendas : 0;
       const roas = c.investimento > 0 ? receita / c.investimento : 0;

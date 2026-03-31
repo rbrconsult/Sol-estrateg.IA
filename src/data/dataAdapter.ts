@@ -232,7 +232,7 @@ export function adaptSheetData(sheetData: any[]): Proposal[] {
       potenciaSistema: parseFloat(item.potencia_sistema) || 0,
       tsProposta: item.data_criacao_proposta || item.data_criacao_projeto || '',
       statusProposta,
-      status: mapStatusProposta(statusProposta, faseSM),
+      status: mapStatusProposta(statusProposta),
       tsSync: '',
     };
   }));

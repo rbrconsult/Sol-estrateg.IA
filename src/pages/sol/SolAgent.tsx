@@ -62,7 +62,7 @@ export default function SolAgent() {
   const kpis = useMemo(() => {
     const all = leads || [];
     const today = new Date().toISOString().split("T")[0];
-    const todayLeads = all.filter(l => l.data_entrada?.startsWith(today));
+    const todayLeads = all.filter(l => l.ts_cadastro?.startsWith(today));
     const qualificados = all.filter(l => (l.status || "").toUpperCase() === "QUALIFICADO");
     const taxa = all.length > 0 ? ((qualificados.length / all.length) * 100).toFixed(0) : "0";
     const totalMsgs = all.reduce((acc, l) => acc + (l.total_mensagens_ia || 0), 0);
@@ -94,10 +94,10 @@ export default function SolAgent() {
     }));
   }, [metricas]);
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (tel: string) => {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      next.has(tel) ? next.delete(tel) : next.add(tel);
       return next;
     });
   };
@@ -106,11 +106,11 @@ export default function SolAgent() {
     if (selected.size === filtered.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(filtered.map(l => l.id)));
+      setSelected(new Set(filtered.map(l => l.telefone)));
     }
   };
 
-  const getSelectedLeads = () => filtered.filter(l => selected.has(l.id));
+  const getSelectedLeads = () => filtered.filter(l => selected.has(l.telefone));
 
   const handleBatchAction = (action: string) => {
     const selectedLeads = getSelectedLeads();
@@ -135,7 +135,7 @@ export default function SolAgent() {
             chatId: lead.chat_id || "",
             contactId: lead.contact_id || "",
             nome: lead.nome || "",
-            score: lead.score || 0,
+            score: parseInt(String(lead.score || '0')) || 0,
             valor_conta: lead.valor_conta || "",
             mensagem: true,
           });
@@ -242,9 +242,9 @@ export default function SolAgent() {
               </TableHeader>
               <TableBody>
                 {filtered.slice(0, 100).map(lead => (
-                  <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={lead.telefone} className="cursor-pointer hover:bg-muted/50">
                     <TableCell>
-                      <Checkbox checked={selected.has(lead.id)} onCheckedChange={() => toggleSelect(lead.id)} />
+                      <Checkbox checked={selected.has(lead.telefone)} onCheckedChange={() => toggleSelect(lead.telefone)} />
                     </TableCell>
                     <TableCell className="font-medium">{lead.nome || "—"}</TableCell>
                     <TableCell><CanalOrigemBadge canal={lead.canal_origem} /></TableCell>
@@ -253,7 +253,7 @@ export default function SolAgent() {
                         {lead.status || "TRAFEGO_PAGO"}
                       </Badge>
                     </TableCell>
-                    <TableCell><ScoreGauge score={lead.score} /></TableCell>
+                    <TableCell><ScoreGauge score={parseInt(String(lead.score || '0')) || 0} /></TableCell>
                     <TableCell><TemperatureBadge temperatura={lead.temperatura} /></TableCell>
                     <TableCell className="text-right tabular-nums">{lead.total_mensagens_ia || 0}</TableCell>
                     <TableCell className="text-xs">
