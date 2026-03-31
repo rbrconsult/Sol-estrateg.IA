@@ -8,7 +8,7 @@ interface SLAData {
   geralProposta: { mediaDias: number };
 }
 
-export function SLAMetricsMock({ data }: { data: SLAData }) {
+export function SLAMetrics({ data }: { data: SLAData }) {
   const statusIcon = (s: string) =>
     s === "ok" ? <CheckCircle2 className="h-3 w-3 text-success" /> :
     s === "warning" ? <Clock className="h-3 w-3 text-warning" /> :

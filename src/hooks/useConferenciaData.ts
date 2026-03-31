@@ -50,7 +50,7 @@ export interface TabelaLead {
   respondeu?: boolean;
   historico: { data: string; tipo: string; msg: string }[];
 }
-export interface SLAMock {
+export interface SLAMetricsData {
   primeiroAtendimento: { media: number; pctDentro24h: number; total: number };
   porEtapa: { etapa: string; slaDias: number; mediaDias: number; status: 'ok' | 'warning' | 'overdue' }[];
   robos: { tempoResposta: string; leadsAguardando: number; taxaResposta: number };
@@ -628,7 +628,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       .filter(s => s !== 'Fechado')
       .map(etapa => ({ etapa, ...tempByEtapa[etapa] }));
 
-    const slaMockData: SLAMock = {
+    const slaMetricsData: SLAMetricsData = {
       primeiroAtendimento: {
         media: tempoMedioRespostaMin > 0 ? +tempoMedioRespostaMin.toFixed(1) : 0,
         pctDentro24h,
@@ -746,7 +746,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       kpiCards, pipelineStages, origemLeads, fupFrio: fupFrioData,
       desqualMotivos, mensagens, sla: slaData, heatmap: heatmapData,
       taxaPorTentativa, solHoje, alertas, temperaturaPorEtapa: tempEtapa,
-      tabelaLeads, slaMock: slaMockData, robotInsights: robotInsightsData,
+      tabelaLeads, slaMetrics: slaMetricsData, robotInsights: robotInsightsData,
       scorePorOrigem, monthlyEvolution,
     };
   }, [allRecords]);

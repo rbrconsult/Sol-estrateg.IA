@@ -5,9 +5,8 @@ import { ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, Che
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// Mock data removed — using real data only
 import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
-import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
+import { RobotInsights } from "@/components/conferencia/RobotInsights";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
@@ -146,7 +145,7 @@ export default function Conferencia() {
   const alertasData = realData?.alertas ?? [];
   const temperaturaPorEtapa = realData?.temperaturaPorEtapa ?? [];
   const tabelaLeads = realData?.tabelaLeads ?? [];
-  const slaMockData = realData?.slaMock ?? { primeiroAtendimento: { media: 0, pctDentro24h: 0, total: 0 }, porEtapa: [], robos: { tempoResposta: '—', leadsAguardando: 0, taxaResposta: 0 }, geralProposta: { mediaDias: 0 } };
+  const slaMetrics = realData?.slaMetrics ?? { primeiroAtendimento: { media: 0, pctDentro24h: 0, total: 0 }, porEtapa: [], robos: { tempoResposta: '—', leadsAguardando: 0, taxaResposta: 0 }, geralProposta: { mediaDias: 0 } };
   const robotInsightsData = realData?.robotInsights ?? { destaques: [], comparacao: { sol: { nome: 'SOL', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 }, fup: { nome: 'FUP', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 } }, funilMensagens: [], alertasUrgentes: [] };
   const scorePorOrigemData = realData?.scorePorOrigem ?? [];
   const monthlyEvolution = realData?.monthlyEvolution ?? [];
@@ -162,12 +161,12 @@ export default function Conferencia() {
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
   const primeiroAtendimentoLabel = useMemo(() => {
-    const mins = slaMockData.primeiroAtendimento.media;
+    const mins = slaMetrics.primeiroAtendimento.media;
     if (!mins || mins <= 0) return "—";
     if (mins < 60) return `${Math.round(mins)}min`;
     if (mins < 1440) return `${(mins / 60).toFixed(1)}h`;
     return `${(mins / 1440).toFixed(1)}d`;
-  }, [slaMockData.primeiroAtendimento.media]);
+  }, [slaMetrics.primeiroAtendimento.media]);
 
   const maxPipeline = Math.max(...pipelineStages.map((s) => s.valor), 1);
   const maxShare = Math.max(...origemLeads.map((o) => o.share), 1);
@@ -555,18 +554,18 @@ export default function Conferencia() {
               </div>
               <div className="flex justify-between text-[10px]">
                 <span className="text-muted-foreground">Dentro 24h</span>
-                <span className="font-semibold text-foreground">{slaMockData.primeiroAtendimento.pctDentro24h}%</span>
+                <span className="font-semibold text-foreground">{slaMetrics.primeiroAtendimento.pctDentro24h}%</span>
               </div>
               <div className="flex justify-between text-[10px]">
                 <span className="text-muted-foreground">Proposta (média)</span>
-                <span className="font-semibold text-foreground">{slaMockData.geralProposta.mediaDias}d</span>
+                <span className="font-semibold text-foreground">{slaMetrics.geralProposta.mediaDias}d</span>
               </div>
             </div>
           </div>
           <div className="rounded-lg border border-border/50 bg-card p-4 space-y-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA por Etapa</p>
             <div className="space-y-2">
-              {slaMockData.porEtapa.slice(0, 5).map((e: any) => {
+              {slaMetrics.porEtapa.slice(0, 5).map((e: any) => {
                 const pct = e.slaDias > 0 ? Math.min((e.mediaDias / e.slaDias) * 100, 100) : 0;
                 const status = pct <= 60 ? "bg-success" : pct <= 85 ? "bg-warning" : "bg-destructive";
                 return (
@@ -587,7 +586,7 @@ export default function Conferencia() {
 
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
-        <RobotInsightsMock data={robotInsightsData} />
+        <RobotInsights data={robotInsightsData} />
 
         {/* ══════ ROW 10 — Score por Origem ══════ */}
         <section className="mt-4">

@@ -193,7 +193,7 @@ export default function Leads() {
       if (filterStatus !== "todos" && r.makeStatus !== filterStatus) return false;
       if (filterCloser !== "todos" && normalizeCloser(r.closerAtribuido) !== filterCloser) return false;
       if (filterCanal !== "todos" && (r.canalOrigem || "").toUpperCase() !== filterCanal) return false;
-      if (filterDsSource !== "todos" && (r.dsSource || "ds_thread") !== filterDsSource) return false;
+      if (filterDsSource !== "todos" && (r.dsSource || "sol_leads") !== filterDsSource) return false;
       return true;
     });
   }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser, filterCanal, filterDsSource]);
@@ -471,9 +471,8 @@ export default function Leads() {
           <Select value={filterDsSource} onValueChange={setFilterDsSource}>
             <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Origem" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="todos">v1 + v2</SelectItem>
-              <SelectItem value="ds_thread">v1 (Thread)</SelectItem>
-              <SelectItem value="sol_leads">v2 (SOL)</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="sol_leads">SOL Leads</SelectItem>
             </SelectContent>
           </Select>
         </section>

@@ -259,7 +259,7 @@ async function syncDataStore(supabase: any, creds: OrgCredentials): Promise<any>
   return { fetched: allRecords.length, upserted: upsertedLeads };
 }
 
-/** Sync DS Comercial (84404) — enrich leads_consolidados with CRM data */
+/** Sync DS Comercial — enrich leads_consolidados with CRM data */
 async function syncComercialDS(supabase: any, creds: OrgCredentials): Promise<any> {
   if (!creds.makeComercialDsId) return { skipped: true, reason: 'no comercial DS id' };
 
