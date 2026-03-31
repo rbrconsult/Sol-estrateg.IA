@@ -6,11 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
- * Fetches the list of active team members (sm_id + nome) from time_comercial
+ * Fetches the list of active team members from sol_equipe_sync
  * for the given organization's slug.
  */
 async function fetchTeamResponsaveis(orgId: string): Promise<{ names: string[]; ids: string[] }> {
-  // First get org slug
   const { data: orgData } = await supabase
     .from("organizations")
     .select("slug")
@@ -20,7 +19,7 @@ async function fetchTeamResponsaveis(orgId: string): Promise<{ names: string[]; 
   if (!orgData?.slug) return { names: [], ids: [] };
 
   const { data, error } = await supabase
-    .from("time_comercial" as any)
+    .from("sol_equipe_sync")
     .select("nome, sm_id")
     .eq("franquia_id", orgData.slug)
     .eq("ativo", true);
@@ -32,7 +31,7 @@ async function fetchTeamResponsaveis(orgId: string): Promise<{ names: string[]; 
 
   const names: string[] = [];
   const ids: string[] = [];
-  for (const m of (data as any[]) || []) {
+  for (const m of (data || []) as any[]) {
     if (m.nome) names.push(String(m.nome).trim().toLowerCase());
     if (m.sm_id) ids.push(String(m.sm_id));
   }
@@ -41,7 +40,7 @@ async function fetchTeamResponsaveis(orgId: string): Promise<{ names: string[]; 
 
 /**
  * Hook that wraps useEnrichedProposals and filters proposals by the selected
- * organization's team members from time_comercial. Super Admins with "Global" see all.
+ * organization's team members from sol_equipe_sync. Super Admins with "Global" see all.
  */
 export function useOrgFilteredProposals(): EnrichedData & { orgFilterActive: boolean } {
   const enriched = useEnrichedProposals();
@@ -65,9 +64,7 @@ export function useOrgFilteredProposals(): EnrichedData & { orgFilterActive: boo
 
     return enriched.proposals.filter((p) => {
       const respId = (p.responsavelId || "").trim();
-      // Primary: match by SM numeric ID
       if (respId && teamData.ids.includes(respId)) return true;
-      // Fallback: match by name
       const rep = (p.representante || "").trim().toLowerCase();
       const resp = (p.responsavel || "").trim().toLowerCase();
       return teamData.names.some(

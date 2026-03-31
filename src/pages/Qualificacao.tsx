@@ -75,13 +75,13 @@ export default function Qualificacao() {
   useEffect(() => {
     const fetchKrolic = async () => {
       let query = supabase
-        .from("time_comercial")
-        .select("id, nome, sm_id, krolik_id")
+        .from("sol_equipe_sync")
+        .select("key, nome, sm_id, krolik_id")
         .eq("ativo", true)
-        .eq("krolic", true);
+        .eq("krolik_ativo", true);
       if (selectedOrgSlug) query = query.eq("franquia_id", selectedOrgSlug);
       const { data } = await query;
-      if (data) setKrolicMembers(data);
+      if (data) setKrolicMembers(data.map((d: any) => ({ id: d.key, nome: d.nome, sm_id: d.sm_id, krolik_id: d.krolik_id })));
     };
     fetchKrolic();
   }, [selectedOrgSlug]);

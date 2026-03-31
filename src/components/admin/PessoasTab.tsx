@@ -27,16 +27,15 @@ interface UserWithRole {
 
 interface TeamMember {
   id: string;
+  key: string;
   franquia_id: string;
   nome: string;
   cargo: string | null;
-  telefone: string | null;
-  email: string | null;
   ativo: boolean;
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
-  krolic: boolean;
+  krolik_ativo: boolean;
 }
 
 interface UnifiedPerson {
@@ -53,7 +52,7 @@ interface UnifiedPerson {
   smId: number | null;
   isActive: boolean;
   userId: string | null; // auth user id
-  teamMemberId: string | null; // time_comercial id
+  teamMemberId: string | null; // sol_equipe_sync key
   createdAt: string | null;
 }
 
@@ -125,11 +124,11 @@ export function PessoasTab({
   async function fetchTeamMembers() {
     setLoading(true);
     const { data, error } = await supabase
-      .from('time_comercial' as any)
+      .from('sol_equipe_sync')
       .select('*')
       .order('nome');
     if (error) console.error(error);
-    setTeamMembers((data as any as TeamMember[]) || []);
+    setTeamMembers((data || []).map((d: any) => ({ ...d, id: d.key })) as TeamMember[]);
     setLoading(false);
   }
 
@@ -145,57 +144,55 @@ export function PessoasTab({
 
     // First, process all SOL users
     for (const u of users) {
-      // Match by email OR by name (time_comercial often has no email)
+      // Match by email OR by name (sol_equipe_sync may have no email)
       const teamMatch = teamMembers.find(tm => {
-        if (tm.email && u.email && tm.email.toLowerCase() === u.email.toLowerCase()) return true;
         if (u.full_name && tm.nome && u.full_name.toLowerCase().includes(tm.nome.toLowerCase().split(' ')[0])) {
-          // fuzzy: first name match
           return tm.nome.toLowerCase() === u.full_name.toLowerCase() ||
                  u.full_name.toLowerCase().includes(tm.nome.toLowerCase()) ||
                  tm.nome.toLowerCase().includes(u.full_name.toLowerCase());
         }
         return false;
       });
-      if (teamMatch) matchedTeamEmails.add(teamMatch.id); // use ID for matching instead
+      if (teamMatch) matchedTeamEmails.add(teamMatch.key);
 
       people.push({
         id: u.id,
         name: u.full_name || u.email,
         email: u.email,
-        phone: u.phone || teamMatch?.telefone || null,
+        phone: u.phone || null,
         role: u.role,
         cargo: teamMatch?.cargo || null,
         franquia_id: teamMatch?.franquia_id || null,
         hasSOLAccess: true,
-        hasKrolic: teamMatch?.krolic ?? false,
+        hasKrolic: teamMatch?.krolik_ativo ?? false,
         hasSM: !!teamMatch?.sm_id,
         smId: teamMatch?.sm_id || null,
         isActive: teamMatch?.ativo ?? true,
         userId: u.id,
-        teamMemberId: teamMatch?.id || null,
+        teamMemberId: teamMatch?.key || null,
         createdAt: u.created_at,
       });
     }
 
     // Then, add team members NOT matched to any SOL user
     for (const tm of teamMembers) {
-      if (matchedTeamEmails.has(tm.id)) continue;
+      if (matchedTeamEmails.has(tm.key)) continue;
       
       people.push({
-        id: `tm-${tm.id}`,
+        id: `tm-${tm.key}`,
         name: tm.nome,
-        email: tm.email,
-        phone: tm.telefone,
+        email: null,
+        phone: null,
         role: null,
         cargo: tm.cargo,
         franquia_id: tm.franquia_id,
         hasSOLAccess: false,
-        hasKrolic: tm.krolic,
+        hasKrolic: tm.krolik_ativo,
         hasSM: !!tm.sm_id,
         smId: tm.sm_id,
         isActive: tm.ativo,
         userId: null,
-        teamMemberId: tm.id,
+        teamMemberId: tm.key,
         createdAt: null,
       });
     }
@@ -231,11 +228,11 @@ export function PessoasTab({
     setTeamForm({
       nome: tm.nome,
       cargo: tm.cargo || '',
-      telefone: tm.telefone || '',
-      email: tm.email || '',
+      telefone: '',
+      email: '',
       franquia_id: tm.franquia_id,
       ativo: tm.ativo,
-      krolic: tm.krolic,
+      krolic: tm.krolik_ativo,
       sm_id: tm.sm_id?.toString() || '',
       krolik_id: tm.krolik_id || '',
       krolik_setor_id: tm.krolik_setor_id || '',
@@ -252,19 +249,19 @@ export function PessoasTab({
     const payload: any = {
       nome: teamForm.nome,
       cargo: teamForm.cargo || null,
-      telefone: teamForm.telefone || null,
-      email: teamForm.email || null,
       franquia_id: teamForm.franquia_id,
       ativo: teamForm.ativo,
-      krolic: teamForm.krolic,
+      krolik_ativo: teamForm.krolic,
       sm_id: teamForm.sm_id ? parseInt(teamForm.sm_id) : null,
       krolik_id: teamForm.krolik_id || null,
       krolik_setor_id: teamForm.krolik_setor_id || null,
+      updated_by: 'lovable',
+      updated_at: new Date().toISOString(),
     };
 
     const { error } = editingTeamMember
-      ? await supabase.from('time_comercial' as any).update(payload).eq('id', editingTeamMember.id)
-      : await supabase.from('time_comercial' as any).insert(payload);
+      ? await supabase.from('sol_equipe_sync').update(payload).eq('key', editingTeamMember.key)
+      : await supabase.from('sol_equipe_sync').insert({ ...payload, key: `${teamForm.franquia_id}_${teamForm.nome.replace(/\s/g, '_')}` } as any);
 
     if (error) {
       toast.error('Erro ao salvar: ' + error.message);
@@ -278,7 +275,7 @@ export function PessoasTab({
 
   async function handleTeamDelete() {
     if (!deleteTeamId) return;
-    const { error } = await supabase.from('time_comercial' as any).delete().eq('id', deleteTeamId);
+    const { error } = await supabase.from('sol_equipe_sync').delete().eq('key', deleteTeamId);
     if (error) toast.error('Erro ao excluir');
     else {
       toast.success('Removido');
@@ -290,19 +287,19 @@ export function PessoasTab({
   async function toggleKrolic(person: UnifiedPerson) {
     if (!person.teamMemberId) return;
     const newVal = !person.hasKrolic;
-    const { error } = await supabase.from('time_comercial' as any).update({ krolic: newVal }).eq('id', person.teamMemberId);
+    const { error } = await supabase.from('sol_equipe_sync').update({ krolik_ativo: newVal, updated_by: 'lovable', updated_at: new Date().toISOString() }).eq('key', person.teamMemberId);
     if (error) { toast.error('Erro'); return; }
     toast.success(newVal ? 'Krolic ativado' : 'Krolic desativado');
-    setTeamMembers(prev => prev.map(x => x.id === person.teamMemberId ? { ...x, krolic: newVal } : x));
+    setTeamMembers(prev => prev.map(x => x.key === person.teamMemberId ? { ...x, krolik_ativo: newVal } : x));
   }
 
   async function toggleAtivo(person: UnifiedPerson) {
     if (!person.teamMemberId) return;
     const newVal = !person.isActive;
-    const { error } = await supabase.from('time_comercial' as any).update({ ativo: newVal }).eq('id', person.teamMemberId);
+    const { error } = await supabase.from('sol_equipe_sync').update({ ativo: newVal, updated_by: 'lovable', updated_at: new Date().toISOString() }).eq('key', person.teamMemberId);
     if (error) { toast.error('Erro'); return; }
     toast.success(newVal ? 'Ativado' : 'Desativado');
-    setTeamMembers(prev => prev.map(x => x.id === person.teamMemberId ? { ...x, ativo: newVal } : x));
+    setTeamMembers(prev => prev.map(x => x.key === person.teamMemberId ? { ...x, ativo: newVal } : x));
   }
 
   async function handlePromote() {
@@ -332,12 +329,12 @@ export function PessoasTab({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // 2. Update time_comercial with email + telefone
+      // 2. Update sol_equipe_sync
       if (promoteTarget.teamMemberId) {
-        await supabase.from('time_comercial' as any).update({
-          email: promoteForm.email,
-          telefone: promoteForm.telefone.replace(/\D/g, '') || null,
-        }).eq('id', promoteTarget.teamMemberId);
+        await supabase.from('sol_equipe_sync').update({
+          updated_by: 'lovable',
+          updated_at: new Date().toISOString(),
+        }).eq('key', promoteTarget.teamMemberId);
       }
 
       // 3. Send WhatsApp welcome
@@ -410,11 +407,10 @@ export function PessoasTab({
   }
 
   function openPromote(person: UnifiedPerson) {
-    const teamObj = person.teamMemberId ? teamMembers.find(t => t.id === person.teamMemberId) : null;
     setPromoteTarget(person);
     setPromoteForm({
-      email: person.email || teamObj?.email || '',
-      telefone: person.phone || teamObj?.telefone || '',
+      email: person.email || '',
+      telefone: person.phone || '',
       role: 'closer',
     });
   }

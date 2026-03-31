@@ -70,12 +70,11 @@ Deno.serve(async (req) => {
       targetOrgId = orgId;
     }
 
-    // ── Get allowed responsavel names/IDs from time_comercial ──
+    // ── Get allowed responsavel names/IDs from sol_equipe_sync ──
     let allowedNames: string[] = [];
     let allowedIds: string[] = [];
 
     if (targetOrgId) {
-      // Get the org slug from organizations table
       const { data: orgData } = await adminClient
         .from("organizations")
         .select("slug")
@@ -85,16 +84,15 @@ Deno.serve(async (req) => {
       const orgSlug = orgData?.slug;
 
       if (orgSlug) {
-        // Query time_comercial by franquia_id (slug) — only active members
         const { data: teamMembers } = await adminClient
-          .from("time_comercial")
+          .from("sol_equipe_sync")
           .select("nome, sm_id, krolik_id")
           .eq("franquia_id", orgSlug)
           .eq("ativo", true);
 
         for (const m of teamMembers || []) {
           if (m.sm_id) allowedIds.push(String(m.sm_id));
-          if (m.nome) allowedNames.push(m.nome.trim().toLowerCase());
+          if (m.nome) allowedNames.push(String(m.nome).trim().toLowerCase());
         }
       }
 

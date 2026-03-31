@@ -17,17 +17,16 @@ import { Plus, Pencil, Trash2, Users, Loader2 } from "lucide-react";
 
 interface TeamMember {
   id: string;
+  key: string;
   franquia_id: string;
   nome: string;
   cargo: string | null;
-  telefone: string | null;
-  email: string | null;
   ativo: boolean;
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
-  krolic: boolean;
-  created_at: string;
+  krolik_ativo: boolean;
+  updated_at: string | null;
 }
 
 const EMPTY_FORM = {
@@ -62,14 +61,14 @@ export function TimeComercialTab() {
   async function fetchMembers() {
     setLoading(true);
     const { data, error } = await supabase
-      .from("time_comercial" as any)
+      .from("sol_equipe_sync")
       .select("*")
       .order("nome");
     if (error) {
-      toast.error("Erro ao carregar time comercial");
+      toast.error("Erro ao carregar equipe");
       console.error(error);
     }
-    setMembers((data as any as TeamMember[]) || []);
+    setMembers((data || []).map((d: any) => ({ ...d, id: d.key })) as TeamMember[]);
     setLoading(false);
   }
 
@@ -80,15 +79,15 @@ export function TimeComercialTab() {
   }
 
   function openEdit(m: TeamMember) {
-    setEditingId(m.id);
+    setEditingId(m.key);
     setForm({
       nome: m.nome,
       cargo: m.cargo || "",
-      telefone: m.telefone || "",
-      email: m.email || "",
+      telefone: "",
+      email: "",
       franquia_id: m.franquia_id,
       ativo: m.ativo,
-      krolic: m.krolic,
+      krolic: m.krolik_ativo,
       sm_id: m.sm_id?.toString() || "",
       krolik_id: m.krolik_id || "",
       krolik_setor_id: m.krolik_setor_id || "",
@@ -105,21 +104,22 @@ export function TimeComercialTab() {
     const payload: any = {
       nome: form.nome,
       cargo: form.cargo || null,
-      telefone: form.telefone || null,
-      email: form.email || null,
       franquia_id: form.franquia_id,
       ativo: form.ativo,
-      krolic: form.krolic,
+      krolik_ativo: form.krolic,
       sm_id: form.sm_id ? parseInt(form.sm_id) : null,
       krolik_id: form.krolik_id || null,
       krolik_setor_id: form.krolik_setor_id || null,
+      updated_by: 'lovable',
+      updated_at: new Date().toISOString(),
     };
 
     let error;
     if (editingId) {
-      ({ error } = await supabase.from("time_comercial" as any).update(payload).eq("id", editingId));
+      ({ error } = await supabase.from("sol_equipe_sync").update(payload).eq("key", editingId));
     } else {
-      ({ error } = await supabase.from("time_comercial" as any).insert(payload));
+      const key = `${form.franquia_id}_${form.nome.replace(/\s/g, '_')}`;
+      ({ error } = await supabase.from("sol_equipe_sync").insert({ ...payload, key } as any));
     }
 
     if (error) {
@@ -136,7 +136,7 @@ export function TimeComercialTab() {
 
   async function handleDelete() {
     if (!deleteId) return;
-    const { error } = await supabase.from("time_comercial" as any).delete().eq("id", deleteId);
+    const { error } = await supabase.from("sol_equipe_sync").delete().eq("key", deleteId);
     if (error) toast.error("Erro ao excluir");
     else {
       toast.success("Membro removido");
@@ -148,16 +148,16 @@ export function TimeComercialTab() {
   async function handleToggleAtivo(m: TeamMember) {
     const newAtivo = !m.ativo;
     const { error } = await supabase
-      .from("time_comercial" as any)
-      .update({ ativo: newAtivo })
-      .eq("id", m.id);
+      .from("sol_equipe_sync")
+      .update({ ativo: newAtivo, updated_by: 'lovable', updated_at: new Date().toISOString() })
+      .eq("key", m.key);
     if (error) {
       toast.error("Erro ao atualizar status");
       return;
     }
     toast.success(newAtivo ? "Ativado" : "Desativado");
     syncToMake({ ...m, ativo: newAtivo });
-    setMembers(prev => prev.map(x => x.id === m.id ? { ...x, ativo: newAtivo } : x));
+    setMembers(prev => prev.map(x => x.key === m.key ? { ...x, ativo: newAtivo } : x));
   }
 
   async function syncToMake(member: any) {
@@ -259,22 +259,22 @@ export function TimeComercialTab() {
                     <Badge variant="outline">{getFranquiaLabel(m.franquia_id)}</Badge>
                   </TableCell>
                 )}
-                {!isSuperAdmin && <TableCell>{m.telefone || "—"}</TableCell>}
+                {!isSuperAdmin && <TableCell>{m.sm_id || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs">{m.sm_id || "—"}</TableCell>}
                 {isSuperAdmin && <TableCell className="font-mono text-xs max-w-[120px] truncate">{m.krolik_id || "—"}</TableCell>}
                 {isSuperAdmin && (
                   <TableCell>
                     <Switch
-                      checked={m.krolic}
+                      checked={m.krolik_ativo}
                       onCheckedChange={async () => {
-                        const newVal = !m.krolic;
+                        const newVal = !m.krolik_ativo;
                         const { error } = await supabase
-                          .from("time_comercial" as any)
-                          .update({ krolic: newVal })
-                          .eq("id", m.id);
+                          .from("sol_equipe_sync")
+                          .update({ krolik_ativo: newVal, updated_by: 'lovable', updated_at: new Date().toISOString() })
+                          .eq("key", m.key);
                         if (error) { toast.error("Erro ao atualizar"); return; }
                         toast.success(newVal ? "Krolic ativado" : "Krolic desativado");
-                        setMembers(prev => prev.map(x => x.id === m.id ? { ...x, krolic: newVal } : x));
+                        setMembers(prev => prev.map(x => x.key === m.key ? { ...x, krolik_ativo: newVal } : x));
                       }}
                     />
                   </TableCell>
