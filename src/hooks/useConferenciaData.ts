@@ -628,7 +628,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       .filter(s => s !== 'Fechado')
       .map(etapa => ({ etapa, ...tempByEtapa[etapa] }));
 
-    const slaMockData: SLAMock = {
+    const slaMetricsData: SLAMetricsData = {
       primeiroAtendimento: {
         media: tempoMedioRespostaMin > 0 ? +tempoMedioRespostaMin.toFixed(1) : 0,
         pctDentro24h,
