@@ -135,7 +135,7 @@ export default function SolAgent() {
             chatId: lead.chat_id || "",
             contactId: lead.contact_id || "",
             nome: lead.nome || "",
-            score: lead.score || 0,
+            score: parseInt(String(lead.score || '0')) || 0,
             valor_conta: lead.valor_conta || "",
             mensagem: true,
           });
