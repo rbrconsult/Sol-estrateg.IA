@@ -106,7 +106,7 @@ export default function SolAgent() {
     if (selected.size === filtered.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(filtered.map(l => l.id)));
+      setSelected(new Set(filtered.map(l => l.telefone)));
     }
   };
 
