@@ -109,7 +109,7 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'generate-report',
-    description: 'Gera relatórios com dados reais (Make DS thread + comercial + Meta Ads + Google Ads + Produção) + insights via Lovable AI.',
+    description: 'Gera relatórios com dados reais (DS v2: sol_leads + sol_qualificacao + sol_metricas + sol_equipe) + insights via Lovable AI.',
     category: 'ai',
     status: 'active',
     dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'organization_configs (sol_leads, sol_qualificacao, sol_config, sol_equipe, sol_metricas)', 'time_comercial'],
