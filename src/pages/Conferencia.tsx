@@ -565,7 +565,7 @@ export default function Conferencia() {
           <div className="rounded-lg border border-border/50 bg-card p-4 space-y-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA por Etapa</p>
             <div className="space-y-2">
-              {slaMockData.porEtapa.slice(0, 5).map((e: any) => {
+              {slaMetrics.porEtapa.slice(0, 5).map((e: any) => {
                 const pct = e.slaDias > 0 ? Math.min((e.mediaDias / e.slaDias) * 100, 100) : 0;
                 const status = pct <= 60 ? "bg-success" : pct <= 85 ? "bg-warning" : "bg-destructive";
                 return (
