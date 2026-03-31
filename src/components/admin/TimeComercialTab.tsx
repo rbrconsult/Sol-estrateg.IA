@@ -17,17 +17,16 @@ import { Plus, Pencil, Trash2, Users, Loader2 } from "lucide-react";
 
 interface TeamMember {
   id: string;
+  key: string;
   franquia_id: string;
   nome: string;
   cargo: string | null;
-  telefone: string | null;
-  email: string | null;
   ativo: boolean;
   sm_id: number | null;
   krolik_id: string | null;
   krolik_setor_id: string | null;
-  krolic: boolean;
-  created_at: string;
+  krolik_ativo: boolean;
+  updated_at: string | null;
 }
 
 const EMPTY_FORM = {
