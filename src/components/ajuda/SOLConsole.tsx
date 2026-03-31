@@ -193,7 +193,7 @@ export default function SOLConsole() {
 
     try {
       step("PRÉ-VÔO");
-      addLog("Limpando mocks anteriores...");
+      addLog("Limpando registros de teste anteriores...");
       await deleteMakeRecord(DS_IDS.sol_leads, lead.telefone);
       await deleteMakeRecord(DS_IDS.sol_qualificacao, lead.telefone);
       addLog("Mocks limpos ✅", "success");
