@@ -176,23 +176,23 @@ export function PessoasTab({
 
     // Then, add team members NOT matched to any SOL user
     for (const tm of teamMembers) {
-      if (matchedTeamEmails.has(tm.id)) continue;
+      if (matchedTeamEmails.has(tm.key)) continue;
       
       people.push({
-        id: `tm-${tm.id}`,
+        id: `tm-${tm.key}`,
         name: tm.nome,
-        email: tm.email,
-        phone: tm.telefone,
+        email: null,
+        phone: null,
         role: null,
         cargo: tm.cargo,
         franquia_id: tm.franquia_id,
         hasSOLAccess: false,
-        hasKrolic: tm.krolic,
+        hasKrolic: tm.krolik_ativo,
         hasSM: !!tm.sm_id,
         smId: tm.sm_id,
         isActive: tm.ativo,
         userId: null,
-        teamMemberId: tm.id,
+        teamMemberId: tm.key,
         createdAt: null,
       });
     }
