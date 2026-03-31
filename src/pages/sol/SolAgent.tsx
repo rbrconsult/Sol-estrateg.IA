@@ -110,7 +110,7 @@ export default function SolAgent() {
     }
   };
 
-  const getSelectedLeads = () => filtered.filter(l => selected.has(l.id));
+  const getSelectedLeads = () => filtered.filter(l => selected.has(l.telefone));
 
   const handleBatchAction = (action: string) => {
     const selectedLeads = getSelectedLeads();
