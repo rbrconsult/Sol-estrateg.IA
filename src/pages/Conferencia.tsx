@@ -5,9 +5,8 @@ import { ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, Che
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// Mock data removed — using real data only
 import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
-import { RobotInsightsMock } from "@/components/conferencia/RobotInsightsMock";
+import { RobotInsights } from "@/components/conferencia/RobotInsights";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
