@@ -1221,6 +1221,183 @@ export type Database = {
           },
         ]
       }
+      sol_config_sync: {
+        Row: {
+          counter: number | null
+          key: string
+          synced_at: string | null
+          updated_at: string | null
+          updated_by: string | null
+          valor_text: string | null
+        }
+        Insert: {
+          counter?: number | null
+          key: string
+          synced_at?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          valor_text?: string | null
+        }
+        Update: {
+          counter?: number | null
+          key?: string
+          synced_at?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          valor_text?: string | null
+        }
+        Relationships: []
+      }
+      sol_conversions_sync: {
+        Row: {
+          canal: string | null
+          capi_response: string | null
+          capi_sent: boolean | null
+          event_name: string | null
+          fbclid: string | null
+          gclid: string | null
+          google_response: string | null
+          google_sent: boolean | null
+          key: string
+          project_id: string | null
+          synced_at: string | null
+          telefone: string | null
+          ts_enviado: string | null
+          ts_evento: string | null
+          value: number | null
+        }
+        Insert: {
+          canal?: string | null
+          capi_response?: string | null
+          capi_sent?: boolean | null
+          event_name?: string | null
+          fbclid?: string | null
+          gclid?: string | null
+          google_response?: string | null
+          google_sent?: boolean | null
+          key: string
+          project_id?: string | null
+          synced_at?: string | null
+          telefone?: string | null
+          ts_enviado?: string | null
+          ts_evento?: string | null
+          value?: number | null
+        }
+        Update: {
+          canal?: string | null
+          capi_response?: string | null
+          capi_sent?: boolean | null
+          event_name?: string | null
+          fbclid?: string | null
+          gclid?: string | null
+          google_response?: string | null
+          google_sent?: boolean | null
+          key?: string
+          project_id?: string | null
+          synced_at?: string | null
+          telefone?: string | null
+          ts_enviado?: string | null
+          ts_evento?: string | null
+          value?: number | null
+        }
+        Relationships: []
+      }
+      sol_equipe_sync: {
+        Row: {
+          ativo: boolean | null
+          cargo: string | null
+          franquia_id: string | null
+          horario_pico_fim: string | null
+          horario_pico_inicio: string | null
+          key: string
+          krolik_ativo: boolean | null
+          krolik_id: string | null
+          krolik_setor_id: string | null
+          leads_hoje: number | null
+          leads_mes: number | null
+          nome: string | null
+          sm_id: number | null
+          synced_at: string | null
+          taxa_conversao: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cargo?: string | null
+          franquia_id?: string | null
+          horario_pico_fim?: string | null
+          horario_pico_inicio?: string | null
+          key: string
+          krolik_ativo?: boolean | null
+          krolik_id?: string | null
+          krolik_setor_id?: string | null
+          leads_hoje?: number | null
+          leads_mes?: number | null
+          nome?: string | null
+          sm_id?: number | null
+          synced_at?: string | null
+          taxa_conversao?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cargo?: string | null
+          franquia_id?: string | null
+          horario_pico_fim?: string | null
+          horario_pico_inicio?: string | null
+          key?: string
+          krolik_ativo?: boolean | null
+          krolik_id?: string | null
+          krolik_setor_id?: string | null
+          leads_hoje?: number | null
+          leads_mes?: number | null
+          nome?: string | null
+          sm_id?: number | null
+          synced_at?: string | null
+          taxa_conversao?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      sol_funis_sync: {
+        Row: {
+          etapas: Json | null
+          franquia_id: string
+          funil_id: number | null
+          funil_nome: string | null
+          sm_etiqueta_robo: string | null
+          sm_robo_id: number | null
+          synced_at: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          etapas?: Json | null
+          franquia_id: string
+          funil_id?: number | null
+          funil_nome?: string | null
+          sm_etiqueta_robo?: string | null
+          sm_robo_id?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          etapas?: Json | null
+          franquia_id?: string
+          funil_id?: number | null
+          funil_nome?: string | null
+          sm_etiqueta_robo?: string | null
+          sm_robo_id?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       sol_insights: {
         Row: {
           acao_sugerida: string | null
@@ -1266,6 +1443,144 @@ export type Database = {
           tipo?: string
           titulo?: string
           visualizado?: boolean | null
+        }
+        Relationships: []
+      }
+      sol_leads_sync: {
+        Row: {
+          acrescimo_carga: string | null
+          aguardando_conta_luz: boolean | null
+          canal_origem: string | null
+          chat_id: string | null
+          cidade: string | null
+          closer_nome: string | null
+          closer_sm_id: string | null
+          contact_id: string | null
+          custo_elevenlabs: number | null
+          custo_openai: number | null
+          custo_total_usd: number | null
+          email: string | null
+          etapa_funil: string | null
+          forma_pagamento: string | null
+          franquia_id: string | null
+          fup_followup_count: number | null
+          identificador: string | null
+          nome: string | null
+          prazo_decisao: string | null
+          preferencia_contato: string | null
+          project_id: string | null
+          qualificado_por: string | null
+          resumo_conversa: string | null
+          resumo_qualificacao: string | null
+          score: string | null
+          status: string | null
+          synced_at: string | null
+          telefone: string
+          temperatura: string | null
+          tipo_imovel: string | null
+          tipo_telhado: string | null
+          total_audios_enviados: number | null
+          total_mensagens_ia: number | null
+          transferido_comercial: boolean | null
+          ts_cadastro: string | null
+          ts_desqualificado: string | null
+          ts_pedido_conta_luz: string | null
+          ts_qualificado: string | null
+          ts_transferido: string | null
+          ts_ultima_interacao: string | null
+          ts_ultimo_fup: string | null
+          valor_conta: string | null
+          valor_conta_confirmado_ocr: string | null
+        }
+        Insert: {
+          acrescimo_carga?: string | null
+          aguardando_conta_luz?: boolean | null
+          canal_origem?: string | null
+          chat_id?: string | null
+          cidade?: string | null
+          closer_nome?: string | null
+          closer_sm_id?: string | null
+          contact_id?: string | null
+          custo_elevenlabs?: number | null
+          custo_openai?: number | null
+          custo_total_usd?: number | null
+          email?: string | null
+          etapa_funil?: string | null
+          forma_pagamento?: string | null
+          franquia_id?: string | null
+          fup_followup_count?: number | null
+          identificador?: string | null
+          nome?: string | null
+          prazo_decisao?: string | null
+          preferencia_contato?: string | null
+          project_id?: string | null
+          qualificado_por?: string | null
+          resumo_conversa?: string | null
+          resumo_qualificacao?: string | null
+          score?: string | null
+          status?: string | null
+          synced_at?: string | null
+          telefone: string
+          temperatura?: string | null
+          tipo_imovel?: string | null
+          tipo_telhado?: string | null
+          total_audios_enviados?: number | null
+          total_mensagens_ia?: number | null
+          transferido_comercial?: boolean | null
+          ts_cadastro?: string | null
+          ts_desqualificado?: string | null
+          ts_pedido_conta_luz?: string | null
+          ts_qualificado?: string | null
+          ts_transferido?: string | null
+          ts_ultima_interacao?: string | null
+          ts_ultimo_fup?: string | null
+          valor_conta?: string | null
+          valor_conta_confirmado_ocr?: string | null
+        }
+        Update: {
+          acrescimo_carga?: string | null
+          aguardando_conta_luz?: boolean | null
+          canal_origem?: string | null
+          chat_id?: string | null
+          cidade?: string | null
+          closer_nome?: string | null
+          closer_sm_id?: string | null
+          contact_id?: string | null
+          custo_elevenlabs?: number | null
+          custo_openai?: number | null
+          custo_total_usd?: number | null
+          email?: string | null
+          etapa_funil?: string | null
+          forma_pagamento?: string | null
+          franquia_id?: string | null
+          fup_followup_count?: number | null
+          identificador?: string | null
+          nome?: string | null
+          prazo_decisao?: string | null
+          preferencia_contato?: string | null
+          project_id?: string | null
+          qualificado_por?: string | null
+          resumo_conversa?: string | null
+          resumo_qualificacao?: string | null
+          score?: string | null
+          status?: string | null
+          synced_at?: string | null
+          telefone?: string
+          temperatura?: string | null
+          tipo_imovel?: string | null
+          tipo_telhado?: string | null
+          total_audios_enviados?: number | null
+          total_mensagens_ia?: number | null
+          transferido_comercial?: boolean | null
+          ts_cadastro?: string | null
+          ts_desqualificado?: string | null
+          ts_pedido_conta_luz?: string | null
+          ts_qualificado?: string | null
+          ts_transferido?: string | null
+          ts_ultima_interacao?: string | null
+          ts_ultimo_fup?: string | null
+          valor_conta?: string | null
+          valor_conta_confirmado_ocr?: string | null
         }
         Relationships: []
       }
@@ -1317,6 +1632,117 @@ export type Database = {
           synced_at?: string | null
           total_audios?: number | null
           total_mensagens?: number | null
+        }
+        Relationships: []
+      }
+      sol_metricas_sync: {
+        Row: {
+          custo_total: number | null
+          data: string | null
+          franquia_id: string | null
+          key: string
+          leads_novos: number | null
+          leads_qualificados: number | null
+          leads_transferidos: number | null
+          robo: string | null
+          synced_at: string | null
+        }
+        Insert: {
+          custo_total?: number | null
+          data?: string | null
+          franquia_id?: string | null
+          key: string
+          leads_novos?: number | null
+          leads_qualificados?: number | null
+          leads_transferidos?: number | null
+          robo?: string | null
+          synced_at?: string | null
+        }
+        Update: {
+          custo_total?: number | null
+          data?: string | null
+          franquia_id?: string | null
+          key?: string
+          leads_novos?: number | null
+          leads_qualificados?: number | null
+          leads_transferidos?: number | null
+          robo?: string | null
+          synced_at?: string | null
+        }
+        Relationships: []
+      }
+      sol_projetos_sync: {
+        Row: {
+          etapa: string | null
+          evento: string | null
+          franquia_id: string | null
+          identificador: string | null
+          key: string
+          project_id: string | null
+          synced_at: string | null
+          ts_evento: string | null
+        }
+        Insert: {
+          etapa?: string | null
+          evento?: string | null
+          franquia_id?: string | null
+          identificador?: string | null
+          key: string
+          project_id?: string | null
+          synced_at?: string | null
+          ts_evento?: string | null
+        }
+        Update: {
+          etapa?: string | null
+          evento?: string | null
+          franquia_id?: string | null
+          identificador?: string | null
+          key?: string
+          project_id?: string | null
+          synced_at?: string | null
+          ts_evento?: string | null
+        }
+        Relationships: []
+      }
+      sol_qualificacao_sync: {
+        Row: {
+          acao: string | null
+          dados_qualificacao: Json | null
+          franquia_id: string | null
+          modelo_negocio: string | null
+          resumo_qualificacao: string | null
+          score: number | null
+          synced_at: string | null
+          telefone: string
+          temperatura: string | null
+          ts_primeira_qualificacao: string | null
+          ts_ultima_atualizacao: string | null
+        }
+        Insert: {
+          acao?: string | null
+          dados_qualificacao?: Json | null
+          franquia_id?: string | null
+          modelo_negocio?: string | null
+          resumo_qualificacao?: string | null
+          score?: number | null
+          synced_at?: string | null
+          telefone: string
+          temperatura?: string | null
+          ts_primeira_qualificacao?: string | null
+          ts_ultima_atualizacao?: string | null
+        }
+        Update: {
+          acao?: string | null
+          dados_qualificacao?: Json | null
+          franquia_id?: string | null
+          modelo_negocio?: string | null
+          resumo_qualificacao?: string | null
+          score?: number | null
+          synced_at?: string | null
+          telefone?: string
+          temperatura?: string | null
+          ts_primeira_qualificacao?: string | null
+          ts_ultima_atualizacao?: string | null
         }
         Relationships: []
       }
