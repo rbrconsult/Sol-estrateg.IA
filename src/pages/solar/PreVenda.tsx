@@ -17,7 +17,7 @@ import { Search, RefreshCw, Phone, MessageSquare, Clock, FileText, Send, X, Rota
 import type { SolLeadSync } from '@/hooks/useSolLeadsSync';
 
 const KANBAN_COLUMNS = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP'] as const;
-const COL_LABELS: Record<string, string> = { TRAFEGO_PAGO: 'Tráfego Pago', EM_QUALIFICACAO: 'Em Qualificação', FOLLOW_UP: 'Follow Up' };
+const COL_LABELS: Record<string, string> = { TRAFEGO_PAGO: 'Leads Recebidos', EM_QUALIFICACAO: 'MQL', FOLLOW_UP: 'Follow Up' };
 const COL_COLORS: Record<string, string> = { TRAFEGO_PAGO: 'border-blue-500/60 bg-blue-500/10', EM_QUALIFICACAO: 'border-amber-500/60 bg-amber-500/10', FOLLOW_UP: 'border-violet-500/60 bg-violet-500/10' };
 
 function timeAgo(ts: string | null): string {
