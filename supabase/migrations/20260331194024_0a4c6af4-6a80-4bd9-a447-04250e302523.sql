@@ -1,0 +1,1 @@
+ALTER TABLE public.leads_consolidados ALTER COLUMN ds_source SET DEFAULT 'sol_leads';
