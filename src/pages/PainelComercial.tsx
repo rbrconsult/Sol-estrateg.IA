@@ -450,8 +450,8 @@ export default function PainelComercial() {
                     <div className="px-4 pb-4 space-y-4">
                       <div className="grid grid-cols-3 gap-2">
                         {[
-                          { label: "Total Leads", value: summary.total, icon: Flame },
-                          { label: "Qualificados", value: summary.qualificados, icon: Thermometer },
+                          { label: "Leads Recebidos", value: summary.total, icon: Flame },
+                          { label: "SQL", value: summary.qualificados, icon: Thermometer },
                           { label: "Responderam", value: summary.responderam, icon: CalendarCheck },
                           { label: "FUP Ativos", value: summary.fupAtivos, icon: Send },
                           { label: "Score ∅", value: summary.avgScore, icon: Zap },
@@ -502,7 +502,7 @@ export default function PainelComercial() {
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">Qualificados</span>
+                            <span className="text-muted-foreground">SQL</span>
                             <span className="text-foreground font-medium">
                               {summary.qualificados} ({summary.total ? Math.round((summary.qualificados / summary.total) * 100) : 0}%)
                             </span>

@@ -116,7 +116,7 @@ export function useBIData(dateRange?: DateRange) {
     const funil = [
       { etapa: 'Leads Recebidos', valor: solRecords.length, icon: '📥' },
       { etapa: 'Responderam', valor: responderam.length, icon: '💬' },
-      { etapa: 'MQL (Qualificados)', valor: qualificados.length, icon: '✅' },
+      { etapa: 'MQL', valor: qualificados.length, icon: '✅' },
       { etapa: 'Closer', valor: closers.length, icon: '🎯' },
       { etapa: 'Fechados', valor: fechados.length, icon: '🏆' },
     ];

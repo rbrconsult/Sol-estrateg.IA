@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowRight, DollarSign, Users, Target, TrendingUp, Clock } from 'lucide-react';
 import { formatCurrency, formatNumber, formatPct } from '@/hooks/useCampaignObs';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
+import { getStatusLabel } from '@/lib/leadClassification';
 
 const FUNNEL_STAGES = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'QUALIFICADO', 'GANHO', 'PERDIDO'];
 const STAGE_COLORS: Record<string, string> = {
@@ -30,7 +31,7 @@ function FunnelBar({ label, value, maxValue, prevValue, color }: { label: string
   const convRate = prevValue && prevValue > 0 ? ((value / prevValue) * 100).toFixed(1) : null;
   return (
     <div className="flex items-center gap-3">
-      <div className="w-32 text-xs font-medium text-right">{label.replace(/_/g, ' ')}</div>
+      <div className="w-32 text-xs font-medium text-right">{getStatusLabel(label)}</div>
       <div className="flex-1 relative">
         <div className="h-10 rounded" style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: color, transition: 'width 0.6s ease' }}>
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-white">
@@ -146,7 +147,7 @@ export default function FunilConsolidado() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPICard label="Total Leads" value={formatNumber(rates.total)} icon={<Users className="h-4 w-4" />} />
+        <KPICard label="Leads Recebidos" value={formatNumber(rates.total)} icon={<Users className="h-4 w-4" />} />
         <KPICard label="Taxa Qualif." value={formatPct(rates.taxaQual)} icon={<Target className="h-4 w-4" />} />
         <KPICard label="Taxa Fecham." value={formatPct(rates.taxaFech)} icon={<TrendingUp className="h-4 w-4" />} />
         <KPICard label="Pipeline Valor" value={formatCurrency(rates.pipelineValor)} icon={<DollarSign className="h-4 w-4" />} />

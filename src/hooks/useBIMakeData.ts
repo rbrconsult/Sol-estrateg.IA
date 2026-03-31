@@ -175,7 +175,7 @@ export function useBIMakeData(dateRange?: DateRange) {
       { etapa: 'Leads Recebidos', valor: totalLeads, pctAnterior: 100, icon: '📥', cor: 'success' },
       { etapa: 'Abordados', valor: abordados, pctAnterior: calcPct(abordados, totalLeads), icon: '🤖', cor: corSaude(calcPct(abordados, totalLeads)) },
       { etapa: 'Responderam', valor: responderam, pctAnterior: calcPct(responderam, abordados), icon: '💬', cor: corSaude(calcPct(responderam, abordados)) },
-      { etapa: 'Qualificados', valor: qualificados, pctAnterior: calcPct(qualificados, responderam), icon: '✅', cor: corSaude(calcPct(qualificados, responderam)) },
+      { etapa: 'MQL', valor: qualificados, pctAnterior: calcPct(qualificados, responderam), icon: '✅', cor: corSaude(calcPct(qualificados, responderam)) },
       { etapa: 'Em Contato', valor: emContato, pctAnterior: calcPct(emContato, qualificados || 1), icon: '📞', cor: corSaude(calcPct(emContato, qualificados || 1)) },
       { etapa: 'Fechados', valor: fechados, pctAnterior: calcPct(fechados, emContato || 1), icon: '🏆', cor: corSaude(calcPct(fechados, emContato || 1)) },
     ];
