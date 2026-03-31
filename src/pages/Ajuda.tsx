@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Search, MessageSquare, BookOpen } from "lucide-react";
+import { Search, MessageSquare, BookOpen, Terminal } from "lucide-react";
+import SOLConsole from "@/components/ajuda/SOLConsole";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
