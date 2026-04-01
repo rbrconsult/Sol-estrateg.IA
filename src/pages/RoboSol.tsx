@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { Bot, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { format, parseISO } from 'date-fns';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
