@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
