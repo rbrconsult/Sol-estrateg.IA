@@ -301,9 +301,6 @@ export default function PainelComercial() {
             <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse inline-block" />
             {records.length} leads carregados
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => forceSync()}>
-            <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-          </Button>
         </div>
       </div>
 
