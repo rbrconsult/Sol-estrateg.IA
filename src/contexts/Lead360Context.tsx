@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { Proposal } from "@/data/dataAdapter";
+import type { SolLead } from "@/hooks/useSolData";
+import type { Proposal } from "@/data/dataAdapter";
 
 interface Lead360ContextType {
   isOpen: boolean;
