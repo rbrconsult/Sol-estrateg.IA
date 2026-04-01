@@ -28,8 +28,8 @@ export function getLeadStage(record: {
   if (status === 'QUALIFICADO') return 'Qualificado';
   if (status === 'DESQUALIFICADO') return 'Desqualificado';
   if (status === 'GANHO' || status === 'CONTRATO') return 'Fechado';
-  if (status === 'EM_QUALIFICACAO') return 'Qualificação';
-  if (status === 'FOLLOW_UP') return 'Follow Up';
+  if (status === 'EM_QUALIFICACAO') return 'Robô SOL';
+  if (status === 'FOLLOW_UP') return 'Robô FUP Frio';
   if (status === 'TRAFEGO_PAGO') return 'Robô SOL';
   if (status === 'PERDIDO') return 'Perdido';
   return 'Robô SOL';
