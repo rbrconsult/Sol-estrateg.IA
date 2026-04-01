@@ -21,7 +21,7 @@ interface GlobalFilterContextType {
 const GlobalFilterContext = createContext<GlobalFilterContextType | undefined>(undefined);
 
 export function GlobalFilterProvider({ children }: { children: ReactNode }) {
-  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }, "mes");
+  const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }, "30d");
 
   return (
     <GlobalFilterContext.Provider value={pf}>

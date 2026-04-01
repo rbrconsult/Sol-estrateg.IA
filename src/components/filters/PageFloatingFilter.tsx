@@ -34,6 +34,22 @@ export interface FilterState {
   status: string;
 }
 
+type FilterableRecord = {
+  data_envio?: string;
+  ts_cadastro?: string;
+  synced_at?: string;
+  cidade?: string;
+  nome?: string;
+  makeTemperatura?: string;
+  temperatura?: string;
+  canalOrigem?: string;
+  canal_origem?: string;
+  makeStatus?: string;
+  status?: string;
+  etapaFunil?: string;
+  etapa_funil?: string;
+};
+
 const defaultState: FilterState = {
   periodo: "all",
   canal: "todos",
@@ -104,11 +120,11 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
-  const filterRecords = useCallback(<T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string; canalOrigem?: string; makeStatus?: string; etapaFunil?: string }>(records: T[]): T[] => {
+  const filterRecords = useCallback(<T extends FilterableRecord>(records: T[]): T[] => {
     return records.filter(r => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
-        const dateStr = r.data_envio;
+        const dateStr = r.data_envio || r.ts_cadastro || r.synced_at;
         if (!dateStr) return false;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;
@@ -119,10 +135,15 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
         }
         if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
       }
-      if (filters.canal !== "todos" && (r as any).canalOrigem !== filters.canal) return false;
-      if (filters.temperatura !== "todas" && (r.makeTemperatura || "").toUpperCase() !== filters.temperatura) return false;
-      if (filters.etapa !== "todas" && (r.etapaFunil || "").toUpperCase() !== filters.etapa.toUpperCase()) return false;
-      if (filters.status !== "todos" && (r.makeStatus || "").toUpperCase() !== filters.status.toUpperCase()) return false;
+      const canal = r.canalOrigem || r.canal_origem || "";
+      const temperatura = r.makeTemperatura || r.temperatura || "";
+      const etapa = r.etapaFunil || r.etapa_funil || "";
+      const status = r.makeStatus || r.status || "";
+
+      if (filters.canal !== "todos" && canal !== filters.canal) return false;
+      if (filters.temperatura !== "todas" && temperatura.toUpperCase() !== filters.temperatura) return false;
+      if (filters.etapa !== "todas" && etapa.toUpperCase() !== filters.etapa.toUpperCase()) return false;
+      if (filters.status !== "todos" && status.toUpperCase() !== filters.status.toUpperCase()) return false;
       if (filters.searchTerm && !(r.nome || "").toLowerCase().includes(filters.searchTerm.toLowerCase())) return false;
       return true;
     });
