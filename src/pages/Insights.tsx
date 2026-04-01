@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Search, ChevronDown, ChevronRight, Info } from "lucide-react";
 import { skillCategories, statusConfig, type SkillStatus } from "@/data/skillsMap";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSkillToggles } from "@/hooks/useSkillToggles";
 
 const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
   { value: "all", label: "Todas" },
@@ -23,6 +25,7 @@ export default function Insights() {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(skillCategories.map(c => [c.key, true]))
   );
+  const { toggles, toggle } = useSkillToggles();
 
   const totals = useMemo(() => {
     const all = skillCategories.flatMap(c => c.skills);
@@ -32,8 +35,9 @@ export default function Insights() {
       precisa_dados: all.filter(s => s.status === "precisa_dados").length,
       criar: all.filter(s => s.status === "criar").length,
       futuro: all.filter(s => s.status === "futuro").length,
+      ligadas: all.filter(s => toggles[s.id]).length,
     };
-  }, []);
+  }, [toggles]);
 
   const filteredCategories = useMemo(() => {
     const q = search.toLowerCase();
@@ -51,6 +55,7 @@ export default function Insights() {
     setOpenCats(prev => ({ ...prev, [key]: !prev[key] }));
 
   const pctAtivo = Math.round((totals.ativo / totals.total) * 100);
+  const pctLigadas = Math.round((totals.ligadas / totals.total) * 100);
 
   return (
     <div className="space-y-6 p-1">
@@ -63,11 +68,17 @@ export default function Insights() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Card className="bg-card/60 border-border/40">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold">{totals.total}</p>
             <p className="text-xs text-muted-foreground">Total Skills</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/60 border-primary/30">
+          <CardContent className="p-4 text-center">
+            <p className="text-3xl font-bold text-primary">{totals.ligadas}</p>
+            <p className="text-xs text-muted-foreground">Ligadas</p>
           </CardContent>
         </Card>
         {(["ativo", "precisa_dados", "criar", "futuro"] as SkillStatus[]).map(st => {
@@ -83,16 +94,27 @@ export default function Insights() {
         })}
       </div>
 
-      {/* Progress */}
-      <Card className="bg-card/60 border-border/40">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Progresso de Ativação</span>
-            <span className="text-sm font-bold text-primary">{pctAtivo}% ({totals.ativo}/{totals.total})</span>
-          </div>
-          <Progress value={pctAtivo} className="h-2" />
-        </CardContent>
-      </Card>
+      {/* Progress bars */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <Card className="bg-card/60 border-border/40">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Desenvolvimento</span>
+              <span className="text-sm font-bold">{pctAtivo}% ({totals.ativo}/{totals.total})</span>
+            </div>
+            <Progress value={pctAtivo} className="h-2" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card/60 border-primary/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Ativação (Ligadas)</span>
+              <span className="text-sm font-bold text-primary">{pctLigadas}% ({totals.ligadas}/{totals.total})</span>
+            </div>
+            <Progress value={pctLigadas} className="h-2" />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -120,7 +142,7 @@ export default function Insights() {
       <TooltipProvider>
         {filteredCategories.map(cat => {
           const isOpen = openCats[cat.key] !== false;
-          const catActive = cat.skills.filter(s => s.status === "ativo").length;
+          const catActive = cat.skills.filter(s => toggles[s.id]).length;
           return (
             <Collapsible key={cat.key} open={isOpen} onOpenChange={() => toggleCat(cat.key)}>
               <CollapsibleTrigger className="w-full">
@@ -135,8 +157,8 @@ export default function Insights() {
                   </div>
                   <div className="flex items-center gap-2">
                     {catActive > 0 && (
-                      <Badge variant="outline" className={statusConfig.ativo.className + " text-[10px]"}>
-                        {catActive} ativas
+                      <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                        {catActive} ligadas
                       </Badge>
                     )}
                   </div>
@@ -146,34 +168,41 @@ export default function Insights() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-2 mb-4">
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
+                    const isOn = !!toggles[skill.id];
                     return (
-                      <Card key={skill.id} className="bg-card/60 border-border/40 hover:border-primary/30 transition-colors">
+                      <Card
+                        key={skill.id}
+                        className={`border transition-colors ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"}`}
+                      >
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-start justify-between gap-2">
-                            <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
-                            <Badge variant="outline" className={`${cfg.className} text-[10px] shrink-0`}>{cfg.label}</Badge>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
+                              <Badge variant="outline" className={`${cfg.className} text-[10px] shrink-0`}>{cfg.label}</Badge>
+                            </div>
+                            <Switch
+                              checked={isOn}
+                              onCheckedChange={(checked) => toggle({ skillId: skill.id, enabled: checked })}
+                              className="shrink-0"
+                            />
                           </div>
                           <CardTitle className="text-sm mt-1 leading-tight">{skill.name}</CardTitle>
                         </CardHeader>
                         <CardContent className="px-4 pb-4 space-y-2">
                           <p className="text-xs text-muted-foreground leading-relaxed">{skill.desc}</p>
                           {(skill.fonte || skill.output) && (
-                            <div className="flex items-center gap-1">
-                              {skill.fonte && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                                      <Info className="h-3 w-3" />
-                                      <span>Fonte</span>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="bottom" className="max-w-xs">
-                                    <p className="text-xs"><strong>Fonte:</strong> {skill.fonte}</p>
-                                    {skill.output && <p className="text-xs mt-1"><strong>Output:</strong> {skill.output}</p>}
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                            </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                                  <Info className="h-3 w-3" />
+                                  <span>Detalhes</span>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="max-w-xs">
+                                {skill.fonte && <p className="text-xs"><strong>Fonte:</strong> {skill.fonte}</p>}
+                                {skill.output && <p className="text-xs mt-1"><strong>Output:</strong> {skill.output}</p>}
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </CardContent>
                       </Card>
