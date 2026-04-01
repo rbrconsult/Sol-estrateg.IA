@@ -154,7 +154,6 @@ export default function SolAgent() {
   };
 
   const handleSync = async () => {
-    await forceSync();
     refetchLeads();
   };
 
