@@ -79,9 +79,9 @@ export default function SolAgent() {
   const costChartData = useMemo(() => {
     return (metricas || []).map(m => ({
       data: new Date(m.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      OpenAI: m.custo_openai_usd,
-      "11Labs": m.custo_elevenlabs_usd,
-      Make: m.custo_make_usd,
+      OpenAI: 0,
+      "11Labs": 0,
+      Make: m.custo_total || 0,
     }));
   }, [metricas]);
 
