@@ -168,7 +168,7 @@ function deriveSLAData(records: SolLead[]) {
 export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
 
   const pf = usePageFilters({ showPeriodo: true, showSearch: true });
