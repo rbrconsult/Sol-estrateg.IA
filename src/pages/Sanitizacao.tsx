@@ -409,7 +409,7 @@ export default function Sanitizacao() {
 
       {/* Tabs */}
       <Tabs defaultValue="duplicatas" className="space-y-4">
-        <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-card border border-border/50 p-1">
+        <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-card border border-border/50 p-1 overflow-x-auto">
           <TabsTrigger value="duplicatas" className="flex items-center gap-1.5 text-xs">
             <span className="text-destructive">●</span> Duplicatas <Badge variant="secondary" className="text-[10px] ml-1">{dupGroupCount}</Badge>
           </TabsTrigger>

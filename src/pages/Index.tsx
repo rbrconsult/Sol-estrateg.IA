@@ -278,7 +278,7 @@ const Index = () => {
                     <Icon className={`h-4 w-4 ${c.color}`} />
                     <p className="text-xs text-muted-foreground">{c.label}</p>
                   </div>
-                  <p className={`text-3xl font-bold ${c.color}`}>{c.value}</p>
+                  <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
                   <p className="text-[10px] text-muted-foreground">{c.desc}</p>
                 </div>
               );

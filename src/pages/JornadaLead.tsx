@@ -306,15 +306,15 @@ export default function JornadaLead() {
         <CardHeader className="pb-3"><CardTitle className="text-base">Timeline da Jornada</CardTitle></CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <div className="flex items-center gap-0 min-w-[800px] py-4">
+            <div className="flex items-center gap-0 min-w-[800px] py-6">
               {timelineEtapas.map((e, i) => {
                 const sla = slaMetrics[i];
                 return (
                   <div key={i} className="flex items-center">
-                    <div className="flex flex-col items-center w-24">
-                      <span className="text-2xl mb-1">{e.icon}</span>
-                      <p className="text-[10px] font-semibold text-center leading-tight">{e.label}</p>
-                      <p className="text-[9px] text-muted-foreground">{e.ator}</p>
+                    <div className="flex flex-col items-center w-28">
+                      <span className="text-3xl mb-2">{e.icon}</span>
+                      <p className="text-xs font-semibold text-center leading-tight">{e.label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{e.ator}</p>
                       {sla && (
                         <div className="mt-1 flex items-center gap-1">
                           <StatusIcon status={sla.status} />
