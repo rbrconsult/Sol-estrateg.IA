@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
-import { useForceSync } from "@/hooks/useForceSync";
+import { useForceSync } from "@/hooks/useSolData";
 
 const HIDE_SYNC_ROUTES = ["/reports", "/chamados"];
 const HIDE_FILTER_ROUTES = ["/reports", "/chamados"];

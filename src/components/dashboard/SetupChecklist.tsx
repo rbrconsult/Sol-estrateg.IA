@@ -2,11 +2,10 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Circle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMakeComercialData } from "@/hooks/useMakeComercialData";
+import { useSolLeads } from "@/hooks/useSolData";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { adaptComercialData, extractVendedores } from "@/data/dataAdapter";
 
 interface CheckItem {
   label: string;
@@ -15,7 +14,7 @@ interface CheckItem {
 
 export function SetupChecklist() {
   const { organizationId } = useAuth();
-  const { data: comercialData } = useMakeComercialData();
+  const { data: leads } = useSolLeads();
 
   const { data: orgMembers } = useQuery({
     queryKey: ["org-members-count", organizationId],
@@ -45,33 +44,17 @@ export function SetupChecklist() {
   });
 
   const items: CheckItem[] = useMemo(() => {
-    const hasData = !!(comercialData && comercialData.length > 0);
-    const proposals = hasData ? adaptComercialData(comercialData) : [];
-    const vendedores = hasData ? extractVendedores(proposals) : [];
+    const hasData = !!(leads && leads.length > 0);
+    const closers = hasData ? [...new Set(leads.filter(l => l.closer_nome).map(l => l.closer_nome))] : [];
 
     return [
-      {
-        label: "Data Store configurado",
-        completed: hasData,
-      },
-      {
-        label: "Vendedores cadastrados",
-        completed: vendedores.length > 0,
-      },
-      {
-        label: "Primeira proposta inserida",
-        completed: proposals.length > 0,
-      },
-      {
-        label: "Usuários criados",
-        completed: (orgMembers || 0) > 1,
-      },
-      {
-        label: "Monitoramento configurado",
-        completed: !!statusUrl,
-      },
+      { label: "Data Store configurado", completed: hasData },
+      { label: "Vendedores cadastrados", completed: closers.length > 0 },
+      { label: "Primeiro lead sincronizado", completed: hasData },
+      { label: "Usuários criados", completed: (orgMembers || 0) > 1 },
+      { label: "Monitoramento configurado", completed: !!statusUrl },
     ];
-  }, [comercialData, orgMembers, statusUrl]);
+  }, [leads, orgMembers, statusUrl]);
 
   const allDone = items.every((i) => i.completed);
   const completedCount = items.filter((i) => i.completed).length;
@@ -96,16 +79,10 @@ export function SetupChecklist() {
               key={item.label}
               className={cn(
                 "flex items-center gap-2 p-3 rounded-lg text-sm transition-colors",
-                item.completed
-                  ? "bg-primary/10 text-foreground"
-                  : "bg-secondary/50 text-muted-foreground"
+                item.completed ? "bg-primary/10 text-foreground" : "bg-secondary/50 text-muted-foreground"
               )}
             >
-              {item.completed ? (
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-              ) : (
-                <Circle className="h-4 w-4 shrink-0" />
-              )}
+              {item.completed ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> : <Circle className="h-4 w-4 shrink-0" />}
               <span>{item.label}</span>
             </div>
           ))}
