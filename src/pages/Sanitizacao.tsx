@@ -351,8 +351,8 @@ export default function Sanitizacao() {
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
         <AlertTriangle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground text-sm">Nenhum dado disponível para análise de sanitização.</p>
-        <p className="text-muted-foreground text-sm">Nenhum dado disponível. Use o botão "Atualizar página" no canto superior.</p>
+      <p className="text-muted-foreground text-sm">Nenhum dado disponível para análise de sanitização.</p>
+        <p className="text-muted-foreground text-sm">Aguardando sincronização — dados serão carregados automaticamente.</p>
       </div>
     );
   }
@@ -398,7 +398,7 @@ export default function Sanitizacao() {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <KPICard label="Duplicatas por Tel." value={analysis.dupProjectCount} sub={`em ${dupGroupCount} telefones`} colorClass="bg-destructive text-destructive" />
         <KPICard label="Telefones Inválidos" value={analysis.invalidProjectCount} sub={`${Object.keys(analysis.invalidGroups).length} números`} colorClass="bg-warning text-warning" />
         <KPICard label="Sem Telefone" value={analysis.semTel.length} sub="projetos sem contato" colorClass="bg-warning text-warning" />
@@ -409,7 +409,7 @@ export default function Sanitizacao() {
 
       {/* Tabs */}
       <Tabs defaultValue="duplicatas" className="space-y-4">
-        <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-card border border-border/50 p-1">
+        <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-card border border-border/50 p-1 overflow-x-auto">
           <TabsTrigger value="duplicatas" className="flex items-center gap-1.5 text-xs">
             <span className="text-destructive">●</span> Duplicatas <Badge variant="secondary" className="text-[10px] ml-1">{dupGroupCount}</Badge>
           </TabsTrigger>

@@ -36,10 +36,10 @@ export function HeartbeatSummary({ scenarios, isLoading }: Props) {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <Card>
+      <Card className={globalUptime >= 99 ? "border-emerald-500/30" : globalUptime >= 90 ? "border-amber-500/30" : "border-destructive/30"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Uptime Global</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
+          <Activity className={`h-4 w-4 ${globalUptime >= 99 ? "text-emerald-500" : globalUptime >= 90 ? "text-amber-500" : "text-destructive"}`} />
         </CardHeader>
         <CardContent>
           <div className={`text-3xl font-bold ${globalUptime >= 99 ? "text-emerald-500" : globalUptime >= 90 ? "text-amber-500" : "text-destructive"}`}>
@@ -62,16 +62,16 @@ export function HeartbeatSummary({ scenarios, isLoading }: Props) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={totalErrors > 0 ? "border-destructive/30" : "border-emerald-500/20"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Erros / Avisos</CardTitle>
-          <XCircle className="h-4 w-4 text-destructive" />
+          {totalErrors > 0 ? <XCircle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            <span className="text-destructive">{totalErrors}</span>
+            <span className={totalErrors > 0 ? "text-destructive" : "text-emerald-500"}>{totalErrors}</span>
             <span className="text-muted-foreground mx-1">/</span>
-            <span className="text-amber-500">{totalWarnings}</span>
+            <span className={totalWarnings > 0 ? "text-amber-500" : "text-muted-foreground"}>{totalWarnings}</span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">nos últimos 7 dias</p>
         </CardContent>
