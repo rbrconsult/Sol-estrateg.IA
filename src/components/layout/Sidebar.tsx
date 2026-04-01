@@ -19,17 +19,30 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+type AppRole = 'super_admin' | 'diretor' | 'gerente' | 'closer' | 'admin';
+
 interface MenuItem {
   title: string;
   icon: React.ElementType;
   path: string;
   moduleKey?: string;
+  /** Which roles can see this item. If omitted, all roles see it. */
+  minRole?: AppRole[];
 }
 
 interface MenuGroup {
   label: string;
   items: MenuItem[];
+  /** Which roles can see this group. If omitted, all roles see it. */
+  minRole?: AppRole[];
 }
+
+/** Roles that can see strategic/intelligence pages */
+const STRATEGIC_ROLES: AppRole[] = ['super_admin', 'diretor'];
+/** Roles that can see managerial pages */
+const MANAGERIAL_ROLES: AppRole[] = ['super_admin', 'diretor', 'gerente'];
+/** All operational roles */
+const ALL_ROLES: AppRole[] = ['super_admin', 'diretor', 'gerente', 'closer', 'admin'];
 
 const menuGroups: MenuGroup[] = [
   {
@@ -37,9 +50,9 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Dashboard", icon: Presentation, path: "/dashboard", moduleKey: "conferencia" },
       { title: "Leads", icon: Users, path: "/leads", moduleKey: "leads" },
-      { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
-      { title: "Robô FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
-      { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi" },
+      { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol", minRole: MANAGERIAL_ROLES },
+      { title: "Robô FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio", minRole: MANAGERIAL_ROLES },
+      { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi", minRole: MANAGERIAL_ROLES },
     ],
   },
   {
@@ -47,14 +60,15 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Painel Comercial", icon: Zap, path: "/painel-comercial", moduleKey: "painel-comercial" },
       { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
-      { title: "Forecast", icon: FileCheck, path: "/forecast", moduleKey: "forecast" },
-      { title: "Contratos Fechados", icon: Handshake, path: "/contratos-fechados", moduleKey: "pipeline" },
-      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
-      { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes" },
+      { title: "Forecast", icon: FileCheck, path: "/forecast", moduleKey: "forecast", minRole: MANAGERIAL_ROLES },
+      { title: "Contratos Fechados", icon: Handshake, path: "/contratos-fechados", moduleKey: "pipeline", minRole: MANAGERIAL_ROLES },
+      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores", minRole: MANAGERIAL_ROLES },
+      { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes", minRole: MANAGERIAL_ROLES },
     ],
   },
   {
     label: "Inteligência",
+    minRole: STRATEGIC_ROLES,
     items: [
       { title: "BI Dashboard", icon: BarChart3, path: "/bi", moduleKey: "bi" },
       { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
@@ -65,6 +79,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: "Campanhas",
+    minRole: STRATEGIC_ROLES,
     items: [
       { title: "Visão Geral", icon: LayoutDashboard, path: "/campanhas", moduleKey: "bi" },
       { title: "Meta Ads", icon: Megaphone, path: "/campanhas/meta", moduleKey: "bi" },
@@ -78,6 +93,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: "Operacional",
+    minRole: MANAGERIAL_ROLES,
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor Make", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
@@ -163,9 +179,14 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
         {/* Navigation — all groups always visible, no collapse */}
         <nav className="flex-1 p-1.5 overflow-y-auto space-y-1">
           {menuGroups.map((group) => {
-            const visibleItems = group.items.filter((item) =>
-              item.moduleKey ? hasAccess(item.moduleKey) : true
-            );
+            // Role-based group visibility
+            if (group.minRole && userRole && !group.minRole.includes(userRole as AppRole)) return null;
+
+            const visibleItems = group.items.filter((item) => {
+              // Role-based item visibility
+              if (item.minRole && userRole && !item.minRole.includes(userRole as AppRole)) return false;
+              return item.moduleKey ? hasAccess(item.moduleKey) : true;
+            });
             if (visibleItems.length === 0) return null;
 
             return (

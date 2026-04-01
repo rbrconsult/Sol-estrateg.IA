@@ -60,7 +60,7 @@ import CampanhasAdsPerformance from "./pages/campanhas/AdsPerformance";
 import CampanhasMidiaReceita from "./pages/campanhas/MidiaReceita";
 import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
 import TimeComercialPage from "./pages/TimeComercialPage";
-import SolInsights from "./pages/sol/SolInsights";
+// SolInsights removed — route redirects to /leads
 import SolConfigPage from "./pages/admin/SolConfigPage";
 import SolEquipePage from "./pages/admin/SolEquipePage";
 import SolFunisPage from "./pages/admin/SolFunisPage";
@@ -113,7 +113,7 @@ const App = () => (
               <Route path="/chamados" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="chamados"><Chamados /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/bi" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><BI /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/operacoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Operacoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/leads" element={<ProtectedRoute><MainLayout><Leads /></MainLayout></ProtectedRoute>} />
+              <Route path="/leads" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="leads"><Leads /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><MainLayout><Admin /></MainLayout></ProtectedRoute>} />
               <Route path="/admin/filial/:orgId" element={<ProtectedRoute><MainLayout><OrgConfigPage /></MainLayout></ProtectedRoute>} />
               {/* /ajuda removido — Bug B8 */}
@@ -122,19 +122,19 @@ const App = () => (
               <Route path="/midia" element={<Navigate to="/campanhas/receita" replace />} />
               <Route path="/ga4" element={<Navigate to="/campanhas/ga4" replace />} />
 
-              <Route path="/robo-sol" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><RoboSol /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/robo-fup-frio" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><RoboFupFrio /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/jornada-lead" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><JornadaLead /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/robo-sol" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="robo-sol"><RoboSol /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/robo-fup-frio" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="robo-fup-frio"><RoboFupFrio /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/jornada-lead" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="jornada-lead"><JornadaLead /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/roadmap" element={<ProtectedRoute><MainLayout><Roadmap /></MainLayout></ProtectedRoute>} />
-              <Route path="/painel-comercial" element={<ProtectedRoute><MainLayout><PainelComercial /></MainLayout></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><MainLayout><Reports /></MainLayout></ProtectedRoute>} />
-              <Route path="/sla" element={<ProtectedRoute><MainLayout><SLAMonitor /></MainLayout></ProtectedRoute>} />
-              <Route path="/followup" element={<ProtectedRoute><MainLayout><AnalistaFollowup /></MainLayout></ProtectedRoute>} />
-              <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/painel-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="painel-comercial"><PainelComercial /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="reports"><Reports /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/sla" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="sla-monitor"><SLAMonitor /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/followup" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="followup"><AnalistaFollowup /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="comissoes"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><Qualificacao /></MainLayout></ProtectedRoute>} />
-              <Route path="/desqualificar" element={<ProtectedRoute><MainLayout><Desqualificar /></MainLayout></ProtectedRoute>} />
-              <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><Reprocessamento /></MainLayout></ProtectedRoute>} />
+              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="leads"><Qualificacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/desqualificar" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="leads"><Desqualificar /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="leads"><Reprocessamento /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasVisaoGeral /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/meta" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><MetaAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/google" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GoogleAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
