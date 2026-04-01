@@ -351,8 +351,8 @@ export default function Sanitizacao() {
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
         <AlertTriangle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground text-sm">Nenhum dado disponível para análise de sanitização.</p>
-        <p className="text-muted-foreground text-sm">Nenhum dado disponível. Use o botão "Atualizar página" no canto superior.</p>
+      <p className="text-muted-foreground text-sm">Nenhum dado disponível para análise de sanitização.</p>
+        <p className="text-muted-foreground text-sm">Aguardando sincronização — dados serão carregados automaticamente.</p>
       </div>
     );
   }
