@@ -108,10 +108,10 @@ export default function Qualificacao() {
   };
 
   const allLeads = useMemo(() => {
-    if (!records) return [];
+    if (!solLeads?.length) return [];
     const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU'];
     const { from: effFrom, to: effTo } = gf.effectiveDateRange;
-    return records
+    return solLeads
       .filter((r) => {
         if (effFrom || effTo) {
           const dateStr = r.ts_cadastro;
@@ -131,7 +131,7 @@ export default function Qualificacao() {
         _desqualificado: isDesqualificado(r),
         _qualificado: isQualificado(r),
       }));
-  }, [records, gf.effectiveDateRange]);
+  }, [solLeads, gf.effectiveDateRange]);
 
   const filtered = useMemo(() => {
     let result = allLeads;
