@@ -238,8 +238,8 @@ export default function RoboSol() {
   
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
-  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
+  const canais = useMemo(() => [...new Set((solLeads || []).map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
+  const records = useMemo(() => gf.filterRecords(solLeads || []), [solLeads, gf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
 
