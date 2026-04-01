@@ -34,6 +34,22 @@ export interface FilterState {
   status: string;
 }
 
+type FilterableRecord = {
+  data_envio?: string;
+  ts_cadastro?: string;
+  synced_at?: string;
+  cidade?: string;
+  nome?: string;
+  makeTemperatura?: string;
+  temperatura?: string;
+  canalOrigem?: string;
+  canal_origem?: string;
+  makeStatus?: string;
+  status?: string;
+  etapaFunil?: string;
+  etapa_funil?: string;
+};
+
 const defaultState: FilterState = {
   periodo: "all",
   canal: "todos",
@@ -104,21 +120,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return { from: undefined as Date | undefined, to: undefined as Date | undefined };
   }, [filters.periodo, filters.dateFrom, filters.dateTo]);
 
-  const filterRecords = useCallback<<T extends {
-    data_envio?: string;
-    ts_cadastro?: string;
-    synced_at?: string;
-    cidade?: string;
-    nome?: string;
-    makeTemperatura?: string;
-    temperatura?: string;
-    canalOrigem?: string;
-    canal_origem?: string;
-    makeStatus?: string;
-    status?: string;
-    etapaFunil?: string;
-    etapa_funil?: string;
-  }>>(records: T[]): T[] => {
+  const filterRecords = useCallback(<T extends FilterableRecord>(records: T[]): T[] => {
     return records.filter(r => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
