@@ -90,9 +90,9 @@ function normalizeCloser(c: string | undefined): string {
   return c.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 }
 
-/** Get etapa label — treat empty as "Sem Etapa" */
+/** Get etapa label — treat empty as "Tráfego Pago" (entrada do funil) */
 function getEtapaLabel(r: SolLead): string {
-  return r.etapa_funil?.trim() || "SEM ETAPA";
+  return r.etapa_funil?.trim() || "TRAFEGO PAGO";
 }
 
 function safeDate(str: string | undefined): Date | null {
