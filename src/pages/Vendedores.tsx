@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { useMakeDataStore } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync } from '@/hooks/useSolData';
 import { getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
@@ -15,7 +15,7 @@ import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 export default function Vendedores() {
   const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
-  const { data: makeRecords } = useMakeDataStore();
+  const { data: solLeads } = useSolLeads();
   const { selectedOrgName } = useOrgFilter();
   const gf = useGlobalFilters();
 
@@ -36,9 +36,9 @@ export default function Vendedores() {
 
     // IDs de projetos qualificados pelo SOL (etapa passou por SOL SDR/QUALIFICADO)
     const solProjectIds = new Set(
-      (makeRecords || [])
-        .filter(r => r.projectId && r.etapaFunil && !['TRAFEGO PAGO', 'DESQUALIFICADO'].includes(r.etapaFunil))
-        .map(r => r.projectId)
+      (solLeads || [])
+        .filter(r => r.project_id && r.etapa_funil && !['TRAFEGO PAGO', 'DESQUALIFICADO'].includes(r.etapa_funil))
+        .map(r => r.project_id)
     );
 
     const viaSol = ganhas.filter(p => solProjectIds.has(p.projetoId));
@@ -58,7 +58,7 @@ export default function Vendedores() {
       ticketSol,
       ticketManual,
     };
-  }, [filteredProposals, makeRecords]);
+  }, [filteredProposals, solLeads]);
 
   // ── Totais da tabela ──
   const totais = useMemo(() => ({

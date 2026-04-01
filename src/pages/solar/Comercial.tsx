@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useSolLeadsSync, SolLeadSync } from "@/hooks/useSolLeadsSync";
-import { useSolProjetosSync, useSolEquipeSync } from "@/hooks/useSolSyncTables";
+import { useSolLeads, useSolProjetos, useSolEquipe, type SolLead } from "@/hooks/useSolData";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,9 +30,9 @@ const preferenceIcon = (pref: string | null) => {
 };
 
 export default function Comercial() {
-  const { data: allLeads, isLoading, error, isFetching, refetch } = useSolLeadsSync(["QUALIFICADO", "GANHO", "PERDIDO"]);
-  const { data: projetos } = useSolProjetosSync(100);
-  const { data: equipe } = useSolEquipeSync();
+  const { data: allLeads, isLoading, error, isFetching, refetch } = useSolLeads(["QUALIFICADO", "GANHO", "PERDIDO"]);
+  const { data: projetos } = useSolProjetos(100);
+  const { data: equipe } = useSolEquipe();
 
   const [search, setSearch] = useState("");
   const [filterCloser, setFilterCloser] = useState("all");
@@ -61,7 +60,7 @@ export default function Comercial() {
   }, [allLeads, search, filterCloser]);
 
   const byStatus = useMemo(() => {
-    const grouped: Record<string, SolLeadSync[]> = {};
+    const grouped: Record<string, SolLead[]> = {};
     KANBAN_COLUMNS.forEach(c => grouped[c] = []);
     filtered.forEach(r => {
       const s = (r.status || "").toUpperCase().trim();

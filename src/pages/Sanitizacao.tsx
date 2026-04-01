@@ -13,7 +13,7 @@ import {
 import { ChevronDown, Search, AlertTriangle, Phone, PhoneOff, BarChart3, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { normalizePhone } from "@/hooks/useMakeDataStore";
+import { normalizePhone } from '@/hooks/useSolData';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -182,7 +182,7 @@ export default function Sanitizacao() {
 
     const toEntry = (p: any): ProjectEntry => ({
       projeto_id: p.projeto_id || "",
-      nome: p.nome_cliente || p.makeNome || "",
+      nome: p.nome_cliente || p.nome || "",
       etapa: p.etapa || "",
       status: p.status || "",
       responsavel: p.responsavel || "",

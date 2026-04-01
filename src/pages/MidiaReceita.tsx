@@ -9,26 +9,26 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line, Legend,
 } from "recharts";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { DollarSign, TrendingUp, Users, Target, RefreshCcw } from "lucide-react";
 import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 const TEMP_COLORS = { quente: "hsl(var(--destructive))", morno: "hsl(var(--warning))", frio: "hsl(var(--info))" };
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
-function deriveMidiaData(records: MakeRecord[]) {
+function deriveMidiaData(records: SolLead[]) {
   // Group by canal
   const canais: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[]; quentes: number; mornos: number; frios: number }> = {};
 
   records.forEach(r => {
-    let canal = r.canalOrigem || 'Outros';
+    let canal = r.canal_origem || 'Outros';
     if (!canais[canal]) canais[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0, mornos: 0, frios: 0 };
     canais[canal].leads++;
-    if (r.status_resposta === 'respondeu') canais[canal].responderam++;
-    if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') canais[canal].qualificados++;
-    const s = parseInt(r.makeScore || '0') || 0;
+    if (r.status === 'respondeu') canais[canal].responderam++;
+    if ((r.status || '').toUpperCase() === 'QUALIFICADO') canais[canal].qualificados++;
+    const s = parseInt(r.score || '0') || 0;
     if (s > 0) canais[canal].scores.push(s);
-    const temp = (r.makeTemperatura || '').toUpperCase();
+    const temp = (r.temperatura || '').toUpperCase();
     if (temp === 'QUENTE') canais[canal].quentes++;
     else if (temp === 'MORNO') canais[canal].mornos++;
     else canais[canal].frios++;
@@ -77,13 +77,13 @@ function deriveMidiaData(records: MakeRecord[]) {
   // Weekly evolution
   const byWeek: Record<string, Record<string, { leads: number }>> = {};
   records.forEach(r => {
-    if (!r.data_envio) return;
+    if (!r.ts_cadastro) return;
     try {
-      const d = new Date(r.data_envio);
+      const d = new Date(r.ts_cadastro);
       if (isNaN(d.getTime())) return;
       const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
       const key = ws.toISOString().slice(0, 10);
-      const canal = r.canalOrigem || 'Outros';
+      const canal = r.canal_origem || 'Outros';
       if (!byWeek[key]) byWeek[key] = {};
       if (!byWeek[key][canal]) byWeek[key][canal] = { leads: 0 };
       byWeek[key][canal].leads++;
@@ -101,8 +101,8 @@ function deriveMidiaData(records: MakeRecord[]) {
 
   // KPIs table
   const totalLeads = records.length;
-  const totalResp = records.filter(r => r.status_resposta === 'respondeu').length;
-  const totalQual = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
+  const totalResp = records.filter(r => r.status === 'respondeu').length;
+  const totalQual = records.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const kpiTable = [
     { metrica: "Leads gerados", total: String(totalLeads) },
     { metrica: "Responderam", total: String(totalResp) },
@@ -115,12 +115,12 @@ function deriveMidiaData(records: MakeRecord[]) {
 }
 
 export default function MidiaReceita() {
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
-  const allRecords = makeRecords || [];
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
+  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
   const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => pf.filterRecords(solLeads), [solLeads, pf.filterRecords]);
 
   const d = useMemo(() => deriveMidiaData(records), [records]);
 

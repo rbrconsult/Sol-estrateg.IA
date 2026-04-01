@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Megaphone, RefreshCcw } from 'lucide-react';
-import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
@@ -39,12 +39,12 @@ function KPICard({ label, value, suffix = '', color }: { label: string; value: n
 }
 
 /* C3: Derive attribution exclusively from canal_origem */
-function deriveAttribution(records: MakeRecord[]) {
+function deriveAttribution(records: SolLead[]) {
   const byCanal: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[]; quentes: number }> = {};
 
   records.forEach(r => {
     // C3: Use ONLY canal_origem — no inference from cidade or messages
-    const raw = (r.canalOrigem || '').trim().toLowerCase();
+    const raw = (r.canal_origem || '').trim().toLowerCase();
     let canal = 'Direto / Não identificado';
     if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) canal = 'Meta Ads';
     else if (raw === 'google_ads' || raw.includes('google')) canal = 'Google Ads';
@@ -54,11 +54,11 @@ function deriveAttribution(records: MakeRecord[]) {
 
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0 };
     byCanal[canal].leads++;
-    if (r.status_resposta === 'respondeu') byCanal[canal].responderam++;
-    if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') byCanal[canal].qualificados++;
-    const score = parseInt(r.makeScore || '0') || 0;
+    if (((r as any)._status_resposta || '') === 'respondeu') byCanal[canal].responderam++;
+    if ((r.status || '').toUpperCase() === 'QUALIFICADO') byCanal[canal].qualificados++;
+    const score = parseInt(r.score || '0') || 0;
     if (score > 0) byCanal[canal].scores.push(score);
-    if ((r.makeTemperatura || '').toUpperCase() === 'QUENTE') byCanal[canal].quentes++;
+    if ((r.temperatura || '').toUpperCase() === 'QUENTE') byCanal[canal].quentes++;
   });
 
   return Object.entries(byCanal)
@@ -73,10 +73,10 @@ function deriveAttribution(records: MakeRecord[]) {
 }
 
 /* C3: Temperature by channel — use canal_origem directly */
-function deriveTemperatureByChannel(records: MakeRecord[], attribution: ReturnType<typeof deriveAttribution>) {
+function deriveTemperatureByChannel(records: SolLead[], attribution: ReturnType<typeof deriveAttribution>) {
   return attribution.map(a => {
     const channelRecords = records.filter(r => {
-      const raw = (r.canalOrigem || '').trim().toLowerCase();
+      const raw = (r.canal_origem || '').trim().toLowerCase();
       let canal = 'Direto / Não identificado';
       if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) canal = 'Meta Ads';
       else if (raw === 'google_ads' || raw.includes('google')) canal = 'Google Ads';
@@ -87,28 +87,28 @@ function deriveTemperatureByChannel(records: MakeRecord[], attribution: ReturnTy
     });
     return {
       canal: a.canal,
-      quentes: channelRecords.filter(r => (r.makeTemperatura || '').toUpperCase() === 'QUENTE').length,
-      mornos: channelRecords.filter(r => (r.makeTemperatura || '').toUpperCase() === 'MORNO').length,
-      frios: channelRecords.filter(r => !r.makeTemperatura || (r.makeTemperatura || '').toUpperCase() === 'FRIO').length,
+      quentes: channelRecords.filter(r => (r.temperatura || '').toUpperCase() === 'QUENTE').length,
+      mornos: channelRecords.filter(r => (r.temperatura || '').toUpperCase() === 'MORNO').length,
+      frios: channelRecords.filter(r => !r.temperatura || (r.temperatura || '').toUpperCase() === 'FRIO').length,
     };
   });
 }
 
 /* Derive weekly evolution from data_envio dates */
-function deriveWeeklyEvolution(records: MakeRecord[]) {
+function deriveWeeklyEvolution(records: SolLead[]) {
   const byWeek: Record<string, { leads: number; qualificados: number; responderam: number }> = {};
   records.forEach(r => {
-    if (!r.data_envio) return;
+    if (!r.ts_cadastro) return;
     try {
-      const d = new Date(r.data_envio);
+      const d = new Date(r.ts_cadastro);
       if (isNaN(d.getTime())) return;
       const weekStart = new Date(d);
       weekStart.setDate(d.getDate() - d.getDay());
       const key = weekStart.toISOString().slice(0, 10);
       if (!byWeek[key]) byWeek[key] = { leads: 0, qualificados: 0, responderam: 0 };
       byWeek[key].leads++;
-      if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') byWeek[key].qualificados++;
-      if (r.status_resposta === 'respondeu') byWeek[key].responderam++;
+      if ((r.status || '').toUpperCase() === 'QUALIFICADO') byWeek[key].qualificados++;
+      if (((r as any)._status_resposta || '') === 'respondeu') byWeek[key].responderam++;
     } catch { /* skip */ }
   });
   return Object.entries(byWeek)
@@ -124,9 +124,10 @@ function deriveWeeklyEvolution(records: MakeRecord[]) {
 }
 
 export default function AdsPerformance() {
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
   const gf = useGlobalFilters();
-  const filteredRecords = useMemo(() => gf.filterRecords(makeRecords || []), [makeRecords, gf.filterRecords]);
+  const filteredRecords = useMemo(() => gf.filterRecords(solLeads || []), [solLeads, gf.filterRecords]);
   const records = filteredRecords;
 
   const attribution = useMemo(() => deriveAttribution(records), [records]);
@@ -146,8 +147,8 @@ export default function AdsPerformance() {
 
   // Overall KPIs derived from all data
   const totalLeads = records.length;
-  const totalQualificados = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
-  const totalResponderam = records.filter(r => r.status_resposta === 'respondeu').length;
+  const totalQualificados = records.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const totalResponderam = records.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaRespostaGeral = totalLeads > 0 ? (totalResponderam / totalLeads) * 100 : 0;
   const taxaQualGeral = totalLeads > 0 ? (totalQualificados / totalLeads) * 100 : 0;
 

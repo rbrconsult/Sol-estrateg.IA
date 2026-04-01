@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Legend } from 'recharts';
 import { Repeat, RefreshCcw } from 'lucide-react';
-import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
@@ -18,21 +18,21 @@ const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(va
 
 /* ── Derive FUP metrics from Make records ── */
 
-function deriveFupData(records: MakeRecord[]) {
-  const fupRecords = records.filter(r => (r.followupCount || 0) >= 1);
+function deriveFupData(records: SolLead[]) {
+  const fupRecords = records.filter(r => (r.fup_followup_count || 0) >= 1);
   const totalEntrou = fupRecords.length;
-  const reativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
+  const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaReativacao = totalEntrou > 0 ? Math.round((reativados / totalEntrou) * 100) : 0;
 
   // Group by followup count to build pipeline
   const byFup: Record<number, { disparos: number; respostas: number }> = {};
   fupRecords.forEach(r => {
-    const count = r.followupCount || 1;
+    const count = r.fup_followup_count || 1;
     for (let i = 1; i <= Math.min(count, 8); i++) {
       if (!byFup[i]) byFup[i] = { disparos: 0, respostas: 0 };
       byFup[i].disparos++;
     }
-    if (r.status_resposta === 'respondeu') {
+    if (((r as any)._status_resposta || '') === 'respondeu') {
       const c = Math.min(count, 8);
       if (byFup[c]) byFup[c].respostas++;
     }
@@ -55,10 +55,10 @@ function deriveFupData(records: MakeRecord[]) {
   });
 
   // Status anterior analysis
-  const desqEntrou = fupRecords.filter(r => (r.codigoStatus || '').includes('DESQUAL') || (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const noRespEntrou = fupRecords.filter(r => r.codigoStatus === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou').length;
-  const desqReativados = fupRecords.filter(r => ((r.codigoStatus || '').includes('DESQUAL') || (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO') && r.status_resposta === 'respondeu').length;
-  const noRespReativados = fupRecords.filter(r => (r.codigoStatus === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou') && r.status_resposta === 'respondeu').length;
+  const desqEntrou = fupRecords.filter(r => (r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const noRespEntrou = fupRecords.filter(r => r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou').length;
+  const desqReativados = fupRecords.filter(r => ((r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO') && ((r as any)._status_resposta || '') === 'respondeu').length;
+  const noRespReativados = fupRecords.filter(r => (r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou') && ((r as any)._status_resposta || '') === 'respondeu').length;
 
   // C5: Removed fallback percentages — show real data only
   const hasEnoughData = totalEntrou >= 30;
@@ -68,7 +68,7 @@ function deriveFupData(records: MakeRecord[]) {
   ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 })) : [];
 
   // Results of reactivated
-  const qualificadosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
+  const qualificadosFup = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const desqNovamente = Math.max(0, reativados - qualificadosFup - Math.round(reativados * 0.13));
   const emQual = reativados - qualificadosFup - desqNovamente;
 
@@ -81,29 +81,29 @@ function deriveFupData(records: MakeRecord[]) {
 
   // Active leads in FUP
   const leadsAtivos = fupRecords
-    .filter(r => r.status_resposta !== 'respondeu')
+    .filter(r => ((r as any)._status_resposta || '') !== 'respondeu')
     .slice(0, 15)
     .map(r => ({
       nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
-      etapaAtual: `FUP ${Math.min(r.followupCount || 1, 8)}`,
-      proximoFup: `FUP ${Math.min((r.followupCount || 1) + 1, 8)}`,
-      diasEmFup: r.followupCount ? r.followupCount * 3 : 1,
+      etapaAtual: `FUP ${Math.min(r.fup_followup_count || 1, 8)}`,
+      proximoFup: `FUP ${Math.min((r.fup_followup_count || 1) + 1, 8)}`,
+      diasEmFup: r.fup_followup_count ? r.fup_followup_count * 3 : 1,
       canalOrigem: r.cidade || '—',
-      ultimaResposta: r.lastFollowupDate || '—',
+      ultimaResposta: r.ts_ultimo_fup || '—',
       telefone: r.telefone,
-      temp: r.makeTemperatura || '',
-      score: parseInt(r.makeScore || '0') || 0,
-      makeStatus: r.makeStatus || '',
-      valorConta: r.valorConta || '',
+      temp: r.temperatura || '',
+      score: parseInt(r.score || '0') || 0,
+      makeStatus: r.status || '',
+      valorConta: r.valor_conta || '',
     }));
 
   // Avg FUP count for reactivated
-  const fupCounts = fupRecords.filter(r => r.status_resposta === 'respondeu').map(r => r.followupCount || 1);
+  const fupCounts = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').map(r => r.fup_followup_count || 1);
   const avgFups = fupCounts.length > 0 ? (fupCounts.reduce((a, b) => a + b, 0) / fupCounts.length).toFixed(1) : '0';
 
   return {
     kpis: {
-      leadsAtivos: fupRecords.filter(r => r.status_resposta !== 'respondeu').length,
+      leadsAtivos: fupRecords.filter(r => ((r as any)._status_resposta || '') !== 'respondeu').length,
       totalEntrou,
       reativados,
       taxaReativacao,
@@ -119,13 +119,13 @@ function deriveFupData(records: MakeRecord[]) {
 /* ── Component ── */
 
 export default function RoboFupFrio() {
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
   const { openLead360 } = useLead360();
-  const allRecords = makeRecords || [];
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
+  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
 
   const fupData = useMemo(() => deriveFupData(records), [records]);
 
@@ -133,8 +133,8 @@ export default function RoboFupFrio() {
     openLead360({
       nome: lead.nome,
       telefone: lead.telefone,
-      etapa: lead.makeStatus || lead.etapaAtual,
-      valor: lead.valorConta || '—',
+      etapa: lead.status || lead.etapaAtual,
+      valor: lead.valor_conta || '—',
       responsavel: '',
       origem: '',
       temperatura: lead.temp || '',
@@ -277,7 +277,7 @@ export default function RoboFupFrio() {
       <RouteStudy records={records} />
 
       {/* BLOCO 4.6 — Heatmap */}
-      <HeatmapChart records={records.filter(r => (r.followupCount || 0) >= 1)} title="Melhor Horário e Dia (FUP)" dateField="lastFollowupDate" />
+      <HeatmapChart records={records.filter(r => (r.fup_followup_count || 0) >= 1)} title="Melhor Horário e Dia (FUP)" dateField="lastFollowupDate" />
 
       {/* BLOCO 4 — Por Status Anterior */}
       <Card>
@@ -328,7 +328,7 @@ export default function RoboFupFrio() {
                   <TableCell><Badge variant="outline" className="text-xs">{l.etapaAtual}</Badge></TableCell>
                   <TableCell className="text-xs">{l.proximoFup}</TableCell>
                   <TableCell className="text-right text-xs">{l.diasEmFup}</TableCell>
-                  <TableCell className="text-xs">{l.canalOrigem}</TableCell>
+                  <TableCell className="text-xs">{l.canal_origem}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

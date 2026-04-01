@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { useSolFunisSync } from "@/hooks/useSolSyncTables";
+import { useSolFunis } from "@/hooks/useSolData";
 
 interface Etapa {
   ordem?: number;
@@ -12,7 +12,7 @@ interface Etapa {
 }
 
 export default function SolFunisPage() {
-  const { data: funis, isLoading } = useSolFunisSync();
+  const { data: funis, isLoading } = useSolFunis();
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;

@@ -8,7 +8,7 @@ import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
 import { HelpButton } from "@/components/HelpButton";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
-import { useSolLeadsSync, type SolLeadSync } from "@/hooks/useSolLeadsSync";
+import { useSolLeads, type SolLead } from "@/hooks/useSolData";
 import type { Proposal } from "@/data/dataAdapter";
 
 // Mapeamento status v2 → coluna Kanban
@@ -31,7 +31,7 @@ function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' {
   return 'Aberto';
 }
 
-function leadToProposal(lead: SolLeadSync, idx: number): Proposal {
+function leadToProposal(lead: SolLead, idx: number): Proposal {
   const status = mapStatus(lead.status);
   const statusUp = (lead.status || 'TRAFEGO_PAGO').toUpperCase();
   const etapa = STATUS_TO_KANBAN[statusUp] || 'TRAFEGO PAGO';
@@ -76,7 +76,7 @@ function leadToProposal(lead: SolLeadSync, idx: number): Proposal {
 }
 
 const Pipeline = () => {
-  const { data: leads, isLoading, error } = useSolLeadsSync();
+  const { data: leads, isLoading, error } = useSolLeads();
   const gf = useGlobalFilters();
   const [statusView, setStatusView] = useState<StatusView>('abertos');
 

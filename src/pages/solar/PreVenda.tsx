@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSolLeadsSync } from '@/hooks/useSolLeadsSync';
-import { useSolEquipeSync, useSolQualificacaoSync } from '@/hooks/useSolSyncTables';
+import { useSolLeads, useSolEquipe, useSolQualificacao, type SolLead } from '@/hooks/useSolData';
 import { useSolActionsV2 } from '@/hooks/useSolActionsV2';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 import { Card } from '@/components/ui/card';
@@ -14,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, RefreshCw, Phone, MessageSquare, Clock, FileText, Send, X, RotateCcw, UserCheck, UserX } from 'lucide-react';
-import type { SolLeadSync } from '@/hooks/useSolLeadsSync';
+
 
 const KANBAN_COLUMNS = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP'] as const;
 const COL_LABELS: Record<string, string> = { TRAFEGO_PAGO: 'Leads Recebidos', EM_QUALIFICACAO: 'MQL', FOLLOW_UP: 'Follow Up' };
@@ -40,18 +39,18 @@ function scoreBadge(score: string | null) {
 
 export default function PreVenda() {
   const franquiaId = useFranquiaId();
-  const { data: leads, isLoading: l1, refetch } = useSolLeadsSync(['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'DESQUALIFICADO']);
-  const { data: equipe, isLoading: l2 } = useSolEquipeSync();
-  const { data: qualificacoes } = useSolQualificacaoSync();
+  const { data: leads, isLoading: l1, refetch } = useSolLeads(['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'DESQUALIFICADO']);
+  const { data: equipe, isLoading: l2 } = useSolEquipe();
+  const { data: qualificacoes } = useSolQualificacao();
   const actions = useSolActionsV2();
 
   const [search, setSearch] = useState('');
   const [tempFilter, setTempFilter] = useState('all');
   const [canalFilter, setCanalFilter] = useState('all');
-  const [selectedLead, setSelectedLead] = useState<SolLeadSync | null>(null);
+  const [selectedLead, setSelectedLead] = useState<SolLead | null>(null);
   const [desqualMotivo, setDesqualMotivo] = useState('');
   const [showDesqualDialog, setShowDesqualDialog] = useState(false);
-  const [desqualTarget, setDesqualTarget] = useState<SolLeadSync | null>(null);
+  const [desqualTarget, setDesqualTarget] = useState<SolLead | null>(null);
 
   const isLoading = l1 || l2;
   const closers = useMemo(() => (equipe || []).filter(e => e.ativo && e.krolik_ativo), [equipe]);
@@ -70,7 +69,7 @@ export default function PreVenda() {
   }, [leads, search, tempFilter, canalFilter]);
 
   const byColumn = useMemo(() => {
-    const grouped: Record<string, SolLeadSync[]> = {};
+    const grouped: Record<string, SolLead[]> = {};
     KANBAN_COLUMNS.forEach(c => grouped[c] = []);
     filtered.forEach(l => {
       const s = l.status || 'TRAFEGO_PAGO';
@@ -95,7 +94,7 @@ export default function PreVenda() {
     return qualificacoes.find(q => q.telefone === selectedLead.telefone) || null;
   }, [selectedLead, qualificacoes]);
 
-  const handleQualificar = (lead: SolLeadSync) => {
+  const handleQualificar = (lead: SolLead) => {
     actions.qualificar.mutate({
       telefone: lead.telefone, nome: lead.nome, score: lead.score, temperatura: lead.temperatura,
       valor_conta: lead.valor_conta, preferencia_contato: lead.preferencia_contato, email: lead.email,
@@ -110,11 +109,11 @@ export default function PreVenda() {
     }, { onSuccess: () => { refetch(); setShowDesqualDialog(false); setDesqualTarget(null); setDesqualMotivo(''); setSelectedLead(null); } });
   };
 
-  const handleReprocessar = (lead: SolLeadSync) => {
+  const handleReprocessar = (lead: SolLead) => {
     actions.reprocessar.mutate({ telefone: lead.telefone }, { onSuccess: () => refetch() });
   };
 
-  const handleTransferir = (lead: SolLeadSync) => {
+  const handleTransferir = (lead: SolLead) => {
     actions.transferir.mutate({
       telefone: lead.telefone, nome: lead.nome, score: lead.score, temperatura: lead.temperatura,
       valor_conta: lead.valor_conta, preferencia_contato: lead.preferencia_contato, email: lead.email,

@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSolLeadsSync } from '@/hooks/useSolLeadsSync';
-import { useSolEquipeSync, useSolProjetosSync, useSolConversionsSync, useSolFunisSync } from '@/hooks/useSolSyncTables';
+import { useSolLeads, useSolEquipe, useSolProjetos, useSolConversions, useSolFunis } from '@/hooks/useSolData';
 import { usePeriodo } from '@/hooks/usePeriodo';
 import { CampanhaFilters } from '@/components/campanhas/CampanhaFilters';
 import { SyncBadge } from '@/components/campanhas/SyncBadge';
@@ -47,10 +46,10 @@ function FunnelBar({ label, value, maxValue, prevValue, color }: { label: string
 export default function FunilConsolidado() {
   const { periodo, setPeriodo, range } = usePeriodo();
   const franquiaId = useFranquiaId();
-  const { data: leads, isLoading: l1 } = useSolLeadsSync();
-  const { data: equipe, isLoading: l2 } = useSolEquipeSync();
-  const { data: projetos, isLoading: l3 } = useSolProjetosSync(50);
-  const { data: conversions, isLoading: l4 } = useSolConversionsSync();
+  const { data: leads, isLoading: l1 } = useSolLeads();
+  const { data: equipe, isLoading: l2 } = useSolEquipe();
+  const { data: projetos, isLoading: l3 } = useSolProjetos(50);
+  const { data: conversions, isLoading: l4 } = useSolConversions();
   const [closerFilter, setCloserFilter] = useState('all');
 
   const isLoading = l1 || l2 || l3 || l4;

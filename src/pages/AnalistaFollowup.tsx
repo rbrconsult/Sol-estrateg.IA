@@ -8,7 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   AreaChart, Area, Line, Legend, PieChart, Pie, Cell,
 } from "recharts";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Repeat, Users, DollarSign, Clock, Zap, TrendingUp, MessageSquare, Target, RefreshCcw,
@@ -18,13 +18,13 @@ import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
-function deriveFupData(records: MakeRecord[]) {
-  const fupRecords = records.filter(r => (r.followupCount ?? 0) > 0 || r.robo === 'fup_frio');
+function deriveFupData(records: SolLead[]) {
+  const fupRecords = records.filter(r => (r.fup_followup_count ?? 0) > 0 || false);
   const total = fupRecords.length;
-  const reativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
+  const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const pctReativados = total > 0 ? Math.round((reativados / total) * 100) : 0;
-  const qualificadosPosFup = fupRecords.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
-  const ativos = fupRecords.filter(r => r.status_resposta === 'aguardando').length;
+  const qualificadosPosFup = fupRecords.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const ativos = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
 
   // KPIs
   const kpis = [
@@ -32,15 +32,15 @@ function deriveFupData(records: MakeRecord[]) {
     { label: "Total entrou no FUP", value: String(total), icon: Target },
     { label: "Reativados", value: `${reativados} (${pctReativados}%)`, icon: Zap },
     { label: "Qualificados pós-FUP", value: String(qualificadosPosFup), icon: DollarSign },
-    { label: "FUPs médios/lead", value: total > 0 ? (fupRecords.reduce((s, r) => s + (r.followupCount || 0), 0) / total).toFixed(1) : "0", icon: Repeat },
+    { label: "FUPs médios/lead", value: total > 0 ? (fupRecords.reduce((s, r) => s + (r.fup_followup_count || 0), 0) / total).toFixed(1) : "0", icon: Repeat },
     { label: "Custo da régua", value: "R$ 0", icon: TrendingUp },
   ];
 
   // Pipeline by FUP count (1-8)
   const pipeline = Array.from({ length: 8 }, (_, i) => {
     const fupNum = i + 1;
-    const inFup = fupRecords.filter(r => (r.followupCount || 0) >= fupNum);
-    const responded = inFup.filter(r => r.status_resposta === 'respondeu').length;
+    const inFup = fupRecords.filter(r => (r.fup_followup_count || 0) >= fupNum);
+    const responded = inFup.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
     return {
       etapa: `FUP ${fupNum}`,
       dia: `D+${[1, 3, 5, 7, 10, 14, 21, 30][i]}`,
@@ -53,8 +53,8 @@ function deriveFupData(records: MakeRecord[]) {
   });
 
   // Resultado reativados
-  const desqNovamente = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const qualPosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
+  const desqNovamente = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const qualPosFup = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const aindaQual = reativados - qualPosFup - desqNovamente;
   const resultadoReativados = [
     { label: "Qualificados → Closer", valor: qualPosFup, pct: reativados > 0 ? Math.round((qualPosFup / reativados) * 100) : 0, cor: "hsl(var(--success))" },
@@ -65,10 +65,10 @@ function deriveFupData(records: MakeRecord[]) {
   // By canal
   const byCanal: Record<string, { entrouFUP: number; reativados: number }> = {};
   fupRecords.forEach(r => {
-    const canal = r.canalOrigem || 'Outros';
+    const canal = r.canal_origem || 'Outros';
     if (!byCanal[canal]) byCanal[canal] = { entrouFUP: 0, reativados: 0 };
     byCanal[canal].entrouFUP++;
-    if (r.status_resposta === 'respondeu') byCanal[canal].reativados++;
+    if (((r as any)._status_resposta || '') === 'respondeu') byCanal[canal].reativados++;
   });
   const porCanal = Object.entries(byCanal)
     .map(([canal, d]) => ({ canal, ...d, taxa: `${d.entrouFUP > 0 ? Math.round((d.reativados / d.entrouFUP) * 100) : 0}%` }))
@@ -76,11 +76,11 @@ function deriveFupData(records: MakeRecord[]) {
     .slice(0, 5);
 
   // Perfil
-  const reativadosRecs = fupRecords.filter(r => r.status_resposta === 'respondeu');
+  const reativadosRecs = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
   const tempDistReativados = {
     temperatura: [
-      { label: "Entrou FRIO", pct: reativadosRecs.length > 0 ? Math.round(reativadosRecs.filter(r => (r.makeTemperatura || '').toUpperCase() === 'FRIO' || !r.makeTemperatura).length / reativadosRecs.length * 100) : 0 },
-      { label: "Entrou MORNO", pct: reativadosRecs.length > 0 ? Math.round(reativadosRecs.filter(r => (r.makeTemperatura || '').toUpperCase() === 'MORNO').length / reativadosRecs.length * 100) : 0 },
+      { label: "Entrou FRIO", pct: reativadosRecs.length > 0 ? Math.round(reativadosRecs.filter(r => (r.temperatura || '').toUpperCase() === 'FRIO' || !r.temperatura).length / reativadosRecs.length * 100) : 0 },
+      { label: "Entrou MORNO", pct: reativadosRecs.length > 0 ? Math.round(reativadosRecs.filter(r => (r.temperatura || '').toUpperCase() === 'MORNO').length / reativadosRecs.length * 100) : 0 },
     ],
     faixaConta: deriveFaixaConta(reativadosRecs),
     cidades: deriveCidades(reativadosRecs),
@@ -88,29 +88,29 @@ function deriveFupData(records: MakeRecord[]) {
 
   // Active leads
   const leadsAtivos = fupRecords
-    .filter(r => r.status_resposta === 'aguardando')
-    .sort((a, b) => (b.followupCount || 0) - (a.followupCount || 0))
+    .filter(r => ((r as any)._status_resposta || '') === 'aguardando')
+    .sort((a, b) => (b.fup_followup_count || 0) - (a.fup_followup_count || 0))
     .slice(0, 8)
     .map(r => ({
       nome: r.nome || 'Lead',
-      etapaAtual: `FUP ${r.followupCount || 1}`,
-      proximoFUP: r.lastFollowupDate || '—',
-      diasEmFUP: r.lastFollowupDate ? `${Math.max(1, Math.round((Date.now() - new Date(r.lastFollowupDate).getTime()) / 86400000))} dias` : '—',
-      canal: r.canalOrigem || 'Direto',
-      ultResposta: r.data_resposta || '—',
+      etapaAtual: `FUP ${r.fup_followup_count || 1}`,
+      proximoFUP: r.ts_ultimo_fup || '—',
+      diasEmFUP: r.ts_ultimo_fup ? `${Math.max(1, Math.round((Date.now() - new Date(r.ts_ultimo_fup).getTime()) / 86400000))} dias` : '—',
+      canal: r.canal_origem || 'Direto',
+      ultResposta: r.ts_ultima_interacao || '—',
     }));
 
   // Temporal evolution
   const byWeek: Record<string, { disparos: number; respostas: number }> = {};
   fupRecords.forEach(r => {
-    const date = r.data_envio || r.lastFollowupDate || '';
+    const date = r.ts_cadastro || r.ts_ultimo_fup || '';
     if (!date) return;
     const d = new Date(date);
     if (isNaN(d.getTime())) return;
     const key = d.toISOString().slice(0, 10);
     if (!byWeek[key]) byWeek[key] = { disparos: 0, respostas: 0 };
     byWeek[key].disparos++;
-    if (r.status_resposta === 'respondeu') byWeek[key].respostas++;
+    if (((r as any)._status_resposta || '') === 'respondeu') byWeek[key].respostas++;
   });
   let acum = 0;
   const evolucao = Object.entries(byWeek)
@@ -124,7 +124,7 @@ function deriveFupData(records: MakeRecord[]) {
   return { kpis, pipeline, resultadoReativados, porCanal, tempDistReativados, leadsAtivos, evolucao };
 }
 
-function deriveFaixaConta(records: MakeRecord[]) {
+function deriveFaixaConta(records: SolLead[]) {
   const ranges = [
     { label: "R$ 250-400", min: 250, max: 400 },
     { label: "R$ 400-700", min: 400, max: 700 },
@@ -133,16 +133,16 @@ function deriveFaixaConta(records: MakeRecord[]) {
   const total = records.length || 1;
   return ranges.map(r => {
     const count = records.filter(rec => {
-      const val = parseInt((rec.valorConta || '').replace(/\D/g, '')) || 0;
+      const val = parseInt((rec.valor_conta || '').replace(/\D/g, '')) || 0;
       return val >= r.min && val < r.max;
     }).length;
     return { label: r.label, pct: Math.round((count / total) * 100) };
   });
 }
 
-function deriveCidades(records: MakeRecord[]) {
+function deriveCidades(records: SolLead[]) {
   const cidades: Record<string, number> = {};
-  records.forEach(r => { const c = r.canalOrigem || 'Outros'; cidades[c] = (cidades[c] || 0) + 1; });
+  records.forEach(r => { const c = r.canal_origem || 'Outros'; cidades[c] = (cidades[c] || 0) + 1; });
   const total = records.length || 1;
   return Object.entries(cidades)
     .sort(([, a], [, b]) => b - a)
@@ -151,13 +151,13 @@ function deriveCidades(records: MakeRecord[]) {
 }
 
 export default function AnalistaFollowup() {
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
   const { openLead360 } = useLead360();
-  const allRecords = makeRecords || [];
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
+  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
 
   const d = useMemo(() => deriveFupData(records), [records]);
 

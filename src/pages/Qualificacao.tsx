@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
@@ -21,14 +21,14 @@ import {
 
 const WEBHOOK_QUALIFICAR = "https://hook.us2.make.com/oxaip1d1e946l7hmtyhpr1aic626o92m";
 
-function classifyLead(r: MakeRecord): string {
-  return (r.followupCount || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
+function classifyLead(r: SolLead): string {
+  return (r.fup_followup_count || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
 }
 
-function isDesqualificado(r: MakeRecord): boolean {
-  const status = (r.makeStatus || "").toUpperCase();
-  const etapa = (r.etapaFunil || "").toUpperCase();
-  const codigo = (r.codigoStatus || "").toUpperCase();
+function isDesqualificado(r: SolLead): boolean {
+  const status = (r.status || "").toUpperCase();
+  const etapa = (r.etapa_funil || "").toUpperCase();
+  const codigo = (r.status || "").toUpperCase();
   return (
     status === "DESQUALIFICADO" || status === "DECLINIO" || status === "DECLÍNIO" ||
     status.includes("DECLINIO") || status.includes("DECLÍNIO") ||
@@ -47,10 +47,11 @@ interface KrolicMember {
   krolik_id: string | null;
 }
 
-type EnrichedLead = MakeRecord & { _classificacao: string; _desqualificado: boolean; _qualificado: boolean };
+type EnrichedLead = SolLead & { _classificacao: string; _desqualificado: boolean; _qualificado: boolean };
 
 export default function Qualificacao() {
-  const { data: records, isLoading, isFetching, forceSync, refetch } = useMakeDataStore();
+  const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
+  const { forceSync } = useForceSync();
   const gf = useGlobalFilters();
   const { selectedOrgId, orgs } = useOrgFilter();
   const [search, setSearch] = useState("");
@@ -98,11 +99,11 @@ export default function Qualificacao() {
       : { nome: "", sm_id: null, krolik_id: null };
   };
 
-  const isQualificado = (r: MakeRecord): boolean => {
+  const isQualificado = (r: SolLead): boolean => {
     if (isDesqualificado(r)) return false;
-    const status = (r.makeStatus || '').toUpperCase();
-    const etapa = (r.etapaFunil || '').toUpperCase();
-    const etapaSm = (r.etapaSm || '').toUpperCase();
+    const status = (r.status || '').toUpperCase();
+    const etapa = (r.etapa_funil || '').toUpperCase();
+    const etapaSm = (r.etapa_funil || '').toUpperCase();
     return status === 'QUALIFICADO' || status.includes('QUALIFICADO') || etapa === 'QUALIFICADO' || etapaSm.includes('QUALIFICADO');
   };
 
@@ -113,14 +114,14 @@ export default function Qualificacao() {
     return records
       .filter((r) => {
         if (effFrom || effTo) {
-          const dateStr = r.data_envio;
+          const dateStr = r.ts_cadastro;
           if (!dateStr) return false;
           const d = new Date(dateStr);
           if (isNaN(d.getTime())) return false;
           if (effFrom) { const fs = new Date(effFrom); fs.setHours(0,0,0,0); if (d < fs) return false; }
           if (effTo) { const es = new Date(effTo); es.setHours(23,59,59,999); if (d > es) return false; }
         }
-        const status = (r.makeStatus || '').toUpperCase();
+        const status = (r.status || '').toUpperCase();
         const isRoboStage = !status || roboStatuses.includes(status) || status === 'WHATSAPP';
         return isRoboStage || status === 'QUALIFICADO' || isDesqualificado(r);
       })
@@ -146,7 +147,7 @@ export default function Qualificacao() {
     }
     return [...result].sort((a, b) => {
       const getLatest = (r: typeof a) => {
-        const dates = [r.lastFollowupDate, r.historico?.length ? r.historico[r.historico.length - 1]?.data : null, r.data_resposta, r.data_envio].filter(Boolean);
+        const dates = [r.ts_ultimo_fup, ([] as any[])?.length ? ([] as any[])[([] as any[]).length - 1]?.data : null, r.ts_ultima_interacao, r.ts_cadastro].filter(Boolean);
         const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
         return timestamps.length > 0 ? Math.max(...timestamps) : 0;
       };
@@ -188,8 +189,8 @@ export default function Qualificacao() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telefone: telefoneFormatado, project_id: lead.projectId || "", chatId: "", contactId: "",
-            nome: lead.nome || "", score: lead.makeScore || "", valor_conta: lead.valorConta || "",
+            telefone: telefoneFormatado, project_id: lead.project_id || "", chatId: "", contactId: "",
+            nome: lead.nome || "", score: lead.score || "", valor_conta: lead.valor_conta || "",
             mensagem: comMensagem, closer_sm_id: vendor.sm_id, closer_krolik_id: vendor.krolik_id,
           }),
         });
@@ -429,22 +430,22 @@ export default function Qualificacao() {
                         </Badge>
                         {isQF && <Badge variant="secondary" className="text-[10px] shrink-0 bg-primary/20 text-primary">QUALIFICADO</Badge>}
                         {isDQ && <Badge variant="destructive" className="text-[10px] shrink-0">DESQUALIFICADO</Badge>}
-                        {lead.makeTemperatura && (
+                        {lead.temperatura && (
                           <Badge variant="secondary" className={`text-[10px] shrink-0 ${
-                            lead.makeTemperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
-                            : lead.makeTemperatura === "MORNO" ? "bg-accent/50 text-accent-foreground"
+                            lead.temperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
+                            : lead.temperatura === "MORNO" ? "bg-accent/50 text-accent-foreground"
                             : "bg-primary/20 text-primary"
                           }`}>
-                            <Thermometer className="h-3 w-3 mr-0.5" />{lead.makeTemperatura}
+                            <Thermometer className="h-3 w-3 mr-0.5" />{lead.temperatura}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.telefone}</span>
                         {lead.cidade && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.cidade}</span>}
-                        {lead.makeScore && <span>Score: {lead.makeScore}</span>}
+                        {lead.score && <span>Score: {lead.score}</span>}
                         {(() => {
-                          const dates = [lead.lastFollowupDate, lead.historico?.length ? lead.historico[lead.historico.length - 1]?.data : null, lead.data_resposta, lead.data_envio].filter(Boolean);
+                          const dates = [lead.ts_ultimo_fup, lead.historico?.length ? lead.historico[lead.historico.length - 1]?.data : null, lead.ts_ultima_interacao, lead.ts_cadastro].filter(Boolean);
                           const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
                           if (timestamps.length === 0) return null;
                           const latest = new Date(Math.max(...timestamps));

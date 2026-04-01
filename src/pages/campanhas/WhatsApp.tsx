@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSolMetricasSync } from '@/hooks/useSolSyncTables';
-import { useSolLeadsSync } from '@/hooks/useSolLeadsSync';
+import { useSolMetricas, useSolLeads } from '@/hooks/useSolData';
 import { usePeriodo } from '@/hooks/usePeriodo';
 import { CampanhaFilters } from '@/components/campanhas/CampanhaFilters';
 import { SyncBadge } from '@/components/campanhas/SyncBadge';
@@ -31,8 +30,8 @@ function timeAgo(ts: string | null): string {
 export default function WhatsAppPage() {
   const { periodo, setPeriodo, range } = usePeriodo();
   const franquiaId = useFranquiaId();
-  const { data: metricas, isLoading: l1 } = useSolMetricasSync(30);
-  const { data: leads, isLoading: l2 } = useSolLeadsSync();
+  const { data: metricas, isLoading: l1 } = useSolMetricas(30);
+  const { data: leads, isLoading: l2 } = useSolLeads();
 
   const isLoading = l1 || l2;
 
