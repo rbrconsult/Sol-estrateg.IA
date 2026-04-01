@@ -11,10 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { DollarSign, MousePointer, Target } from 'lucide-react';
-
-const FRANQUIA = 'evolve_olimpia';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 
 export default function GoogleAdsPage() {
+  const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
   const [campanha, setCampanha] = useState('all');
   const [dispositivo, setDispositivo] = useState('all');
