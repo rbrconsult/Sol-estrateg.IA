@@ -34,7 +34,7 @@ export default function GoogleAdsPage() {
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign_name).filter(Boolean))] as string[], [rows]);
   const dispositivos = useMemo(() => [...new Set((rows || []).map((r: any) => r.dispositivo).filter(Boolean))] as string[], [rows]);
-  const redes = useMemo(() => [...new Set((rows || []).map((r: any) => x.rede).filter(Boolean))] as string[], [rows]);
+  const redes = useMemo(() => [...new Set((rows || []).map((r: any) => r.rede).filter(Boolean))] as string[], [rows]);
 
   const kpis = useMemo(() => {
     const cost = sumField(filtered, 'cost');
