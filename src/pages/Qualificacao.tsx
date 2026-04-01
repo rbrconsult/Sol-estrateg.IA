@@ -445,7 +445,7 @@ export default function Qualificacao() {
                         {lead.cidade && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.cidade}</span>}
                         {lead.score && <span>Score: {lead.score}</span>}
                         {(() => {
-                          const dates = [lead.ts_ultimo_fup, lead.historico?.length ? lead.historico[lead.historico.length - 1]?.data : null, lead.ts_ultima_interacao, lead.ts_cadastro].filter(Boolean);
+                          const dates = [lead.ts_ultimo_fup, lead.ts_ultima_interacao, lead.ts_cadastro].filter(Boolean);
                           const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
                           if (timestamps.length === 0) return null;
                           const latest = new Date(Math.max(...timestamps));
