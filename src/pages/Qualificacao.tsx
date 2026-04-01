@@ -51,7 +51,7 @@ type EnrichedLead = SolLead & { _classificacao: string; _desqualificado: boolean
 
 export default function Qualificacao() {
   const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
   const { selectedOrgId, orgs } = useOrgFilter();
   const [search, setSearch] = useState("");
