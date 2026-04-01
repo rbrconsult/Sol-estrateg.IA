@@ -29,3 +29,5 @@ project_id = "xffzjdulkdgyicsllznp"
     verify_jwt = false
   [functions.sol-actions]
     verify_jwt = false
+  [functions.sync-campaign-data]
+    verify_jwt = false
