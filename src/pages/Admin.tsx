@@ -673,6 +673,13 @@ export default function Admin() {
           <TabsContent value="modulos">
             <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
           </TabsContent>
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* INFRAESTRUTURA */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="infraestrutura">
+            <InfrastructureTab />
+          </TabsContent>
         </Tabs>
 
         {/* ═══════════════════════════════════════════ */}
