@@ -38,6 +38,9 @@ const menuGroups: MenuGroup[] = [
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
       { title: "Robô FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
       { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi" },
+      { title: "Qualificar", icon: Sparkles, path: "/qualificacao", moduleKey: "leads" },
+      { title: "Desqualificar", icon: RotateCcw, path: "/desqualificar", moduleKey: "leads" },
+      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "leads" },
     ],
   },
   {
