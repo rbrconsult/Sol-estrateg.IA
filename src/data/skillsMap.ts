@@ -48,7 +48,7 @@ export const skillCategories: SkillCategory[] = [
     key: "pre-venda", label: "Pré-Venda", emoji: "🎯",
     skills: [
       { id: "1.1", name: "Qualificação Automática (ICP Score)", desc: "Score 0-100 + temperatura FRIO/MORNO/QUENTE baseado no perfil", status: "ativo", verticals: ALL, fonte: "leads_sync (dados de perfil)", output: "Score 0-100 + temperatura" },
-      { id: "1.2", name: "Rankeamento Golden Hour", desc: "Identifica os melhores horários de fechamento por vendedor", status: "precisa_dados", verticals: ALL, fonte: "projetos_sync (GANHO × hora × dia × closer)", output: "Roteamento por horário pico" },
+      { id: "golden-hour", name: "Golden Hour (5 min)", desc: "Alerta quando lead novo não foi contactado em 5 minutos — Edge Function + Make webhook", status: "ativo", verticals: ALL, fonte: "sol_leads_sync (ts_cadastro vs ts_ultima_interacao)", output: "⚠️ Insight + WhatsApp via Make" },
       { id: "1.3", name: "Detector de Lead Dormentes", desc: "Alerta WhatsApp para leads inativos >48h", status: "criar", verticals: ALL, fonte: "leads_sync (ts_ultima_interacao > 48h)", output: "⚠️ Alerta WhatsApp" },
       { id: "1.4", name: "Análise Canal × Conversão", desc: "CPL e taxa de conversão por canal de origem", status: "precisa_dados", verticals: ALL, fonte: "leads_sync + ads", output: "CPL comparativo por canal" },
       { id: "1.5", name: "Gerador de Script por Persona", desc: "Adapta prompt do Agente IA por perfil do lead", status: "criar", verticals: ALL, fonte: "config_sync + qualificacao_sync", output: "Prompt adaptado por persona" },
