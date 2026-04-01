@@ -28,7 +28,7 @@ const isDesqualificado = (r: SolLead): boolean => {
 
 export default function Desqualificar() {
   const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
