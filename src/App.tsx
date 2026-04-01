@@ -24,7 +24,7 @@ import Selecao from "./pages/Selecao";
 import Admin from "./pages/Admin";
 import Chamados from "./pages/Chamados";
 import Operacoes from "./pages/Operacoes";
-import Ajuda from "./pages/Ajuda";
+
 import Leads from "./pages/Leads";
 import Conferencia from "./pages/Conferencia";
 import BI from "./pages/BI";
