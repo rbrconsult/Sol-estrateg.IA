@@ -39,13 +39,13 @@ export default function BI() {
   const data = hasData ? {
     totalRecords: 0,
     financeiro: {
-      receitaFechada: biResult.solarMarket?.totalReceita || 0,
-      negociosGanhos: biResult.solarMarket?.negociosGanhos || 0,
-      valorPipeline: biResult.solarMarket?.valorPipeline || 0,
-      negociosAbertos: biResult.solarMarket?.negociosAbertos || 0,
-      ticketMedio: biResult.solarMarket?.ticketMedio || 0,
-      taxaConversao: biResult.solarMarket?.taxaConversao || 0,
-      totalPropostas: biResult.solarMarket?.totalPropostas || 0,
+      receitaFechada: biResult.solarMarket?.inteligenciaProposta?.valorGanho || 0,
+      negociosGanhos: biResult.solarMarket?.inteligenciaProposta?.negociosGanhos || 0,
+      valorPipeline: biResult.solarMarket?.inteligenciaProposta?.valorPipeline || 0,
+      negociosAbertos: biResult.solarMarket?.inteligenciaProposta?.negociosAbertos || 0,
+      ticketMedio: biResult.solarMarket?.inteligenciaProposta?.ticketMedio || 0,
+      taxaConversao: biResult.solarMarket?.inteligenciaProposta?.taxaConversao || 0,
+      totalPropostas: (biResult.solarMarket?.inteligenciaProposta?.negociosGanhos || 0) + (biResult.solarMarket?.inteligenciaProposta?.negociosAbertos || 0),
     },
     funil: biResult.solSDR?.funil?.map((f: any) => ({ etapa: f.etapa, valor: f.valor, icon: f.icon || '📊', cor: 'default', pctAnterior: 100 })) || [],
     origens: [] as any[],
@@ -55,11 +55,11 @@ export default function BI() {
       { temperatura: 'FRIO', leads: biResult.solSDR?.qualidadeLead?.frios || 0, icon: '❄️', cor: 'text-info' },
     ],
     leadsRecentes: [] as any[],
-    fupFrio: { totalFup: biResult.fupFrio?.totalFup || 0, reativados: biResult.fupFrio?.reativados || 0, taxaReativacao: biResult.fupFrio?.taxaReativacao || 0, etapasResposta: [] as any[] },
+    fupFrio: { totalFup: biResult.fupFrio?.totalFup || 0, reativados: biResult.fupFrio?.responderam || 0, taxaReativacao: biResult.fupFrio?.totalFup ? Math.round(((biResult.fupFrio?.responderam || 0) / biResult.fupFrio.totalFup) * 100) : 0, etapasResposta: [] as any[] },
     volumeSLA: { totalEnviadas: 0, totalRecebidas: 0, mediaInteracoes: 0, slaMenos5min: 0, tempoMedioPrimeiroContato: '—', tempoMedioRespostaLead: '—' },
     custos: { openAI: 0, elevenLabs: 0, make: 0, total: 0 },
-    desqualificacao: biResult.solSDR?.motivos || [],
-    melhorHorario: [] as any[],
+    motivos: biResult.solSDR?.motivos || [],
+    horarios: biResult.solSDR?.performanceTurno?.map((t: any) => ({ dia: t.turno, hora: '', conversoes: t.responderam })) || [],
   } : null;
   const [now, setNow] = useState(new Date());
 
