@@ -41,7 +41,9 @@ import SLAMonitor from "./pages/SLAMonitor";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
-// Dead pages removed: Qualificacao, Desqualificar, Reprocessamento (ações inline nas páginas de Leads)
+import Qualificacao from "./pages/Qualificacao";
+import Desqualificar from "./pages/Desqualificar";
+import Reprocessamento from "./pages/Reprocessamento";
 import OrgConfigPage from "./pages/admin/OrgConfigPage";
 import PreVenda from "./pages/solar/PreVenda";
 import Comercial from "./pages/solar/Comercial";
