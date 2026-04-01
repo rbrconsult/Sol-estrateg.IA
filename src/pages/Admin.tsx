@@ -576,92 +576,132 @@ export default function Admin() {
               <>
                 <LoginAnalyticsTab accessLogs={accessLogs} sessions={sessions} onInvalidateAllSessions={invalidateAllUserSessions} />
 
+                {/* Logs de Acesso — com busca e filtro */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Logs de Acesso</CardTitle>
-                    <CardDescription>Histórico completo de ações no sistema</CardDescription>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-primary" />
+                          Logs de Acesso
+                        </CardTitle>
+                        <CardDescription className="mt-1">Últimas {accessLogs.length} ações registradas</CardDescription>
+                      </div>
+                      <Badge variant="secondary">{accessLogs.length} registros</Badge>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Ação</TableHead>
-                          <TableHead>IP</TableHead>
-                          <TableHead>Navegador</TableHead>
-                          <TableHead>Data/Hora</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {accessLogs.map((log) => (
-                          <TableRow key={log.id}>
-                            <TableCell className="font-medium">{log.email || '-'}</TableCell>
-                            <TableCell>{getActionBadge(log.action)}</TableCell>
-                            <TableCell>{log.ip_address || 'N/A'}</TableCell>
-                            <TableCell>{parseUserAgent(log.user_agent)}</TableCell>
-                            <TableCell>{formatDate(log.created_at)}</TableCell>
+                    <div className="rounded-lg border border-border/50 overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="font-semibold">Email</TableHead>
+                            <TableHead className="font-semibold">Ação</TableHead>
+                            <TableHead className="font-semibold">IP</TableHead>
+                            <TableHead className="font-semibold">Navegador</TableHead>
+                            <TableHead className="font-semibold">Data/Hora</TableHead>
                           </TableRow>
-                        ))}
-                        {accessLogs.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum log de acesso</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {accessLogs.slice(0, 50).map((log) => (
+                            <TableRow key={log.id} className="hover:bg-muted/20 transition-colors">
+                              <TableCell className="font-medium text-sm">{log.email || '-'}</TableCell>
+                              <TableCell>{getActionBadge(log.action)}</TableCell>
+                              <TableCell className="font-mono text-xs text-muted-foreground">{log.ip_address || 'N/A'}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{parseUserAgent(log.user_agent)}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{formatDate(log.created_at)}</TableCell>
+                            </TableRow>
+                          ))}
+                          {accessLogs.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+                                <Shield className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                <p>Nenhum log de acesso registrado</p>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {accessLogs.length > 50 && (
+                      <p className="text-xs text-muted-foreground text-center mt-3">Mostrando 50 de {accessLogs.length} registros</p>
+                    )}
                   </CardContent>
                 </Card>
               </>
             )}
 
-            {/* Sessões Ativas */}
+            {/* Sessões Ativas — redesign */}
             {hasAccess('admin-sessoes') && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Fingerprint className="h-5 w-5" />
-                    Sessões Ativas
-                  </CardTitle>
-                  <CardDescription>{activeSessions.length} sessões ativas no momento</CardDescription>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Fingerprint className="h-4 w-4 text-primary" />
+                        Sessões Ativas
+                      </CardTitle>
+                      <CardDescription className="mt-1">{activeSessions.length} sessões ativas no momento</CardDescription>
+                    </div>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      {activeSessions.length} online
+                    </Badge>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Usuário</TableHead>
-                        <TableHead>IP</TableHead>
-                        <TableHead>Navegador</TableHead>
-                        <TableHead>Última Atividade</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sessions.slice(0, 50).map((s) => {
-                        const sessionUser = users.find(u => u.id === s.user_id);
-                        return (
-                          <TableRow key={s.id}>
-                            <TableCell className="font-medium">{sessionUser?.full_name || sessionUser?.email || s.user_id.slice(0, 8)}</TableCell>
-                            <TableCell>{s.ip_address || 'N/A'}</TableCell>
-                            <TableCell>{parseUserAgent(s.user_agent)}</TableCell>
-                            <TableCell>{formatDate(s.last_activity)}</TableCell>
-                            <TableCell>
-                              <Badge className={s.is_active ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'}>
-                                {s.is_active ? 'Ativa' : 'Inativa'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {s.is_active && (
-                                <Button variant="ghost" size="sm" onClick={() => invalidateSession(s.id, s.user_id)} className="text-destructive text-xs">
-                                  <Ban className="h-3 w-3 mr-1" /> Invalidar
-                                </Button>
-                              )}
-                            </TableCell>
+                  {sessions.length === 0 ? (
+                    <div className="flex flex-col items-center py-12 text-muted-foreground">
+                      <Fingerprint className="h-8 w-8 mb-2 opacity-30" />
+                      <p className="text-sm">Nenhuma sessão registrada</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-border/50 overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="font-semibold">Usuário</TableHead>
+                            <TableHead className="font-semibold">IP</TableHead>
+                            <TableHead className="font-semibold">Navegador</TableHead>
+                            <TableHead className="font-semibold">Última Atividade</TableHead>
+                            <TableHead className="font-semibold text-center">Status</TableHead>
+                            <TableHead className="text-right font-semibold">Ações</TableHead>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {sessions.slice(0, 50).map((s) => {
+                            const sessionUser = users.find(u => u.id === s.user_id);
+                            return (
+                              <TableRow key={s.id} className="hover:bg-muted/20 transition-colors">
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium text-sm">{sessionUser?.full_name || sessionUser?.email || s.user_id.slice(0, 8)}</div>
+                                    {sessionUser?.email && sessionUser?.full_name && (
+                                      <div className="text-xs text-muted-foreground">{sessionUser.email}</div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="font-mono text-xs text-muted-foreground">{s.ip_address || 'N/A'}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{parseUserAgent(s.user_agent)}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{formatDate(s.last_activity)}</TableCell>
+                                <TableCell className="text-center">
+                                  <Badge className={s.is_active ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-muted text-muted-foreground'}>
+                                    {s.is_active ? '● Ativa' : 'Inativa'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {s.is_active && (
+                                    <Button variant="ghost" size="sm" onClick={() => invalidateSession(s.id, s.user_id)} className="text-destructive text-xs hover:bg-destructive/10">
+                                      <Ban className="h-3 w-3 mr-1" /> Invalidar
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
