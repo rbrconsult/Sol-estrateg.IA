@@ -489,7 +489,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
         dataCriacao: r.data_envio || undefined,
         makeStatus: (r.makeStatus || '').toUpperCase(),
         etapaSm: r.etapaSm || undefined,
-        closerAtribuido: r.closerAtribuido || r.representante || undefined,
+        closerAtribuido: r.closerAtribuido || undefined,
         statusProposta: r.statusProposta || undefined,
         dataProposta: r.dataProposta || undefined,
         dataFechamento: r.dataFechamento || undefined,

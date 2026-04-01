@@ -79,6 +79,11 @@ function solLeadToMakeRecord(l: SolLead): MakeRecord {
     sentimento: '',
     interesse: '',
     ultimaMensagem: l.resumo_conversa || '',
+    dsSource: 'sol_leads',
+    totalMensagensIa: l.total_mensagens_ia || 0,
+    representante: l.closer_nome || '',
+    chatId: l.chat_id || '',
+    contactId: l.contact_id || '',
   };
 }
 

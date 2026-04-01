@@ -137,6 +137,10 @@ export function useBIMakeData(dateRange?: DateRange) {
       })
       .sort((a, b) => b.conversoes - a.conversoes)
       .slice(0, 12);
+    // FUP Frio
+    const fupLeads = filtered.filter(l => l.status === 'FOLLOW_UP' || (l.fup_followup_count || 0) > 0);
+    const fupReativados = fupLeads.filter(l => l.transferido_comercial).length;
+    const fupFrio = {
       totalFup: fupLeads.length,
       reativados: fupReativados,
       taxaReativacao: fupLeads.length > 0 ? Math.round((fupReativados / fupLeads.length) * 100) : 0,

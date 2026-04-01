@@ -10,15 +10,14 @@ import { CanalOrigemBadge } from "./CanalOrigemBadge";
 import { TemperatureBadge } from "./TemperatureBadge";
 import { ScoreGauge } from "./ScoreGauge";
 import type { SolLead } from "@/hooks/useSolData";
-type MakeRecord = SolLead;
 
 interface Props {
-  lead: MakeRecord | null;
+  lead: SolLead | null;
   open: boolean;
   onClose: () => void;
-  onQualificar?: (lead: MakeRecord) => void;
-  onDesqualificar?: (lead: MakeRecord) => void;
-  onReprocessar?: (lead: MakeRecord) => void;
+  onQualificar?: (lead: SolLead) => void;
+  onDesqualificar?: (lead: SolLead) => void;
+  onReprocessar?: (lead: SolLead) => void;
   actionsLoading?: boolean;
 }
 
@@ -48,8 +47,8 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
 
   if (!lead) return null;
 
-  const score = lead.makeScore ? parseFloat(lead.makeScore) : 0;
-  const prefIcon = PREF_ICONS[(lead.preferenciaContato || "").toLowerCase()] || "";
+  const score = lead.score ? parseFloat(lead.score) : 0;
+  const prefIcon = PREF_ICONS[(lead.preferencia_contato || "").toLowerCase()] || "";
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -61,8 +60,8 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
               <p className="text-xs text-muted-foreground mt-0.5 font-mono">{lead.telefone}</p>
             </div>
             <div className="flex items-center gap-2">
-              <TemperatureBadge temperatura={lead.makeTemperatura} />
-              <CanalOrigemBadge canal={lead.canalOrigem} />
+              <TemperatureBadge temperatura={lead.temperatura} />
+              <CanalOrigemBadge canal={lead.canal_origem} />
             </div>
           </div>
           {score > 0 && (
@@ -72,11 +71,6 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
                 <p className="text-[10px] text-muted-foreground uppercase">Score ICP</p>
                 <p className="text-lg font-bold text-foreground">{score.toFixed(0)}</p>
               </div>
-              {lead.dsSource && (
-                <Badge variant="outline" className="ml-auto text-[10px]">
-                  {lead.dsSource === "sol_leads" ? "SOL v2" : "v1"}
-                </Badge>
-              )}
             </div>
           )}
         </SheetHeader>
@@ -102,20 +96,19 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
                 <Zap className="h-3 w-3" /> Qualificação
               </h4>
               <div className="rounded-lg border border-border/50 p-3 space-y-0.5">
-                <InfoRow label="Imóvel" value={lead.imovel} icon={<Home className="h-3 w-3" />} />
-                <InfoRow label="Valor da Conta" value={lead.valorConta} />
-                <InfoRow label="Acréscimo de Carga" value={lead.acrescimoCarga} />
-                <InfoRow label="Prazo de Decisão" value={lead.prazoDecisao} icon={<Clock className="h-3 w-3" />} />
-                <InfoRow label="Forma de Pagamento" value={lead.formaPagamento} />
-                <InfoRow label="Preferência de Contato" value={lead.preferenciaContato ? `${prefIcon} ${lead.preferenciaContato}` : undefined} />
-                <InfoRow label="Potência do Sistema" value={lead.potenciaSistema ? `${lead.potenciaSistema} kWp` : undefined} />
-                <InfoRow label="Qualificado por" value={lead.qualificadoPor} />
-                {lead.aguardandoContaLuz && (
+                <InfoRow label="Imóvel" value={lead.tipo_imovel} icon={<Home className="h-3 w-3" />} />
+                <InfoRow label="Valor da Conta" value={lead.valor_conta} />
+                <InfoRow label="Acréscimo de Carga" value={lead.acrescimo_carga} />
+                <InfoRow label="Prazo de Decisão" value={lead.prazo_decisao} icon={<Clock className="h-3 w-3" />} />
+                <InfoRow label="Forma de Pagamento" value={lead.forma_pagamento} />
+                <InfoRow label="Preferência de Contato" value={lead.preferencia_contato ? `${prefIcon} ${lead.preferencia_contato}` : undefined} />
+                <InfoRow label="Qualificado por" value={lead.qualificado_por} />
+                {lead.aguardando_conta_luz && (
                   <div className="flex items-center gap-2 py-1.5">
                     <Badge variant="outline" className="text-[10px] border-warning/30 text-warning">⏳ Aguardando conta de luz</Badge>
                   </div>
                 )}
-                {lead.transferidoComercial && (
+                {lead.transferido_comercial && (
                   <div className="flex items-center gap-2 py-1.5">
                     <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">✅ Transferido ao comercial</Badge>
                   </div>
@@ -124,16 +117,16 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
             </section>
 
             {/* Conversa */}
-            {lead.resumoConversa && (
+            {lead.resumo_conversa && (
               <section>
                 <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <MessageSquare className="h-3 w-3" /> Resumo da Conversa
                 </h4>
                 <div className="rounded-lg border border-border/50 p-3">
                   <div className={cn("text-xs text-foreground whitespace-pre-wrap leading-relaxed", !resumoExpanded && "max-h-32 overflow-hidden")}>
-                    {lead.resumoConversa}
+                    {lead.resumo_conversa}
                   </div>
-                  {lead.resumoConversa.length > 200 && (
+                  {lead.resumo_conversa.length > 200 && (
                     <Button variant="ghost" size="sm" className="mt-2 h-6 text-[10px]" onClick={() => setResumoExpanded(!resumoExpanded)}>
                       {resumoExpanded ? <><ChevronUp className="h-3 w-3 mr-1" /> Recolher</> : <><ChevronDown className="h-3 w-3 mr-1" /> Expandir</>}
                     </Button>
@@ -143,7 +136,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
             )}
 
             {/* Custos */}
-            {(lead.custoTotalUsd !== undefined && lead.custoTotalUsd > 0) && (
+            {(lead.custo_total_usd !== undefined && lead.custo_total_usd !== null && lead.custo_total_usd > 0) && (
               <section>
                 <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <DollarSign className="h-3 w-3" /> Custos Operacionais
@@ -152,22 +145,22 @@ export function LeadDetailDrawer({ lead, open, onClose, onQualificar, onDesquali
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <p className="text-[10px] text-muted-foreground">OpenAI</p>
-                      <p className="text-sm font-bold text-foreground">${(lead.custoOpenai || 0).toFixed(3)}</p>
+                      <p className="text-sm font-bold text-foreground">${(lead.custo_openai || 0).toFixed(3)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">ElevenLabs</p>
-                      <p className="text-sm font-bold text-foreground">${(lead.custoElevenlabs || 0).toFixed(3)}</p>
+                      <p className="text-sm font-bold text-foreground">${(lead.custo_elevenlabs || 0).toFixed(3)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">Total</p>
-                      <p className="text-sm font-bold text-primary">${(lead.custoTotalUsd || 0).toFixed(3)}</p>
+                      <p className="text-sm font-bold text-primary">${(lead.custo_total_usd || 0).toFixed(3)}</p>
                     </div>
                   </div>
-                  {(lead.totalMensagensIa !== undefined && lead.totalMensagensIa > 0) && (
+                  {(lead.total_mensagens_ia !== undefined && lead.total_mensagens_ia !== null && lead.total_mensagens_ia > 0) && (
                     <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-                      <span><Bot className="h-3 w-3 inline mr-0.5" /> {lead.totalMensagensIa} msgs IA</span>
-                      {lead.totalAudiosEnviados !== undefined && lead.totalAudiosEnviados > 0 && (
-                        <span>🎙️ {lead.totalAudiosEnviados} áudios</span>
+                      <span><Bot className="h-3 w-3 inline mr-0.5" /> {lead.total_mensagens_ia} msgs IA</span>
+                      {lead.total_audios_enviados !== undefined && lead.total_audios_enviados !== null && lead.total_audios_enviados > 0 && (
+                        <span>🎙️ {lead.total_audios_enviados} áudios</span>
                       )}
                     </div>
                   )}
