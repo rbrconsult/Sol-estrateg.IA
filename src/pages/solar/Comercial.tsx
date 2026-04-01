@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useSolLeadsSync, SolLeadSync } from "@/hooks/useSolLeadsSync";
-import { useSolProjetosSync, useSolEquipeSync } from "@/hooks/useSolSyncTables";
+import { useSolLeads, useSolProjetos, useSolEquipe, type SolLead } from "@/hooks/useSolData";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

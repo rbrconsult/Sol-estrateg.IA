@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSolMetricasSync } from '@/hooks/useSolSyncTables';
-import { useSolLeadsSync } from '@/hooks/useSolLeadsSync';
+import { useSolMetricas, useSolLeads } from '@/hooks/useSolData';
 import { usePeriodo } from '@/hooks/usePeriodo';
 import { CampanhaFilters } from '@/components/campanhas/CampanhaFilters';
 import { SyncBadge } from '@/components/campanhas/SyncBadge';

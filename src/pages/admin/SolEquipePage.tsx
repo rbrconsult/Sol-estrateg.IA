@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Pencil, Users } from "lucide-react";
-import { useSolEquipeSync, useSolEquipeUpdate, useSolEquipeInsert, SolEquipeSync } from "@/hooks/useSolSyncTables";
+import { useSolEquipe, useSolEquipeUpdate, useSolEquipeInsert, type SolEquipeMembro } from "@/hooks/useSolData";
 import { useFranquiaId } from "@/hooks/useFranquiaId";
 
 export default function SolEquipePage() {

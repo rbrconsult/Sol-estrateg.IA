@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, RefreshCw, Phone, MessageSquare, Clock, FileText, Send, X, RotateCcw, UserCheck, UserX } from 'lucide-react';
-import type { SolLeadSync } from '@/hooks/useSolLeadsSync';
+
 
 const KANBAN_COLUMNS = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP'] as const;
 const COL_LABELS: Record<string, string> = { TRAFEGO_PAGO: 'Leads Recebidos', EM_QUALIFICACAO: 'MQL', FOLLOW_UP: 'Follow Up' };

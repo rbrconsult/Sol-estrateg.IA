@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, Settings } from "lucide-react";
-import { useSolConfigSync, useSolConfigUpdate } from "@/hooks/useSolSyncTables";
+import { useSolConfig, useSolConfigUpdate } from "@/hooks/useSolData";
 
 const PROMPT_KEYS = [
   { key: "system_prompt_sdr", label: "Prompt Agent SDR", icon: "📝" },
