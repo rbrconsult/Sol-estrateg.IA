@@ -88,7 +88,7 @@ export default function SiteGA4Page() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-xl font-bold flex items-center gap-2"><Globe className="h-5 w-5" /> Site (GA4)</h1>
         <div className="flex items-center gap-3 flex-wrap">
-          <SyncBadge franquiaId={FRANQUIA} />
+          <SyncBadge franquiaId={franquiaId} />
           <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
             extraFilters={
               <>
