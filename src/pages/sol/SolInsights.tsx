@@ -39,7 +39,7 @@ export default function SolAgent() {
   const { data: leads, isLoading: leadsLoading, refetch: refetchLeads } = useSolLeads();
   const { data: metricas, isLoading: metricasLoading } = useSolMetricas(7);
   const { qualificar, desqualificar, reprocessar, isLoading: actionLoading } = useSolActions();
-  const { forceSync, isSyncing } = useForceSync();
+  
   const { selectedOrgName } = useOrgFilter();
 
   const [search, setSearch] = useState("");
