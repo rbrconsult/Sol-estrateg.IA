@@ -99,7 +99,7 @@ async function syncGoogleAds(supabase: any, googleToken: string): Promise<{ upse
   const devToken = "20f6773a96e4285ed577843bfada1f40fd5f47a8";
 
   const res = await fetch(
-    `https://googleads.googleapis.com/v18/customers/${customerId}/googleAds:search`,
+    `https://googleads.googleapis.com/v17/customers/${customerId}/googleAds:search`,
     {
       method: "POST",
       headers: {
