@@ -56,6 +56,7 @@ export type Database = {
           campaign_id: string
           campaign_name: string | null
           campaign_status: string | null
+          campaign_type: string | null
           clicks: number | null
           company_id: string
           conversion_value: number | null
@@ -67,17 +68,25 @@ export type Database = {
           ctr: number | null
           customer_id: string
           date: string
+          dia_semana: string | null
           dispositivo: string | null
           engagements: number | null
           franquia_id: string
+          hora: number | null
           id: string
           impressions: number | null
           inserted_at: string | null
           objetivo: string | null
           orcamento_campanha: number | null
+          quality_score: number | null
           raw_payload: Json | null
           rede: string | null
           roas: number | null
+          search_abs_top_impression_pct: number | null
+          search_budget_lost_share: number | null
+          search_impression_share: number | null
+          search_rank_lost_share: number | null
+          search_top_impression_pct: number | null
           updated_at: string | null
           video_view_rate: number | null
           video_views: number | null
@@ -93,6 +102,7 @@ export type Database = {
           campaign_id: string
           campaign_name?: string | null
           campaign_status?: string | null
+          campaign_type?: string | null
           clicks?: number | null
           company_id: string
           conversion_value?: number | null
@@ -104,17 +114,25 @@ export type Database = {
           ctr?: number | null
           customer_id?: string
           date: string
+          dia_semana?: string | null
           dispositivo?: string | null
           engagements?: number | null
           franquia_id?: string
+          hora?: number | null
           id?: string
           impressions?: number | null
           inserted_at?: string | null
           objetivo?: string | null
           orcamento_campanha?: number | null
+          quality_score?: number | null
           raw_payload?: Json | null
           rede?: string | null
           roas?: number | null
+          search_abs_top_impression_pct?: number | null
+          search_budget_lost_share?: number | null
+          search_impression_share?: number | null
+          search_rank_lost_share?: number | null
+          search_top_impression_pct?: number | null
           updated_at?: string | null
           video_view_rate?: number | null
           video_views?: number | null
@@ -130,6 +148,7 @@ export type Database = {
           campaign_id?: string
           campaign_name?: string | null
           campaign_status?: string | null
+          campaign_type?: string | null
           clicks?: number | null
           company_id?: string
           conversion_value?: number | null
@@ -141,17 +160,25 @@ export type Database = {
           ctr?: number | null
           customer_id?: string
           date?: string
+          dia_semana?: string | null
           dispositivo?: string | null
           engagements?: number | null
           franquia_id?: string
+          hora?: number | null
           id?: string
           impressions?: number | null
           inserted_at?: string | null
           objetivo?: string | null
           orcamento_campanha?: number | null
+          quality_score?: number | null
           raw_payload?: Json | null
           rede?: string | null
           roas?: number | null
+          search_abs_top_impression_pct?: number | null
+          search_budget_lost_share?: number | null
+          search_impression_share?: number | null
+          search_rank_lost_share?: number | null
+          search_top_impression_pct?: number | null
           updated_at?: string | null
           video_view_rate?: number | null
           video_views?: number | null
@@ -166,6 +193,7 @@ export type Database = {
           adset_id: string | null
           adset_name: string | null
           adset_status: string | null
+          age_range: string | null
           campaign_id: string
           campaign_name: string | null
           campaign_status: string | null
@@ -175,6 +203,7 @@ export type Database = {
           capi_qualificado_enviado: boolean | null
           clicks: number | null
           company_id: string
+          conversion_ranking: string | null
           cpc: number | null
           cpl: number | null
           cpl_agendado: number | null
@@ -185,9 +214,11 @@ export type Database = {
           ctr: number | null
           date: string
           dispositivo: string | null
+          engagement_ranking: string | null
           external_account_id: string
           franquia_id: string
           frequency: number | null
+          gender: string | null
           id: string
           impressions: number | null
           inserted_at: string | null
@@ -198,16 +229,25 @@ export type Database = {
           objetivo: string | null
           orcamento_diario: number | null
           orcamento_total: number | null
+          platform_position: string | null
           publico_alvo: string | null
+          publisher_platform: string | null
+          quality_ranking: string | null
           raw_payload: Json | null
           reach: number | null
           receita_gerada: number | null
+          region: string | null
           roas: number | null
           spend: number | null
           taxa_agendamento: number | null
           taxa_fechamento: number | null
           taxa_qualificacao: number | null
           updated_at: string | null
+          video_p100: number | null
+          video_p25: number | null
+          video_p50: number | null
+          video_p75: number | null
+          video_views_3s: number | null
         }
         Insert: {
           ad_id: string
@@ -216,6 +256,7 @@ export type Database = {
           adset_id?: string | null
           adset_name?: string | null
           adset_status?: string | null
+          age_range?: string | null
           campaign_id: string
           campaign_name?: string | null
           campaign_status?: string | null
@@ -225,6 +266,7 @@ export type Database = {
           capi_qualificado_enviado?: boolean | null
           clicks?: number | null
           company_id: string
+          conversion_ranking?: string | null
           cpc?: number | null
           cpl?: number | null
           cpl_agendado?: number | null
@@ -235,9 +277,11 @@ export type Database = {
           ctr?: number | null
           date: string
           dispositivo?: string | null
+          engagement_ranking?: string | null
           external_account_id?: string
           franquia_id?: string
           frequency?: number | null
+          gender?: string | null
           id?: string
           impressions?: number | null
           inserted_at?: string | null
@@ -248,16 +292,25 @@ export type Database = {
           objetivo?: string | null
           orcamento_diario?: number | null
           orcamento_total?: number | null
+          platform_position?: string | null
           publico_alvo?: string | null
+          publisher_platform?: string | null
+          quality_ranking?: string | null
           raw_payload?: Json | null
           reach?: number | null
           receita_gerada?: number | null
+          region?: string | null
           roas?: number | null
           spend?: number | null
           taxa_agendamento?: number | null
           taxa_fechamento?: number | null
           taxa_qualificacao?: number | null
           updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          video_views_3s?: number | null
         }
         Update: {
           ad_id?: string
@@ -266,6 +319,7 @@ export type Database = {
           adset_id?: string | null
           adset_name?: string | null
           adset_status?: string | null
+          age_range?: string | null
           campaign_id?: string
           campaign_name?: string | null
           campaign_status?: string | null
@@ -275,6 +329,7 @@ export type Database = {
           capi_qualificado_enviado?: boolean | null
           clicks?: number | null
           company_id?: string
+          conversion_ranking?: string | null
           cpc?: number | null
           cpl?: number | null
           cpl_agendado?: number | null
@@ -285,9 +340,11 @@ export type Database = {
           ctr?: number | null
           date?: string
           dispositivo?: string | null
+          engagement_ranking?: string | null
           external_account_id?: string
           franquia_id?: string
           frequency?: number | null
+          gender?: string | null
           id?: string
           impressions?: number | null
           inserted_at?: string | null
@@ -298,25 +355,38 @@ export type Database = {
           objetivo?: string | null
           orcamento_diario?: number | null
           orcamento_total?: number | null
+          platform_position?: string | null
           publico_alvo?: string | null
+          publisher_platform?: string | null
+          quality_ranking?: string | null
           raw_payload?: Json | null
           reach?: number | null
           receita_gerada?: number | null
+          region?: string | null
           roas?: number | null
           spend?: number | null
           taxa_agendamento?: number | null
           taxa_fechamento?: number | null
           taxa_qualificacao?: number | null
           updated_at?: string | null
+          video_p100?: number | null
+          video_p25?: number | null
+          video_p50?: number | null
+          video_p75?: number | null
+          video_views_3s?: number | null
         }
         Relationships: []
       }
       analytics_ga4_daily: {
         Row: {
+          avg_session_duration: number | null
+          bounce_rate: number | null
           campaign: string | null
+          city: string | null
           company_id: string
           conversions: number | null
           date: string
+          device_category: string | null
           engaged_sessions: number | null
           franquia_id: string
           id: string
@@ -324,6 +394,7 @@ export type Database = {
           landing_page: string | null
           medium: string | null
           new_users: number | null
+          pages_per_session: number | null
           property_id: string
           raw_payload: Json | null
           revenue: number | null
@@ -333,10 +404,14 @@ export type Database = {
           users: number | null
         }
         Insert: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
           campaign?: string | null
+          city?: string | null
           company_id: string
           conversions?: number | null
           date: string
+          device_category?: string | null
           engaged_sessions?: number | null
           franquia_id?: string
           id?: string
@@ -344,6 +419,7 @@ export type Database = {
           landing_page?: string | null
           medium?: string | null
           new_users?: number | null
+          pages_per_session?: number | null
           property_id: string
           raw_payload?: Json | null
           revenue?: number | null
@@ -353,10 +429,14 @@ export type Database = {
           users?: number | null
         }
         Update: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
           campaign?: string | null
+          city?: string | null
           company_id?: string
           conversions?: number | null
           date?: string
+          device_category?: string | null
           engaged_sessions?: number | null
           franquia_id?: string
           id?: string
@@ -364,6 +444,7 @@ export type Database = {
           landing_page?: string | null
           medium?: string | null
           new_users?: number | null
+          pages_per_session?: number | null
           property_id?: string
           raw_payload?: Json | null
           revenue?: number | null
