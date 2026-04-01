@@ -352,9 +352,7 @@ export default function Sanitizacao() {
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
         <AlertTriangle className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground text-sm">Nenhum dado disponível para análise de sanitização.</p>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}>
-          <RefreshCw className="h-4 w-4 mr-2" /> Recarregar
-        </Button>
+        <p className="text-muted-foreground text-sm">Nenhum dado disponível. Use o botão "Atualizar página" no canto superior.</p>
       </div>
     );
   }
