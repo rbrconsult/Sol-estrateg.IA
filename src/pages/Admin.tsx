@@ -25,6 +25,7 @@ import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSet
 import DiscoveredDataStores from '@/components/admin/DiscoveredDataStores';
 import SkillsTab from '@/components/admin/SkillsTab';
 import { PessoasTab } from '@/components/admin/PessoasTab';
+import { InfrastructureTab } from '@/components/admin/InfrastructureTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
