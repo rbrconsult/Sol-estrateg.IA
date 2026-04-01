@@ -116,7 +116,7 @@ function deriveMidiaData(records: SolLead[]) {
 
 export default function MidiaReceita() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
 
   const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
   const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
