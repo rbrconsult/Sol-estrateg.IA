@@ -9,7 +9,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line, Legend,
 } from "recharts";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { DollarSign, TrendingUp, Users, Target, RefreshCcw } from "lucide-react";
 import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
