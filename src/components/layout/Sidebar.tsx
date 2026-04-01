@@ -6,7 +6,7 @@ import {
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
-  RefreshCcw,
+  RefreshCcw, MessageSquare, Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,12 @@ const ALL_ROLES: AppRole[] = ['super_admin', 'diretor', 'gerente', 'closer', 'ad
 
 const menuGroups: MenuGroup[] = [
   {
+    label: "Central",
+    items: [
+      { title: "Mensagens", icon: MessageSquare, path: "/mensagens" },
+    ],
+  },
+  {
     label: "Pré-Venda",
     items: [
       { title: "Dashboard", icon: Presentation, path: "/dashboard", moduleKey: "conferencia" },
@@ -75,6 +81,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
       { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
       { title: "Reports WhatsApp", icon: FileText, path: "/reports", moduleKey: "reports" },
+      { title: "Skills & IA", icon: Brain, path: "/insights", moduleKey: "bi" },
     ],
   },
   {

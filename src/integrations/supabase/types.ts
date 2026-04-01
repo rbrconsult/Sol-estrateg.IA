@@ -594,6 +594,50 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_messages: {
+        Row: {
+          channel: string
+          content: string
+          created_at: string | null
+          id: string
+          is_broadcast: boolean | null
+          organization_id: string | null
+          read_at: string | null
+          recipient_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          channel?: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_broadcast?: boolean | null
+          organization_id?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          channel?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_broadcast?: boolean | null
+          organization_id?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_status_history: {
         Row: {
           changed_by: string | null
