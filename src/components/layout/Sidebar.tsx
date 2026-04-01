@@ -6,7 +6,7 @@ import {
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
-  RefreshCcw,
+  RefreshCcw, MessageSquare, Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
