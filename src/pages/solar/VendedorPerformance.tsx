@@ -173,7 +173,7 @@ export default function VendedorPerformance() {
               <SelectItem value="conversao">Por Conversão</SelectItem>
             </SelectContent>
           </Select>
-          </Button>
+          
         </div>
       </div>
 
