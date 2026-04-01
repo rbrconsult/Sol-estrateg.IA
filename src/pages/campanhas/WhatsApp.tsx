@@ -30,8 +30,8 @@ function timeAgo(ts: string | null): string {
 export default function WhatsAppPage() {
   const { periodo, setPeriodo, range } = usePeriodo();
   const franquiaId = useFranquiaId();
-  const { data: metricas, isLoading: l1 } = useSolMetricasSync(30);
-  const { data: leads, isLoading: l2 } = useSolLeadsSync();
+  const { data: metricas, isLoading: l1 } = useSolMetricas(30);
+  const { data: leads, isLoading: l2 } = useSolLeads();
 
   const isLoading = l1 || l2;
 

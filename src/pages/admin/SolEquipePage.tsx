@@ -12,7 +12,7 @@ import { useSolEquipe, useSolEquipeUpdate, useSolEquipeInsert, type SolEquipeMem
 import { useFranquiaId } from "@/hooks/useFranquiaId";
 
 export default function SolEquipePage() {
-  const { data: equipe, isLoading } = useSolEquipeSync();
+  const { data: equipe, isLoading } = useSolEquipe();
   const updateEquipe = useSolEquipeUpdate();
   const insertEquipe = useSolEquipeInsert();
   const franquiaId = useFranquiaId();
@@ -27,7 +27,7 @@ export default function SolEquipePage() {
     setDialogOpen(true);
   };
 
-  const openEdit = (m: SolEquipeSync) => {
+  const openEdit = (m: SolEquipeMembro) => {
     setEditingKey(m.key);
     setForm({
       nome: m.nome || "",
@@ -68,7 +68,7 @@ export default function SolEquipePage() {
     setDialogOpen(false);
   };
 
-  const toggleField = async (member: SolEquipeSync, field: "ativo" | "krolik_ativo") => {
+  const toggleField = async (member: SolEquipeMembro, field: "ativo" | "krolik_ativo") => {
     await updateEquipe.mutateAsync({ key: member.key, updates: { [field]: !member[field] } });
   };
 
