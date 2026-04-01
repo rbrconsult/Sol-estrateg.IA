@@ -186,7 +186,7 @@ export default function AnalistaFollowup() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Analista de Follow-up Frio</h1>
           <p className="text-sm text-muted-foreground mt-1">Régua de reativação · Dados reais do Data Store</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        
       </div>
 
       <PageFloatingFilter
