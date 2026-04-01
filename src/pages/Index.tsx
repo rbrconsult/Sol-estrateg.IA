@@ -503,7 +503,7 @@ const Index = () => {
                         <TableHead className="text-xs text-right">Leads</TableHead>
                         <TableHead className="text-xs text-right">Ganhos</TableHead>
                         <TableHead className="text-xs text-right">Perdidos</TableHead>
-                        <TableHead className="text-xs text-right">Pipeline R$</TableHead>
+                        <TableHead className="text-xs text-right">Conversão</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -514,7 +514,7 @@ const Index = () => {
                           <TableCell className="text-xs text-right">{c.leads}</TableCell>
                           <TableCell className="text-xs text-right">{c.ganhos}</TableCell>
                           <TableCell className="text-xs text-right">{c.perdidos}</TableCell>
-                          <TableCell className="text-xs text-right">R$ {c.valor.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-xs text-right">{c.leads > 0 ? `${((c.ganhos / c.leads) * 100).toFixed(0)}%` : '—'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
