@@ -231,7 +231,7 @@ export default function Sanitizacao() {
     for (const p of proposals) {
       const e = p.etapa || "SEM ETAPA";
       funil[e] = (funil[e] || 0) + 1;
-      const r = p.responsavel || "Sem responsável";
+      const r = p.responsavel || "Não atribuído";
       responsavel[r] = (responsavel[r] || 0) + 1;
     }
 

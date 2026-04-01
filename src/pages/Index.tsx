@@ -588,21 +588,21 @@ const Index = () => {
           )}
 
           {/* Meta vs Realizado + Resumo IA */}
-          <GoalProgress valorFechado={valorGanho} receitaPrevista={valorPipeline} />
+          <GoalProgress valorFechado={countGanho} receitaPrevista={countPipeline} />
 
           <ExecutiveSummary
             kpis={{
-              receitaPrevista: valorPipeline, valorGanho, taxaConversao: solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0,
-              ticketMedio: statusCounts['GANHO'] > 0 ? valorGanho / statusCounts['GANHO'] : 0,
+              receitaPrevista: countPipeline, valorGanho: countGanho, taxaConversao: solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0,
+              ticketMedio: 0,
               totalNegocios: filtered.length, negociosGanhos: statusCounts['GANHO'],
               negociosPerdidos: statusCounts['PERDIDO'] + statusCounts['DESQUALIFICADO'],
               negociosAbertos: statusCounts['EM_QUALIFICACAO'] + statusCounts['FOLLOW_UP'] + statusCounts['QUALIFICADO'],
-              valorPipeline, cicloProposta: 0,
+              valorPipeline: countPipeline, cicloProposta: 0,
             }}
             healthScore={Math.min(Math.round((solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0) * 4), 100)}
             alertCount={alertas.semAtividade.length + alertas.aguardandoCL.length}
             topVendedor="SOL Agent"
-            funnelBottleneck={statusCounts['TRAFEGO_PAGO'] > 0 ? `Leads Recebidos → MQL (${((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(0)}%)` : "Dados insuficientes"}
+            funnelBottleneck={statusCounts['TRAFEGO_PAGO'] > 0 ? `Recebidos → Qualificação (${((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(0)}%)` : "Dados insuficientes"}
           />
 
           <footer className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
