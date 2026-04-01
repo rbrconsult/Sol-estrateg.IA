@@ -232,7 +232,7 @@ function deriveAbandonByStage(records: SolLead[]) {
 export default function JornadaLead() {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
 
   const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showEtapa: true, showStatus: true, showSearch: true });
