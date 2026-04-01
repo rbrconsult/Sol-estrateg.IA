@@ -8,7 +8,7 @@ import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
 import { HelpButton } from "@/components/HelpButton";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
-import { useSolLeadsSync, type SolLeadSync } from "@/hooks/useSolLeadsSync";
+import { useSolLeads, type SolLead } from "@/hooks/useSolData";
 import type { Proposal } from "@/data/dataAdapter";
 
 // Mapeamento status v2 → coluna Kanban
