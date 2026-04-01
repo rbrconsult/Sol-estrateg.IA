@@ -6,6 +6,7 @@ import {
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
+  RefreshCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { useForceSync } from "@/hooks/useSolData";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -99,6 +101,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
   const isSuperAdmin = userRole === "super_admin";
+  const { forceSync, isSyncing } = useForceSync();
 
   let orgFilter: ReturnType<typeof useOrgFilter> | null = null;
   try { orgFilter = useOrgFilter(); } catch {}
@@ -236,38 +239,38 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
 
         {/* Footer */}
         <div className="p-1.5 border-t border-border/50 space-y-0.5">
-          {/* Admin link */}
-          {(userRole === "super_admin" || hasAccess("admin") || (userRole === "diretor" && hasAccess("admin-pessoas"))) && (
-            isCollapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    to="/admin"
-                    onClick={handleNavClick}
-                    className={cn(
-                      "flex items-center justify-center py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
-                      location.pathname === "/admin" && "bg-warning/10"
-                    )}
-                  >
-                    <Shield className="h-4 w-4 shrink-0" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">Admin</TooltipContent>
-              </Tooltip>
-            ) : (
+          {/* Admin + Sync row */}
+          <div className="flex items-center gap-1">
+            {(userRole === "super_admin" || hasAccess("admin") || (userRole === "diretor" && hasAccess("admin-pessoas"))) && (
               <Link
                 to="/admin"
                 onClick={handleNavClick}
                 className={cn(
-                  "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
+                  "flex items-center gap-2 flex-1 px-2.5 py-1.5 rounded-lg transition-all text-xs text-warning hover:bg-warning/10",
                   location.pathname === "/admin" && "bg-warning/10"
                 )}
               >
                 <Shield className="h-4 w-4 shrink-0" />
-                <span className="font-medium">Admin</span>
+                {!isCollapsed && <span className="font-medium">Admin</span>}
               </Link>
-            )
-          )}
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={forceSync}
+                  disabled={isSyncing}
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <RefreshCcw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs">
+                {isSyncing ? "Atualizando..." : "Atualizar dados"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
 
           {/* User card — compact identity block */}
           {!isCollapsed ? (
