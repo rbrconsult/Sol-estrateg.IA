@@ -1,22 +1,7 @@
 import { createContext, useContext, ReactNode } from "react";
-import { usePageFilters, FilterState, FilterConfig } from "@/components/filters/PageFloatingFilter";
+import { usePageFilters } from "@/components/filters/PageFloatingFilter";
 
-interface GlobalFilterContextType {
-  filters: FilterState;
-  hasFilters: boolean;
-  clearFilters: () => void;
-  setPeriodo: (v: string) => void;
-  setDateFrom: (d: Date | undefined) => void;
-  setDateTo: (d: Date | undefined) => void;
-  setCanal: (v: string) => void;
-  setTemperatura: (v: string) => void;
-  setSearchTerm: (v: string) => void;
-  setEtapa: (v: string) => void;
-  setStatus: (v: string) => void;
-  effectiveDateRange: { from: Date | undefined; to: Date | undefined };
-  filterRecords: <T extends { data_envio?: string; cidade?: string; nome?: string; makeTemperatura?: string; makeStatus?: string; etapaFunil?: string }>(records: T[]) => T[];
-  filterProposals: <T extends { dataCriacaoProposta?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string; etapa?: string; status?: string }>(proposals: T[]) => T[];
-}
+type GlobalFilterContextType = ReturnType<typeof usePageFilters>;
 
 const GlobalFilterContext = createContext<GlobalFilterContextType | undefined>(undefined);
 
