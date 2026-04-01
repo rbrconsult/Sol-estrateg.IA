@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { CanalOrigemBadge } from "./CanalOrigemBadge";
 import { TemperatureBadge } from "./TemperatureBadge";
 import { ScoreGauge } from "./ScoreGauge";
-import type { MakeRecord } from "@/hooks/useMakeDataStore";
+import type { SolLead } from "@/hooks/useSolData";
+type MakeRecord = SolLead;
 
 interface Props {
   lead: MakeRecord | null;

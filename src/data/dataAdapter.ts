@@ -133,6 +133,19 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
       makeTemperatura: l.temperatura || undefined,
       makeScore: l.score || undefined,
       makeNome: l.nome || undefined,
+      makeCidade: l.cidade || undefined,
+      makeEmail: l.email || undefined,
+      makeValorConta: l.valor_conta || undefined,
+      makeImovel: l.tipo_imovel || undefined,
+      makeSentimento: undefined,
+      makeInteresse: undefined,
+      makeUltimaMensagem: l.resumo_conversa || undefined,
+      makeHistorico: [],
+      makeStatusResposta: l.transferido_comercial ? 'respondeu' : undefined,
+      makeRespondeu: l.transferido_comercial || false,
+      makeTotalMensagens: l.total_mensagens_ia || 0,
+      makeMensagensRecebidas: 0,
+      makeDataResposta: l.ts_ultima_interacao || undefined,
     };
   });
 }
