@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useForceSync } from "@/hooks/useSolData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +31,7 @@ function getRate(nome: string, overrides: Record<string, string>): number {
 
 export default function Comissoes() {
   const { proposals, isLoading, orgFilterActive } = useOrgFilteredProposals();
-  const { forceSync, isSyncing } = useForceSync();
+  
   const { selectedOrgName } = useOrgFilter();
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
   const gf = useGlobalFilters();
@@ -126,9 +125,6 @@ export default function Comissoes() {
           <Badge variant="outline" className="text-xs">
             {filteredProposals.length} propostas
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing}>
-            <RefreshCcw className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} /> Atualizar
-          </Button>
         </div>
       </div>
 

@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { Bot, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { format, parseISO } from 'date-fns';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
@@ -235,7 +235,7 @@ function deriveSolData(records: SolLead[]) {
 
 export default function RoboSol() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
 
   const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
@@ -272,7 +272,7 @@ export default function RoboSol() {
           </h1>
           <p className="text-sm text-muted-foreground">Performance operacional — Dados reais do Data Store</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        
       </div>
 
       <PageFloatingFilter

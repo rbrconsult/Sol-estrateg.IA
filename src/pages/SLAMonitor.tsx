@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Zap, User, Bot, Clock, AlertTriangle, CheckCircle2, XCircle, Search,
@@ -168,7 +168,7 @@ function deriveSLAData(records: SolLead[]) {
 export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
 
   const pf = usePageFilters({ showPeriodo: true, showSearch: true });
@@ -209,7 +209,7 @@ export default function SLAMonitor() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Monitor de SLA — Jornada do Lead</h1>
           <p className="text-sm text-muted-foreground mt-1">{d.totalLeads} leads rastreados · Dados reais</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        
       </div>
 
       <PageFloatingFilter

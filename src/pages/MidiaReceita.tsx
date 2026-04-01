@@ -9,7 +9,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line, Legend,
 } from "recharts";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { DollarSign, TrendingUp, Users, Target, RefreshCcw } from "lucide-react";
 import { usePageFilters, PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
@@ -116,7 +116,7 @@ function deriveMidiaData(records: SolLead[]) {
 
 export default function MidiaReceita() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
 
   const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
   const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
@@ -149,7 +149,7 @@ export default function MidiaReceita() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Mídia × Receita — Atribuição e ROI</h1>
           <p className="text-sm text-muted-foreground mt-1">{records.length} leads · Dados reais do Data Store</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}><RefreshCcw className="h-4 w-4 mr-1" /> Atualizar</Button>
+        
       </div>
 
       <PageFloatingFilter

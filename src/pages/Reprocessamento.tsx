@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as c
 
 export default function Reprocessamento() {
   const { data: solLeads, isLoading, isFetching } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -130,9 +130,6 @@ export default function Reprocessamento() {
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">Selecione os leads e reprocesse em lote</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isFetching} className="shrink-0 gap-1.5">
-          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
-        </Button>
       </div>
 
       {/* KPIs */}

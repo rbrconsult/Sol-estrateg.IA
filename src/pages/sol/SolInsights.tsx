@@ -13,7 +13,7 @@ import { CanalOrigemBadge } from "@/components/sol/CanalOrigemBadge";
 import { ScoreGauge } from "@/components/sol/ScoreGauge";
 import { useSolLeads, useSolMetricas, type SolLead } from "@/hooks/useSolData";
 import { useSolActionsV2 as useSolActions } from '@/hooks/useSolActionsV2';
-import { useForceSync } from "@/hooks/useSolData";
+
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { HelpButton } from "@/components/HelpButton";
 import { toast } from "sonner";
@@ -39,7 +39,7 @@ export default function SolAgent() {
   const { data: leads, isLoading: leadsLoading, refetch: refetchLeads } = useSolLeads();
   const { data: metricas, isLoading: metricasLoading } = useSolMetricas(7);
   const { qualificar, desqualificar, reprocessar, isLoading: actionLoading } = useSolActions();
-  const { forceSync, isSyncing } = useForceSync();
+  
   const { selectedOrgName } = useOrgFilter();
 
   const [search, setSearch] = useState("");
@@ -154,7 +154,6 @@ export default function SolAgent() {
   };
 
   const handleSync = async () => {
-    await forceSync();
     refetchLeads();
   };
 
@@ -171,10 +170,6 @@ export default function SolAgent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSync} disabled={isSyncing}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing ? "animate-spin" : ""}`} />
-            Force Sync
-          </Button>
           <HelpButton moduleId="sol-agent" label="Ajuda" />
         </div>
       </div>

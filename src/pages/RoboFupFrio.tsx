@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Legend } from 'recharts';
 import { Repeat, RefreshCcw } from 'lucide-react';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
@@ -120,7 +120,7 @@ function deriveFupData(records: SolLead[]) {
 
 export default function RoboFupFrio() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
   const gf = useGlobalFilters();
 
@@ -162,9 +162,6 @@ export default function RoboFupFrio() {
           </h1>
           <p className="text-sm text-muted-foreground">Dados reais — {kpis.totalEntrou} leads no FUP</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}>
-          <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-        </Button>
       </div>
 
       <PageFloatingFilter

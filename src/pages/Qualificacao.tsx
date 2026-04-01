@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
@@ -51,7 +51,7 @@ type EnrichedLead = SolLead & { _classificacao: string; _desqualificado: boolean
 
 export default function Qualificacao() {
   const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
   const { selectedOrgId, orgs } = useOrgFilter();
   const [search, setSearch] = useState("");
@@ -246,9 +246,6 @@ export default function Qualificacao() {
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">Selecione os leads e qualifique em lote</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isFetching} className="shrink-0 gap-1.5">
-          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
-        </Button>
       </div>
 
       {/* KPIs */}

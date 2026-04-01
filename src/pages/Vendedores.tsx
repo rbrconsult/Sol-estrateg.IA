@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { useSolLeads, useForceSync } from '@/hooks/useSolData';
+import { useSolLeads } from '@/hooks/useSolData';
 import { getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev } from "@/lib/formatters";

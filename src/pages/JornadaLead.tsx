@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Route, AlertTriangle, Search, CheckCircle, Clock, XCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
@@ -232,7 +232,7 @@ function deriveAbandonByStage(records: SolLead[]) {
 export default function JornadaLead() {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
 
   const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showEtapa: true, showStatus: true, showSearch: true });
@@ -272,9 +272,6 @@ export default function JornadaLead() {
           </h1>
           <p className="text-sm text-muted-foreground">Dados reais do Data Store — {records.length} leads analisados</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}>
-          <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-        </Button>
       </div>
 
       <PageFloatingFilter

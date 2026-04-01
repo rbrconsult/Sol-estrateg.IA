@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
@@ -127,7 +127,7 @@ const JOURNEY_ORDER = [
 export default function Leads() {
   const queryClient = useQueryClient();
   const { data: solLeads, isLoading, error } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { selectedOrgName } = useOrgFilter();
   const solActions = useSolActions();
   const [searchTerm, setSearchTerm] = useState("");
@@ -392,7 +392,7 @@ export default function Leads() {
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <AlertCircle className="h-10 w-10 text-destructive" />
         <p className="text-muted-foreground">Erro ao carregar dados</p>
-        <Button onClick={() => forceSync()} variant="outline">Tentar novamente</Button>
+        <Button onClick={() => window.location.reload()} variant="outline">Tentar novamente</Button>
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -28,7 +28,7 @@ const isDesqualificado = (r: SolLead): boolean => {
 
 export default function Desqualificar() {
   const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -127,9 +127,6 @@ export default function Desqualificar() {
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">Selecione os leads e desqualifique em lote</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isFetching} className="shrink-0 gap-1.5">
-          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
-        </Button>
       </div>
 
       {/* KPIs */}

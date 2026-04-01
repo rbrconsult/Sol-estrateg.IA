@@ -137,9 +137,6 @@ export default function Comercial() {
           {filterCloser !== "all" && (
             <Button variant="ghost" size="sm" onClick={() => setFilterCloser("all")} className="text-xs text-muted-foreground">Limpar</Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Atualizar
-          </Button>
         </div>
       </div>
 

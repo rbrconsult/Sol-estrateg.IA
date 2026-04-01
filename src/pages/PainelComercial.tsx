@@ -21,7 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
@@ -254,7 +254,7 @@ export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { proposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
 
@@ -301,9 +301,6 @@ export default function PainelComercial() {
             <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse inline-block" />
             {records.length} leads carregados
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => forceSync()}>
-            <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-          </Button>
         </div>
       </div>
 

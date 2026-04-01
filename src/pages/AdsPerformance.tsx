@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Megaphone, RefreshCcw } from 'lucide-react';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
@@ -125,7 +125,7 @@ function deriveWeeklyEvolution(records: SolLead[]) {
 
 export default function AdsPerformance() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
   const filteredRecords = useMemo(() => gf.filterRecords(solLeads || []), [solLeads, gf.filterRecords]);
   const records = filteredRecords;
@@ -177,9 +177,6 @@ export default function AdsPerformance() {
           </h1>
           <p className="text-sm text-muted-foreground">Atribuição real de leads — {totalLeads} leads no Data Store</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => forceSync()}>
-          <RefreshCcw className="h-4 w-4 mr-1" /> Atualizar
-        </Button>
       </div>
 
       <PageFloatingFilter
