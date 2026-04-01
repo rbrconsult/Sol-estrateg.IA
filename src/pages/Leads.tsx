@@ -800,7 +800,7 @@ export default function Leads() {
                         <td className="px-3 py-2.5 text-muted-foreground text-xs font-mono">{r.telefone || '—'}</td>
                         <td className="px-3 py-2.5"><CanalOrigemBadge canal={r.canal_origem} /></td>
                         <td className="px-3 py-2.5">
-                          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", getEtapaLabel(r) === "SEM ETAPA" ? "bg-secondary text-muted-foreground" : "bg-primary/10 text-primary")}>
+                          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", getEtapaLabel(r) === "TRAFEGO PAGO" ? "bg-secondary text-muted-foreground" : "bg-primary/10 text-primary")}>
                             {getEtapaLabel(r)}
                           </span>
                         </td>
