@@ -173,9 +173,6 @@ export default function VendedorPerformance() {
               <SelectItem value="conversao">Por Conversão</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => forceSync()} disabled={isSyncing || isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
-            Atualizar
           </Button>
         </div>
       </div>

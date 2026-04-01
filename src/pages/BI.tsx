@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSolLeads, useSolMetricas, useForceSync } from '@/hooks/useSolData';
+import { useSolLeads, useSolMetricas } from '@/hooks/useSolData';
 import { useBIData } from '@/hooks/useBIData';
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { cn } from "@/lib/utils";

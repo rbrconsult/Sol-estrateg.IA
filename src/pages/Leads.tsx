@@ -392,7 +392,7 @@ export default function Leads() {
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <AlertCircle className="h-10 w-10 text-destructive" />
         <p className="text-muted-foreground">Erro ao carregar dados</p>
-        <Button onClick={() => forceSync()} variant="outline">Tentar novamente</Button>
+        <Button onClick={() => window.location.reload()} variant="outline">Tentar novamente</Button>
       </div>
     );
   }
