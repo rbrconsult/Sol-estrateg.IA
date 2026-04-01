@@ -15,12 +15,13 @@ import { useFranquiaId } from '@/hooks/useFranquiaId';
 const COLORS = ['hsl(210,80%,55%)', 'hsl(35,90%,55%)', 'hsl(140,60%,45%)', 'hsl(0,70%,55%)', 'hsl(270,60%,55%)', 'hsl(180,60%,45%)', 'hsl(45,90%,50%)', 'hsl(320,60%,55%)'];
 
 export default function SiteGA4Page() {
+  const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
   const [campanha, setCampanha] = useState('all');
   const [source, setSource] = useState('all');
   const [medium, setMedium] = useState('all');
   const [landingPage, setLandingPage] = useState('all');
-  const { data: rows, isLoading } = useGA4(FRANQUIA, range);
+  const { data: rows, isLoading } = useGA4(franquiaId, range);
 
   const filtered = useMemo(() => {
     if (!rows) return [];
