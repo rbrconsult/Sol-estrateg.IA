@@ -84,10 +84,51 @@ Todas as queries respeitam:
 
 ---
 
-## 6. Direção dos Dados
+## 6. Sincronização Automática (pg_cron → Edge Function)
+
+A Edge Function `sync-make-datastores` é chamada automaticamente via **pg_cron + pg_net**.
+
+### Jobs Ativos
+
+| Job Name | Cron | Frequência | Group | Tabelas |
+|----------|------|-----------|-------|---------|
+| `sync-make-fast` | `*/5 * * * *` | **Cada 5 min** | `fast` | `sol_leads_sync` (DS 87418), `sol_qualificacao_sync` (DS 87715), `sol_conversions_sync` (DS 87775) |
+| `sync-make-medium` | `*/15 * * * *` | **Cada 15 min** | `medium` | `sol_metricas_sync` (DS 87422), `sol_projetos_sync` (DS 87423) |
+| `sync-make-slow` | `0 * * * *` | **Cada 1 hora** | `slow` | `sol_config_sync` (DS 87419), `sol_equipe_sync` (DS 87420), `sol_funis_sync` (DS 87421) |
+
+### Como funciona
+
+1. pg_cron dispara `net.http_post` para a Edge Function com `{"group": "fast|medium|slow"}`
+2. A Edge Function chama `GET https://us2.make.com/api/v2/data-stores/{DS_ID}/data?teamId=1934898` com paginação (100/página)
+3. Mapeia campos camelCase → snake_case (ex: `chatId` → `chat_id`)
+4. Converte objetos vazios `{}` → `null`
+5. Faz upsert em batches de 100 na tabela _sync correspondente
+6. Registra resultado em `integration_runs` (status, rows_received, rows_upserted, errors)
+
+### Secrets necessários
+
+| Secret | Valor |
+|--------|-------|
+| `MAKE_API_KEY` | Token da API Make.com (já configurado) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Auto-disponível nas Edge Functions |
+
+### Monitoramento
+
+Consultar últimas execuções:
+```sql
+SELECT integration_name, status, rows_received, rows_upserted, error_message, started_at
+FROM integration_runs
+WHERE integration_name LIKE 'sync-make-ds-%'
+ORDER BY started_at DESC
+LIMIT 20;
+```
+
+---
+
+## 7. Direção dos Dados
 
 ```
-Make Data Stores ──cron──▶ Supabase (sol_*_sync) ──▶ Lovable (leitura)
+Make Data Stores ──pg_cron (5/15/60 min)──▶ Edge Function sync-make-datastores ──▶ Supabase (sol_*_sync) ──▶ Lovable (leitura)
 Lovable (escrita) ──▶ Supabase (sol_config/equipe/funis_sync) ──sync reverso──▶ Make DS
 Make Cenários ──POST direto──▶ Supabase (ads_*, analytics_*)
 Lovable (ações) ──webhook──▶ Make Cenários v2
