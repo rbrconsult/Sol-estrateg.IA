@@ -125,7 +125,7 @@ function deriveWeeklyEvolution(records: SolLead[]) {
 
 export default function AdsPerformance() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const gf = useGlobalFilters();
   const filteredRecords = useMemo(() => gf.filterRecords(solLeads || []), [solLeads, gf.filterRecords]);
   const records = filteredRecords;
