@@ -6,6 +6,7 @@ import {
   Zap, FileText, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
+  RefreshCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { useForceSync } from "@/hooks/useSolData";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
