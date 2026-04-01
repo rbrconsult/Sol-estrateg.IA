@@ -19,16 +19,22 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+type AppRole = 'super_admin' | 'diretor' | 'gerente' | 'closer' | 'admin';
+
 interface MenuItem {
   title: string;
   icon: React.ElementType;
   path: string;
   moduleKey?: string;
+  /** Which roles can see this item. If omitted, all roles see it. */
+  minRole?: AppRole[];
 }
 
 interface MenuGroup {
   label: string;
   items: MenuItem[];
+  /** Which roles can see this group. If omitted, all roles see it. */
+  minRole?: AppRole[];
 }
 
 const menuGroups: MenuGroup[] = [
