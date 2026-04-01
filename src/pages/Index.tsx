@@ -373,7 +373,7 @@ const Index = () => {
                       <TableHead className="text-xs">Nome</TableHead>
                       <TableHead className="text-xs">Score</TableHead>
                       <TableHead className="text-xs">Temp.</TableHead>
-                      <TableHead className="text-xs">Valor Conta</TableHead>
+                      <TableHead className="text-xs">Conta Luz</TableHead>
                       <TableHead className="text-xs">Closer</TableHead>
                       <TableHead className="text-xs text-right">Msgs IA</TableHead>
                       <TableHead className="text-xs text-right">Custo</TableHead>
