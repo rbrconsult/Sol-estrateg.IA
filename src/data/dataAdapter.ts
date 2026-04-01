@@ -36,6 +36,19 @@ export interface Proposal {
   makeScore?: string;
   makeRobo?: string;
   makeNome?: string;
+  makeCidade?: string;
+  makeEmail?: string;
+  makeValorConta?: string;
+  makeImovel?: string;
+  makeSentimento?: string;
+  makeInteresse?: string;
+  makeUltimaMensagem?: string;
+  makeHistorico?: { data: string; tipo: string; mensagem: string }[];
+  makeStatusResposta?: string;
+  makeRespondeu?: boolean;
+  makeTotalMensagens?: number;
+  makeMensagensRecebidas?: number;
+  makeDataResposta?: string;
 }
 
 // ── Helpers ──
