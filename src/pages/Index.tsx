@@ -315,13 +315,13 @@ const Index = () => {
             {/* Taxas calculadas */}
             <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
               {statusCounts['TRAFEGO_PAGO'] > 0 && (
-                <span>Tráfego → MQL: <b className="text-foreground">{((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(1)}%</b></span>
+                <span>Recebidos → Qualificação: <b className="text-foreground">{((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(1)}%</b></span>
               )}
               {(statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO']) > 0 && (
-                <span>MQL → SQL: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
+                <span>Qualificação → Qualificados: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
               )}
               {(statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO']) > 0 && (
-                <span>SQL → Ganho: <b className="text-foreground">{((statusCounts['GANHO'] / (statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO'])) * 100).toFixed(1)}%</b></span>
+                <span>Qualificados → Ganho: <b className="text-foreground">{((statusCounts['GANHO'] / (statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO'])) * 100).toFixed(1)}%</b></span>
               )}
             </div>
           </Card>
