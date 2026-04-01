@@ -21,7 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
