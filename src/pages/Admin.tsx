@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, Globe, Lock } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, Globe, Lock, Server } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
@@ -25,6 +25,7 @@ import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSet
 import DiscoveredDataStores from '@/components/admin/DiscoveredDataStores';
 import SkillsTab from '@/components/admin/SkillsTab';
 import { PessoasTab } from '@/components/admin/PessoasTab';
+import { InfrastructureTab } from '@/components/admin/InfrastructureTab';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -470,6 +471,12 @@ export default function Admin() {
                 Módulos
               </TabsTrigger>
             )}
+            {userRole === 'super_admin' && (
+              <TabsTrigger value="infraestrutura" className="flex items-center gap-1.5">
+                <Server className="h-3.5 w-3.5" />
+                Infraestrutura
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* ═══════════════════════════════════════════ */}
@@ -665,6 +672,13 @@ export default function Admin() {
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="modulos">
             <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
+          </TabsContent>
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* INFRAESTRUTURA */}
+          {/* ═══════════════════════════════════════════ */}
+          <TabsContent value="infraestrutura">
+            <InfrastructureTab />
           </TabsContent>
         </Tabs>
 
