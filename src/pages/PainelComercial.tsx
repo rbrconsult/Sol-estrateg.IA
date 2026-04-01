@@ -19,6 +19,7 @@ import {
   Send,
   RefreshCcw,
   Zap,
+  CheckCircle2,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
@@ -522,30 +523,43 @@ export default function PainelComercial() {
         <TabsContent value="oportunidades" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Alta Probabilidade */}
-            <Card className="border-chart-3/30">
-              <CardHeader>
-                <CardTitle className="text-chart-3 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Alta Probabilidade (≥70%)
+            <Card className="border-border/50 overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-success/10 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-success" />
+                  </div>
+                  Alta Probabilidade
+                  {forecastData && forecastData.altaProbabilidade.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{forecastData.altaProbabilidade.length}</Badge>
+                  )}
                 </CardTitle>
+                <p className="text-[10px] text-muted-foreground">Etapas avançadas com ≥70% de chance de fechamento</p>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[360px]">
                   <div className="space-y-2">
                     {!forecastData || forecastData.altaProbabilidade.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8 text-sm">
-                        Nenhuma proposta com alta probabilidade
-                      </p>
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="h-12 w-12 rounded-full bg-success/5 flex items-center justify-center mb-3">
+                          <TrendingUp className="h-6 w-6 text-success/30" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Sem propostas de alta probabilidade</p>
+                        <p className="text-[11px] text-muted-foreground/70 mt-1 max-w-[200px]">Propostas em Negociação ou Proposta Enviada aparecerão aqui</p>
+                      </div>
                     ) : (
                       forecastData.altaProbabilidade.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
-                          <div>
-                            <p className="font-medium text-foreground text-sm">{p.nomeCliente}</p>
-                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.responsavel || p.representante || '—'}</p>
+                        <div key={p.id} className="flex items-center justify-between p-3 rounded-lg border border-border/30 hover:border-success/30 hover:bg-success/5 transition-all cursor-pointer group">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground text-sm truncate group-hover:text-success transition-colors">{p.nomeCliente}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Badge variant="outline" className="text-[9px] h-4 px-1">{p.etapa}</Badge>
+                              <span className="text-[10px] text-muted-foreground">{p.responsavel || p.representante || '—'}</span>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-chart-3">{formatCurrencyAbbrev(p.valorProposta)}</p>
-                            <p className="text-xs text-muted-foreground">{p.probabilidade}%</p>
+                          <div className="text-right shrink-0 ml-3">
+                            <p className="font-bold text-success text-sm">{formatCurrencyAbbrev(p.valorProposta)}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{p.probabilidade}%</p>
                           </div>
                         </div>
                       ))
@@ -556,30 +570,43 @@ export default function PainelComercial() {
             </Card>
 
             {/* Em Risco */}
-            <Card className="border-destructive/30">
-              <CardHeader>
-                <CardTitle className="text-destructive flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
+            <Card className="border-border/50 overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                  </div>
                   Propostas em Risco
+                  {forecastData && forecastData.emRisco.length > 0 && (
+                    <Badge variant="destructive" className="text-[10px] h-4 px-1.5">{forecastData.emRisco.length}</Badge>
+                  )}
                 </CardTitle>
+                <p className="text-[10px] text-muted-foreground">Paradas há +30 dias ou probabilidade abaixo de 30%</p>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[360px]">
                   <div className="space-y-2">
                     {!forecastData || forecastData.emRisco.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8 text-sm">
-                        Nenhuma proposta em risco identificada
-                      </p>
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="h-12 w-12 rounded-full bg-success/5 flex items-center justify-center mb-3">
+                          <CheckCircle2 className="h-6 w-6 text-success/30" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Nenhuma proposta em risco</p>
+                        <p className="text-[11px] text-muted-foreground/70 mt-1 max-w-[200px]">Pipeline saudável — sem negócios estagnados</p>
+                      </div>
                     ) : (
                       forecastData.emRisco.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg border border-destructive/20 hover:bg-destructive/15 transition-colors">
-                          <div>
-                            <p className="font-medium text-foreground text-sm">{p.nomeCliente}</p>
-                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.tempoNaEtapa} dias parado</p>
+                        <div key={p.id} className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-all cursor-pointer group">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground text-sm truncate">{p.nomeCliente}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Badge variant="outline" className="text-[9px] h-4 px-1 border-destructive/20 text-destructive">{p.etapa}</Badge>
+                              <span className="text-[10px] text-destructive/70 font-mono">{p.tempoNaEtapa}d parado</span>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-destructive">{formatCurrencyAbbrev(p.valorProposta)}</p>
-                            <p className="text-xs text-muted-foreground">{p.probabilidade}%</p>
+                          <div className="text-right shrink-0 ml-3">
+                            <p className="font-bold text-destructive text-sm">{formatCurrencyAbbrev(p.valorProposta)}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{p.probabilidade}%</p>
                           </div>
                         </div>
                       ))
