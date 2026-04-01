@@ -90,7 +90,7 @@ const App = () => (
 
               {/* Dashboard Pré-Venda */}
               <Route path="/dashboard" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Index /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/conferencia" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/conferencia" element={<Navigate to="/dashboard" replace />} />
 
               {/* Dashboard principal */}
 
