@@ -25,7 +25,7 @@ import {
 // ── Status colors & icons ──
 const STATUS_META: Record<string, { color: string; icon: typeof Users; desc: string }> = {
   TRAFEGO_PAGO:    { color: "text-muted-foreground", icon: Users,          desc: "Preencheu formulário — SOL não falou" },
-  EM_QUALIFICACAO: { color: "text-amber-500",        icon: MessageSquare,  desc: "SOL está conversando" },
+  EM_QUALIFICACAO: { color: "text-amber-500",        icon: Bot,            desc: "SOL está conversando" },
   QUALIFICADO:     { color: "text-emerald-500",      icon: UserCheck,      desc: "Qualificado, transferido pro closer" },
   DESQUALIFICADO:  { color: "text-destructive",      icon: UserX,          desc: "Descartado pela SOL" },
   FOLLOW_UP:       { color: "text-orange-500",       icon: Repeat,         desc: "FUP Frio ativo" },
