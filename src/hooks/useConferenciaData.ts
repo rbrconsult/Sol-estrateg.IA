@@ -541,10 +541,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     // ── Build all data structures ──
     const kpiCards: KPICard[] = [
       { label: 'Leads Recebidos', value: total, suffix: '', detail: `${solRecords.length} SOL + ${fupRecords.length} FUP` },
-      { label: 'Taxa Resposta', value: taxaResposta, suffix: '%', detail: `${responderam.length}/${total}` },
-      { label: 'MQL', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%`, tooltip: 'Marketing Qualified Leads' },
-      { label: 'SQL', value: sqlCount, suffix: '', detail: `${mqlCount > 0 ? ((sqlCount / mqlCount) * 100).toFixed(0) : 0}%`, tooltip: 'Sales Qualified Leads' },
-      { label: 'Agendamentos', value: agendamentos, suffix: '', detail: `${sqlCount > 0 ? ((agendamentos / sqlCount) * 100).toFixed(0) : 0}%` },
+      { label: 'Em Qualificação', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%` },
+      { label: 'Qualificados', value: sqlCount, suffix: '', detail: `${mqlCount > 0 ? ((sqlCount / mqlCount) * 100).toFixed(0) : 0}%` },
       { label: 'Fechados', value: ganhos.length, suffix: '', detail: `${total > 0 ? ((ganhos.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
       { label: 'Resgatados FUP', value: fupReativados, suffix: '', detail: formatCurrencyShort(valorFupRecuperado), tooltip: 'Leads recuperados via FUP Frio' },
     ];
