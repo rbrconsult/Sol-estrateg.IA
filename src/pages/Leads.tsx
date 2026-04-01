@@ -925,8 +925,9 @@ export default function Leads() {
           onDesqualificar={(l: any) => {
             solActions.desqualificar.mutate({
               telefone: l.telefone,
-              chatId: l.chatId || l.chat_id || "",
-              nome: l.nome,
+              chat_id: l.chat_id || "",
+              contact_id: l.contact_id || "",
+              motivo: "Desqualificado via drawer",
             });
           }}
           onReprocessar={(l: any) => {
