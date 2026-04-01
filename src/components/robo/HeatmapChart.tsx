@@ -1,9 +1,9 @@
 import type { SolLead } from '@/hooks/useSolData';
 
 interface HeatmapChartProps {
-  records: SolLead[];
+  records: any[];
   title?: string;
-  dateField?: 'ts_cadastro' | 'ts_ultimo_fup';
+  dateField?: string;
 }
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
