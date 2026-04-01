@@ -130,10 +130,9 @@ const App = () => (
               <Route path="/followup" element={<ProtectedRoute><MainLayout><AnalistaFollowup /></MainLayout></ProtectedRoute>} />
               <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              {/* Dead pages → redirect to /leads */}
-              <Route path="/qualificacao" element={<Navigate to="/leads" replace />} />
-              <Route path="/desqualificar" element={<Navigate to="/leads" replace />} />
-              <Route path="/reprocessamento" element={<Navigate to="/leads" replace />} />
+              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><Qualificacao /></MainLayout></ProtectedRoute>} />
+              <Route path="/desqualificar" element={<ProtectedRoute><MainLayout><Desqualificar /></MainLayout></ProtectedRoute>} />
+              <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><Reprocessamento /></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasVisaoGeral /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/meta" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><MetaAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/google" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GoogleAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
