@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSolLeadsSync } from '@/hooks/useSolLeadsSync';
-import { useSolEquipeSync, useSolQualificacaoSync } from '@/hooks/useSolSyncTables';
+import { useSolLeads, useSolEquipe, useSolQualificacao, type SolLead } from '@/hooks/useSolData';
 import { useSolActionsV2 } from '@/hooks/useSolActionsV2';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 import { Card } from '@/components/ui/card';
