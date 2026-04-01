@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Route, AlertTriangle, Search, CheckCircle, Clock, XCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
