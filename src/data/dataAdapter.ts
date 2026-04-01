@@ -109,7 +109,9 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
       responsavel: l.closer_nome || '',
       responsavelId: l.closer_sm_id || '',
       representante: l.closer_nome || '',
-      valorProposta: parseFloat(l.valor_conta || '0') || 0,
+      // B4 FIX: valor_conta = conta de luz do lead (pré-venda), NÃO é valor da proposta comercial
+      // valor_proposta deveria vir de sol_projetos_sync (hoje vazio)
+      valorProposta: 0,
       potenciaSistema: 0,
       nomeProposta: l.nome || '',
       dataCriacaoProjeto: parseDate(l.ts_cadastro || '') || '',
