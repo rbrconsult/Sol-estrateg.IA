@@ -170,8 +170,6 @@ export default function SolAgent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            Force Sync
-          </Button>
           <HelpButton moduleId="sol-agent" label="Ajuda" />
         </div>
       </div>
