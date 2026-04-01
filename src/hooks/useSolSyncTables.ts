@@ -7,7 +7,8 @@ export {
   useSolConversions as useSolConversionsSync,
   useSolFunis as useSolFunisSync,
   useSolConfig as useSolConfigSync,
-  useSolConfigUpdate as useSolConfigUpdateSync,
-  useSolEquipeUpdate as useSolEquipeUpdateSync,
-  useSolEquipeInsert as useSolEquipeInsertSync,
+  useSolConfigUpdate,
+  useSolEquipeUpdate,
+  useSolEquipeInsert,
+  type SolEquipeMembro as SolEquipeSync,
 } from '@/hooks/useSolData';
