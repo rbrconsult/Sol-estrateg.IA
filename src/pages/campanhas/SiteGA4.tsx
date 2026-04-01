@@ -11,17 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { Globe, Users, Target } from 'lucide-react';
-
-const FRANQUIA = 'evolve_olimpia';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 const COLORS = ['hsl(210,80%,55%)', 'hsl(35,90%,55%)', 'hsl(140,60%,45%)', 'hsl(0,70%,55%)', 'hsl(270,60%,55%)', 'hsl(180,60%,45%)', 'hsl(45,90%,50%)', 'hsl(320,60%,55%)'];
 
 export default function SiteGA4Page() {
+  const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
   const [campanha, setCampanha] = useState('all');
   const [source, setSource] = useState('all');
   const [medium, setMedium] = useState('all');
   const [landingPage, setLandingPage] = useState('all');
-  const { data: rows, isLoading } = useGA4(FRANQUIA, range);
+  const { data: rows, isLoading } = useGA4(franquiaId, range);
 
   const filtered = useMemo(() => {
     if (!rows) return [];
@@ -81,14 +81,14 @@ export default function SiteGA4Page() {
   }, [filtered]);
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-8 w-64 mb-4" /><div className="grid grid-cols-3 gap-4">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}</div></div>;
-  if (!rows?.length) return <div className="p-6"><div className="flex justify-between items-center mb-4"><h1 className="text-xl font-bold">Site (GA4)</h1><SyncBadge franquiaId={FRANQUIA} /></div><EmptyState /></div>;
+  if (!rows?.length) return <div className="p-6"><div className="flex justify-between items-center mb-4"><h1 className="text-xl font-bold">Site (GA4)</h1><SyncBadge franquiaId={franquiaId} /></div><EmptyState /></div>;
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-xl font-bold flex items-center gap-2"><Globe className="h-5 w-5" /> Site (GA4)</h1>
         <div className="flex items-center gap-3 flex-wrap">
-          <SyncBadge franquiaId={FRANQUIA} />
+          <SyncBadge franquiaId={franquiaId} />
           <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
             extraFilters={
               <>
