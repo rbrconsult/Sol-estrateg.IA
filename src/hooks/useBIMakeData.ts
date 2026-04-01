@@ -178,6 +178,8 @@ export function useBIMakeData(dateRange?: DateRange) {
       fupFrio,
       volumeSLA,
       financeiro,
+      motivos,
+      horarios,
     };
   }, [leads, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
 
