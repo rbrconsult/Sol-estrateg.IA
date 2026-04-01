@@ -120,7 +120,7 @@ function deriveFupData(records: SolLead[]) {
 
 export default function RoboFupFrio() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
   const gf = useGlobalFilters();
 
