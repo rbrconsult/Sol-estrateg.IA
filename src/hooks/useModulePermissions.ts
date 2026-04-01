@@ -26,10 +26,7 @@ export const MODULE_DEFINITIONS = [
   // Operacional
   { key: 'chamados', label: 'Chamados', description: 'Suporte & SLA', path: '/chamados' },
   { key: 'monitoramento', label: 'Monitor', description: 'Status do Sistema', path: '/operacoes' },
-  { key: 'reprocessamento', label: 'Reprocessar', description: 'Reprocessar Dados', path: '/reprocessamento' },
-  { key: 'qualificacao', label: 'Qualificação', description: 'Qualificação Manual', path: '/qualificacao' },
-  { key: 'sanitizacao', label: 'Sanitização', description: 'Limpeza de Dados', path: '/sanitizacao' },
-  { key: 'ajuda', label: 'Ajuda', description: 'Central de Ajuda', path: '/ajuda' },
+  // Removed: reprocessamento, qualificacao, ajuda (dead pages)
   // Admin
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
   { key: 'admin-pessoas', label: 'Gestão de Pessoas', description: 'Criar e gerir usuários', path: '/admin' },
