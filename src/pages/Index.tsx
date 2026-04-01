@@ -153,17 +153,16 @@ const Index = () => {
   // ══════════════════════════════════════════════════════════════
   const closerPerf = useMemo(() => {
     if (!equipe?.length) return [];
-    const map: Record<string, { cargo: string; leads: number; ganhos: number; perdidos: number; valor: number }> = {};
+    const map: Record<string, { cargo: string; leads: number; ganhos: number; perdidos: number }> = {};
     equipe.filter(e => e.ativo).forEach(e => {
-      map[e.nome || ''] = { cargo: e.cargo || '', leads: 0, ganhos: 0, perdidos: 0, valor: 0 };
+      map[e.nome || ''] = { cargo: e.cargo || '', leads: 0, ganhos: 0, perdidos: 0 };
     });
     filtered.filter(l => l.closer_nome).forEach(l => {
       const c = l.closer_nome!;
-      if (!map[c]) map[c] = { cargo: 'closer', leads: 0, ganhos: 0, perdidos: 0, valor: 0 };
+      if (!map[c]) map[c] = { cargo: 'closer', leads: 0, ganhos: 0, perdidos: 0 };
       map[c].leads++;
       if (l.status === 'GANHO') map[c].ganhos++;
       if (l.status === 'PERDIDO') map[c].perdidos++;
-      map[c].valor += parseFloat(l.valor_conta || '0') || 0;
     });
     return Object.entries(map).map(([nome, d]) => ({ nome, ...d })).sort((a, b) => b.leads - a.leads);
   }, [filtered, equipe]);
