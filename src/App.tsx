@@ -41,7 +41,9 @@ import SLAMonitor from "./pages/SLAMonitor";
 import AnalistaFollowup from "./pages/AnalistaFollowup";
 import Comissoes from "./pages/Comissoes";
 import Sanitizacao from "./pages/Sanitizacao";
-// Dead pages removed: Qualificacao, Desqualificar, Reprocessamento (ações inline nas páginas de Leads)
+import Qualificacao from "./pages/Qualificacao";
+import Desqualificar from "./pages/Desqualificar";
+import Reprocessamento from "./pages/Reprocessamento";
 import OrgConfigPage from "./pages/admin/OrgConfigPage";
 import PreVenda from "./pages/solar/PreVenda";
 import Comercial from "./pages/solar/Comercial";
@@ -130,10 +132,9 @@ const App = () => (
               <Route path="/followup" element={<ProtectedRoute><MainLayout><AnalistaFollowup /></MainLayout></ProtectedRoute>} />
               <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="vendedores"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sanitizacao" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><Sanitizacao /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              {/* Dead pages → redirect to /leads */}
-              <Route path="/qualificacao" element={<Navigate to="/leads" replace />} />
-              <Route path="/desqualificar" element={<Navigate to="/leads" replace />} />
-              <Route path="/reprocessamento" element={<Navigate to="/leads" replace />} />
+              <Route path="/qualificacao" element={<ProtectedRoute><MainLayout><Qualificacao /></MainLayout></ProtectedRoute>} />
+              <Route path="/desqualificar" element={<ProtectedRoute><MainLayout><Desqualificar /></MainLayout></ProtectedRoute>} />
+              <Route path="/reprocessamento" element={<ProtectedRoute><MainLayout><Reprocessamento /></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasVisaoGeral /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/meta" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><MetaAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/google" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GoogleAdsPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
@@ -144,7 +145,7 @@ const App = () => (
               <Route path="/campanhas/receita" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><CampanhasMidiaReceita /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/campanhas/ga4" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GA4Campanhas /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/time-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="time-comercial"><TimeComercialPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/sol/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="monitoramento"><SolInsights /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/sol/insights" element={<Navigate to="/leads" replace />} />
               <Route path="/admin/config" element={<ProtectedRoute><MainLayout><SolConfigPage /></MainLayout></ProtectedRoute>} />
               <Route path="/admin/equipe" element={<ProtectedRoute><MainLayout><SolEquipePage /></MainLayout></ProtectedRoute>} />
               <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><SolFunisPage /></MainLayout></ProtectedRoute>} />
