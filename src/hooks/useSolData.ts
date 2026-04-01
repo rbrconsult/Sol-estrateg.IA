@@ -177,11 +177,11 @@ export function normalizePhone(phone: string): string {
 // ── sol_leads ──
 
 export function useSolLeads(statusFilter?: string[]) {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const franquiaId = useFranquiaId();
 
   return useQuery({
-    queryKey: ["sol-leads", franquiaId, statusFilter],
+    queryKey: ["sol-leads", franquiaId, statusFilter, userRole],
     queryFn: async (): Promise<SolLead[]> => {
       let query = supabase
         .from("sol_leads_sync")
@@ -191,6 +191,18 @@ export function useSolLeads(statusFilter?: string[]) {
 
       if (statusFilter?.length) {
         query = query.in("status", statusFilter);
+      }
+
+      // Role-based filtering: closers only see their own leads
+      if (userRole === 'closer' && user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        if (profile?.full_name) {
+          query = query.eq("closer_nome", profile.full_name);
+        }
       }
 
       const allRows: any[] = [];
