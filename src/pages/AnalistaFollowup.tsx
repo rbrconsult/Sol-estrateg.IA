@@ -8,7 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   AreaChart, Area, Line, Legend, PieChart, Pie, Cell,
 } from "recharts";
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Repeat, Users, DollarSign, Clock, Zap, TrendingUp, MessageSquare, Target, RefreshCcw,
