@@ -26,6 +26,7 @@ export const MODULE_DEFINITIONS = [
   // Operacional
   { key: 'chamados', label: 'Chamados', description: 'Suporte & SLA', path: '/chamados' },
   { key: 'monitoramento', label: 'Monitor', description: 'Status do Sistema', path: '/operacoes' },
+  { key: 'sanitizacao', label: 'Sanitização', description: 'Limpeza de Dados', path: '/sanitizacao' },
   // Removed: reprocessamento, qualificacao, ajuda (dead pages)
   // Admin
   { key: 'time-comercial', label: 'Time Comercial', description: 'Gestão do Time', path: '/admin' },
