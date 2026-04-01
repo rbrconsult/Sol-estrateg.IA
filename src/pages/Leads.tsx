@@ -909,30 +909,28 @@ export default function Leads() {
 
         {/* ══════ Lead Detail Drawer ══════ */}
         <LeadDetailDrawer
-          lead={drawerLead}
+          lead={drawerLead as any}
           open={!!drawerLead}
           onClose={() => setDrawerLead(null)}
-          onQualificar={(l) => {
+          onQualificar={(l: any) => {
             solActions.qualificar.mutate({
               telefone: l.telefone,
-              project_id: l.projectId,
-              chatId: l.chatId || "",
-              contactId: l.contactId || "",
+              chatId: l.chatId || l.chat_id || "",
+              contactId: l.contactId || l.contact_id || "",
               nome: l.nome,
-              score: l.makeScore ? parseFloat(l.makeScore) : undefined,
-              valor_conta: l.valorConta,
+              score: l.makeScore ? String(parseFloat(l.makeScore)) : l.score || undefined,
+              valor_conta: l.valorConta || l.valor_conta,
               mensagem: true,
             });
           }}
-          onDesqualificar={(l) => {
+          onDesqualificar={(l: any) => {
             solActions.desqualificar.mutate({
               telefone: l.telefone,
-              project_id: l.projectId,
-              chatId: l.chatId || "",
+              chatId: l.chatId || l.chat_id || "",
               nome: l.nome,
             });
           }}
-          onReprocessar={(l) => {
+          onReprocessar={(l: any) => {
             solActions.reprocessar.mutate({ telefone: l.telefone });
           }}
           actionsLoading={solActions.isLoading}

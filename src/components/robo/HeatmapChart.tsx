@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 
 const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
-export function buildHeatmap(records: SolLead[], dateField: 'ts_cadastro' | 'ts_ultimo_fup' = 'ts_cadastro'): number[][] {
+export function buildHeatmap(records: any[], dateField: string = 'ts_cadastro'): number[][] {
   const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
   records.forEach(r => {
     try {

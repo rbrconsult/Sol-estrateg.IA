@@ -8,7 +8,7 @@ import type { SolLead } from '@/hooks/useSolData';
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
 interface RouteStudyProps {
-  records: SolLead[];
+  records: any[];
 }
 
 export default function RouteStudy({ records }: RouteStudyProps) {
