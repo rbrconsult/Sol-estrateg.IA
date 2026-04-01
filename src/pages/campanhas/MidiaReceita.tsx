@@ -75,13 +75,14 @@ export default function CampanhasMidiaReceita() {
       const matchingLeads = leadsArr.filter(l => l.canal_origem === c.campanha);
       const isFechado = (l: any) =>
         l.status?.toUpperCase() === 'GANHO';
-      const isPipeline = (l: any) => !isFechado(l) && l.valor_conta && parseFloat(l.valor_conta) > 0;
+      const isPipeline = (l: any) => !isFechado(l) && ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status?.toUpperCase());
 
       const vendas = matchingLeads.filter(isFechado).length;
-      const receita = matchingLeads.filter(isFechado).reduce((s: number, l: any) => s + (parseFloat(l.valor_conta) || 0), 0);
-      const pipelineAtivo = matchingLeads.filter(isPipeline).reduce((s: number, l: any) => s + (parseFloat(l.valor_conta) || 0), 0);
-      const oportunidades = matchingLeads.filter((l: any) => l.valor_conta && parseFloat(l.valor_conta) > 0).length;
-      const ticketMedio = vendas > 0 ? receita / vendas : 0;
+      // valor_conta é conta de luz, NÃO receita — usar apenas contagem
+      const receita = 0;
+      const pipelineAtivo = matchingLeads.filter(isPipeline).length;
+      const oportunidades = matchingLeads.filter((l: any) => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP','GANHO'].includes(l.status?.toUpperCase())).length;
+      const ticketMedio = 0;
       const cac = vendas > 0 ? c.investimento / vendas : 0;
       const roas = c.investimento > 0 ? receita / c.investimento : 0;
       const roi = c.investimento > 0 ? ((receita - c.investimento) / c.investimento) * 100 : 0;

@@ -153,17 +153,16 @@ const Index = () => {
   // ══════════════════════════════════════════════════════════════
   const closerPerf = useMemo(() => {
     if (!equipe?.length) return [];
-    const map: Record<string, { cargo: string; leads: number; ganhos: number; perdidos: number; valor: number }> = {};
+    const map: Record<string, { cargo: string; leads: number; ganhos: number; perdidos: number }> = {};
     equipe.filter(e => e.ativo).forEach(e => {
-      map[e.nome || ''] = { cargo: e.cargo || '', leads: 0, ganhos: 0, perdidos: 0, valor: 0 };
+      map[e.nome || ''] = { cargo: e.cargo || '', leads: 0, ganhos: 0, perdidos: 0 };
     });
     filtered.filter(l => l.closer_nome).forEach(l => {
       const c = l.closer_nome!;
-      if (!map[c]) map[c] = { cargo: 'closer', leads: 0, ganhos: 0, perdidos: 0, valor: 0 };
+      if (!map[c]) map[c] = { cargo: 'closer', leads: 0, ganhos: 0, perdidos: 0 };
       map[c].leads++;
       if (l.status === 'GANHO') map[c].ganhos++;
       if (l.status === 'PERDIDO') map[c].perdidos++;
-      map[c].valor += parseFloat(l.valor_conta || '0') || 0;
     });
     return Object.entries(map).map(([nome, d]) => ({ nome, ...d })).sort((a, b) => b.leads - a.leads);
   }, [filtered, equipe]);
@@ -196,12 +195,12 @@ const Index = () => {
     return { semAtividade, aguardandoCL, lixo };
   }, [filtered]);
 
-  // ── Pipeline value for GoalProgress ──
-  const valorGanho = useMemo(() =>
-    filtered.filter(l => l.status === 'GANHO' || l.status === 'CONTRATO').reduce((a, l) => a + (parseFloat(l.valor_conta || '0') || 0), 0),
+  // ── Contagens para GoalProgress (sem valor_conta — valor_conta é conta de luz, NÃO receita) ──
+  const countGanho = useMemo(() =>
+    filtered.filter(l => l.status === 'GANHO' || l.status === 'CONTRATO').length,
   [filtered]);
-  const valorPipeline = useMemo(() =>
-    filtered.filter(l => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status || '')).reduce((a, l) => a + (parseFloat(l.valor_conta || '0') || 0), 0),
+  const countPipeline = useMemo(() =>
+    filtered.filter(l => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status || '')).length,
   [filtered]);
 
   const hasData = (leads?.length ?? 0) > 0;
@@ -316,13 +315,13 @@ const Index = () => {
             {/* Taxas calculadas */}
             <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
               {statusCounts['TRAFEGO_PAGO'] > 0 && (
-                <span>Tráfego → MQL: <b className="text-foreground">{((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(1)}%</b></span>
+                <span>Recebidos → Qualificação: <b className="text-foreground">{((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(1)}%</b></span>
               )}
               {(statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO']) > 0 && (
-                <span>MQL → SQL: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
+                <span>Qualificação → Qualificados: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
               )}
               {(statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO']) > 0 && (
-                <span>SQL → Ganho: <b className="text-foreground">{((statusCounts['GANHO'] / (statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO'])) * 100).toFixed(1)}%</b></span>
+                <span>Qualificados → Ganho: <b className="text-foreground">{((statusCounts['GANHO'] / (statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO'])) * 100).toFixed(1)}%</b></span>
               )}
             </div>
           </Card>
@@ -374,7 +373,7 @@ const Index = () => {
                       <TableHead className="text-xs">Nome</TableHead>
                       <TableHead className="text-xs">Score</TableHead>
                       <TableHead className="text-xs">Temp.</TableHead>
-                      <TableHead className="text-xs">Valor Conta</TableHead>
+                      <TableHead className="text-xs">Conta Luz</TableHead>
                       <TableHead className="text-xs">Closer</TableHead>
                       <TableHead className="text-xs text-right">Msgs IA</TableHead>
                       <TableHead className="text-xs text-right">Custo</TableHead>
@@ -411,7 +410,7 @@ const Index = () => {
                       <TableHead className="text-xs">Nome</TableHead>
                       <TableHead className="text-xs">Score</TableHead>
                       <TableHead className="text-xs">Temp.</TableHead>
-                      <TableHead className="text-xs">Valor Conta</TableHead>
+                      <TableHead className="text-xs">Conta Luz</TableHead>
                       <TableHead className="text-xs text-right">Msgs IA</TableHead>
                       <TableHead className="text-xs">Última interação</TableHead>
                     </TableRow>
@@ -504,7 +503,7 @@ const Index = () => {
                         <TableHead className="text-xs text-right">Leads</TableHead>
                         <TableHead className="text-xs text-right">Ganhos</TableHead>
                         <TableHead className="text-xs text-right">Perdidos</TableHead>
-                        <TableHead className="text-xs text-right">Pipeline R$</TableHead>
+                        <TableHead className="text-xs text-right">Conversão</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -515,7 +514,7 @@ const Index = () => {
                           <TableCell className="text-xs text-right">{c.leads}</TableCell>
                           <TableCell className="text-xs text-right">{c.ganhos}</TableCell>
                           <TableCell className="text-xs text-right">{c.perdidos}</TableCell>
-                          <TableCell className="text-xs text-right">R$ {c.valor.toLocaleString('pt-BR')}</TableCell>
+                          <TableCell className="text-xs text-right">{c.leads > 0 ? `${((c.ganhos / c.leads) * 100).toFixed(0)}%` : '—'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -589,21 +588,21 @@ const Index = () => {
           )}
 
           {/* Meta vs Realizado + Resumo IA */}
-          <GoalProgress valorFechado={valorGanho} receitaPrevista={valorPipeline} />
+          <GoalProgress valorFechado={countGanho} receitaPrevista={countPipeline} />
 
           <ExecutiveSummary
             kpis={{
-              receitaPrevista: valorPipeline, valorGanho, taxaConversao: solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0,
-              ticketMedio: statusCounts['GANHO'] > 0 ? valorGanho / statusCounts['GANHO'] : 0,
+              receitaPrevista: countPipeline, valorGanho: countGanho, taxaConversao: solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0,
+              ticketMedio: 0,
               totalNegocios: filtered.length, negociosGanhos: statusCounts['GANHO'],
               negociosPerdidos: statusCounts['PERDIDO'] + statusCounts['DESQUALIFICADO'],
               negociosAbertos: statusCounts['EM_QUALIFICACAO'] + statusCounts['FOLLOW_UP'] + statusCounts['QUALIFICADO'],
-              valorPipeline, cicloProposta: 0,
+              valorPipeline: countPipeline, cicloProposta: 0,
             }}
             healthScore={Math.min(Math.round((solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0) * 4), 100)}
             alertCount={alertas.semAtividade.length + alertas.aguardandoCL.length}
             topVendedor="SOL Agent"
-            funnelBottleneck={statusCounts['TRAFEGO_PAGO'] > 0 ? `Leads Recebidos → MQL (${((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(0)}%)` : "Dados insuficientes"}
+            funnelBottleneck={statusCounts['TRAFEGO_PAGO'] > 0 ? `Recebidos → Qualificação (${((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(0)}%)` : "Dados insuficientes"}
           />
 
           <footer className="border-t border-border pt-4 text-center text-xs text-muted-foreground">

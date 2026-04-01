@@ -31,65 +31,62 @@ interface MenuGroup {
 
 const menuGroups: MenuGroup[] = [
   {
-    label: "Pré-venda",
+    label: "Pré-Venda",
     items: [
       { title: "Dashboard", icon: Presentation, path: "/dashboard", moduleKey: "conferencia" },
+      { title: "Conferência SDR", icon: FileCheck, path: "/conferencia", moduleKey: "conferencia" },
       { title: "Leads", icon: Users, path: "/leads", moduleKey: "leads" },
-    ],
-  },
-  {
-    label: "SDR / Qualificação",
-    items: [
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
-      { title: "FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
-      { title: "Qualificar", icon: Sparkles, path: "/qualificacao", moduleKey: "qualificacao" },
-      { title: "Desqualificar", icon: Eraser, path: "/desqualificar", moduleKey: "qualificacao" },
-      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "monitoramento" },
+      { title: "Robô FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
+      { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi" },
     ],
   },
   {
     label: "Comercial",
     items: [
-      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
       { title: "Painel Comercial", icon: Zap, path: "/painel-comercial", moduleKey: "painel-comercial" },
+      { title: "Pipeline", icon: Kanban, path: "/pipeline", moduleKey: "pipeline" },
       { title: "Forecast", icon: FileCheck, path: "/forecast", moduleKey: "forecast" },
       { title: "Contratos Fechados", icon: Handshake, path: "/contratos-fechados", moduleKey: "pipeline" },
-      { title: "Vendedores", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
+      { title: "Performance", icon: TrendingUp, path: "/performance", moduleKey: "vendedores" },
       { title: "Comissões", icon: Percent, path: "/comissoes", moduleKey: "comissoes" },
+    ],
+  },
+  {
+    label: "Pós-Venda",
+    items: [
+      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
+      { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
+      { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
+    ],
+  },
+  {
+    label: "Inteligência",
+    items: [
+      { title: "BI Dashboard", icon: BarChart3, path: "/bi", moduleKey: "bi" },
+      { title: "SOL Insights", icon: Sparkles, path: "/sol/insights", moduleKey: "monitoramento" },
+      { title: "Reports WhatsApp", icon: FileText, path: "/reports", moduleKey: "reports" },
     ],
   },
   {
     label: "Campanhas",
     items: [
       { title: "Visão Geral", icon: LayoutDashboard, path: "/campanhas", moduleKey: "bi" },
-      { title: "Ads Performance", icon: Megaphone, path: "/campanhas/ads", moduleKey: "bi" },
-      { title: "Mídia × Receita", icon: DollarSign, path: "/campanhas/receita", moduleKey: "bi" },
-      { title: "GA4", icon: Globe, path: "/campanhas/ga4", moduleKey: "bi" },
       { title: "Meta Ads", icon: Megaphone, path: "/campanhas/meta", moduleKey: "bi" },
       { title: "Google Ads", icon: Globe, path: "/campanhas/google", moduleKey: "bi" },
       { title: "Site (GA4)", icon: Globe, path: "/campanhas/site", moduleKey: "bi" },
       { title: "WhatsApp", icon: Zap, path: "/campanhas/whatsapp", moduleKey: "bi" },
-      { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi" },
-    ],
-  },
-  {
-    label: "Inteligência",
-    items: [
-      { title: "BI", icon: BarChart3, path: "/bi", moduleKey: "bi" },
-      { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
-      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
-      { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
-      { title: "Insights | Skills", icon: FileText, path: "/reports", moduleKey: "reports" },
+      { title: "Ads Performance", icon: Megaphone, path: "/campanhas/ads", moduleKey: "bi" },
+      { title: "Mídia × Receita", icon: DollarSign, path: "/campanhas/receita", moduleKey: "bi" },
+      { title: "GA4 Campanhas", icon: Globe, path: "/campanhas/ga4", moduleKey: "bi" },
     ],
   },
   {
     label: "Operacional",
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
-      { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
-      { title: "SOL Insights", icon: Sparkles, path: "/sol/insights", moduleKey: "monitoramento" },
-      { title: "Sanitizar", icon: Eraser, path: "/sanitizacao", moduleKey: "monitoramento" },
-      
+      { title: "Monitor Make", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
+      { title: "Sanitização", icon: Eraser, path: "/sanitizacao", moduleKey: "monitoramento" },
     ],
   },
 ];

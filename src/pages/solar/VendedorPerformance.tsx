@@ -56,7 +56,7 @@ function deriveVendedorStats(records: SolLead[]): VendedorStats[] {
   const map = new Map<string, SolLead[]>();
 
   records.forEach(r => {
-    const key = r.closer_nome || "Sem responsável";
+    const key = r.closer_nome || "Não atribuído";
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(r);
   });
