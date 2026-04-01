@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import { useForceSync } from "@/hooks/useForceSync";
-import { RefreshCw, Users, DollarSign, TrendingUp, Zap, Trophy, Target } from "lucide-react";
+import { RefreshCw, Users, DollarSign, TrendingUp, Zap, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMakeComercialData, ComercialRecord } from "@/hooks/useMakeComercialData";
-import { formatCurrencyAbbrev, formatCurrencyFull, formatPower } from "@/lib/formatters";
+import { useSolLeads, SolLead } from "@/hooks/useSolData";
+import { formatCurrencyAbbrev, formatCurrencyFull } from "@/lib/formatters";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, Cell, PieChart, Pie,
@@ -18,7 +18,6 @@ interface VendedorStats {
   nome: string;
   totalProjetos: number;
   valorTotal: number;
-  potenciaTotal: number;
   ganhos: number;
   valorGanho: number;
   perdidos: number;
@@ -42,46 +41,52 @@ const CHART_COLORS = [
 function classifyStatus(status: string): "ganho" | "perdido" | "aberto" {
   const s = (status || "").toUpperCase();
   if (s.includes("GANH") || s.includes("WON") || s.includes("FECHAR") || s.includes("FECHAD")) return "ganho";
-  if (s.includes("PERD") || s.includes("LOST")) return "perdido";
+  if (s.includes("PERD") || s.includes("LOST") || s.includes("DESQUAL")) return "perdido";
   return "aberto";
 }
 
-function deriveVendedorStats(records: ComercialRecord[]): VendedorStats[] {
-  const map = new Map<string, ComercialRecord[]>();
+function getValorConta(lead: SolLead): number {
+  const v = lead.valor_conta;
+  if (!v) return 0;
+  const num = parseFloat(String(v).replace(/[^\d.,]/g, "").replace(",", "."));
+  return isNaN(num) ? 0 : num;
+}
+
+function deriveVendedorStats(records: SolLead[]): VendedorStats[] {
+  const map = new Map<string, SolLead[]>();
 
   records.forEach(r => {
-    const key = r.responsavel || "Sem responsável";
+    const key = r.closer_nome || "Sem responsável";
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(r);
   });
 
   return Array.from(map.entries())
     .map(([nome, recs]) => {
-      const ganhos = recs.filter(r => classifyStatus(r.statusProposta) === "ganho");
-      const perdidos = recs.filter(r => classifyStatus(r.statusProposta) === "perdido");
-      const abertos = recs.filter(r => classifyStatus(r.statusProposta) === "aberto");
+      const ganhos = recs.filter(r => classifyStatus(r.status || "") === "ganho");
+      const perdidos = recs.filter(r => classifyStatus(r.status || "") === "perdido");
+      const abertos = recs.filter(r => classifyStatus(r.status || "") === "aberto");
 
       const etapas: Record<string, number> = {};
       recs.forEach(r => {
-        const e = r.etapaSM || "N/A";
+        const e = r.etapa_funil || "N/A";
         etapas[e] = (etapas[e] || 0) + 1;
       });
 
       const totalProjetos = recs.length;
-      const valorTotal = recs.reduce((a, r) => a + r.valorProposta, 0);
-      const valorGanho = ganhos.reduce((a, r) => a + r.valorProposta, 0);
+      const valorTotal = recs.reduce((a, r) => a + getValorConta(r), 0);
+      const valorGanho = ganhos.reduce((a, r) => a + getValorConta(r), 0);
 
       return {
         nome,
         totalProjetos,
         valorTotal,
-        potenciaTotal: recs.reduce((a, r) => a + r.potenciaSistema, 0),
         ganhos: ganhos.length,
         valorGanho,
         perdidos: perdidos.length,
-        valorPerdido: perdidos.reduce((a, r) => a + r.valorProposta, 0),
+        valorPerdido: perdidos.reduce((a, r) => a + getValorConta(r), 0),
         abertos: abertos.length,
-        valorAberto: abertos.reduce((a, r) => a + r.valorProposta, 0),
+        valorAberto: abertos.reduce((a, r) => a + getValorConta(r), 0),
         taxaConversao: totalProjetos > 0 ? (ganhos.length / totalProjetos) * 100 : 0,
         ticketMedio: totalProjetos > 0 ? valorTotal / totalProjetos : 0,
         etapas,
@@ -105,7 +110,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function VendedorPerformance() {
-  const { data: records, isLoading, error, isFetching } = useMakeComercialData();
+  const { data: records, isLoading, error, isFetching } = useSolLeads(['QUALIFICADO', 'GANHO', 'PERDIDO']);
   const { forceSync, isSyncing } = useForceSync();
   const [sortBy, setSortBy] = useState<"valor" | "projetos" | "conversao">("valor");
 
@@ -122,16 +127,14 @@ export default function VendedorPerformance() {
   }, [stats, sortBy]);
 
   const totals = useMemo(() => {
-    if (!stats.length) return { projetos: 0, valor: 0, potencia: 0, vendedores: 0 };
+    if (!stats.length) return { projetos: 0, valor: 0, vendedores: 0 };
     return {
       projetos: stats.reduce((a, s) => a + s.totalProjetos, 0),
       valor: stats.reduce((a, s) => a + s.valorTotal, 0),
-      potencia: stats.reduce((a, s) => a + s.potenciaTotal, 0),
       vendedores: stats.length,
     };
   }, [stats]);
 
-  // Chart data
   const barData = useMemo(() =>
     sorted.slice(0, 10).map(v => ({
       nome: v.nome.split(" ")[0],
@@ -152,7 +155,6 @@ export default function VendedorPerformance() {
 
   return (
     <div className="p-4 md:p-6 space-y-5">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance por Vendedor</h1>
@@ -180,7 +182,7 @@ export default function VendedorPerformance() {
 
       {error && (
         <Alert className="border-destructive/50 bg-destructive/10">
-          <AlertDescription>{error.message}</AlertDescription>
+          <AlertDescription>{(error as Error).message}</AlertDescription>
         </Alert>
       )}
 
@@ -193,8 +195,7 @@ export default function VendedorPerformance() {
 
       {!isLoading && stats.length > 0 && (
         <>
-          {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
@@ -214,14 +215,6 @@ export default function VendedorPerformance() {
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                  <Zap className="h-3.5 w-3.5" /> Potência Total
-                </div>
-                <p className="text-2xl font-bold text-foreground">{formatPower(totals.potencia)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <TrendingUp className="h-3.5 w-3.5" /> Projetos
                 </div>
                 <p className="text-2xl font-bold text-foreground">{totals.projetos}</p>
@@ -229,9 +222,7 @@ export default function VendedorPerformance() {
             </Card>
           </div>
 
-          {/* Charts row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Bar chart - Valor por vendedor */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Valor por Vendedor (Top 10)</CardTitle>
@@ -244,7 +235,7 @@ export default function VendedorPerformance() {
                     <YAxis type="category" dataKey="nome" width={80} tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="ganho" name="Ganho" stackId="a" fill="hsl(142, 71%, 45%)" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="ganho" name="Ganho" stackId="a" fill="hsl(142, 71%, 45%)" />
                     <Bar dataKey="aberto" name="Aberto" stackId="a" fill="hsl(var(--primary))" />
                     <Bar dataKey="perdido" name="Perdido" stackId="a" fill="hsl(0, 84%, 60%)" radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -252,7 +243,6 @@ export default function VendedorPerformance() {
               </CardContent>
             </Card>
 
-            {/* Pie chart - Share de valor */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Participação no Pipeline</CardTitle>
@@ -281,7 +271,6 @@ export default function VendedorPerformance() {
             </Card>
           </div>
 
-          {/* Ranking table */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -304,7 +293,7 @@ export default function VendedorPerformance() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{v.nome}</p>
                       <p className="text-xs text-muted-foreground">
-                        {v.totalProjetos} projetos • {formatPower(v.potenciaTotal)}
+                        {v.totalProjetos} projetos
                       </p>
                     </div>
                     <div className="text-right">
@@ -337,7 +326,7 @@ export default function VendedorPerformance() {
 
       {!isLoading && !error && stats.length === 0 && (
         <Alert className="border-muted">
-          <AlertDescription>Nenhum dado encontrado.</AlertDescription>
+          <AlertDescription>Nenhum dado encontrado. Aguardando sincronização.</AlertDescription>
         </Alert>
       )}
     </div>
