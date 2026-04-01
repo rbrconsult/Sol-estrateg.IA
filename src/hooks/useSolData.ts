@@ -313,6 +313,7 @@ export function useSolProjetos(limit = 100) {
         .from("sol_projetos_sync")
         .select("*")
         .eq("franquia_id", franquiaId)
+        .not("project_id", "is", null)
         .order("ts_evento", { ascending: false })
         .limit(limit);
       if (error) throw error;
