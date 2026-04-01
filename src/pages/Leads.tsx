@@ -120,7 +120,6 @@ const JOURNEY_ORDER = [
   'NEGOCIAÇÃO',
   'REMARKETING',
   'DECLÍNIO',
-  'SEM ETAPA',
 ];
 
 /* ═══════════════════ MAIN ═══════════════════ */
