@@ -55,9 +55,9 @@ const fmt = (n: number) => n.toLocaleString('pt-BR');
 const fmtUSD = (n: number) => `$${n.toFixed(2)}`;
 
 const Index = () => {
-  const { data: leads, isLoading: l1, error } = useSolLeadsSync();
-  const { data: equipe, isLoading: l2 } = useSolEquipeSync();
-  const { data: metricas, isLoading: l3 } = useSolMetricasSync(30);
+  const { data: leads, isLoading: l1, error } = useSolLeads();
+  const { data: equipe, isLoading: l2 } = useSolEquipe();
+  const { data: metricas, isLoading: l3 } = useSolMetricas(30);
   const { selectedOrgName } = useOrgFilter();
   const gf = useGlobalFilters();
 

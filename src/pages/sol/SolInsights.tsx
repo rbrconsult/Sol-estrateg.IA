@@ -11,10 +11,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TemperatureBadge } from "@/components/sol/TemperatureBadge";
 import { CanalOrigemBadge } from "@/components/sol/CanalOrigemBadge";
 import { ScoreGauge } from "@/components/sol/ScoreGauge";
-import { useSolLeads, SolLead } from "@/hooks/useSolLeads";
-import { useSolMetricas } from "@/hooks/useSolMetricas";
+import { useSolLeads, useSolMetricas, type SolLead } from "@/hooks/useSolData";
 import { useSolActions } from "@/hooks/useSolActions";
-import { useForceSync } from "@/hooks/useForceSync";
+import { useForceSync } from "@/hooks/useSolData";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { HelpButton } from "@/components/HelpButton";
 import { toast } from "sonner";
