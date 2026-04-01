@@ -152,7 +152,7 @@ function deriveCidades(records: SolLead[]) {
 
 export default function AnalistaFollowup() {
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { openLead360 } = useLead360();
   const gf = useGlobalFilters();
 
