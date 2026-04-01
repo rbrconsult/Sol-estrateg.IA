@@ -127,7 +127,7 @@ const JOURNEY_ORDER = [
 export default function Leads() {
   const queryClient = useQueryClient();
   const { data: solLeads, isLoading, error } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { selectedOrgName } = useOrgFilter();
   const solActions = useSolActions();
   const [searchTerm, setSearchTerm] = useState("");
