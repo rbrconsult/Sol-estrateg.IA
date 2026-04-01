@@ -915,12 +915,11 @@ export default function Leads() {
           onQualificar={(l: any) => {
             solActions.qualificar.mutate({
               telefone: l.telefone,
-              chatId: l.chatId || l.chat_id || "",
-              contactId: l.contactId || l.contact_id || "",
+              chat_id: l.chat_id || "",
+              contact_id: l.contact_id || "",
               nome: l.nome,
-              score: l.makeScore ? String(parseFloat(l.makeScore)) : l.score || undefined,
-              valor_conta: l.valorConta || l.valor_conta,
-              mensagem: true,
+              score: l.score || undefined,
+              valor_conta: l.valor_conta,
             });
           }}
           onDesqualificar={(l: any) => {
