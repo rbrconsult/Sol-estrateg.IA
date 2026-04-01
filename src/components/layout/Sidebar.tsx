@@ -101,6 +101,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
   const { hasAccess } = useModulePermissions();
   const isMobile = useIsMobile();
   const isSuperAdmin = userRole === "super_admin";
+  const { forceSync, isSyncing } = useForceSync();
 
   let orgFilter: ReturnType<typeof useOrgFilter> | null = null;
   try { orgFilter = useOrgFilter(); } catch {}
