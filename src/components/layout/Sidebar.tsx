@@ -38,9 +38,6 @@ const menuGroups: MenuGroup[] = [
       { title: "Robô SOL", icon: Bot, path: "/robo-sol", moduleKey: "robo-sol" },
       { title: "Robô FUP Frio", icon: Repeat, path: "/robo-fup-frio", moduleKey: "robo-fup-frio" },
       { title: "Funil Consolidado", icon: TrendingUp, path: "/campanhas/funil", moduleKey: "bi" },
-      { title: "Qualificar", icon: Sparkles, path: "/qualificacao", moduleKey: "leads" },
-      { title: "Desqualificar", icon: RotateCcw, path: "/desqualificar", moduleKey: "leads" },
-      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "leads" },
     ],
   },
   {
@@ -80,6 +77,9 @@ const menuGroups: MenuGroup[] = [
   {
     label: "Operacional",
     items: [
+      { title: "Qualificar", icon: Sparkles, path: "/qualificacao", moduleKey: "leads" },
+      { title: "Desqualificar", icon: RotateCcw, path: "/desqualificar", moduleKey: "leads" },
+      { title: "Reprocessar", icon: RefreshCw, path: "/reprocessamento", moduleKey: "leads" },
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor Make", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
       { title: "Sanitização", icon: Eraser, path: "/sanitizacao", moduleKey: "monitoramento" },
