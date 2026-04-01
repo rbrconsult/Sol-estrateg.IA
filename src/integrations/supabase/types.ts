@@ -1346,6 +1346,36 @@ export type Database = {
           },
         ]
       }
+      skill_toggles: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          franquia_id: string
+          id: string
+          skill_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          franquia_id?: string
+          id?: string
+          skill_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          franquia_id?: string
+          id?: string
+          skill_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       sol_config_sync: {
         Row: {
           counter: number | null
