@@ -52,18 +52,12 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: "Pós-Venda",
-    items: [
-      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
-      { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
-      { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
-    ],
-  },
-  {
     label: "Inteligência",
     items: [
       { title: "BI Dashboard", icon: BarChart3, path: "/bi", moduleKey: "bi" },
-      { title: "SOL Insights", icon: Sparkles, path: "/sol/insights", moduleKey: "monitoramento" },
+      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
+      { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
+      { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
       { title: "Reports WhatsApp", icon: FileText, path: "/reports", moduleKey: "reports" },
     ],
   },
