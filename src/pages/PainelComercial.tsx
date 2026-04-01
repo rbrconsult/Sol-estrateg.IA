@@ -258,9 +258,8 @@ export default function PainelComercial() {
   const { proposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
 
-  const records = solLeads || [];
   const gf = useGlobalFilters();
-  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
   const filteredProposals = useMemo(() => gf.filterProposals(proposals), [proposals, gf.filterProposals]);
 
   const alerts = useMemo(() => deriveAlerts(records), [records]);

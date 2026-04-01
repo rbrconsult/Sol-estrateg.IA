@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSolLeads, useSolMetricas, useForceSync } from '@/hooks/useSolData';
+import { useBIData } from '@/hooks/useBIData';
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
@@ -32,7 +33,7 @@ export default function BI() {
     from: gf.effectiveDateRange.from,
     to: gf.effectiveDateRange.to,
   }), [gf.effectiveDateRange]);
-  const { data, hasData, isLoading } = useBIMakeData(dateRange);
+  const { data, hasData, isLoading } = useBIData(dateRange);
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {

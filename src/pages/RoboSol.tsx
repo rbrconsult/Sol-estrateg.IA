@@ -236,11 +236,10 @@ function deriveSolData(records: SolLead[]) {
 export default function RoboSol() {
   const { data: solLeads, isLoading } = useSolLeads();
   const { forceSync } = useForceSync();
-  const records = solLeads || [];
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
+  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
 

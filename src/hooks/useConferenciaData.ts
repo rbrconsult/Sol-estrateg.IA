@@ -228,7 +228,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     if (total === 0) return null;
 
     const solRecords = allRecords.filter(r => 'sol' === 'sol');
-    const fupRecords = allRecords.filter(r => 'sol' === 'fup_frio');
+    const fupRecords = allRecords.filter(r => false);
 
     // ── Stage classification ──
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
@@ -462,14 +462,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       const valor = estimateValueFromBill(r);
 
       let statusFup = 'Novo';
-      if ('sol' === 'fup_frio') statusFup = 'FUP Frio';
+      if (false) statusFup = 'FUP Frio';
       else if (((r as any)._status_resposta || '') === 'respondeu') statusFup = 'Qualificação';
       else if (([] as any[]).length > 0) statusFup = 'Aguardando';
       if (stage === 'Fechado') statusFup = 'Concluído';
 
       const historico = ([] as any[]).map(h => ({
         data: h.data || r.ts_cadastro || '',
-        tipo: 'sol' === 'fup_frio' ? 'FUP' : 'SOL',
+        tipo: false ? 'FUP' : 'SOL',
         msg: h.mensagem || 'Interação registrada',
       }));
 

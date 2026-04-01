@@ -31,7 +31,7 @@ function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' {
   return 'Aberto';
 }
 
-function leadToProposal(lead: SolLeadSync, idx: number): Proposal {
+function leadToProposal(lead: SolLead, idx: number): Proposal {
   const status = mapStatus(lead.status);
   const statusUp = (lead.status || 'TRAFEGO_PAGO').toUpperCase();
   const etapa = STATUS_TO_KANBAN[statusUp] || 'TRAFEGO PAGO';
@@ -76,7 +76,7 @@ function leadToProposal(lead: SolLeadSync, idx: number): Proposal {
 }
 
 const Pipeline = () => {
-  const { data: leads, isLoading, error } = useSolLeadsSync();
+  const { data: leads, isLoading, error } = useSolLeads();
   const gf = useGlobalFilters();
   const [statusView, setStatusView] = useState<StatusView>('abertos');
 

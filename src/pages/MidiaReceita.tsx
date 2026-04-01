@@ -24,7 +24,7 @@ function deriveMidiaData(records: SolLead[]) {
     let canal = r.canal_origem || 'Outros';
     if (!canais[canal]) canais[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0, mornos: 0, frios: 0 };
     canais[canal].leads++;
-    if (r.status_resposta === 'respondeu') canais[canal].responderam++;
+    if (r.status === 'respondeu') canais[canal].responderam++;
     if ((r.status || '').toUpperCase() === 'QUALIFICADO') canais[canal].qualificados++;
     const s = parseInt(r.score || '0') || 0;
     if (s > 0) canais[canal].scores.push(s);
@@ -101,7 +101,7 @@ function deriveMidiaData(records: SolLead[]) {
 
   // KPIs table
   const totalLeads = records.length;
-  const totalResp = records.filter(r => r.status_resposta === 'respondeu').length;
+  const totalResp = records.filter(r => r.status === 'respondeu').length;
   const totalQual = records.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const kpiTable = [
     { metrica: "Leads gerados", total: String(totalLeads) },
@@ -117,11 +117,10 @@ function deriveMidiaData(records: SolLead[]) {
 export default function MidiaReceita() {
   const { data: solLeads, isLoading } = useSolLeads();
   const { forceSync } = useForceSync();
-  const records = solLeads || [];
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [allRecords]);
+  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
   const pf = usePageFilters({ showPeriodo: true, showCanal: true, showSearch: true, canais });
-  const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);
+  const records = useMemo(() => pf.filterRecords(solLeads), [solLeads, pf.filterRecords]);
 
   const d = useMemo(() => deriveMidiaData(records), [records]);
 

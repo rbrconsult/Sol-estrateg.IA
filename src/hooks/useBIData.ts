@@ -188,7 +188,7 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ FUP Frio ═══
   const fupFrio = useMemo(() => {
-    const fupRecords = allSolLeads.filter(r => 'sol' === 'fup_frio');
+    const fupRecords = allSolLeads.filter(r => false);
     const totalFup = fupRecords.length;
     if (totalFup === 0) return null;
 

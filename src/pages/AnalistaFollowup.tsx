@@ -19,7 +19,7 @@ import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
 function deriveFupData(records: SolLead[]) {
-  const fupRecords = records.filter(r => (r.fup_followup_count ?? 0) > 0 || 'sol' === 'fup_frio');
+  const fupRecords = records.filter(r => (r.fup_followup_count ?? 0) > 0 || false);
   const total = fupRecords.length;
   const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const pctReativados = total > 0 ? Math.round((reativados / total) * 100) : 0;
@@ -154,11 +154,10 @@ export default function AnalistaFollowup() {
   const { data: solLeads, isLoading } = useSolLeads();
   const { forceSync } = useForceSync();
   const { openLead360 } = useLead360();
-  const records = solLeads || [];
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [allRecords]);
-  const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
+  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
+  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
 
   const d = useMemo(() => deriveFupData(records), [records]);
 
