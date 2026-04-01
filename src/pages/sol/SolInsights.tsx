@@ -170,8 +170,6 @@ export default function SolAgent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSync} disabled={isSyncing}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing ? "animate-spin" : ""}`} />
             Force Sync
           </Button>
           <HelpButton moduleId="sol-agent" label="Ajuda" />
