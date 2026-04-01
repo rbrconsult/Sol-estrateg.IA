@@ -90,9 +90,9 @@ function normalizeCloser(c: string | undefined): string {
   return c.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 }
 
-/** Get etapa label — treat empty as "Sem Etapa" */
+/** Get etapa label — treat empty as "Tráfego Pago" (entrada do funil) */
 function getEtapaLabel(r: SolLead): string {
-  return r.etapa_funil?.trim() || "SEM ETAPA";
+  return r.etapa_funil?.trim() || "TRAFEGO PAGO";
 }
 
 function safeDate(str: string | undefined): Date | null {
@@ -120,7 +120,6 @@ const JOURNEY_ORDER = [
   'NEGOCIAÇÃO',
   'REMARKETING',
   'DECLÍNIO',
-  'SEM ETAPA',
 ];
 
 /* ═══════════════════ MAIN ═══════════════════ */
@@ -801,7 +800,7 @@ export default function Leads() {
                         <td className="px-3 py-2.5 text-muted-foreground text-xs font-mono">{r.telefone || '—'}</td>
                         <td className="px-3 py-2.5"><CanalOrigemBadge canal={r.canal_origem} /></td>
                         <td className="px-3 py-2.5">
-                          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", getEtapaLabel(r) === "SEM ETAPA" ? "bg-secondary text-muted-foreground" : "bg-primary/10 text-primary")}>
+                          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", getEtapaLabel(r) === "TRAFEGO PAGO" ? "bg-secondary text-muted-foreground" : "bg-primary/10 text-primary")}>
                             {getEtapaLabel(r)}
                           </span>
                         </td>
