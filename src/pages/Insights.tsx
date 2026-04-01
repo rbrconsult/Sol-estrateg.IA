@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Search, ChevronDown, ChevronRight, Info } from "lucide-react";
-import { skillCategories, statusConfig, type SkillStatus } from "@/data/skillsMap";
+import { skillCategories, statusConfig, verticalConfig, type SkillStatus, type Vertical } from "@/data/skillsMap";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
@@ -14,30 +14,23 @@ import { useSkillToggles } from "@/hooks/useSkillToggles";
 const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "ativo", label: "✅ Ativas" },
-  { value: "precisa_dados", label: "⏳ Precisa Dados" },
+  { value: "precisa_dados", label: "⏳ Dados" },
   { value: "criar", label: "🔨 Criar" },
   { value: "futuro", label: "🔮 Futuro" },
 ];
 
+const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagens", "seguros", "academia"];
+
 export default function Insights() {
   const [statusFilter, setStatusFilter] = useState<SkillStatus | "all">("all");
+  const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("all");
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(skillCategories.map(c => [c.key, true]))
   );
   const { toggles, toggle } = useSkillToggles();
 
-  const totals = useMemo(() => {
-    const all = skillCategories.flatMap(c => c.skills);
-    return {
-      total: all.length,
-      ativo: all.filter(s => s.status === "ativo").length,
-      precisa_dados: all.filter(s => s.status === "precisa_dados").length,
-      criar: all.filter(s => s.status === "criar").length,
-      futuro: all.filter(s => s.status === "futuro").length,
-      ligadas: all.filter(s => toggles[s.id]).length,
-    };
-  }, [toggles]);
+  const allSkills = useMemo(() => skillCategories.flatMap(c => c.skills), []);
 
   const filteredCategories = useMemo(() => {
     const q = search.toLowerCase();
@@ -45,76 +38,117 @@ export default function Insights() {
       ...cat,
       skills: cat.skills.filter(s => {
         if (statusFilter !== "all" && s.status !== statusFilter) return false;
+        if (verticalFilter !== "all" && !s.verticals.includes(verticalFilter)) return false;
         if (q && !s.name.toLowerCase().includes(q) && !s.desc.toLowerCase().includes(q) && !s.id.includes(q)) return false;
         return true;
       }),
     })).filter(cat => cat.skills.length > 0);
-  }, [statusFilter, search]);
+  }, [statusFilter, verticalFilter, search]);
+
+  const visibleSkills = useMemo(() => filteredCategories.flatMap(c => c.skills), [filteredCategories]);
+
+  const totals = useMemo(() => ({
+    total: allSkills.length,
+    visible: visibleSkills.length,
+    ativo: allSkills.filter(s => s.status === "ativo").length,
+    precisa_dados: allSkills.filter(s => s.status === "precisa_dados").length,
+    criar: allSkills.filter(s => s.status === "criar").length,
+    futuro: allSkills.filter(s => s.status === "futuro").length,
+    ligadas: allSkills.filter(s => toggles[s.id]).length,
+  }), [allSkills, toggles, visibleSkills]);
 
   const toggleCat = (key: string) =>
     setOpenCats(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const pctAtivo = Math.round((totals.ativo / totals.total) * 100);
-  const pctLigadas = Math.round((totals.ligadas / totals.total) * 100);
+  const pctLigadas = totals.total > 0 ? Math.round((totals.ligadas / totals.total) * 100) : 0;
+
+  // Vertical counts
+  const verticalCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    verticalFilters.forEach(v => {
+      counts[v] = allSkills.filter(s => s.verticals.includes(v)).length;
+    });
+    return counts;
+  }, [allSkills]);
 
   return (
     <div className="space-y-6 p-1">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills — Scale</h1>
         <p className="text-muted-foreground mt-1">
-          {totals.total} automações inteligentes — Template RBR Scale
+          {totals.total} automações inteligentes • Template multi-vertical replicável
         </p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Vertical selector */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setVerticalFilter("all")}
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
+            verticalFilter === "all"
+              ? "bg-primary/10 border-primary/30 text-primary font-medium"
+              : "bg-card/60 border-border/40 text-muted-foreground hover:border-primary/20"
+          }`}
+        >
+          🌐 Todos <span className="text-xs opacity-70">({totals.total})</span>
+        </button>
+        {verticalFilters.map(v => {
+          const vc = verticalConfig[v];
+          const isActive = verticalFilter === v;
+          return (
+            <button
+              key={v}
+              onClick={() => setVerticalFilter(v)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                isActive
+                  ? `${vc.color} font-medium`
+                  : "bg-card/60 border-border/40 text-muted-foreground hover:border-primary/20"
+              }`}
+            >
+              {vc.emoji} {vc.label} <span className="text-xs opacity-70">({verticalCounts[v]})</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Summary row */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         <Card className="bg-card/60 border-border/40">
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold">{totals.total}</p>
-            <p className="text-xs text-muted-foreground">Total Skills</p>
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl font-bold">{totals.visible}</p>
+            <p className="text-[10px] text-muted-foreground">Visíveis</p>
           </CardContent>
         </Card>
         <Card className="bg-card/60 border-primary/30">
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-primary">{totals.ligadas}</p>
-            <p className="text-xs text-muted-foreground">Ligadas</p>
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl font-bold text-primary">{totals.ligadas}</p>
+            <p className="text-[10px] text-muted-foreground">Ligadas</p>
           </CardContent>
         </Card>
         {(["ativo", "precisa_dados", "criar", "futuro"] as SkillStatus[]).map(st => {
           const cfg = statusConfig[st];
           return (
             <Card key={st} className="bg-card/60 border-border/40">
-              <CardContent className="p-4 text-center">
-                <p className="text-3xl font-bold">{totals[st]}</p>
-                <Badge variant="outline" className={`${cfg.className} text-[10px] mt-1`}>{cfg.label}</Badge>
+              <CardContent className="p-3 text-center">
+                <p className="text-2xl font-bold">{totals[st]}</p>
+                <Badge variant="outline" className={`${cfg.className} text-[9px] mt-0.5`}>{cfg.label}</Badge>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Progress bars */}
-      <div className="grid sm:grid-cols-2 gap-3">
-        <Card className="bg-card/60 border-border/40">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Desenvolvimento</span>
-              <span className="text-sm font-bold">{pctAtivo}% ({totals.ativo}/{totals.total})</span>
-            </div>
-            <Progress value={pctAtivo} className="h-2" />
-          </CardContent>
-        </Card>
-        <Card className="bg-card/60 border-primary/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Ativação (Ligadas)</span>
-              <span className="text-sm font-bold text-primary">{pctLigadas}% ({totals.ligadas}/{totals.total})</span>
-            </div>
-            <Progress value={pctLigadas} className="h-2" />
-          </CardContent>
-        </Card>
-      </div>
+      {/* Activation progress */}
+      <Card className="bg-card/60 border-primary/30">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Ativação Global</span>
+            <span className="text-sm font-bold text-primary">{pctLigadas}% ({totals.ligadas}/{totals.total})</span>
+          </div>
+          <Progress value={pctLigadas} className="h-2" />
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -142,7 +176,7 @@ export default function Insights() {
       <TooltipProvider>
         {filteredCategories.map(cat => {
           const isOpen = openCats[cat.key] !== false;
-          const catActive = cat.skills.filter(s => toggles[s.id]).length;
+          const catLigadas = cat.skills.filter(s => toggles[s.id]).length;
           return (
             <Collapsible key={cat.key} open={isOpen} onOpenChange={() => toggleCat(cat.key)}>
               <CollapsibleTrigger className="w-full">
@@ -152,13 +186,13 @@ export default function Insights() {
                     <span className="text-lg">{cat.emoji}</span>
                     <h2 className="text-sm font-semibold">{cat.label}</h2>
                     <Badge variant="outline" className="text-[10px]">
-                      {cat.skills.length} skills
+                      {cat.skills.length}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    {catActive > 0 && (
+                    {catLigadas > 0 && (
                       <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
-                        {catActive} ligadas
+                        {catLigadas} ligadas
                       </Badge>
                     )}
                   </div>
@@ -176,9 +210,9 @@ export default function Insights() {
                       >
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
-                              <Badge variant="outline" className={`${cfg.className} text-[10px] shrink-0`}>{cfg.label}</Badge>
+                              <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
                             </div>
                             <Switch
                               checked={isOn}
@@ -188,8 +222,20 @@ export default function Insights() {
                           </div>
                           <CardTitle className="text-sm mt-1 leading-tight">{skill.name}</CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pb-4 space-y-2">
+                        <CardContent className="px-4 pb-3 space-y-2">
                           <p className="text-xs text-muted-foreground leading-relaxed">{skill.desc}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {skill.verticals.filter(v => v !== "universal").map(v => (
+                              <Badge key={v} variant="outline" className={`${verticalConfig[v].color} text-[9px]`}>
+                                {verticalConfig[v].emoji} {verticalConfig[v].label}
+                              </Badge>
+                            ))}
+                            {skill.verticals.includes("universal") && skill.verticals.length === 1 && (
+                              <Badge variant="outline" className="text-[9px] bg-slate-500/10 text-slate-400 border-slate-500/20">
+                                🌐 Universal
+                              </Badge>
+                            )}
+                          </div>
                           {(skill.fonte || skill.output) && (
                             <Tooltip>
                               <TooltipTrigger asChild>
