@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,23 +17,24 @@ import {
 
 const WEBHOOK_URL = "https://hook.us2.make.com/m6zaweontguh6vqsfvid3g73bxb1qg44";
 
-function isDesqualificado(r: MakeRecord): boolean {
-  const status = (r.makeStatus || "").toUpperCase();
-  const etapa = (r.etapaFunil || "").toUpperCase();
-  const codigo = (r.codigoStatus || "").toUpperCase();
+function isDesqualificado(r: SolLead): boolean {
+  const status = (r.status || "").toUpperCase();
+  const etapa = (r.etapa_funil || "").toUpperCase();
+  const codigo = (r.status || "").toUpperCase();
   return status === "DESQUALIFICADO" || etapa === "DESQUALIFICADO" || etapa === "DECLINIO" || etapa === "DECLÍNIO" || codigo === "DESQUALIFICADO" || codigo === "LEAD_FRIO";
 }
 
-function isQualificado(r: MakeRecord): boolean {
-  const status = (r.makeStatus || "").toUpperCase();
-  const etapa = (r.etapaFunil || "").toUpperCase();
+function isQualificado(r: SolLead): boolean {
+  const status = (r.status || "").toUpperCase();
+  const etapa = (r.etapa_funil || "").toUpperCase();
   return status === "QUALIFICADO" || etapa === "QUALIFICADO";
 }
 
 const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 export default function Reprocessamento() {
-  const { data: records, isLoading, isFetching, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading, isFetching } = useSolLeads();
+  const { forceSync } = useForceSync();
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -55,9 +56,9 @@ export default function Reprocessamento() {
       );
     }
     result.sort((a, b) => {
-      const getLatest = (r: MakeRecord) => {
+      const getLatest = (r: SolLead) => {
         const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
-        const candidate = lastHist || r.lastFollowupDate || r.data_envio || '';
+        const candidate = lastHist || r.ts_ultimo_fup || r.ts_cadastro || '';
         return new Date(candidate).getTime() || 0;
       };
       return getLatest(b) - getLatest(a);
@@ -228,22 +229,22 @@ export default function Reprocessamento() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm truncate">{lead.nome || "Sem nome"}</span>
-                        {lead.makeStatus && <Badge variant="outline" className="text-[10px] shrink-0">{lead.makeStatus}</Badge>}
+                        {lead.status && <Badge variant="outline" className="text-[10px] shrink-0">{lead.status}</Badge>}
                         {wasSent && <Badge variant="secondary" className="text-[10px] shrink-0 bg-green-500/20 text-green-600">✓ Enviado</Badge>}
-                        {lead.makeTemperatura && (
+                        {lead.temperatura && (
                           <Badge variant="secondary" className={`text-[10px] shrink-0 ${
-                            lead.makeTemperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
-                            : lead.makeTemperatura === "MORNO" ? "bg-accent/60 text-accent-foreground"
+                            lead.temperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
+                            : lead.temperatura === "MORNO" ? "bg-accent/60 text-accent-foreground"
                             : "bg-primary/20 text-primary"
                           }`}>
-                            <Thermometer className="h-3 w-3 mr-0.5" />{lead.makeTemperatura}
+                            <Thermometer className="h-3 w-3 mr-0.5" />{lead.temperatura}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.telefone}</span>
                         {lead.cidade && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.cidade}</span>}
-                        {lead.makeScore && <span>Score: {lead.makeScore}</span>}
+                        {lead.score && <span>Score: {lead.score}</span>}
                       </div>
                     </div>
                   </div>

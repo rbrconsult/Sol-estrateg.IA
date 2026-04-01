@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -16,10 +16,10 @@ import {
 
 const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/joonk1hj7ubqeogtq1hxwymncruxslbl";
 
-const isDesqualificado = (r: MakeRecord): boolean => {
-  const status = (r.makeStatus || "").toUpperCase();
-  const etapa = (r.etapaFunil || "").toUpperCase();
-  const cod = (r.codigoStatus || "").toUpperCase();
+const isDesqualificado = (r: SolLead): boolean => {
+  const status = (r.status || "").toUpperCase();
+  const etapa = (r.etapa_funil || "").toUpperCase();
+  const cod = (r.status || "").toUpperCase();
   return (
     status.includes("DESQUALIFICADO") || status.includes("DECLINIO") || status.includes("DECLÍNIO") ||
     status.includes("LEAD_FRIO") || etapa.includes("DESQUALIFICADO") || cod.includes("DESQUALIFICADO")
@@ -27,7 +27,8 @@ const isDesqualificado = (r: MakeRecord): boolean => {
 };
 
 export default function Desqualificar() {
-  const { data: records, isLoading, isFetching, forceSync, refetch } = useMakeDataStore();
+  const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
+  const { forceSync } = useForceSync();
   const gf = useGlobalFilters();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -74,7 +75,7 @@ export default function Desqualificar() {
         const res = await fetch(WEBHOOK_DESQUALIFICAR, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            telefone: telefoneFormatado, project_id: lead.projectId || "", chatId: "", nome: lead.nome || "",
+            telefone: telefoneFormatado, project_id: lead.project_id || "", chatId: "", nome: lead.nome || "",
           }),
         });
         if (res.ok) success++;
@@ -246,20 +247,20 @@ export default function Desqualificar() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm truncate">{lead.nome || "Sem nome"}</span>
-                        {lead.makeTemperatura && (
+                        {lead.temperatura && (
                           <Badge variant="secondary" className={`text-[10px] shrink-0 ${
-                            lead.makeTemperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
-                            : lead.makeTemperatura === "MORNO" ? "bg-accent/50 text-accent-foreground"
+                            lead.temperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
+                            : lead.temperatura === "MORNO" ? "bg-accent/50 text-accent-foreground"
                             : "bg-primary/20 text-primary"
                           }`}>
-                            <Thermometer className="h-3 w-3 mr-0.5" />{lead.makeTemperatura}
+                            <Thermometer className="h-3 w-3 mr-0.5" />{lead.temperatura}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.telefone}</span>
                         {lead.cidade && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.cidade}</span>}
-                        {lead.makeScore && <span>Score: {lead.makeScore}</span>}
+                        {lead.score && <span>Score: {lead.score}</span>}
                       </div>
                     </div>
                   </div>

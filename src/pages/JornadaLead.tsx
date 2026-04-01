@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Route, AlertTriangle, Search, CheckCircle, Clock, XCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 
@@ -20,8 +20,8 @@ interface SLADef {
   metaLabel: string;
   icon: string;
   ator: string;
-  getRecords: (r: MakeRecord[]) => MakeRecord[];
-  getTimeMinutes: (r: MakeRecord) => number | null;
+  getRecords: (r: SolLead[]) => SolLead[];
+  getTimeMinutes: (r: SolLead) => number | null;
 }
 
 const SLA_DEFS: SLADef[] = [
@@ -31,7 +31,7 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '3 min',
     icon: '📥',
     ator: 'Automação',
-    getRecords: (recs) => recs.filter(r => r.robo === 'sol' && r.data_envio),
+    getRecords: (recs) => recs.filter(r => r.robo === 'sol' && r.ts_cadastro),
     getTimeMinutes: () => null, // C2: No real data available yet — show "Sem dados"
   },
   {
@@ -42,8 +42,8 @@ const SLA_DEFS: SLADef[] = [
     ator: 'Robô Sol',
     getRecords: (recs) => recs.filter(r => r.status_resposta === 'respondeu'),
     getTimeMinutes: (r) => {
-      if (r.data_envio && r.data_resposta) {
-        const diff = new Date(r.data_resposta).getTime() - new Date(r.data_envio).getTime();
+      if (r.ts_cadastro && r.ts_ultima_interacao) {
+        const diff = new Date(r.ts_ultima_interacao).getTime() - new Date(r.ts_cadastro).getTime();
         return diff > 0 ? diff / 60000 : null;
       }
       return null;
@@ -55,11 +55,11 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '10 min',
     icon: '✅',
     ator: 'Robô Sol',
-    getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO'),
+    getRecords: (recs) => recs.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO'),
     getTimeMinutes: (r) => {
       // C2: Use ts_qualificado - data_envio if available
-      if (r.data_envio && r.data_resposta) {
-        const diff = new Date(r.data_resposta).getTime() - new Date(r.data_envio).getTime();
+      if (r.ts_cadastro && r.ts_ultima_interacao) {
+        const diff = new Date(r.ts_ultima_interacao).getTime() - new Date(r.ts_cadastro).getTime();
         return diff > 0 ? diff / 60000 : null;
       }
       return null;
@@ -71,7 +71,7 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '60 min',
     icon: '📞',
     ator: 'Closer',
-    getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO'),
+    getRecords: (recs) => recs.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO'),
     getTimeMinutes: () => null, // C2: "Em implementação" — no real data
   },
   {
@@ -81,7 +81,7 @@ const SLA_DEFS: SLADef[] = [
     icon: '📅',
     ator: 'Closer',
     getRecords: (recs) => recs.filter(r => {
-      const s = (r.makeStatus || '').toUpperCase();
+      const s = (r.status || '').toUpperCase();
       return s === 'AGENDAMENTO' || s === 'AGENDADO';
     }),
     getTimeMinutes: () => null, // C2: No real data — removed Math.random()
@@ -92,7 +92,7 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '5 dias',
     icon: '🤝',
     ator: 'Closer',
-    getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'AGENDAMENTO'),
+    getRecords: (recs) => recs.filter(r => (r.status || '').toUpperCase() === 'AGENDAMENTO'),
     getTimeMinutes: () => null, // C2: No real data — removed Math.random()
   },
   {
@@ -101,11 +101,11 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '3 horas',
     icon: '📄',
     ator: 'Closer',
-    getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'PROPOSTA'),
+    getRecords: (recs) => recs.filter(r => (r.status || '').toUpperCase() === 'PROPOSTA'),
     getTimeMinutes: (r) => {
       // C2: Use ts_proposta - ts_qualificado from DS Comercial if available
-      if (r.dataProposta && r.data_resposta) {
-        const diff = new Date(r.dataProposta).getTime() - new Date(r.data_resposta).getTime();
+      if (r.ts_qualificado && r.ts_ultima_interacao) {
+        const diff = new Date(r.ts_qualificado).getTime() - new Date(r.ts_ultima_interacao).getTime();
         return diff > 0 ? diff / 60000 : null;
       }
       return null;
@@ -117,11 +117,11 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '7 dias',
     icon: '🎯',
     ator: 'Closer',
-    getRecords: (recs) => recs.filter(r => (r.makeStatus || '').toUpperCase() === 'FECHADO' || (r.makeStatus || '').toUpperCase() === 'GANHO'),
+    getRecords: (recs) => recs.filter(r => (r.status || '').toUpperCase() === 'FECHADO' || (r.status || '').toUpperCase() === 'GANHO'),
     getTimeMinutes: (r) => {
       // C2: Use ts_fechamento - ts_proposta if available
-      if (r.dataFechamento && r.dataProposta) {
-        const diff = new Date(r.dataFechamento).getTime() - new Date(r.dataProposta).getTime();
+      if (r.ts_transferido && r.ts_qualificado) {
+        const diff = new Date(r.ts_transferido).getTime() - new Date(r.ts_qualificado).getTime();
         return diff > 0 ? diff / 60000 : null;
       }
       return null;
@@ -164,7 +164,7 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 /* ── Derive data from records ── */
-function deriveSLAMetrics(records: MakeRecord[]) {
+function deriveSLAMetrics(records: SolLead[]) {
   return SLA_DEFS.map(def => {
     const eligible = def.getRecords(records);
     const times = eligible.map(r => def.getTimeMinutes(r)).filter((t): t is number => t !== null && t > 0);
@@ -186,14 +186,14 @@ function deriveSLAMetrics(records: MakeRecord[]) {
   });
 }
 
-function deriveLeadsByStage(records: MakeRecord[]) {
+function deriveLeadsByStage(records: SolLead[]) {
   const stages: Record<string, { qtd: number; alertas: number }> = {};
   records.forEach(r => {
-    const s = (r.makeStatus || 'TRAFEGO_PAGO').toUpperCase();
+    const s = (r.status || 'TRAFEGO_PAGO').toUpperCase();
     if (!stages[s]) stages[s] = { qtd: 0, alertas: 0 };
     stages[s].qtd++;
     // Alert if score high but status hasn't progressed
-    const score = parseInt(r.makeScore || '0') || 0;
+    const score = parseInt(r.score || '0') || 0;
     if (score >= 70 && (s === 'WHATSAPP' || s === 'TRAFEGO_PAGO')) stages[s].alertas++;
   });
   return Object.entries(stages).map(([etapa, data]) => ({ etapa, ...data, tempoMedio: '—' }));
@@ -214,10 +214,10 @@ function deriveBottlenecks(slaMetrics: ReturnType<typeof deriveSLAMetrics>) {
     }));
 }
 
-function deriveAbandonByStage(records: MakeRecord[]) {
+function deriveAbandonByStage(records: SolLead[]) {
   const total = records.length || 1;
-  const desq = records.filter(r => (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const noResp = records.filter(r => r.status_resposta === 'ignorou' || r.codigoStatus === 'NAO_RESPONDEU').length;
+  const desq = records.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const noResp = records.filter(r => r.status_resposta === 'ignorou' || r.status === 'NAO_RESPONDEU').length;
   const aguardando = records.filter(r => r.status_resposta === 'aguardando').length;
 
   return [
@@ -231,11 +231,12 @@ function deriveAbandonByStage(records: MakeRecord[]) {
 /* ── Component ── */
 export default function JornadaLead() {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
   const { openLead360 } = useLead360();
 
   const pf = usePageFilters({ showPeriodo: true, showTemperatura: true, showEtapa: true, showStatus: true, showSearch: true });
-  const records = useMemo(() => pf.filterRecords(makeRecords || []), [makeRecords, pf.filterRecords]);
+  const records = useMemo(() => pf.filterRecords(solLeads || []), [solLeads, pf.filterRecords]);
 
   const slaMetrics = useMemo(() => deriveSLAMetrics(records), [records]);
   const leadsByStage = useMemo(() => deriveLeadsByStage(records), [records]);
@@ -413,12 +414,12 @@ export default function JornadaLead() {
                   onClick={() => openLead360({
                     nome: r.nome || r.telefone,
                     telefone: r.telefone,
-                    etapa: r.makeStatus || 'Novo',
-                    valor: r.valorConta || '—',
+                    etapa: r.status || 'Novo',
+                    valor: r.valor_conta || '—',
                     responsavel: '',
                     origem: '',
-                    temperatura: r.makeTemperatura || '',
-                    score: parseInt(r.makeScore || '0') || 0,
+                    temperatura: r.temperatura || '',
+                    score: parseInt(r.score || '0') || 0,
                   } as any)}
                   className="w-full flex items-center justify-between rounded-md border border-border/50 p-3 text-left hover:bg-secondary/50 transition-colors"
                 >
@@ -427,11 +428,11 @@ export default function JornadaLead() {
                     <span className="text-xs text-muted-foreground ml-2">{r.telefone}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
-                    <Badge variant="outline">{r.makeStatus || 'Novo'}</Badge>
-                    <span className={r.makeTemperatura === 'QUENTE' ? 'text-red-400' : r.makeTemperatura === 'MORNO' ? 'text-yellow-400' : 'text-blue-400'}>
-                      {r.makeTemperatura || '—'}
+                    <Badge variant="outline">{r.status || 'Novo'}</Badge>
+                    <span className={r.temperatura === 'QUENTE' ? 'text-red-400' : r.temperatura === 'MORNO' ? 'text-yellow-400' : 'text-blue-400'}>
+                      {r.temperatura || '—'}
                     </span>
-                    <span>Score {r.makeScore || '—'}</span>
+                    <span>Score {r.score || '—'}</span>
                   </div>
                 </button>
               ))}

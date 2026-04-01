@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from "@/contexts/Lead360Context";
 import {
   Zap, User, Bot, Clock, AlertTriangle, CheckCircle2, XCircle, Search,
@@ -29,7 +29,7 @@ const atorIcon = (ator: string) => {
   return <Clock className="h-3.5 w-3.5 text-muted-foreground" />;
 };
 
-function deriveSLAData(records: MakeRecord[]) {
+function deriveSLAData(records: SolLead[]) {
   // Define stages based on available data fields
   const stages = [
     { id: 1, etapa: "Lead → Sol aborda", slaMeta: "3 min", slaMetaMinutos: 3, ator: "Automação" },
@@ -39,10 +39,10 @@ function deriveSLAData(records: MakeRecord[]) {
   ];
 
   // Calculate real response times from data
-  const withResponseTime = records.filter(r => r.data_envio && r.data_resposta);
+  const withResponseTime = records.filter(r => r.ts_cadastro && r.ts_ultima_interacao);
   const avgResponseMinutes = withResponseTime.length > 0
     ? withResponseTime.reduce((sum, r) => {
-        const diff = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000;
+        const diff = (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000;
         return sum + Math.max(diff, 0);
       }, 0) / withResponseTime.length
     : 0;
@@ -63,7 +63,7 @@ function deriveSLAData(records: MakeRecord[]) {
       hasData = true;
       realMedioMin = avgResponseMinutes;
       pctCumprindo = Math.round(withResponseTime.filter(r => {
-        const diff = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000;
+        const diff = (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000;
         return diff <= s.slaMetaMinutos;
       }).length / withResponseTime.length * 100);
     } else if (s.id === 1) {
@@ -71,12 +71,12 @@ function deriveSLAData(records: MakeRecord[]) {
       hasData = false;
     } else if (s.id === 3) {
       // C2: Use real qualification data if available
-      const qualRecs = records.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO' && r.data_resposta && r.data_envio);
+      const qualRecs = records.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO' && r.ts_ultima_interacao && r.ts_cadastro);
       if (qualRecs.length > 0) {
         hasData = true;
         const times = qualRecs.map(r => {
-          const envio = new Date(r.data_envio).getTime();
-          const resp = new Date(r.data_resposta!).getTime();
+          const envio = new Date(r.ts_cadastro).getTime();
+          const resp = new Date(r.ts_ultima_interacao!).getTime();
           return Math.max(0, (resp - envio) / 60000);
         }).filter(t => t > 0 && t < 10080); // < 7 days
         realMedioMin = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
@@ -116,7 +116,7 @@ function deriveSLAData(records: MakeRecord[]) {
   // Leads fora do SLA — use records with slow response
   const leadsForaSLA = withResponseTime
     .map(r => {
-      const diffMin = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000;
+      const diffMin = (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000;
       const sla = 10; // Using Sol response SLA
       if (diffMin <= sla) return null;
       const extrapolou = formatMinutes(diffMin - sla);
@@ -142,11 +142,11 @@ function deriveSLAData(records: MakeRecord[]) {
     {
       etapa: "Sol → Resposta do Lead",
       faixas: [
-        { label: "<5m", count: withResponseTime.filter(r => (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000 < 5).length },
-        { label: "5-30m", count: withResponseTime.filter(r => { const d = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000; return d >= 5 && d < 30; }).length },
-        { label: "30m-2h", count: withResponseTime.filter(r => { const d = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000; return d >= 30 && d < 120; }).length },
-        { label: "2-12h", count: withResponseTime.filter(r => { const d = (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000; return d >= 120 && d < 720; }).length },
-        { label: "+12h", count: withResponseTime.filter(r => (new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime()) / 60000 >= 720).length },
+        { label: "<5m", count: withResponseTime.filter(r => (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000 < 5).length },
+        { label: "5-30m", count: withResponseTime.filter(r => { const d = (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000; return d >= 5 && d < 30; }).length },
+        { label: "30m-2h", count: withResponseTime.filter(r => { const d = (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000; return d >= 30 && d < 120; }).length },
+        { label: "2-12h", count: withResponseTime.filter(r => { const d = (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000; return d >= 120 && d < 720; }).length },
+        { label: "+12h", count: withResponseTime.filter(r => (new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime()) / 60000 >= 720).length },
       ],
     },
   ];
@@ -156,9 +156,9 @@ function deriveSLAData(records: MakeRecord[]) {
     nome: r.nome || 'Lead',
     telefone: r.telefone,
     etapas: [
-      { etapa: "Lead entrada", data: r.data_envio || '—', duracao: "—", status: "dentro" as SLAStatus },
-      ...(r.data_resposta ? [{ etapa: "Resposta", data: r.data_resposta, duracao: formatMinutes((new Date(r.data_resposta).getTime() - new Date(r.data_envio).getTime()) / 60000), status: ((new Date(r.data_resposta).getTime() - new Date(r.data_envio).getTime()) / 60000 > 10 ? "atencao" : "dentro") as SLAStatus }] : []),
-      ...((r.makeStatus || '').toUpperCase() === 'QUALIFICADO' ? [{ etapa: "Qualificado", data: '—', duracao: '—', status: "dentro" as SLAStatus }] : []),
+      { etapa: "Lead entrada", data: r.ts_cadastro || '—', duracao: "—", status: "dentro" as SLAStatus },
+      ...(r.ts_ultima_interacao ? [{ etapa: "Resposta", data: r.ts_ultima_interacao, duracao: formatMinutes((new Date(r.ts_ultima_interacao).getTime() - new Date(r.ts_cadastro).getTime()) / 60000), status: ((new Date(r.ts_ultima_interacao).getTime() - new Date(r.ts_cadastro).getTime()) / 60000 > 10 ? "atencao" : "dentro") as SLAStatus }] : []),
+      ...((r.status || '').toUpperCase() === 'QUALIFICADO' ? [{ etapa: "Qualificado", data: '—', duracao: '—', status: "dentro" as SLAStatus }] : []),
     ],
   }));
 
@@ -167,9 +167,10 @@ function deriveSLAData(records: MakeRecord[]) {
 
 export default function SLAMonitor() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
   const { openLead360 } = useLead360();
-  const allRecords = makeRecords || [];
+  const records = solLeads || [];
 
   const pf = usePageFilters({ showPeriodo: true, showSearch: true });
   const records = useMemo(() => pf.filterRecords(allRecords), [allRecords, pf.filterRecords]);

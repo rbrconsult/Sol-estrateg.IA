@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useBIMakeData } from "@/hooks/useBIMakeData";
+import { useSolLeads, useSolMetricas, useForceSync } from '@/hooks/useSolData';
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
@@ -437,7 +437,7 @@ export default function BI() {
                         <tr key={i} className="border-b border-border/20 hover:bg-muted/30 transition-colors">
                           <td className="py-2 px-2 font-medium text-foreground">{l.nome}</td>
                           <td className="py-2 px-2 text-muted-foreground">{l.cidade}</td>
-                          <td className="py-2 px-2 text-muted-foreground text-xs">{l.valorConta}</td>
+                          <td className="py-2 px-2 text-muted-foreground text-xs">{l.valor_conta}</td>
                           <td className="text-center py-2 px-2">
                             <span className={cn("text-xs font-bold",
                               l.temperatura === 'QUENTE' ? 'text-destructive' :

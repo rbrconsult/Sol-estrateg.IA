@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { Bot, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { format, parseISO } from 'date-fns';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
@@ -60,23 +60,23 @@ function KPICardAnimated({ label, value, suffix, color, pulse }: { label: string
   );
 }
 
-function deriveSolData(records: MakeRecord[]) {
-  const solRecords = records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.followupCount ?? 0) === 0));
+function deriveSolData(records: SolLead[]) {
+  const solRecords = records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.fup_followup_count ?? 0) === 0));
   const total = solRecords.length;
   const responderam = solRecords.filter(r => r.status_resposta === 'respondeu').length;
   const taxaResposta = total > 0 ? (responderam / total) * 100 : 0;
 
-  const qualificados = solRecords.filter(r => (r.makeStatus || '').toUpperCase() === 'QUALIFICADO').length;
-  const desqualificados = solRecords.filter(r => (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const qualificados = solRecords.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const desqualificados = solRecords.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
   const emQualificacao = solRecords.filter(r => {
-    const s = (r.makeStatus || '').toUpperCase();
+    const s = (r.status || '').toUpperCase();
     return s !== 'QUALIFICADO' && s !== 'DESQUALIFICADO' && r.status_resposta === 'respondeu';
   }).length;
 
-  const scores = solRecords.map(r => parseInt(r.makeScore || '0') || 0).filter(s => s > 0);
+  const scores = solRecords.map(r => parseInt(r.score || '0') || 0).filter(s => s > 0);
   const scoreMedio = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
-  const temps = solRecords.map(r => (r.makeTemperatura || '').toUpperCase());
+  const temps = solRecords.map(r => (r.temperatura || '').toUpperCase());
   const quentes = temps.filter(t => t === 'QUENTE').length;
   const mornos = temps.filter(t => t === 'MORNO').length;
   const frios = temps.filter(t => t === 'FRIO').length;
@@ -102,15 +102,15 @@ function deriveSolData(records: MakeRecord[]) {
 
   // Top hot leads
   const topQuentes = solRecords
-    .filter(r => (r.makeTemperatura || '').toUpperCase() === 'QUENTE')
-    .sort((a, b) => (parseInt(b.makeScore || '0') || 0) - (parseInt(a.makeScore || '0') || 0))
+    .filter(r => (r.temperatura || '').toUpperCase() === 'QUENTE')
+    .sort((a, b) => (parseInt(b.score || '0') || 0) - (parseInt(a.score || '0') || 0))
     .slice(0, 5)
-    .map(r => ({ nome: r.nome || 'Lead', cidade: r.cidade || '—', score: parseInt(r.makeScore || '0') || 0, canal: r.canalOrigem || 'Direto' }));
+    .map(r => ({ nome: r.nome || 'Lead', cidade: r.cidade || '—', score: parseInt(r.score || '0') || 0, canal: r.canal_origem || 'Direto' }));
 
   // Disqualification reasons from codigoStatus
   const desqualReasons: Record<string, number> = {};
-  solRecords.filter(r => (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO').forEach(r => {
-    const reason = r.codigoStatus || 'NAO_INFORMADO';
+  solRecords.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').forEach(r => {
+    const reason = r.status || 'NAO_INFORMADO';
     desqualReasons[reason] = (desqualReasons[reason] || 0) + 1;
   });
   const totalDesq = Object.values(desqualReasons).reduce((a, b) => a + b, 0) || 1;
@@ -122,12 +122,12 @@ function deriveSolData(records: MakeRecord[]) {
   // Performance by channel (derived from cidade/campanha)
   const byCanal: Record<string, { leads: number; responderam: number; qualificados: number; scores: number[] }> = {};
   solRecords.forEach(r => {
-    const canal = r.canalOrigem || 'Outros';
+    const canal = r.canal_origem || 'Outros';
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [] };
     byCanal[canal].leads++;
     if (r.status_resposta === 'respondeu') byCanal[canal].responderam++;
-    if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') byCanal[canal].qualificados++;
-    const s = parseInt(r.makeScore || '0') || 0;
+    if ((r.status || '').toUpperCase() === 'QUALIFICADO') byCanal[canal].qualificados++;
+    const s = parseInt(r.score || '0') || 0;
     if (s > 0) byCanal[canal].scores.push(s);
   });
   const perfCanal = Object.entries(byCanal)
@@ -157,7 +157,7 @@ function deriveSolData(records: MakeRecord[]) {
   // Messages per day (aggregate by date)
   const msgByDay: Record<string, { enviadas: number; recebidas: number }> = {};
   solRecords.forEach(r => {
-    const date = r.data_envio ? r.data_envio.slice(0, 10) : '';
+    const date = r.ts_cadastro ? r.ts_cadastro.slice(0, 10) : '';
     if (!date) return;
     if (!msgByDay[date]) msgByDay[date] = { enviadas: 0, recebidas: 0 };
     msgByDay[date].enviadas += r.historico.filter(h => h.tipo === 'enviada').length || 1;
@@ -172,11 +172,11 @@ function deriveSolData(records: MakeRecord[]) {
   // Daily evolution
   const evolByDay: Record<string, { recebidos: number; qualificados: number }> = {};
   solRecords.forEach(r => {
-    const date = r.data_envio ? r.data_envio.slice(0, 10) : '';
+    const date = r.ts_cadastro ? r.ts_cadastro.slice(0, 10) : '';
     if (!date) return;
     if (!evolByDay[date]) evolByDay[date] = { recebidos: 0, qualificados: 0 };
     evolByDay[date].recebidos++;
-    if ((r.makeStatus || '').toUpperCase() === 'QUALIFICADO') evolByDay[date].qualificados++;
+    if ((r.status || '').toUpperCase() === 'QUALIFICADO') evolByDay[date].qualificados++;
   });
   const evolucaoDiaria = Object.entries(evolByDay)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -190,18 +190,18 @@ function deriveSolData(records: MakeRecord[]) {
 
   // Recent leads
   const leadsRecentes = solRecords
-    .sort((a, b) => (b.data_envio || '').localeCompare(a.data_envio || ''))
+    .sort((a, b) => (b.ts_cadastro || '').localeCompare(a.ts_cadastro || ''))
     .slice(0, 15)
     .map(r => ({
       nome: r.nome || 'Lead',
       cidade: r.cidade || '—',
-      canal: r.canalOrigem || 'Direto',
-      score: parseInt(r.makeScore || '0') || 0,
-      temperatura: (r.makeTemperatura || 'FRIO').toUpperCase(),
-      status: (r.makeStatus || '').toUpperCase() === 'QUALIFICADO' ? 'Qualificado' :
-              (r.makeStatus || '').toUpperCase() === 'DESQUALIFICADO' ? 'Desqualificado' : 'Em qualificação',
+      canal: r.canal_origem || 'Direto',
+      score: parseInt(r.score || '0') || 0,
+      temperatura: (r.temperatura || 'FRIO').toUpperCase(),
+      status: (r.status || '').toUpperCase() === 'QUALIFICADO' ? 'Qualificado' :
+              (r.status || '').toUpperCase() === 'DESQUALIFICADO' ? 'Desqualificado' : 'Em qualificação',
       duracao: '—',
-      data: r.data_envio ? r.data_envio.slice(0, 10) : '—',
+      data: r.ts_cadastro ? r.ts_cadastro.slice(0, 10) : '—',
     }));
 
   // SLA — derive from data
@@ -211,18 +211,18 @@ function deriveSolData(records: MakeRecord[]) {
     { etapa: 'Sol → Lead qualificado', slaMeta: '10 min', real: '—', pctCumprido: 0, status: 'dentro' as const },
   ];
   // Attempt to calculate real SLA if we have tempo_resposta_seg equivalent in historico
-  const withResponse = solRecords.filter(r => r.data_resposta && r.data_envio);
+  const withResponse = solRecords.filter(r => r.ts_ultima_interacao && r.ts_cadastro);
   if (withResponse.length > 0) {
     const avgResponseMs = withResponse.reduce((sum, r) => {
-      const sent = new Date(r.data_envio).getTime();
-      const resp = new Date(r.data_resposta!).getTime();
+      const sent = new Date(r.ts_cadastro).getTime();
+      const resp = new Date(r.ts_ultima_interacao!).getTime();
       return sum + (resp - sent);
     }, 0) / withResponse.length;
     const avgMin = avgResponseMs / 60000;
     const formatted = avgMin > 60 ? `${Math.round(avgMin / 60)}h ${Math.round(avgMin % 60)}min` : `${Math.round(avgMin)}min`;
     slaData[1].real = formatted;
     slaData[1].pctCumprido = Math.round(withResponse.filter(r => {
-      const diff = new Date(r.data_resposta!).getTime() - new Date(r.data_envio).getTime();
+      const diff = new Date(r.ts_ultima_interacao!).getTime() - new Date(r.ts_cadastro).getTime();
       return diff <= 10 * 60000;
     }).length / withResponse.length * 100);
   }
@@ -234,11 +234,12 @@ function deriveSolData(records: MakeRecord[]) {
 }
 
 export default function RoboSol() {
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
-  const allRecords = makeRecords || [];
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
+  const records = solLeads || [];
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canalOrigem).filter(Boolean) as string[])].sort(), [allRecords]);
+  const canais = useMemo(() => [...new Set(allRecords.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [allRecords]);
   const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
 
   const d = useMemo(() => deriveSolData(records), [records]);
@@ -459,7 +460,7 @@ export default function RoboSol() {
       </Card>
 
       {/* Heatmap */}
-      <HeatmapChart records={records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.followupCount ?? 0) === 0))} dateField="data_envio" />
+      <HeatmapChart records={records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.fup_followup_count ?? 0) === 0))} dateField="data_envio" />
 
       {/* Evolução Diária */}
       {evolucaoDiaria.length > 0 && (

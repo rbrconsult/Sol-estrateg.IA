@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMakeDataStore, MakeRecord } from '@/hooks/useMakeDataStore';
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 
 // ─── Types matching the page component shapes ───
 export interface KPICard {
@@ -121,19 +121,19 @@ function formatCurrencyShort(v: number): string {
   return `R$ ${v.toFixed(0)}`;
 }
 
-function getPrimaryDateForFilter(r: MakeRecord): Date | null {
+function getPrimaryDateForFilter(r: SolLead): Date | null {
   return safeDate(
-    r.dataEntrada ||
-    r.lastFollowupDate ||
-    r.data_resposta ||
-    r.dataProposta ||
-    r.dataFechamento ||
-    r.data_envio
+    r.ts_cadastro ||
+    r.ts_ultimo_fup ||
+    r.ts_ultima_interacao ||
+    r.ts_qualificado ||
+    r.ts_transferido ||
+    r.ts_cadastro
   );
 }
 
-function getOrigemLabel(r: MakeRecord): string {
-  const raw = (r.canalOrigem || '').trim().toLowerCase();
+function getOrigemLabel(r: SolLead): string {
+  const raw = (r.canal_origem || '').trim().toLowerCase();
   if (raw === 'meta_ads' || raw.includes('facebook') || raw.includes('instagram') || raw.includes('meta')) return 'Meta Ads';
   if (raw === 'google_ads' || raw.includes('google')) return 'Google Ads';
   if (raw === 'site' || raw.includes('landing')) return 'Site';
@@ -147,26 +147,26 @@ function average(values: number[]): number {
   return values.reduce((acc, v) => acc + v, 0) / values.length;
 }
 
-function getStageAnchorDate(r: MakeRecord, stage: string): Date | null {
-  if (stage === 'Robô SOL') return safeDate(r.dataEntrada || r.data_envio);
-  if (stage === 'Qualificação') return safeDate(r.data_resposta || r.lastFollowupDate || r.dataEntrada || r.data_envio);
-  if (stage === 'Qualificado') return safeDate(r.data_resposta || r.lastFollowupDate || r.dataEntrada || r.data_envio);
-  if (stage === 'Closer') return safeDate(r.lastFollowupDate || r.data_resposta || r.dataEntrada || r.data_envio);
-  if (stage === 'Proposta') return safeDate(r.dataProposta || r.lastFollowupDate || r.dataEntrada || r.data_envio);
-  return safeDate(r.dataFechamento || r.dataProposta || r.lastFollowupDate || r.data_envio);
+function getStageAnchorDate(r: SolLead, stage: string): Date | null {
+  if (stage === 'Robô SOL') return safeDate(r.ts_cadastro || r.ts_cadastro);
+  if (stage === 'Qualificação') return safeDate(r.ts_ultima_interacao || r.ts_ultimo_fup || r.ts_cadastro || r.ts_cadastro);
+  if (stage === 'Qualificado') return safeDate(r.ts_ultima_interacao || r.ts_ultimo_fup || r.ts_cadastro || r.ts_cadastro);
+  if (stage === 'Closer') return safeDate(r.ts_ultimo_fup || r.ts_ultima_interacao || r.ts_cadastro || r.ts_cadastro);
+  if (stage === 'Proposta') return safeDate(r.ts_qualificado || r.ts_ultimo_fup || r.ts_cadastro || r.ts_cadastro);
+  return safeDate(r.ts_transferido || r.ts_qualificado || r.ts_ultimo_fup || r.ts_cadastro);
 }
 
 /** Map Make status → Sol Pipeline stage */
-function getSolStageFromMake(r: MakeRecord): string {
+function getSolStageFromMake(r: SolLead): string {
   // Prioritize etapa_sm from CRM if available
-  const etapaSm = (r.etapaSm || '').toUpperCase();
+  const etapaSm = (r.etapa_funil || '').toUpperCase();
   if (etapaSm) {
     if (etapaSm.includes('CONTRATO') || etapaSm.includes('ASSINADO') || etapaSm.includes('COBRANÇA') || etapaSm.includes('GANHO')) return 'Fechado';
     if (etapaSm.includes('PROPOSTA') || etapaSm.includes('NEGOCI')) return 'Proposta';
     if (etapaSm.includes('AGEND') || etapaSm.includes('CONTATO') || etapaSm.includes('CLOSER')) return 'Closer';
   }
 
-  const status = (r.makeStatus || '').toUpperCase();
+  const status = (r.status || '').toUpperCase();
   if (status.includes('GANHO') || status.includes('FECHADO') || status.includes('VENDA')) return 'Fechado';
   if (status.includes('PROPOSTA') || status.includes('NEGOCI')) return 'Proposta';
   if (status.includes('CONTATO') || status.includes('AGEND')) return 'Closer';
@@ -176,18 +176,18 @@ function getSolStageFromMake(r: MakeRecord): string {
   return 'Robô SOL';
 }
 
-function getTemp(r: MakeRecord): string {
-  const t = parseTemp(r.makeTemperatura);
+function getTemp(r: SolLead): string {
+  const t = parseTemp(r.temperatura);
   if (t) return t;
-  const s = parseScore(r.makeScore);
+  const s = parseScore(r.score);
   if (s >= 70) return 'QUENTE';
   if (s >= 40) return 'MORNO';
   if (s > 0) return 'FRIO';
   return 'MORNO'; // default
 }
 
-function estimateValueFromBill(r: MakeRecord): number {
-  const bill = (r.valorConta || '').toLowerCase();
+function estimateValueFromBill(r: SolLead): number {
+  const bill = (r.valor_conta || '').toLowerCase();
   if (bill.includes('1.000') || bill.includes('1000') || bill.includes('acima')) return 45000;
   if (bill.includes('700') || bill.includes('400')) return 28000;
   if (bill.includes('250') || bill.includes('350')) return 18000;
@@ -197,11 +197,11 @@ function estimateValueFromBill(r: MakeRecord): number {
 
 // ─── Main Hook ───
 export function useConferenciaData(effectiveDateRange?: { from: Date | undefined; to: Date | undefined }) {
-  const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
+  const { data: solLeads, isLoading: makeLoading } = useSolLeads();
 
   // Apply global date filter BEFORE any computation
   const allRecords = useMemo(() => {
-    const raw = makeRecords || [];
+    const raw = solLeads || [];
     const from = effectiveDateRange?.from;
     const to = effectiveDateRange?.to;
     if (!from && !to) return raw;
@@ -221,7 +221,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       }
       return true;
     });
-  }, [makeRecords, effectiveDateRange?.from?.getTime(), effectiveDateRange?.to?.getTime()]);
+  }, [solLeads, effectiveDateRange?.from?.getTime(), effectiveDateRange?.to?.getTime()]);
 
   const computed = useMemo(() => {
     const total = allRecords.length;
@@ -246,15 +246,15 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
 
     // ── Status counts ──
     const qualificados = allRecords.filter(r => {
-      const s = (r.makeStatus || '').toUpperCase();
+      const s = (r.status || '').toUpperCase();
       return s.includes('QUALIFICADO') && !s.includes('DES');
     });
-    const desqualificados = allRecords.filter(r => (r.makeStatus || '').includes('DESQUALIFICADO'));
+    const desqualificados = allRecords.filter(r => (r.status || '').includes('DESQUALIFICADO'));
     const responderam = allRecords.filter(r => r.status_resposta === 'respondeu');
     const taxaResposta = total > 0 ? Math.round((responderam.length / total) * 100) : 0;
 
     const ganhos = allRecords.filter(r => {
-      const s = (r.makeStatus || '').toUpperCase();
+      const s = (r.status || '').toUpperCase();
       return s.includes('GANHO') || s.includes('FECHADO') || s.includes('VENDA');
     });
     const mqlCount = qualificados.length;
@@ -291,7 +291,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     }).length;
 
     // ── Scores ──
-    const scores = allRecords.map(r => parseScore(r.makeScore)).filter(s => s > 0);
+    const scores = allRecords.map(r => parseScore(r.score)).filter(s => s > 0);
     const scoreMedio = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
     // ── Heatmap from responses ──
@@ -299,8 +299,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const heatmapGrid = [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]];
     let maxHeat = 1;
     allRecords.forEach(r => {
-      if (r.data_resposta) {
-        const d = safeDate(r.data_resposta);
+      if (r.ts_ultima_interacao) {
+        const d = safeDate(r.ts_ultima_interacao);
         if (d) {
           const dow = dayOfWeek(d);
           const pi = hourBucket(d) === 'Manhã' ? 0 : hourBucket(d) === 'Tarde' ? 1 : 2;
@@ -338,8 +338,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     // ── SLA ──
     const temposRespostaMin: number[] = [];
     allRecords.forEach(r => {
-      const envio = safeDate(r.dataEntrada || r.data_envio);
-      const resposta = safeDate(r.data_resposta || r.lastFollowupDate);
+      const envio = safeDate(r.ts_cadastro || r.ts_cadastro);
+      const resposta = safeDate(r.ts_ultima_interacao || r.ts_ultimo_fup);
       if (envio && resposta) {
         const diffMin = (resposta.getTime() - envio.getTime()) / (1000 * 60);
         if (diffMin >= 0 && diffMin <= 60 * 24 * 30) temposRespostaMin.push(diffMin);
@@ -382,7 +382,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
         return ['Qualificado', 'Closer', 'Proposta', 'Fechado'].includes(stage);
       });
 
-      const scoresSum = dayQualified.reduce((acc, r) => acc + parseScore(r.makeScore), 0);
+      const scoresSum = dayQualified.reduce((acc, r) => acc + parseScore(r.score), 0);
       const dayQuentes = dayQualified.filter(r => getTemp(r) === 'QUENTE').length;
       const dayMornos = dayQualified.filter(r => getTemp(r) === 'MORNO').length;
       const dayFrios = dayQualified.filter(r => getTemp(r) === 'FRIO').length;
@@ -401,14 +401,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const motivoCounts: Record<string, number> = {};
     desqualificados.forEach(r => {
       const msgs = r.historico.map(h => h.mensagem.toLowerCase()).join(' ');
-      const bill = (r.valorConta || '').toLowerCase();
+      const bill = (r.valor_conta || '').toLowerCase();
       let motivo = 'Sem interesse/Curioso';
       if (bill.includes('menos') || bill.includes('<') || bill.includes('250')) motivo = 'Consumo Desqualificado';
       else if (msgs.includes('financ') || msgs.includes('crédito')) motivo = 'Problemas de Financiamento';
       else if (msgs.includes('depois') || msgs.includes('momento') || msgs.includes('agora não')) motivo = 'Timing';
       else if (msgs.includes('concorr') || msgs.includes('outra empresa')) motivo = 'Concorrência';
       else if (msgs.includes('aluguel') || msgs.includes('alugado')) motivo = 'Imóvel alugado';
-      else if (r.codigoStatus === 'NAO_RESPONDEU') motivo = 'Não respondeu';
+      else if (r.status === 'NAO_RESPONDEU') motivo = 'Não respondeu';
       motivoCounts[motivo] = (motivoCounts[motivo] || 0) + 1;
     });
     const totalDesqual = desqualificados.length || 1;
@@ -426,7 +426,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     // ── Score por Origem ──
     const scoreByOrigem: Record<string, { scores: number[]; count: number }> = {};
     allRecords.forEach(r => {
-      const score = parseScore(r.makeScore);
+      const score = parseScore(r.score);
       const origem = getOrigemLabel(r);
       if (!scoreByOrigem[origem]) scoreByOrigem[origem] = { scores: [], count: 0 };
       scoreByOrigem[origem].count++;
@@ -458,7 +458,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const tabelaLeads: TabelaLead[] = uniqueRecords.map((r, i) => {
       const stage = getSolStageFromMake(r);
       const temp = getTemp(r);
-      const score = parseScore(r.makeScore);
+      const score = parseScore(r.score);
       const valor = estimateValueFromBill(r);
 
       let statusFup = 'Novo';
@@ -468,13 +468,13 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       if (stage === 'Fechado') statusFup = 'Concluído';
 
       const historico = r.historico.map(h => ({
-        data: h.data || r.data_envio || '',
+        data: h.data || r.ts_cadastro || '',
         tipo: r.robo === 'fup_frio' ? 'FUP' : 'SOL',
         msg: h.mensagem || 'Interação registrada',
       }));
 
       // Calculate SLA (days since last interaction)
-      const lastDate = safeDate(r.lastFollowupDate || r.data_resposta || r.data_envio);
+      const lastDate = safeDate(r.ts_ultimo_fup || r.ts_ultima_interacao || r.ts_cadastro);
       const sla = lastDate ? Math.round((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
       return {
@@ -486,15 +486,15 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
         sla,
         statusFup,
         valor,
-        dataCriacao: r.data_envio || undefined,
-        makeStatus: (r.makeStatus || '').toUpperCase(),
-        etapaSm: r.etapaSm || undefined,
-        closerAtribuido: r.closerAtribuido || undefined,
-        statusProposta: r.statusProposta || undefined,
-        dataProposta: r.dataProposta || undefined,
-        dataFechamento: r.dataFechamento || undefined,
-        dataQualificacao: r.data_resposta || undefined,
-        lastFollowupDate: r.lastFollowupDate || undefined,
+        dataCriacao: r.ts_cadastro || undefined,
+        makeStatus: (r.status || '').toUpperCase(),
+        etapaSm: r.etapa_funil || undefined,
+        closerAtribuido: r.closer_nome || undefined,
+        statusProposta: r.status || undefined,
+        dataProposta: r.ts_qualificado || undefined,
+        dataFechamento: r.ts_transferido || undefined,
+        dataQualificacao: r.ts_ultima_interacao || undefined,
+        lastFollowupDate: r.ts_ultimo_fup || undefined,
         respondeu: r.status_resposta === 'respondeu',
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
@@ -565,8 +565,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
 
     const fupReactivationDays = fupRecords
       .map(r => {
-        const start = safeDate(r.dataEntrada || r.data_envio);
-        const end = safeDate(r.lastFollowupDate || r.data_resposta);
+        const start = safeDate(r.ts_cadastro || r.ts_cadastro);
+        const end = safeDate(r.ts_ultimo_fup || r.ts_ultima_interacao);
         if (!start || !end) return null;
         const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
         if (diff < 0 || diff > 180) return null;
@@ -661,8 +661,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
         mediaDias: +average(
           allRecords
             .map(r => {
-              const start = safeDate(r.dataEntrada || r.data_envio);
-              const proposta = safeDate(r.dataProposta);
+              const start = safeDate(r.ts_cadastro || r.ts_cadastro);
+              const proposta = safeDate(r.ts_qualificado);
               if (!start || !proposta) return null;
               const diff = (proposta.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
               if (diff < 0 || diff > 365) return null;
@@ -709,14 +709,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const nowForMonthly = new Date();
     const currentMonthKey = `${nowForMonthly.getFullYear()}-${String(nowForMonthly.getMonth() + 1).padStart(2, '0')}`;
     allRecords.forEach(r => {
-      const d = safeDate(r.dataEntrada || r.data_envio);
+      const d = safeDate(r.ts_cadastro || r.ts_cadastro);
       if (!d) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       // Ignore future months
       if (key > currentMonthKey) return;
       if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
       monthlyMap[key].total++;
-      const s = (r.makeStatus || '').toUpperCase();
+      const s = (r.status || '').toUpperCase();
       if (s.includes('QUALIFICADO') && !s.includes('DES')) monthlyMap[key].qualificados++;
       if (s.includes('GANHO') || s.includes('FECHADO')) monthlyMap[key].fechados++;
       monthlyMap[key].msgEnviadas += Math.max(r.historico.filter(h => h.tipo === 'enviada').length, 1);

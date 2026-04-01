@@ -21,7 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useMakeDataStore, MakeRecord } from "@/hooks/useMakeDataStore";
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
@@ -63,15 +63,15 @@ const reportIcon = (tipo: string) => {
   switch (tipo) { case "executivo": return "☀️"; case "closer": return "📊"; case "robos": return "🤖"; case "campanha": return "📣"; default: return "📄"; }
 };
 
-function getPrioridade(r: MakeRecord): string {
-  const score = parseInt(r.makeScore || "0") || 0;
-  if (score >= 70 || r.makeTemperatura === "QUENTE") return "alta";
-  if (score >= 40 || r.makeTemperatura === "MORNO") return "media";
+function getPrioridade(r: SolLead): string {
+  const score = parseInt(r.score || "0") || 0;
+  if (score >= 70 || r.temperatura === "QUENTE") return "alta";
+  if (score >= 40 || r.temperatura === "MORNO") return "media";
   return "baixa";
 }
 
-function getEtapa(r: MakeRecord): string {
-  const s = (r.makeStatus || "").toUpperCase();
+function getEtapa(r: SolLead): string {
+  const s = (r.status || "").toUpperCase();
   if (s === "QUALIFICADO") return "Qualificado";
   if (s === "WHATSAPP") return "Em Qualificação";
   if (s === "DESQUALIFICADO") return "Desqualificado";
@@ -93,12 +93,12 @@ function timeSince(dateStr: string): string {
 
 /* ── derive alerts from Make data ─────────────────────── */
 
-function deriveAlerts(records: MakeRecord[]): Alert[] {
+function deriveAlerts(records: SolLead[]): Alert[] {
   const alerts: Alert[] = [];
   let id = 0;
 
   // Detect duplicates by phone
-  const phoneCount = new Map<string, MakeRecord[]>();
+  const phoneCount = new Map<string, SolLead[]>();
   records.forEach((r) => {
     if (!r.telefone) return;
     const arr = phoneCount.get(r.telefone) || [];
@@ -120,9 +120,9 @@ function deriveAlerts(records: MakeRecord[]): Alert[] {
 
   // Hot leads without recent activity
   records.forEach((r) => {
-    const score = parseInt(r.makeScore || "0") || 0;
-    const temp = (r.makeTemperatura || "").toUpperCase();
-    const status = (r.makeStatus || "").toUpperCase();
+    const score = parseInt(r.score || "0") || 0;
+    const temp = (r.temperatura || "").toUpperCase();
+    const status = (r.status || "").toUpperCase();
 
     if ((score >= 70 || temp === "QUENTE") && status !== "QUALIFICADO" && status !== "AGENDAMENTO") {
       alerts.push({
@@ -131,34 +131,34 @@ function deriveAlerts(records: MakeRecord[]): Alert[] {
         label: "Lead Quente s/ Agend.",
         desc: `${r.nome || r.telefone} — Score ${score}, ${temp}`,
         severity: "warning",
-        time: timeSince(r.data_envio),
+        time: timeSince(r.ts_cadastro),
         leadData: {
           nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
           telefone: r.telefone,
           score,
           temp: temp || "MORNO",
           etapa: getEtapa(r),
-          valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+          valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
         },
       });
     }
 
     // FUP reactivated
-    if (r.followupCount && r.followupCount >= 1 && r.status_resposta === "respondeu") {
+    if (r.fup_followup_count && r.fup_followup_count >= 1 && r.status_resposta === "respondeu") {
       alerts.push({
         id: `fup-${id++}`,
         tipo: "fup",
         label: "FUP Reativado",
-        desc: `${r.nome || r.telefone} respondeu no FUP #${r.followupCount}`,
+        desc: `${r.nome || r.telefone} respondeu no FUP #${r.fup_followup_count}`,
         severity: "info",
-        time: timeSince(r.data_resposta || r.data_envio),
+        time: timeSince(r.ts_ultima_interacao || r.ts_cadastro),
         leadData: {
           nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
           telefone: r.telefone,
-          score: parseInt(r.makeScore || "0") || 0,
-          temp: (r.makeTemperatura || "MORNO").toUpperCase(),
+          score: parseInt(r.score || "0") || 0,
+          temp: (r.temperatura || "MORNO").toUpperCase(),
           etapa: getEtapa(r),
-          valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+          valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
         },
       });
     }
@@ -188,23 +188,23 @@ interface CloserGroup {
   stats: { count: number; avgScore: number };
 }
 
-function deriveCloserQueue(records: MakeRecord[]): CloserGroup[] {
+function deriveCloserQueue(records: SolLead[]): CloserGroup[] {
   // Group qualified/engaged leads by temperature bucket
   const qualified = records.filter((r) => {
-    const s = (r.makeStatus || "").toUpperCase();
+    const s = (r.status || "").toUpperCase();
     return s === "QUALIFICADO" || s === "WHATSAPP" || s === "AGENDAMENTO" || s === "PROPOSTA" || s === "NEGOCIACAO";
   });
 
   const groups: Record<string, CloserLead[]> = { "Quentes": [], "Mornos": [], "Frios": [] };
   qualified.forEach((r) => {
-    const temp = (r.makeTemperatura || "").toUpperCase();
-    const score = parseInt(r.makeScore || "0") || 0;
+    const temp = (r.temperatura || "").toUpperCase();
+    const score = parseInt(r.score || "0") || 0;
     const lead: CloserLead = {
       nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
       score,
       temp: temp || "MORNO",
       etapa: getEtapa(r),
-      valor: r.valorConta ? `R$ ${r.valorConta}` : "—",
+      valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
       prioridade: getPrioridade(r),
       telefone: r.telefone,
     };
@@ -230,17 +230,17 @@ function deriveCloserQueue(records: MakeRecord[]): CloserGroup[] {
 
 /* ── derive daily summary ─────────────────────────────── */
 
-function deriveSummary(records: MakeRecord[]) {
+function deriveSummary(records: SolLead[]) {
   const total = records.length;
-  const qualificados = records.filter((r) => (r.makeStatus || "").toUpperCase() === "QUALIFICADO").length;
+  const qualificados = records.filter((r) => (r.status || "").toUpperCase() === "QUALIFICADO").length;
   const responderam = records.filter((r) => r.status_resposta === "respondeu").length;
-  const fupAtivos = records.filter((r) => (r.followupCount || 0) >= 1).length;
-  const scores = records.map((r) => parseInt(r.makeScore || "0") || 0).filter((s) => s > 0);
+  const fupAtivos = records.filter((r) => (r.fup_followup_count || 0) >= 1).length;
+  const scores = records.map((r) => parseInt(r.score || "0") || 0).filter((s) => s > 0);
   const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
-  const quentes = records.filter((r) => (r.makeTemperatura || "").toUpperCase() === "QUENTE").length;
-  const mornos = records.filter((r) => (r.makeTemperatura || "").toUpperCase() === "MORNO").length;
-  const frios = records.filter((r) => (r.makeTemperatura || "").toUpperCase() === "FRIO").length;
+  const quentes = records.filter((r) => (r.temperatura || "").toUpperCase() === "QUENTE").length;
+  const mornos = records.filter((r) => (r.temperatura || "").toUpperCase() === "MORNO").length;
+  const frios = records.filter((r) => (r.temperatura || "").toUpperCase() === "FRIO").length;
 
   return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios };
 }
@@ -253,11 +253,12 @@ const mensagensReports: { id: number; tipo: string; titulo: string; enviadoPara:
 export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
-  const { data: makeRecords, isLoading, forceSync } = useMakeDataStore();
+  const { data: solLeads, isLoading } = useSolLeads();
+  const { forceSync } = useForceSync();
   const { proposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
 
-  const allRecords = makeRecords || [];
+  const records = solLeads || [];
   const gf = useGlobalFilters();
   const records = useMemo(() => gf.filterRecords(allRecords), [allRecords, gf.filterRecords]);
   const filteredProposals = useMemo(() => gf.filterProposals(proposals), [proposals, gf.filterProposals]);
@@ -544,7 +545,7 @@ export default function PainelComercial() {
                         <div key={p.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
                           <div>
                             <p className="font-medium text-foreground text-sm">{p.nomeCliente}</p>
-                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.representante || '—'}</p>
+                            <p className="text-xs text-muted-foreground">{p.etapa} • {p.closer_nome || '—'}</p>
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-chart-3">{formatCurrencyAbbrev(p.valorProposta)}</p>

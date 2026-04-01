@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useOrgFilteredProposals } from '@/hooks/useOrgFilteredProposals';
-import { useMakeDataStore, MakeRecord, normalizePhone, buildMakeMap } from '@/hooks/useMakeDataStore';
+import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { getVendedorPerformance, getKPIs, Proposal } from '@/data/dataAdapter';
 import type { DateRange } from '@/components/dashboard/DateFilter';
 
@@ -70,7 +70,7 @@ function getSolStage(etapa: string, status: string): string {
 // ─── Main Hook ───
 export function useBIData(dateRange?: DateRange) {
   const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useOrgFilteredProposals();
-  const { data: makeRecords, isLoading: makeLoading } = useMakeDataStore();
+  const { data: solLeads, isLoading: makeLoading } = useSolLeads();
 
   // Filter by date range
   const filteredProposals = useMemo(() => {
@@ -85,24 +85,24 @@ export function useBIData(dateRange?: DateRange) {
     });
   }, [enrichedProposals, dateRange]);
 
-  const filteredMakeRecords = useMemo(() => {
-    const records = makeRecords || [];
+  const filteredSolLeads = useMemo(() => {
+    const records = solLeads || [];
     if (!dateRange?.from) return records;
     const from = dateRange.from.getTime();
     const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
     return records.filter(r => {
-      const d = safeDate(r.data_envio);
+      const d = safeDate(r.ts_cadastro);
       if (!d) return true;
       const t = d.getTime();
       return t >= from && t <= to;
     });
-  }, [makeRecords, dateRange]);
+  }, [solLeads, dateRange]);
 
-  const allMakeRecords = filteredMakeRecords;
+  const allSolLeads = filteredSolLeads;
 
   // ═══ SOL SDR (V5-V8) ═══
   const solSDR = useMemo(() => {
-    const solRecords = allMakeRecords.filter(r => r.robo === 'sol');
+    const solRecords = allSolLeads.filter(r => r.robo === 'sol');
 
     // V5: Funil real-time
     const responderam = solRecords.filter(r => r.status_resposta === 'respondeu');
@@ -148,7 +148,7 @@ export function useBIData(dateRange?: DateRange) {
     // V7: Performance por turno
     const turnos = { 'Manhã': { total: 0, responderam: 0 }, 'Tarde': { total: 0, responderam: 0 }, 'Noite': { total: 0, responderam: 0 } };
     solRecords.forEach(r => {
-      const d = safeDate(r.data_envio);
+      const d = safeDate(r.ts_cadastro);
       if (!d) return;
       const turno = hourBucket(d);
       turnos[turno].total++;
@@ -184,11 +184,11 @@ export function useBIData(dateRange?: DateRange) {
     };
 
     return { funil, motivos, performanceTurno, qualidadeLead };
-  }, [allMakeRecords, filteredProposals]);
+  }, [allSolLeads, filteredProposals]);
 
   // ═══ FUP Frio ═══
   const fupFrio = useMemo(() => {
-    const fupRecords = allMakeRecords.filter(r => r.robo === 'fup_frio');
+    const fupRecords = allSolLeads.filter(r => r.robo === 'fup_frio');
     const totalFup = fupRecords.length;
     if (totalFup === 0) return null;
 
@@ -260,7 +260,7 @@ export function useBIData(dateRange?: DateRange) {
 
     const turnos = { 'Manhã': { total: 0, responderam: 0 }, 'Tarde': { total: 0, responderam: 0 }, 'Noite': { total: 0, responderam: 0 } };
     fupRecords.forEach(r => {
-      const d = safeDate(r.data_envio);
+      const d = safeDate(r.ts_cadastro);
       if (!d) return;
       const turno = hourBucket(d);
       turnos[turno].total++;
@@ -281,7 +281,7 @@ export function useBIData(dateRange?: DateRange) {
     if (ignoraram.length > totalFup * 0.7) alertas.push({ tipo: 'danger', titulo: `${ignoraram.length} leads ignorando`, desc: 'Mais de 70% dos leads de FUP não responderam — revisar abordagem' });
 
     return { funil, resgate, tentativasConversao, performanceTurnoFup, alertas, totalFup, responderam: responderam.length, aguardando: aguardando.length, ignoraram: ignoraram.length };
-  }, [allMakeRecords, filteredProposals]);
+  }, [allSolLeads, filteredProposals]);
 
   // ═══ SolarMarket (V9-V11) ═══
   const solarMarket = useMemo(() => {
@@ -317,7 +317,7 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ Cruzamentos Grupo B (SDR × SolarMarket) ═══
   const cruzamentosB = useMemo(() => {
-    if (filteredProposals.length === 0 || allMakeRecords.length === 0) return null;
+    if (filteredProposals.length === 0 || allSolLeads.length === 0) return null;
 
     // C4: Aproveitamento do lead qualificado
     const qualificadosSol = filteredProposals.filter(p => p.solQualificado);
@@ -386,7 +386,7 @@ export function useBIData(dateRange?: DateRange) {
     });
 
     return { aproveitamento, perfil, velocidadeConversao };
-  }, [filteredProposals, allMakeRecords]);
+  }, [filteredProposals, allSolLeads]);
 
   // ═══ Cruzamento D C14: Lead em risco ═══
   const leadsEmRisco = useMemo(() => {
@@ -408,7 +408,7 @@ export function useBIData(dateRange?: DateRange) {
       .slice(0, 20);
   }, [filteredProposals]);
 
-  const hasData = filteredProposals.length > 0 || allMakeRecords.length > 0;
+  const hasData = filteredProposals.length > 0 || allSolLeads.length > 0;
   const isLoading = proposalsLoading || makeLoading;
 
   return {
