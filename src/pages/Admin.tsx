@@ -471,6 +471,12 @@ export default function Admin() {
                 Módulos
               </TabsTrigger>
             )}
+            {userRole === 'super_admin' && (
+              <TabsTrigger value="infraestrutura" className="flex items-center gap-1.5">
+                <Server className="h-3.5 w-3.5" />
+                Infraestrutura
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* ═══════════════════════════════════════════ */}
