@@ -81,7 +81,7 @@ export default function SiteGA4Page() {
   }, [filtered]);
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-8 w-64 mb-4" /><div className="grid grid-cols-3 gap-4">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}</div></div>;
-  if (!rows?.length) return <div className="p-6"><div className="flex justify-between items-center mb-4"><h1 className="text-xl font-bold">Site (GA4)</h1><SyncBadge franquiaId={FRANQUIA} /></div><EmptyState /></div>;
+  if (!rows?.length) return <div className="p-6"><div className="flex justify-between items-center mb-4"><h1 className="text-xl font-bold">Site (GA4)</h1><SyncBadge franquiaId={franquiaId} /></div><EmptyState /></div>;
 
   return (
     <div className="p-6 space-y-6">
