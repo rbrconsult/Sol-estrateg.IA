@@ -60,7 +60,7 @@ import CampanhasAdsPerformance from "./pages/campanhas/AdsPerformance";
 import CampanhasMidiaReceita from "./pages/campanhas/MidiaReceita";
 import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
 import TimeComercialPage from "./pages/TimeComercialPage";
-import SolInsights from "./pages/sol/SolInsights";
+// SolInsights removed — route redirects to /leads
 import SolConfigPage from "./pages/admin/SolConfigPage";
 import SolEquipePage from "./pages/admin/SolEquipePage";
 import SolFunisPage from "./pages/admin/SolFunisPage";
