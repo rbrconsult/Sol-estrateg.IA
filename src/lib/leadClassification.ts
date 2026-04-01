@@ -7,9 +7,9 @@ import type { SolLead } from '@/hooks/useSolData';
 
 export const STATUS_LABELS: Record<string, string> = {
   TRAFEGO_PAGO: 'Leads Recebidos',
-  EM_QUALIFICACAO: 'MQL',
+  EM_QUALIFICACAO: 'Em Qualificação',
   FOLLOW_UP: 'Follow Up',
-  QUALIFICADO: 'SQL',
+  QUALIFICADO: 'Qualificados',
   GANHO: 'Ganho',
   PERDIDO: 'Perdido',
   DESQUALIFICADO: 'Desqualificado',

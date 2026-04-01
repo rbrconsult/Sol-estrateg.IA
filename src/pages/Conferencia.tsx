@@ -5,7 +5,7 @@ import { ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, Che
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useConferenciaData, type KPICard } from "@/hooks/useConferenciaData";
+import { useConferenciaData } from "@/hooks/useConferenciaData";
 import { RobotInsights } from "@/components/conferencia/RobotInsights";
 import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
@@ -131,8 +131,6 @@ export default function Conferencia() {
   // Hook receives global filter — ALL data is already filtered by period
   const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData(effectiveDateRange);
 
-  // All data comes pre-filtered from the hook
-  const kpiCards = realData?.kpiCards ?? [];
   const pipelineStages = realData?.pipelineStages ?? [];
   const origemLeads = realData?.origemLeads ?? [];
   const fupFrio = realData?.fupFrio ?? { entraram: 0, reativados: 0, pctReativados: 0, diasAteReativar: 0, valorRecuperado: 'R$ 0', ticketMedio: 'R$ 0', conversaoPosResgate: 0, receitaTotal: 'R$ 0', pctReceitaViaFup: 0 };
@@ -198,26 +196,6 @@ export default function Conferencia() {
             </span>
           </div>
         </header>
-
-
-
-
-
-
-        {/* ══════ KPIs GERAIS (período filtrado) ══════ */}
-        <section className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-          {kpiCards.map((k) => (
-            <KPI
-              key={k.label}
-              label={k.label}
-              target={k.value}
-              suffix={k.suffix}
-              detail={k.detail}
-              tooltip={(k as any).tooltip}
-              highlight={k.label === "Resgatados FUP"}
-            />
-          ))}
-        </section>
 
         {/* ══════ ROW 2 — Pipeline Visual ══════ */}
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
