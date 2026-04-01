@@ -34,7 +34,7 @@ const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as c
 
 export default function Reprocessamento() {
   const { data: solLeads, isLoading, isFetching } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
