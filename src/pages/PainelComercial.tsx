@@ -254,7 +254,7 @@ export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const { openLead360 } = useLead360();
   const { data: solLeads, isLoading } = useSolLeads();
-  const { forceSync } = useForceSync();
+  
   const { proposals, orgFilterActive } = useOrgFilteredProposals();
   const { selectedOrgName } = useOrgFilter();
 
