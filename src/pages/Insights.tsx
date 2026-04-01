@@ -1,109 +1,196 @@
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Bot, MessageSquare, BarChart3, Zap, Target, Eye, Cpu, FileSearch, Gauge, TrendingUp, Workflow } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Search, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { skillCategories, statusConfig, type SkillStatus } from "@/data/skillsMap";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface Skill {
-  icon: React.ElementType;
-  name: string;
-  desc: string;
-  status: "ativo" | "beta" | "planejado";
-  category: string;
-  usage?: number; // percentage
-}
-
-const skills: Skill[] = [
-  // IA Conversacional
-  { icon: Bot, name: "SDR com IA (SOL)", desc: "Qualificação automática de leads via WhatsApp com IA conversacional e áudio", status: "ativo", category: "IA Conversacional", usage: 92 },
-  { icon: MessageSquare, name: "FUP Frio Automático", desc: "Follow-up inteligente para leads inativos com cadência adaptativa", status: "ativo", category: "IA Conversacional", usage: 78 },
-  { icon: Zap, name: "Auto-Followup", desc: "Envia mensagens de acompanhamento automáticas baseadas em contexto", status: "ativo", category: "IA Conversacional", usage: 65 },
-
-  // Análise & Scoring
-  { icon: Brain, name: "Análise de Sentimento", desc: "Detecta tom, intenção e urgência das conversas para priorizar leads", status: "beta", category: "Análise & Scoring" },
-  { icon: Gauge, name: "Lead Scoring (0-100)", desc: "Pontuação automática baseada em comportamento, perfil e engajamento", status: "ativo", category: "Análise & Scoring", usage: 88 },
-  { icon: Target, name: "Temperatura Dinâmica", desc: "Classificação quente/morno/frio baseada em interações recentes", status: "ativo", category: "Análise & Scoring", usage: 95 },
-
-  // Operacional
-  { icon: Eye, name: "OCR Conta de Luz", desc: "Leitura automática de contas de energia com extração de kWh e valor", status: "ativo", category: "Operacional", usage: 70 },
-  { icon: Workflow, name: "Roteamento Inteligente", desc: "Distribui leads para o closer ideal com base em carga e performance", status: "beta", category: "Operacional" },
-  { icon: FileSearch, name: "Sanitização de Dados", desc: "Detecção e correção automática de dados inconsistentes", status: "ativo", category: "Operacional", usage: 45 },
-
-  // Inteligência
-  { icon: BarChart3, name: "Executive Summary", desc: "Resumo diário gerado por IA com KPIs e alertas estratégicos", status: "ativo", category: "Inteligência", usage: 60 },
-  { icon: TrendingUp, name: "Previsão de Conversão", desc: "Modelo preditivo de probabilidade de fechamento por lead", status: "planejado", category: "Inteligência" },
-  { icon: Cpu, name: "Copilot Comercial", desc: "Assistente IA para vendedores com sugestões de abordagem em tempo real", status: "planejado", category: "Inteligência" },
+const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "ativo", label: "✅ Ativas" },
+  { value: "precisa_dados", label: "⏳ Precisa Dados" },
+  { value: "criar", label: "🔨 Criar" },
+  { value: "futuro", label: "🔮 Futuro" },
 ];
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  ativo: { label: "Ativo", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  beta: { label: "Beta", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  planejado: { label: "Planejado", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-};
-
-const categories = [...new Set(skills.map(s => s.category))];
-
 export default function Insights() {
-  const activeCount = skills.filter(s => s.status === "ativo").length;
-  const betaCount = skills.filter(s => s.status === "beta").length;
-  const plannedCount = skills.filter(s => s.status === "planejado").length;
+  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all">("all");
+  const [search, setSearch] = useState("");
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(skillCategories.map(c => [c.key, true]))
+  );
+
+  const totals = useMemo(() => {
+    const all = skillCategories.flatMap(c => c.skills);
+    return {
+      total: all.length,
+      ativo: all.filter(s => s.status === "ativo").length,
+      precisa_dados: all.filter(s => s.status === "precisa_dados").length,
+      criar: all.filter(s => s.status === "criar").length,
+      futuro: all.filter(s => s.status === "futuro").length,
+    };
+  }, []);
+
+  const filteredCategories = useMemo(() => {
+    const q = search.toLowerCase();
+    return skillCategories.map(cat => ({
+      ...cat,
+      skills: cat.skills.filter(s => {
+        if (statusFilter !== "all" && s.status !== statusFilter) return false;
+        if (q && !s.name.toLowerCase().includes(q) && !s.desc.toLowerCase().includes(q) && !s.id.includes(q)) return false;
+        return true;
+      }),
+    })).filter(cat => cat.skills.length > 0);
+  }, [statusFilter, search]);
+
+  const toggleCat = (key: string) =>
+    setOpenCats(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const pctAtivo = Math.round((totals.ativo / totals.total) * 100);
 
   return (
     <div className="space-y-6 p-1">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Skills & Automações</h1>
-          <p className="text-muted-foreground mt-1">Capacidades de IA ativas e planejadas na plataforma SOL</p>
-        </div>
-        <div className="flex gap-2">
-          <Badge variant="outline" className={statusConfig.ativo.className}>
-            {activeCount} Ativos
-          </Badge>
-          <Badge variant="outline" className={statusConfig.beta.className}>
-            {betaCount} Beta
-          </Badge>
-          <Badge variant="outline" className={statusConfig.planejado.className}>
-            {plannedCount} Planejados
-          </Badge>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills</h1>
+        <p className="text-muted-foreground mt-1">
+          {totals.total} automações inteligentes — Template RBR Scale
+        </p>
       </div>
 
-      {/* By Category */}
-      {categories.map(cat => (
-        <div key={cat} className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{cat}</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {skills.filter(s => s.category === cat).map(s => {
-              const cfg = statusConfig[s.status];
-              return (
-                <Card key={s.name} className="bg-card/60 border-border/40 hover:border-primary/30 transition-colors">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <s.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>
-                    </div>
-                    <CardTitle className="text-base mt-3">{s.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{s.desc}</p>
-                    {s.usage !== undefined && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Utilização</span>
-                          <span className="font-medium">{s.usage}%</span>
-                        </div>
-                        <Progress value={s.usage} className="h-1.5" />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <Card className="bg-card/60 border-border/40">
+          <CardContent className="p-4 text-center">
+            <p className="text-3xl font-bold">{totals.total}</p>
+            <p className="text-xs text-muted-foreground">Total Skills</p>
+          </CardContent>
+        </Card>
+        {(["ativo", "precisa_dados", "criar", "futuro"] as SkillStatus[]).map(st => {
+          const cfg = statusConfig[st];
+          return (
+            <Card key={st} className="bg-card/60 border-border/40">
+              <CardContent className="p-4 text-center">
+                <p className="text-3xl font-bold">{totals[st]}</p>
+                <Badge variant="outline" className={`${cfg.className} text-[10px] mt-1`}>{cfg.label}</Badge>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Progress */}
+      <Card className="bg-card/60 border-border/40">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Progresso de Ativação</span>
+            <span className="text-sm font-bold text-primary">{pctAtivo}% ({totals.ativo}/{totals.total})</span>
           </div>
+          <Progress value={pctAtivo} className="h-2" />
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar skill..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9"
+          />
         </div>
-      ))}
+        <Tabs value={statusFilter} onValueChange={v => setStatusFilter(v as any)}>
+          <TabsList>
+            {statusFilters.map(f => (
+              <TabsTrigger key={f.value} value={f.value} className="text-xs">
+                {f.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Categories */}
+      <TooltipProvider>
+        {filteredCategories.map(cat => {
+          const isOpen = openCats[cat.key] !== false;
+          const catActive = cat.skills.filter(s => s.status === "ativo").length;
+          return (
+            <Collapsible key={cat.key} open={isOpen} onOpenChange={() => toggleCat(cat.key)}>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between py-2 px-1 hover:bg-secondary/30 rounded-lg transition-colors">
+                  <div className="flex items-center gap-2">
+                    {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    <span className="text-lg">{cat.emoji}</span>
+                    <h2 className="text-sm font-semibold">{cat.label}</h2>
+                    <Badge variant="outline" className="text-[10px]">
+                      {cat.skills.length} skills
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {catActive > 0 && (
+                      <Badge variant="outline" className={statusConfig.ativo.className + " text-[10px]"}>
+                        {catActive} ativas
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-2 mb-4">
+                  {cat.skills.map(skill => {
+                    const cfg = statusConfig[skill.status];
+                    return (
+                      <Card key={skill.id} className="bg-card/60 border-border/40 hover:border-primary/30 transition-colors">
+                        <CardHeader className="pb-2 pt-4 px-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
+                            <Badge variant="outline" className={`${cfg.className} text-[10px] shrink-0`}>{cfg.label}</Badge>
+                          </div>
+                          <CardTitle className="text-sm mt-1 leading-tight">{skill.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4 pb-4 space-y-2">
+                          <p className="text-xs text-muted-foreground leading-relaxed">{skill.desc}</p>
+                          {(skill.fonte || skill.output) && (
+                            <div className="flex items-center gap-1">
+                              {skill.fonte && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                                      <Info className="h-3 w-3" />
+                                      <span>Fonte</span>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" className="max-w-xs">
+                                    <p className="text-xs"><strong>Fonte:</strong> {skill.fonte}</p>
+                                    {skill.output && <p className="text-xs mt-1"><strong>Output:</strong> {skill.output}</p>}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          );
+        })}
+      </TooltipProvider>
+
+      {filteredCategories.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          Nenhuma skill encontrada com os filtros aplicados.
+        </div>
+      )}
     </div>
   );
 }
