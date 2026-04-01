@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { useSolLeadsSync, SolLeadSync } from "@/hooks/useSolLeadsSync";
-import { useSolEquipeSync, useSolMetricasSync } from "@/hooks/useSolSyncTables";
+import { useSolLeads, useSolEquipe, useSolMetricas, type SolLead } from "@/hooks/useSolData";
 import { getStatusLabel } from "@/lib/leadClassification";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

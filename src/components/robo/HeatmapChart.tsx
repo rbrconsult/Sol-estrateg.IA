@@ -1,26 +1,23 @@
+import type { SolLead } from '@/hooks/useSolData';
+
+interface HeatmapChartProps {
+  records: SolLead[];
+  title?: string;
+  dateField?: 'ts_cadastro' | 'ts_ultimo_fup';
+}
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MakeRecord } from '@/hooks/useMakeDataStore';
 import { useMemo } from 'react';
 
 const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
-interface HeatmapChartProps {
-  records: MakeRecord[];
-  title?: string;
-  /** Which date field to use: 'data_envio' (SOL) or 'lastFollowupDate' (FUP) */
-  dateField?: 'data_envio' | 'lastFollowupDate';
-}
-
-export function buildHeatmap(records: MakeRecord[], dateField: 'data_envio' | 'lastFollowupDate' = 'data_envio'): number[][] {
+export function buildHeatmap(records: SolLead[], dateField: 'ts_cadastro' | 'ts_ultimo_fup' = 'ts_cadastro'): number[][] {
   const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
   records.forEach(r => {
     try {
-      const raw = (dateField === 'lastFollowupDate' ? r.lastFollowupDate : r.data_envio) || '';
+      const raw = (dateField === 'ts_ultimo_fup' ? r.ts_ultimo_fup : r.ts_cadastro) || '';
       if (!raw) return;
-      const parts = raw.match(/\d+/g);
-      const d = parts && parts.length >= 5
-        ? new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), parseInt(parts[3]), parseInt(parts[4]))
-        : new Date(raw);
+      const d = new Date(raw);
       if (isNaN(d.getTime())) return;
       const day = d.getDay();
       const hour = d.getHours();
@@ -31,12 +28,11 @@ export function buildHeatmap(records: MakeRecord[], dateField: 'data_envio' | 'l
   return heatmap;
 }
 
-export default function HeatmapChart({ records, title = 'Melhor Horário e Dia', dateField = 'data_envio' }: HeatmapChartProps) {
+export default function HeatmapChart({ records, title = 'Melhor Horário e Dia', dateField = 'ts_cadastro' }: HeatmapChartProps) {
   const heatmap = useMemo(() => buildHeatmap(records, dateField), [records, dateField]);
   const maxV = Math.max(...heatmap.flat(), 1);
   const totalPoints = heatmap.flat().reduce((a, b) => a + b, 0);
 
-  // Find best slot
   let bestDay = 0, bestHour = 0, bestVal = 0;
   heatmap.forEach((row, di) => row.forEach((v, hi) => { if (v > bestVal) { bestVal = v; bestDay = di; bestHour = hi; } }));
 
@@ -44,9 +40,7 @@ export default function HeatmapChart({ records, title = 'Melhor Horário e Dia',
     return (
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">{title}</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-8">Dados insuficientes para gerar heatmap.</p>
-        </CardContent>
+        <CardContent><p className="text-sm text-muted-foreground text-center py-8">Dados insuficientes para gerar heatmap.</p></CardContent>
       </Card>
     );
   }
