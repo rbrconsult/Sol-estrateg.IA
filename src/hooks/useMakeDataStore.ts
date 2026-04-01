@@ -39,6 +39,11 @@ export interface MakeRecord {
   sentimento: string;
   interesse: string;
   ultimaMensagem: string;
+  dsSource: string;
+  totalMensagensIa: number;
+  representante: string;
+  chatId: string;
+  contactId: string;
 }
 
 function solLeadToMakeRecord(l: SolLead): MakeRecord {
