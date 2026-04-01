@@ -11,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { Globe, Users, Target } from 'lucide-react';
-
-const FRANQUIA = 'evolve_olimpia';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 const COLORS = ['hsl(210,80%,55%)', 'hsl(35,90%,55%)', 'hsl(140,60%,45%)', 'hsl(0,70%,55%)', 'hsl(270,60%,55%)', 'hsl(180,60%,45%)', 'hsl(45,90%,50%)', 'hsl(320,60%,55%)'];
 
 export default function SiteGA4Page() {
