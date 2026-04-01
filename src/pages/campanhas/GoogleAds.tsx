@@ -19,7 +19,7 @@ export default function GoogleAdsPage() {
   const [campanha, setCampanha] = useState('all');
   const [dispositivo, setDispositivo] = useState('all');
   const [rede, setRede] = useState('all');
-  const { data: rows, isLoading } = useGoogleAds(FRANQUIA, range);
+  const { data: rows, isLoading } = useGoogleAds(franquiaId, range);
 
   const filtered = useMemo(() => {
     if (!rows) return [];
