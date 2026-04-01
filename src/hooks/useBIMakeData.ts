@@ -82,21 +82,61 @@ export function useBIMakeData(dateRange?: DateRange) {
       { temperatura: 'FRIO', leads: frios.length, icon: '🔵', cor: 'text-primary' },
     ];
 
-    // Leads recentes
+    // Leads recentes (enriched)
     const leadsRecentes = filtered
       .filter(l => l.score && parseFloat(l.score) > 0)
       .map(l => ({
         nome: l.nome || 'Lead',
         temperatura: (l.temperatura || '').toUpperCase(),
         score: l.score ? parseFloat(l.score).toFixed(0) : '0',
+        cidade: l.cidade || '',
+        valorConta: l.valor_conta || '',
+        etapa: l.status || '',
+        data: l.ts_cadastro || '',
       }))
       .sort((a, b) => parseInt(b.score) - parseInt(a.score))
       .slice(0, 10);
 
-    // FUP Frio
-    const fupLeads = filtered.filter(l => l.status === 'FOLLOW_UP' || (l.fup_followup_count || 0) > 0);
-    const fupReativados = fupLeads.filter(l => l.transferido_comercial).length;
-    const fupFrio = {
+    // Motivos de desqualificação
+    const desqLeads = filtered.filter(l => l.status === 'DESQUALIFICADO');
+    const motivoCounts: Record<string, number> = {};
+    desqLeads.forEach(l => {
+      const nota = (l.resumo_conversa || '').toLowerCase();
+      let motivo = 'Sem interesse';
+      if (nota.includes('consumo') || nota.includes('baixo')) motivo = 'Consumo baixo';
+      else if (nota.includes('aluguel') || nota.includes('alugado')) motivo = 'Imóvel alugado';
+      else if (nota.includes('financ')) motivo = 'Financiamento';
+      motivoCounts[motivo] = (motivoCounts[motivo] || 0) + 1;
+    });
+    const totalDesq = desqLeads.length || 1;
+    const colors = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
+    const motivos = Object.entries(motivoCounts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([motivo, count], i) => ({
+        motivo,
+        pct: Math.round((count / totalDesq) * 100),
+        count,
+        fill: colors[i % colors.length],
+      }));
+
+    // Horários (from ts_cadastro)
+    const horarioMap: Record<string, number> = {};
+    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    filtered.forEach(l => {
+      const d = safeDate(l.ts_cadastro);
+      if (!d) return;
+      const dia = dias[d.getDay()];
+      const hora = `${d.getHours().toString().padStart(2, '0')}:00`;
+      const key = `${dia}-${hora}`;
+      horarioMap[key] = (horarioMap[key] || 0) + 1;
+    });
+    const horarios = Object.entries(horarioMap)
+      .map(([key, conversoes]) => {
+        const [dia, hora] = key.split('-');
+        return { dia, hora, conversoes };
+      })
+      .sort((a, b) => b.conversoes - a.conversoes)
+      .slice(0, 12);
       totalFup: fupLeads.length,
       reativados: fupReativados,
       taxaReativacao: fupLeads.length > 0 ? Math.round((fupReativados / fupLeads.length) * 100) : 0,
