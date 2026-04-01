@@ -79,9 +79,9 @@ export default function SolAgent() {
   const costChartData = useMemo(() => {
     return (metricas || []).map(m => ({
       data: new Date(m.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      OpenAI: m.custo_openai_usd,
-      "11Labs": m.custo_elevenlabs_usd,
-      Make: m.custo_make_usd,
+      OpenAI: 0,
+      "11Labs": 0,
+      Make: m.custo_total || 0,
     }));
   }, [metricas]);
 
@@ -130,20 +130,18 @@ export default function SolAgent() {
         if (action === "qualificar") {
           await qualificar.mutateAsync({
             telefone: lead.telefone,
-            project_id: lead.project_id || "",
-            chatId: lead.chat_id || "",
-            contactId: lead.contact_id || "",
+            chat_id: lead.chat_id || "",
+            contact_id: lead.contact_id || "",
             nome: lead.nome || "",
-            score: parseInt(String(lead.score || '0')) || 0,
+            score: String(parseInt(String(lead.score || '0')) || 0),
             valor_conta: lead.valor_conta || "",
-            mensagem: true,
           });
         } else if (action === "desqualificar") {
           await desqualificar.mutateAsync({
             telefone: lead.telefone,
-            project_id: lead.project_id || "",
-            chatId: lead.chat_id || "",
-            nome: lead.nome || "",
+            chat_id: lead.chat_id || "",
+            contact_id: lead.contact_id || "",
+            motivo: "Desqualificado em lote",
           });
         } else if (action === "reprocessar") {
           await reprocessar.mutateAsync({ telefone: lead.telefone });
