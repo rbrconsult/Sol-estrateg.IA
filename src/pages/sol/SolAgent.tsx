@@ -167,7 +167,7 @@ export default function SolAgent() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <Bot className="h-5 w-5 md:h-6 md:w-6 text-primary" /> SOL Agent v2
+            <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-primary" /> SOL Insights
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">
             Dashboard operacional — {selectedOrgName}

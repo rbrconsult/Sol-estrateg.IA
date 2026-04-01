@@ -87,7 +87,6 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Chamados", icon: Headset, path: "/chamados", moduleKey: "chamados" },
       { title: "Monitor", icon: Activity, path: "/operacoes", moduleKey: "monitoramento" },
-      { title: "SOL Agent v2", icon: Bot, path: "/sol/agent", moduleKey: "monitoramento" },
       { title: "SOL Insights", icon: Sparkles, path: "/sol/insights", moduleKey: "monitoramento" },
       { title: "Sanitizar", icon: Eraser, path: "/sanitizacao", moduleKey: "monitoramento" },
       { title: "Ajuda", icon: HelpCircle, path: "/ajuda", moduleKey: "ajuda" },
