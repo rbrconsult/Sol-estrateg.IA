@@ -19,6 +19,7 @@ import {
   Send,
   RefreshCcw,
   Zap,
+  CheckCircle2,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
