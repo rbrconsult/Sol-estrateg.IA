@@ -179,9 +179,14 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
         {/* Navigation — all groups always visible, no collapse */}
         <nav className="flex-1 p-1.5 overflow-y-auto space-y-1">
           {menuGroups.map((group) => {
-            const visibleItems = group.items.filter((item) =>
-              item.moduleKey ? hasAccess(item.moduleKey) : true
-            );
+            // Role-based group visibility
+            if (group.minRole && userRole && !group.minRole.includes(userRole as AppRole)) return null;
+
+            const visibleItems = group.items.filter((item) => {
+              // Role-based item visibility
+              if (item.minRole && userRole && !item.minRole.includes(userRole as AppRole)) return false;
+              return item.moduleKey ? hasAccess(item.moduleKey) : true;
+            });
             if (visibleItems.length === 0) return null;
 
             return (
