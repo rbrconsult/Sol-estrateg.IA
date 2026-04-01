@@ -26,7 +26,7 @@ import Chamados from "./pages/Chamados";
 import Operacoes from "./pages/Operacoes";
 
 import Leads from "./pages/Leads";
-import Conferencia from "./pages/Conferencia";
+// Conferencia removed — /conferencia redirects to /dashboard
 import BI from "./pages/BI";
 // AdsPerformance, MidiaReceita, GA4 legacy pages replaced by campanhas/* versions
 import RoboSol from "./pages/RoboSol";
