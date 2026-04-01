@@ -38,9 +38,9 @@ export default function Desqualificar() {
   const [manualDesqSending, setManualDesqSending] = useState(false);
 
   const allLeads = useMemo(() => {
-    if (!records) return [];
-    return gf.filterRecords(records).map((r) => ({ ...r, _desqualificado: isDesqualificado(r) }));
-  }, [records, gf]);
+    if (!solLeads?.length) return [];
+    return gf.filterRecords(solLeads).map((r) => ({ ...r, _desqualificado: isDesqualificado(r) }));
+  }, [solLeads, gf]);
 
   const filtered = useMemo(() => {
     let list = allLeads.filter((l) => !l._desqualificado); // only show candidates

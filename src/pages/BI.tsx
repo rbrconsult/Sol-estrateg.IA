@@ -33,7 +33,34 @@ export default function BI() {
     from: gf.effectiveDateRange.from,
     to: gf.effectiveDateRange.to,
   }), [gf.effectiveDateRange]);
-  const { data, hasData, isLoading } = useBIData(dateRange);
+  const biResult = useBIData(dateRange);
+  const hasData = biResult.hasData;
+  const isLoading = biResult.isLoading;
+  const data = hasData ? {
+    totalRecords: 0,
+    financeiro: {
+      receitaFechada: biResult.solarMarket?.inteligenciaProposta?.valorGanho || 0,
+      negociosGanhos: biResult.solarMarket?.inteligenciaProposta?.negociosGanhos || 0,
+      valorPipeline: biResult.solarMarket?.inteligenciaProposta?.valorPipeline || 0,
+      negociosAbertos: biResult.solarMarket?.inteligenciaProposta?.negociosAbertos || 0,
+      ticketMedio: biResult.solarMarket?.inteligenciaProposta?.ticketMedio || 0,
+      taxaConversao: biResult.solarMarket?.inteligenciaProposta?.taxaConversao || 0,
+      totalPropostas: (biResult.solarMarket?.inteligenciaProposta?.negociosGanhos || 0) + (biResult.solarMarket?.inteligenciaProposta?.negociosAbertos || 0),
+    },
+    funil: biResult.solSDR?.funil?.map((f: any) => ({ etapa: f.etapa, valor: f.valor, icon: f.icon || '📊', cor: 'default', pctAnterior: 100 })) || [],
+    origens: [] as any[],
+    temperatura: [
+      { temperatura: 'QUENTE', leads: biResult.solSDR?.qualidadeLead?.quentes || 0, icon: '🔥', cor: 'text-destructive' },
+      { temperatura: 'MORNO', leads: biResult.solSDR?.qualidadeLead?.mornos || 0, icon: '🌡️', cor: 'text-warning' },
+      { temperatura: 'FRIO', leads: biResult.solSDR?.qualidadeLead?.frios || 0, icon: '❄️', cor: 'text-info' },
+    ],
+    leadsRecentes: [] as any[],
+    fupFrio: { totalFup: biResult.fupFrio?.totalFup || 0, reativados: biResult.fupFrio?.responderam || 0, taxaReativacao: biResult.fupFrio?.totalFup ? Math.round(((biResult.fupFrio?.responderam || 0) / biResult.fupFrio.totalFup) * 100) : 0, etapasResposta: [] as any[] },
+    volumeSLA: { totalEnviadas: 0, totalRecebidas: 0, mediaInteracoes: 0, slaMenos5min: 0, tempoMedioPrimeiroContato: '—', tempoMedioRespostaLead: '—' },
+    custos: { openAI: 0, elevenLabs: 0, make: 0, total: 0 },
+    motivos: biResult.solSDR?.motivos || [],
+    horarios: biResult.solSDR?.performanceTurno?.map((t: any) => ({ dia: t.turno, hora: '', conversoes: t.responderam })) || [],
+  } : null;
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {

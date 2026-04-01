@@ -328,7 +328,7 @@ export default function RoboFupFrio() {
                   <TableCell><Badge variant="outline" className="text-xs">{l.etapaAtual}</Badge></TableCell>
                   <TableCell className="text-xs">{l.proximoFup}</TableCell>
                   <TableCell className="text-right text-xs">{l.diasEmFup}</TableCell>
-                  <TableCell className="text-xs">{l.canal_origem}</TableCell>
+                  <TableCell className="text-xs">{l.canalOrigem}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

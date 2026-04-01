@@ -44,8 +44,8 @@ export default function Reprocessamento() {
   const [sentSet, setSentSet] = useState<Set<string>>(new Set());
 
   const leads = useMemo(() => {
-    if (!records) return [];
-    let result = [...records];
+    if (!solLeads?.length) return [];
+    let result = [...solLeads];
     if (statusFilter === "ativos") result = result.filter(r => !isDesqualificado(r) && !isQualificado(r));
     else if (statusFilter === "qualificados") result = result.filter(r => isQualificado(r));
     else if (statusFilter === "desqualificados") result = result.filter(r => isDesqualificado(r));
@@ -57,14 +57,13 @@ export default function Reprocessamento() {
     }
     result.sort((a, b) => {
       const getLatest = (r: SolLead) => {
-        const lastHist = r.historico?.length ? r.historico[r.historico.length - 1]?.data : null;
-        const candidate = lastHist || r.ts_ultimo_fup || r.ts_cadastro || '';
+        const candidate = r.ts_ultimo_fup || r.ts_cadastro || '';
         return new Date(candidate).getTime() || 0;
       };
       return getLatest(b) - getLatest(a);
     });
     return result;
-  }, [records, search, statusFilter]);
+  }, [solLeads, search, statusFilter]);
 
   const toggleSelect = (key: string) => {
     setSelected((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; });
