@@ -398,7 +398,7 @@ export default function Sanitizacao() {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <KPICard label="Duplicatas por Tel." value={analysis.dupProjectCount} sub={`em ${dupGroupCount} telefones`} colorClass="bg-destructive text-destructive" />
         <KPICard label="Telefones Inválidos" value={analysis.invalidProjectCount} sub={`${Object.keys(analysis.invalidGroups).length} números`} colorClass="bg-warning text-warning" />
         <KPICard label="Sem Telefone" value={analysis.semTel.length} sub="projetos sem contato" colorClass="bg-warning text-warning" />
