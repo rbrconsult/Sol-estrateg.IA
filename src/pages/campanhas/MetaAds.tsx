@@ -19,7 +19,7 @@ export default function MetaAdsPage() {
   const [campanha, setCampanha] = useState('all');
   const [adset, setAdset] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { data: rows, isLoading } = useMetaAds(FRANQUIA, range);
+  const { data: rows, isLoading } = useMetaAds(franquiaId, range);
 
   const filtered = useMemo(() => {
     if (!rows) return [];
