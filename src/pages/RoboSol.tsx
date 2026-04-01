@@ -61,16 +61,16 @@ function KPICardAnimated({ label, value, suffix, color, pulse }: { label: string
 }
 
 function deriveSolData(records: SolLead[]) {
-  const solRecords = records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.fup_followup_count ?? 0) === 0));
+  const solRecords = records.filter(r => 'sol' === 'sol' || (!'sol'.includes('fup') && (r.fup_followup_count ?? 0) === 0));
   const total = solRecords.length;
-  const responderam = solRecords.filter(r => r.status_resposta === 'respondeu').length;
+  const responderam = solRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaResposta = total > 0 ? (responderam / total) * 100 : 0;
 
   const qualificados = solRecords.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const desqualificados = solRecords.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
   const emQualificacao = solRecords.filter(r => {
     const s = (r.status || '').toUpperCase();
-    return s !== 'QUALIFICADO' && s !== 'DESQUALIFICADO' && r.status_resposta === 'respondeu';
+    return s !== 'QUALIFICADO' && s !== 'DESQUALIFICADO' && ((r as any)._status_resposta || '') === 'respondeu';
   }).length;
 
   const scores = solRecords.map(r => parseInt(r.score || '0') || 0).filter(s => s > 0);
@@ -125,7 +125,7 @@ function deriveSolData(records: SolLead[]) {
     const canal = r.canal_origem || 'Outros';
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [] };
     byCanal[canal].leads++;
-    if (r.status_resposta === 'respondeu') byCanal[canal].responderam++;
+    if (((r as any)._status_resposta || '') === 'respondeu') byCanal[canal].responderam++;
     if ((r.status || '').toUpperCase() === 'QUALIFICADO') byCanal[canal].qualificados++;
     const s = parseInt(r.score || '0') || 0;
     if (s > 0) byCanal[canal].scores.push(s);
@@ -143,9 +143,9 @@ function deriveSolData(records: SolLead[]) {
     .slice(0, 6);
 
   // Messages volume
-  const totalEnviadas = solRecords.reduce((s, r) => s + r.historico.filter(h => h.tipo === 'enviada').length, 0);
-  const totalRecebidas = solRecords.reduce((s, r) => s + r.historico.filter(h => h.tipo === 'recebida').length, 0);
-  const conversas = solRecords.filter(r => r.historico.length > 0).length || 1;
+  const totalEnviadas = solRecords.reduce((s, r) => s + ([] as any[]).filter(h => h.tipo === 'enviada').length, 0);
+  const totalRecebidas = solRecords.reduce((s, r) => s + ([] as any[]).filter(h => h.tipo === 'recebida').length, 0);
+  const conversas = solRecords.filter(r => ([] as any[]).length > 0).length || 1;
   const volumeMensagens = {
     totalEnviadas,
     totalRecebidas,
@@ -160,8 +160,8 @@ function deriveSolData(records: SolLead[]) {
     const date = r.ts_cadastro ? r.ts_cadastro.slice(0, 10) : '';
     if (!date) return;
     if (!msgByDay[date]) msgByDay[date] = { enviadas: 0, recebidas: 0 };
-    msgByDay[date].enviadas += r.historico.filter(h => h.tipo === 'enviada').length || 1;
-    msgByDay[date].recebidas += r.historico.filter(h => h.tipo === 'recebida').length;
+    msgByDay[date].enviadas += ([] as any[]).filter(h => h.tipo === 'enviada').length || 1;
+    msgByDay[date].recebidas += ([] as any[]).filter(h => h.tipo === 'recebida').length;
   });
   const mensagensPorDia = Object.entries(msgByDay)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -460,7 +460,7 @@ export default function RoboSol() {
       </Card>
 
       {/* Heatmap */}
-      <HeatmapChart records={records.filter(r => r.robo === 'sol' || (!r.robo.includes('fup') && (r.fup_followup_count ?? 0) === 0))} dateField="data_envio" />
+      <HeatmapChart records={records.filter(r => 'sol' === 'sol' || (!'sol'.includes('fup') && (r.fup_followup_count ?? 0) === 0))} dateField="data_envio" />
 
       {/* Evolução Diária */}
       {evolucaoDiaria.length > 0 && (

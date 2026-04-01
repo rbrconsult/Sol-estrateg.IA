@@ -102,10 +102,10 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ SOL SDR (V5-V8) ═══
   const solSDR = useMemo(() => {
-    const solRecords = allSolLeads.filter(r => r.robo === 'sol');
+    const solRecords = allSolLeads.filter(r => 'sol' === 'sol');
 
     // V5: Funil real-time
-    const responderam = solRecords.filter(r => r.status_resposta === 'respondeu');
+    const responderam = solRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
     const qualificados = filteredProposals.filter(p => p.solQualificado);
     const closers = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
@@ -152,7 +152,7 @@ export function useBIData(dateRange?: DateRange) {
       if (!d) return;
       const turno = hourBucket(d);
       turnos[turno].total++;
-      if (r.status_resposta === 'respondeu') turnos[turno].responderam++;
+      if (((r as any)._status_resposta || '') === 'respondeu') turnos[turno].responderam++;
     });
     const performanceTurno = Object.entries(turnos).map(([turno, v]) => ({
       turno,
@@ -188,13 +188,13 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ FUP Frio ═══
   const fupFrio = useMemo(() => {
-    const fupRecords = allSolLeads.filter(r => r.robo === 'fup_frio');
+    const fupRecords = allSolLeads.filter(r => 'sol' === 'fup_frio');
     const totalFup = fupRecords.length;
     if (totalFup === 0) return null;
 
-    const responderam = fupRecords.filter(r => r.status_resposta === 'respondeu');
-    const ignoraram = fupRecords.filter(r => r.status_resposta === 'ignorou');
-    const aguardando = fupRecords.filter(r => r.status_resposta === 'aguardando');
+    const responderam = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
+    const ignoraram = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'ignorou');
+    const aguardando = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'aguardando');
 
     // Cross-reference with proposals to find rescued leads
     const fupPhones = new Set(fupRecords.map(r => r.telefone));
@@ -236,11 +236,11 @@ export function useBIData(dateRange?: DateRange) {
 
     const tentativasMap: Record<string, { total: number; responderam: number; resgatados: number }> = {};
     fupRecords.forEach(r => {
-      const attempts = r.historico.filter(h => h.tipo === 'enviada').length;
+      const attempts = ([] as any[]).filter(h => h.tipo === 'enviada').length;
       const faixa = attempts <= 1 ? '1' : attempts <= 3 ? '2-3' : attempts <= 5 ? '4-5' : '6+';
       if (!tentativasMap[faixa]) tentativasMap[faixa] = { total: 0, responderam: 0, resgatados: 0 };
       tentativasMap[faixa].total++;
-      if (r.status_resposta === 'respondeu') tentativasMap[faixa].responderam++;
+      if (((r as any)._status_resposta || '') === 'respondeu') tentativasMap[faixa].responderam++;
       const phone = r.telefone;
       const rescued = leadsResgatados.some(p => normalizePhone(p.clienteTelefone || '') === phone);
       if (rescued) tentativasMap[faixa].resgatados++;
@@ -264,7 +264,7 @@ export function useBIData(dateRange?: DateRange) {
       if (!d) return;
       const turno = hourBucket(d);
       turnos[turno].total++;
-      if (r.status_resposta === 'respondeu') turnos[turno].responderam++;
+      if (((r as any)._status_resposta || '') === 'respondeu') turnos[turno].responderam++;
     });
     const performanceTurnoFup = Object.entries(turnos).map(([turno, v]) => ({
       turno,

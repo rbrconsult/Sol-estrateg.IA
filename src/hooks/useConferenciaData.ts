@@ -172,7 +172,7 @@ function getSolStageFromMake(r: SolLead): string {
   if (status.includes('CONTATO') || status.includes('AGEND')) return 'Closer';
   if (status.includes('QUALIFICADO') && !status.includes('DES')) return 'Qualificado';
   if (status.includes('WHATSAPP')) return 'Qualificação';
-  if (r.status_resposta === 'respondeu') return 'Qualificação';
+  if (((r as any)._status_resposta || '') === 'respondeu') return 'Qualificação';
   return 'Robô SOL';
 }
 
@@ -227,8 +227,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const total = allRecords.length;
     if (total === 0) return null;
 
-    const solRecords = allRecords.filter(r => r.robo === 'sol');
-    const fupRecords = allRecords.filter(r => r.robo === 'fup_frio');
+    const solRecords = allRecords.filter(r => 'sol' === 'sol');
+    const fupRecords = allRecords.filter(r => 'sol' === 'fup_frio');
 
     // ── Stage classification ──
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
@@ -250,7 +250,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       return s.includes('QUALIFICADO') && !s.includes('DES');
     });
     const desqualificados = allRecords.filter(r => (r.status || '').includes('DESQUALIFICADO'));
-    const responderam = allRecords.filter(r => r.status_resposta === 'respondeu');
+    const responderam = allRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
     const taxaResposta = total > 0 ? Math.round((responderam.length / total) * 100) : 0;
 
     const ganhos = allRecords.filter(r => {
@@ -267,14 +267,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
 
     // ── Make-based metrics ──
     const totalMsgsEnviadas = allRecords.reduce((sum, r) =>
-      sum + Math.max(r.historico.filter(h => h.tipo === 'enviada').length, 1), 0
+      sum + Math.max(([] as any[]).filter(h => h.tipo === 'enviada').length, 1), 0
     );
     const totalMsgsRecebidas = allRecords.reduce((sum, r) =>
-      sum + r.historico.filter(h => h.tipo === 'recebida').length, 0
+      sum + ([] as any[]).filter(h => h.tipo === 'recebida').length, 0
     );
 
     // ── FUP Frio ──
-    const fupReativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
+    const fupReativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
     const fupTotal = fupRecords.length;
     const valorEstimado = ganhos.reduce((s, r) => s + estimateValueFromBill(r), 0);
     const valorFupRecuperado = fupReativados > 0 ? fupReativados * 7000 : 0;
@@ -322,14 +322,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const tentativaCounts = [0, 0, 0, 0];
     const tentativaRespostas = [0, 0, 0, 0];
     allRecords.forEach(r => {
-      const enviadas = r.historico.filter(h => h.tipo === 'enviada');
-      const primeiraResposta = r.historico.findIndex(h => h.tipo === 'recebida');
+      const enviadas = ([] as any[]).filter(h => h.tipo === 'enviada');
+      const primeiraResposta = ([] as any[]).findIndex(h => h.tipo === 'recebida');
       if (enviadas.length >= 1) tentativaCounts[0]++;
       if (enviadas.length >= 2) tentativaCounts[1]++;
       if (enviadas.length >= 3) tentativaCounts[2]++;
       if (enviadas.length >= 4) tentativaCounts[3]++;
       if (primeiraResposta >= 0) {
-        const msgsAntes = r.historico.slice(0, primeiraResposta).filter(h => h.tipo === 'enviada').length;
+        const msgsAntes = ([] as any[]).slice(0, primeiraResposta).filter(h => h.tipo === 'enviada').length;
         const idx = Math.min(msgsAntes, 3);
         tentativaRespostas[idx]++;
       }
@@ -350,7 +350,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const dentroDe24h = temposRespostaMin.filter(t => t <= 24 * 60).length;
     const pctAbordados5min = temposRespostaMin.length > 0 ? Math.round((abordadosAte5Min / temposRespostaMin.length) * 100) : 0;
     const pctDentro24h = temposRespostaMin.length > 0 ? Math.round((dentroDe24h / temposRespostaMin.length) * 100) : 0;
-    const leadsAguardando = allRecords.filter(r => r.status_resposta === 'aguardando').length;
+    const leadsAguardando = allRecords.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
 
     let tempoRespostaStr = '—';
     if (tempoMedioRespostaMin > 0) {
@@ -400,7 +400,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     // ── Desqualificação motivos ──
     const motivoCounts: Record<string, number> = {};
     desqualificados.forEach(r => {
-      const msgs = r.historico.map(h => h.mensagem.toLowerCase()).join(' ');
+      const msgs = ([] as any[]).map(h => h.mensagem.toLowerCase()).join(' ');
       const bill = (r.valor_conta || '').toLowerCase();
       let motivo = 'Sem interesse/Curioso';
       if (bill.includes('menos') || bill.includes('<') || bill.includes('250')) motivo = 'Consumo Desqualificado';
@@ -462,14 +462,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       const valor = estimateValueFromBill(r);
 
       let statusFup = 'Novo';
-      if (r.robo === 'fup_frio') statusFup = 'FUP Frio';
-      else if (r.status_resposta === 'respondeu') statusFup = 'Qualificação';
-      else if (r.historico.length > 0) statusFup = 'Aguardando';
+      if ('sol' === 'fup_frio') statusFup = 'FUP Frio';
+      else if (((r as any)._status_resposta || '') === 'respondeu') statusFup = 'Qualificação';
+      else if (([] as any[]).length > 0) statusFup = 'Aguardando';
       if (stage === 'Fechado') statusFup = 'Concluído';
 
-      const historico = r.historico.map(h => ({
+      const historico = ([] as any[]).map(h => ({
         data: h.data || r.ts_cadastro || '',
-        tipo: r.robo === 'fup_frio' ? 'FUP' : 'SOL',
+        tipo: 'sol' === 'fup_frio' ? 'FUP' : 'SOL',
         msg: h.mensagem || 'Interação registrada',
       }));
 
@@ -495,7 +495,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
         dataFechamento: r.ts_transferido || undefined,
         dataQualificacao: r.ts_ultima_interacao || undefined,
         lastFollowupDate: r.ts_ultimo_fup || undefined,
-        respondeu: r.status_resposta === 'respondeu',
+        respondeu: ((r as any)._status_resposta || '') === 'respondeu',
         historico: historico.length > 0 ? historico : [{ data: '', tipo: 'SOL', msg: 'Sem interações registradas' }],
       };
     });
@@ -719,8 +719,8 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       const s = (r.status || '').toUpperCase();
       if (s.includes('QUALIFICADO') && !s.includes('DES')) monthlyMap[key].qualificados++;
       if (s.includes('GANHO') || s.includes('FECHADO')) monthlyMap[key].fechados++;
-      monthlyMap[key].msgEnviadas += Math.max(r.historico.filter(h => h.tipo === 'enviada').length, 1);
-      monthlyMap[key].msgRecebidas += r.historico.filter(h => h.tipo === 'recebida').length;
+      monthlyMap[key].msgEnviadas += Math.max(([] as any[]).filter(h => h.tipo === 'enviada').length, 1);
+      monthlyMap[key].msgRecebidas += ([] as any[]).filter(h => h.tipo === 'recebida').length;
     });
 
     const monthlyEvolution: MonthlyEvolutionItem[] = Object.keys(monthlyMap)

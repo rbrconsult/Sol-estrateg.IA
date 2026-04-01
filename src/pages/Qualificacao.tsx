@@ -147,7 +147,7 @@ export default function Qualificacao() {
     }
     return [...result].sort((a, b) => {
       const getLatest = (r: typeof a) => {
-        const dates = [r.ts_ultimo_fup, r.historico?.length ? r.historico[r.historico.length - 1]?.data : null, r.ts_ultima_interacao, r.ts_cadastro].filter(Boolean);
+        const dates = [r.ts_ultimo_fup, ([] as any[])?.length ? ([] as any[])[([] as any[]).length - 1]?.data : null, r.ts_ultima_interacao, r.ts_cadastro].filter(Boolean);
         const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
         return timestamps.length > 0 ? Math.max(...timestamps) : 0;
       };

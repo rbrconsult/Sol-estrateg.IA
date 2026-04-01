@@ -31,7 +31,7 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '3 min',
     icon: '📥',
     ator: 'Automação',
-    getRecords: (recs) => recs.filter(r => r.robo === 'sol' && r.ts_cadastro),
+    getRecords: (recs) => recs.filter(r => 'sol' === 'sol' && r.ts_cadastro),
     getTimeMinutes: () => null, // C2: No real data available yet — show "Sem dados"
   },
   {
@@ -40,7 +40,7 @@ const SLA_DEFS: SLADef[] = [
     metaLabel: '10 min',
     icon: '🤖',
     ator: 'Robô Sol',
-    getRecords: (recs) => recs.filter(r => r.status_resposta === 'respondeu'),
+    getRecords: (recs) => recs.filter(r => ((r as any)._status_resposta || '') === 'respondeu'),
     getTimeMinutes: (r) => {
       if (r.ts_cadastro && r.ts_ultima_interacao) {
         const diff = new Date(r.ts_ultima_interacao).getTime() - new Date(r.ts_cadastro).getTime();
@@ -217,8 +217,8 @@ function deriveBottlenecks(slaMetrics: ReturnType<typeof deriveSLAMetrics>) {
 function deriveAbandonByStage(records: SolLead[]) {
   const total = records.length || 1;
   const desq = records.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const noResp = records.filter(r => r.status_resposta === 'ignorou' || r.status === 'NAO_RESPONDEU').length;
-  const aguardando = records.filter(r => r.status_resposta === 'aguardando').length;
+  const noResp = records.filter(r => ((r as any)._status_resposta || '') === 'ignorou' || r.status === 'NAO_RESPONDEU').length;
+  const aguardando = records.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
 
   return [
     { etapa: 'Pré-venda', abandonaram: Math.round((noResp / total) * 100), motivoPrincipal: 'Não respondeu' },

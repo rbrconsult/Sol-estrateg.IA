@@ -54,7 +54,7 @@ function deriveAttribution(records: SolLead[]) {
 
     if (!byCanal[canal]) byCanal[canal] = { leads: 0, responderam: 0, qualificados: 0, scores: [], quentes: 0 };
     byCanal[canal].leads++;
-    if (r.status_resposta === 'respondeu') byCanal[canal].responderam++;
+    if (((r as any)._status_resposta || '') === 'respondeu') byCanal[canal].responderam++;
     if ((r.status || '').toUpperCase() === 'QUALIFICADO') byCanal[canal].qualificados++;
     const score = parseInt(r.score || '0') || 0;
     if (score > 0) byCanal[canal].scores.push(score);
@@ -108,7 +108,7 @@ function deriveWeeklyEvolution(records: SolLead[]) {
       if (!byWeek[key]) byWeek[key] = { leads: 0, qualificados: 0, responderam: 0 };
       byWeek[key].leads++;
       if ((r.status || '').toUpperCase() === 'QUALIFICADO') byWeek[key].qualificados++;
-      if (r.status_resposta === 'respondeu') byWeek[key].responderam++;
+      if (((r as any)._status_resposta || '') === 'respondeu') byWeek[key].responderam++;
     } catch { /* skip */ }
   });
   return Object.entries(byWeek)
@@ -148,7 +148,7 @@ export default function AdsPerformance() {
   // Overall KPIs derived from all data
   const totalLeads = records.length;
   const totalQualificados = records.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
-  const totalResponderam = records.filter(r => r.status_resposta === 'respondeu').length;
+  const totalResponderam = records.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaRespostaGeral = totalLeads > 0 ? (totalResponderam / totalLeads) * 100 : 0;
   const taxaQualGeral = totalLeads > 0 ? (totalQualificados / totalLeads) * 100 : 0;
 

@@ -144,7 +144,7 @@ function deriveAlerts(records: SolLead[]): Alert[] {
     }
 
     // FUP reactivated
-    if (r.fup_followup_count && r.fup_followup_count >= 1 && r.status_resposta === "respondeu") {
+    if (r.fup_followup_count && r.fup_followup_count >= 1 && ((r as any)._status_resposta || '') === "respondeu") {
       alerts.push({
         id: `fup-${id++}`,
         tipo: "fup",
@@ -233,7 +233,7 @@ function deriveCloserQueue(records: SolLead[]): CloserGroup[] {
 function deriveSummary(records: SolLead[]) {
   const total = records.length;
   const qualificados = records.filter((r) => (r.status || "").toUpperCase() === "QUALIFICADO").length;
-  const responderam = records.filter((r) => r.status_resposta === "respondeu").length;
+  const responderam = records.filter((r) => ((r as any)._status_resposta || '') === "respondeu").length;
   const fupAtivos = records.filter((r) => (r.fup_followup_count || 0) >= 1).length;
   const scores = records.map((r) => parseInt(r.score || "0") || 0).filter((s) => s > 0);
   const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;

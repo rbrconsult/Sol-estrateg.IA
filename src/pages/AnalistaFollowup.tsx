@@ -19,12 +19,12 @@ import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
 function deriveFupData(records: SolLead[]) {
-  const fupRecords = records.filter(r => (r.fup_followup_count ?? 0) > 0 || r.robo === 'fup_frio');
+  const fupRecords = records.filter(r => (r.fup_followup_count ?? 0) > 0 || 'sol' === 'fup_frio');
   const total = fupRecords.length;
-  const reativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
+  const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const pctReativados = total > 0 ? Math.round((reativados / total) * 100) : 0;
   const qualificadosPosFup = fupRecords.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
-  const ativos = fupRecords.filter(r => r.status_resposta === 'aguardando').length;
+  const ativos = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
 
   // KPIs
   const kpis = [
@@ -40,7 +40,7 @@ function deriveFupData(records: SolLead[]) {
   const pipeline = Array.from({ length: 8 }, (_, i) => {
     const fupNum = i + 1;
     const inFup = fupRecords.filter(r => (r.fup_followup_count || 0) >= fupNum);
-    const responded = inFup.filter(r => r.status_resposta === 'respondeu').length;
+    const responded = inFup.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
     return {
       etapa: `FUP ${fupNum}`,
       dia: `D+${[1, 3, 5, 7, 10, 14, 21, 30][i]}`,
@@ -53,8 +53,8 @@ function deriveFupData(records: SolLead[]) {
   });
 
   // Resultado reativados
-  const desqNovamente = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const qualPosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const desqNovamente = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const qualPosFup = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const aindaQual = reativados - qualPosFup - desqNovamente;
   const resultadoReativados = [
     { label: "Qualificados → Closer", valor: qualPosFup, pct: reativados > 0 ? Math.round((qualPosFup / reativados) * 100) : 0, cor: "hsl(var(--success))" },
@@ -68,7 +68,7 @@ function deriveFupData(records: SolLead[]) {
     const canal = r.canal_origem || 'Outros';
     if (!byCanal[canal]) byCanal[canal] = { entrouFUP: 0, reativados: 0 };
     byCanal[canal].entrouFUP++;
-    if (r.status_resposta === 'respondeu') byCanal[canal].reativados++;
+    if (((r as any)._status_resposta || '') === 'respondeu') byCanal[canal].reativados++;
   });
   const porCanal = Object.entries(byCanal)
     .map(([canal, d]) => ({ canal, ...d, taxa: `${d.entrouFUP > 0 ? Math.round((d.reativados / d.entrouFUP) * 100) : 0}%` }))
@@ -76,7 +76,7 @@ function deriveFupData(records: SolLead[]) {
     .slice(0, 5);
 
   // Perfil
-  const reativadosRecs = fupRecords.filter(r => r.status_resposta === 'respondeu');
+  const reativadosRecs = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
   const tempDistReativados = {
     temperatura: [
       { label: "Entrou FRIO", pct: reativadosRecs.length > 0 ? Math.round(reativadosRecs.filter(r => (r.temperatura || '').toUpperCase() === 'FRIO' || !r.temperatura).length / reativadosRecs.length * 100) : 0 },
@@ -88,7 +88,7 @@ function deriveFupData(records: SolLead[]) {
 
   // Active leads
   const leadsAtivos = fupRecords
-    .filter(r => r.status_resposta === 'aguardando')
+    .filter(r => ((r as any)._status_resposta || '') === 'aguardando')
     .sort((a, b) => (b.fup_followup_count || 0) - (a.fup_followup_count || 0))
     .slice(0, 8)
     .map(r => ({
@@ -110,7 +110,7 @@ function deriveFupData(records: SolLead[]) {
     const key = d.toISOString().slice(0, 10);
     if (!byWeek[key]) byWeek[key] = { disparos: 0, respostas: 0 };
     byWeek[key].disparos++;
-    if (r.status_resposta === 'respondeu') byWeek[key].respostas++;
+    if (((r as any)._status_resposta || '') === 'respondeu') byWeek[key].respostas++;
   });
   let acum = 0;
   const evolucao = Object.entries(byWeek)

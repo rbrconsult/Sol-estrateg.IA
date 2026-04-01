@@ -21,7 +21,7 @@ const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(va
 function deriveFupData(records: SolLead[]) {
   const fupRecords = records.filter(r => (r.fup_followup_count || 0) >= 1);
   const totalEntrou = fupRecords.length;
-  const reativados = fupRecords.filter(r => r.status_resposta === 'respondeu').length;
+  const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaReativacao = totalEntrou > 0 ? Math.round((reativados / totalEntrou) * 100) : 0;
 
   // Group by followup count to build pipeline
@@ -32,7 +32,7 @@ function deriveFupData(records: SolLead[]) {
       if (!byFup[i]) byFup[i] = { disparos: 0, respostas: 0 };
       byFup[i].disparos++;
     }
-    if (r.status_resposta === 'respondeu') {
+    if (((r as any)._status_resposta || '') === 'respondeu') {
       const c = Math.min(count, 8);
       if (byFup[c]) byFup[c].respostas++;
     }
@@ -56,9 +56,9 @@ function deriveFupData(records: SolLead[]) {
 
   // Status anterior analysis
   const desqEntrou = fupRecords.filter(r => (r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const noRespEntrou = fupRecords.filter(r => r.status === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou').length;
-  const desqReativados = fupRecords.filter(r => ((r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO') && r.status_resposta === 'respondeu').length;
-  const noRespReativados = fupRecords.filter(r => (r.status === 'NAO_RESPONDEU' || r.status_resposta === 'ignorou') && r.status_resposta === 'respondeu').length;
+  const noRespEntrou = fupRecords.filter(r => r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou').length;
+  const desqReativados = fupRecords.filter(r => ((r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO') && ((r as any)._status_resposta || '') === 'respondeu').length;
+  const noRespReativados = fupRecords.filter(r => (r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou') && ((r as any)._status_resposta || '') === 'respondeu').length;
 
   // C5: Removed fallback percentages — show real data only
   const hasEnoughData = totalEntrou >= 30;
@@ -68,7 +68,7 @@ function deriveFupData(records: SolLead[]) {
   ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 })) : [];
 
   // Results of reactivated
-  const qualificadosFup = fupRecords.filter(r => r.status_resposta === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const qualificadosFup = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
   const desqNovamente = Math.max(0, reativados - qualificadosFup - Math.round(reativados * 0.13));
   const emQual = reativados - qualificadosFup - desqNovamente;
 
@@ -81,7 +81,7 @@ function deriveFupData(records: SolLead[]) {
 
   // Active leads in FUP
   const leadsAtivos = fupRecords
-    .filter(r => r.status_resposta !== 'respondeu')
+    .filter(r => ((r as any)._status_resposta || '') !== 'respondeu')
     .slice(0, 15)
     .map(r => ({
       nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
@@ -98,12 +98,12 @@ function deriveFupData(records: SolLead[]) {
     }));
 
   // Avg FUP count for reactivated
-  const fupCounts = fupRecords.filter(r => r.status_resposta === 'respondeu').map(r => r.fup_followup_count || 1);
+  const fupCounts = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').map(r => r.fup_followup_count || 1);
   const avgFups = fupCounts.length > 0 ? (fupCounts.reduce((a, b) => a + b, 0) / fupCounts.length).toFixed(1) : '0';
 
   return {
     kpis: {
-      leadsAtivos: fupRecords.filter(r => r.status_resposta !== 'respondeu').length,
+      leadsAtivos: fupRecords.filter(r => ((r as any)._status_resposta || '') !== 'respondeu').length,
       totalEntrou,
       reativados,
       taxaReativacao,
