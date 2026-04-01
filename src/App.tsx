@@ -151,6 +151,8 @@ const App = () => (
               <Route path="/admin/config" element={<ProtectedRoute><MainLayout><SolConfigPage /></MainLayout></ProtectedRoute>} />
               <Route path="/admin/equipe" element={<ProtectedRoute><MainLayout><SolEquipePage /></MainLayout></ProtectedRoute>} />
               <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><SolFunisPage /></MainLayout></ProtectedRoute>} />
+              <Route path="/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><Insights /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/mensagens" element={<ProtectedRoute><MainLayout><Mensagens /></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
