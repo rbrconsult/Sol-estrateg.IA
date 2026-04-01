@@ -195,12 +195,12 @@ const Index = () => {
     return { semAtividade, aguardandoCL, lixo };
   }, [filtered]);
 
-  // ── Pipeline value for GoalProgress ──
-  const valorGanho = useMemo(() =>
-    filtered.filter(l => l.status === 'GANHO' || l.status === 'CONTRATO').reduce((a, l) => a + (parseFloat(l.valor_conta || '0') || 0), 0),
+  // ── Contagens para GoalProgress (sem valor_conta — valor_conta é conta de luz, NÃO receita) ──
+  const countGanho = useMemo(() =>
+    filtered.filter(l => l.status === 'GANHO' || l.status === 'CONTRATO').length,
   [filtered]);
-  const valorPipeline = useMemo(() =>
-    filtered.filter(l => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status || '')).reduce((a, l) => a + (parseFloat(l.valor_conta || '0') || 0), 0),
+  const countPipeline = useMemo(() =>
+    filtered.filter(l => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status || '')).length,
   [filtered]);
 
   const hasData = (leads?.length ?? 0) > 0;
