@@ -46,7 +46,7 @@ const ALL_ROLES: AppRole[] = ['super_admin', 'diretor', 'gerente', 'closer', 'ad
 
 const menuGroups: MenuGroup[] = [
   {
-    label: "Central",
+    label: "",
     items: [
       { title: "Mensagens", icon: MessageSquare, path: "/mensagens" },
     ],
