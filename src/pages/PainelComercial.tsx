@@ -433,7 +433,11 @@ export default function PainelComercial() {
                                     </div>
                                   </div>
                                   <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
-                                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                </div>
+                                <div className="flex items-center gap-3 mt-1 text-[9px] text-muted-foreground border-t border-border/30 pt-1">
+                                  <span>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                                  <span>📤 Transferido: {l.tsTransferido ? new Date(l.tsTransferido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                                </div>
                               </button>
                             ))}
                           </div>
