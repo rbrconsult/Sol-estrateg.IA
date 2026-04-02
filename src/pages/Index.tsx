@@ -25,8 +25,8 @@ import {
 // ── Status colors & icons ──
 const STATUS_META: Record<string, { color: string; icon: typeof Users; desc: string }> = {
   TRAFEGO_PAGO:    { color: "text-muted-foreground", icon: Users,          desc: "Preencheu formulário — SOL não falou" },
-  EM_QUALIFICACAO: { color: "text-amber-500",        icon: Bot,            desc: "SOL está conversando" },
-  QUALIFICADO:     { color: "text-emerald-500",      icon: UserCheck,      desc: "Qualificado, transferido pro closer" },
+  EM_QUALIFICACAO: { color: "text-amber-500",        icon: Bot,            desc: "SOL está conversando / qualificando" },
+  QUALIFICADO:     { color: "text-emerald-500",      icon: UserCheck,      desc: "Transferido para o closer" },
   DESQUALIFICADO:  { color: "text-destructive",      icon: UserX,          desc: "Descartado pela SOL" },
   FOLLOW_UP:       { color: "text-orange-500",       icon: Repeat,         desc: "FUP Frio ativo" },
   GANHO:           { color: "text-green-600",         icon: Trophy,         desc: "Negócio fechado" },
@@ -263,8 +263,11 @@ const Index = () => {
           {/* ═══════════════════════════════════════════════ */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { key: 'TOTAL', label: 'Total Leads', value: filtered.length, color: 'text-blue-400', icon: Users, desc: 'Todos os leads' },
-              ...FUNNEL_ORDER.filter(k => statusCounts[k] > 0 || ['TRAFEGO_PAGO','EM_QUALIFICACAO','QUALIFICADO','GANHO'].includes(k)).map(k => ({
+              { key: 'ROBO_SOL', label: 'Robô SOL', value: filtered.length, color: 'text-primary', icon: Bot, desc: 'Total de leads no pipeline do robô' },
+              { key: 'EM_QUAL', label: 'Em Qualificação', value: statusCounts['EM_QUALIFICACAO'] + statusCounts['TRAFEGO_PAGO'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
+              { key: 'QUALIFICADOS', label: 'Qualificados', value: statusCounts['QUALIFICADO'], color: 'text-emerald-500', icon: UserCheck, desc: 'Transferidos para o closer' },
+              { key: 'COM_CLOSER', label: 'Com Closer', value: filtered.filter(l => l.closer_nome).length, color: 'text-blue-400', icon: Users, desc: 'Leads atribuídos a um vendedor' },
+              ...FUNNEL_ORDER.filter(k => !['TRAFEGO_PAGO','EM_QUALIFICACAO','QUALIFICADO'].includes(k) && (statusCounts[k] > 0 || k === 'GANHO')).map(k => ({
                 key: k, label: getStatusLabel(k), value: statusCounts[k],
                 color: STATUS_META[k]?.color || 'text-muted-foreground',
                 icon: STATUS_META[k]?.icon || Users,

@@ -7,8 +7,8 @@ import type { SolLead } from '@/hooks/useSolData';
 
 export const STATUS_LABELS: Record<string, string> = {
   TRAFEGO_PAGO: 'Leads Recebidos',
-  EM_QUALIFICACAO: 'Robô SOL',
-  FOLLOW_UP: 'Robô FUP Frio',
+  EM_QUALIFICACAO: 'Em Qualificação',
+  FOLLOW_UP: 'FUP Frio',
   QUALIFICADO: 'Qualificados',
   GANHO: 'Ganho',
   PERDIDO: 'Perdido',
@@ -28,9 +28,9 @@ export function getLeadStage(record: {
   if (status === 'QUALIFICADO') return 'Qualificado';
   if (status === 'DESQUALIFICADO') return 'Desqualificado';
   if (status === 'GANHO' || status === 'CONTRATO') return 'Fechado';
-  if (status === 'EM_QUALIFICACAO') return 'Robô SOL';
-  if (status === 'FOLLOW_UP') return 'Robô FUP Frio';
-  if (status === 'TRAFEGO_PAGO') return 'Robô SOL';
+  if (status === 'EM_QUALIFICACAO') return 'Em Qualificação';
+  if (status === 'FOLLOW_UP') return 'FUP Frio';
+  if (status === 'TRAFEGO_PAGO') return 'Em Qualificação';
   if (status === 'PERDIDO') return 'Perdido';
   return 'Robô SOL';
 }
