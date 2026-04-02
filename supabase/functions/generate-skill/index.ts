@@ -140,10 +140,11 @@ Responda APENAS com JSON válido (sem markdown):
 }`;
 
     let stage1Content: string;
-    if (openaiKey) {
-      stage1Content = await callOpenAI(openaiKey, generatorPrompt);
-    } else {
-      // Fallback to Lovable AI
+    let stage1Provider: string;
+
+    // Prefer Lovable AI (free), fallback to OpenAI
+    if (lovableKey) {
+      stage1Provider = "lovable/gemini-3-flash";
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
@@ -153,9 +154,17 @@ Responda APENAS com JSON válido (sem markdown):
           temperature: 0.7,
         }),
       });
-      if (!resp.ok) throw new Error(`Lovable AI error [${resp.status}]`);
+      if (!resp.ok) {
+        const t = await resp.text();
+        throw new Error(`Lovable AI error [${resp.status}]: ${t}`);
+      }
       const d = await resp.json();
       stage1Content = d.choices?.[0]?.message?.content || "";
+    } else if (openaiKey) {
+      stage1Provider = "openai/gpt-4o";
+      stage1Content = await callOpenAI(openaiKey, generatorPrompt);
+    } else {
+      throw new Error("No AI API key available for Stage 1");
     }
 
     const jsonMatch = stage1Content.match(/\{[\s\S]*\}/);
