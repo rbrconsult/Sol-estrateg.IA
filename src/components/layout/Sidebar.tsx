@@ -77,7 +77,6 @@ const menuGroups: MenuGroup[] = [
     minRole: STRATEGIC_ROLES,
     items: [
       { title: "BI Dashboard", icon: BarChart3, path: "/bi", moduleKey: "bi" },
-      { title: "Jornada Lead", icon: Route, path: "/jornada-lead", moduleKey: "jornada-lead" },
       { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
       { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
       { title: "Reports WhatsApp", icon: FileText, path: "/reports", moduleKey: "reports" },
