@@ -9,6 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { verticalConfig, type Vertical } from "@/data/skillsMap";
 
+interface SkillReview {
+  approved: boolean | null;
+  score: number | null;
+  notes: string | null;
+  reviewer: string;
+  error?: boolean;
+}
+
 interface SkillDefinition {
   id: string;
   name: string;
@@ -21,6 +29,7 @@ interface SkillDefinition {
   logic_summary: string;
   sql_hint: string;
   alert_channel: string;
+  _review?: SkillReview;
 }
 
 export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: SkillDefinition) => void }) {
