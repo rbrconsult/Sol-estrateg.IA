@@ -244,7 +244,7 @@ Revise como DM e aprove ou sugira melhorias.`;
       success: true,
       skill: skillDef,
       pipeline: {
-        stage1: openaiKey ? "openai/gpt-4o" : "lovable/gemini-3-flash",
+        stage1: stage1Provider,
         stage2: anthropicKey ? "anthropic/claude-opus-4.6" : "skipped",
       },
     }), {
