@@ -24,7 +24,7 @@ const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid h
 
 export default function CampanhasAdsPerformance() {
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [canalFilter, setCanalFilter] = useState('all');
 
   const { data: metaRows, isLoading: loadingMeta } = useMetaAds(FRANQUIA, range);
