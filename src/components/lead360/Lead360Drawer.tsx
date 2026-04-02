@@ -1,14 +1,16 @@
+import { useEffect, useState } from "react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 import {
   User, Phone, Mail, Calendar, Clock, Zap, DollarSign,
   Briefcase, MessageSquare, Bot, TrendingUp, ThermometerSun,
   Target, ArrowRight, CheckCircle2, XCircle, AlertTriangle,
-  Activity
+  Activity, FileText
 } from "lucide-react";
 
 function formatCurrency(value: number) {
