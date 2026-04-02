@@ -5,11 +5,16 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Search, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Info, Sparkles } from "lucide-react";
 import { skillCategories, statusConfig, verticalConfig, type SkillStatus, type Vertical } from "@/data/skillsMap";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
+import { SkillReportsPanel } from "@/components/skills/SkillReportsPanel";
+import { SkillCreatorForm } from "@/components/skills/SkillCreatorForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
   { value: "all", label: "Todas" },
