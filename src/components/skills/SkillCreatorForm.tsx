@@ -9,6 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { verticalConfig, type Vertical } from "@/data/skillsMap";
 
+interface SkillReview {
+  approved: boolean | null;
+  score: number | null;
+  notes: string | null;
+  reviewer: string;
+  error?: boolean;
+}
+
 interface SkillDefinition {
   id: string;
   name: string;
@@ -21,6 +29,7 @@ interface SkillDefinition {
   logic_summary: string;
   sql_hint: string;
   alert_channel: string;
+  _review?: SkillReview;
 }
 
 export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: SkillDefinition) => void }) {
@@ -28,7 +37,7 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
   const [vertical, setVertical] = useState<string>("universal");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SkillDefinition | null>(null);
-  const [provider, setProvider] = useState<string>("");
+  const [pipeline, setPipeline] = useState<{ stage1: string; stage2: string } | null>(null);
 
   const handleGenerate = async () => {
     if (description.length < 10) {
@@ -48,7 +57,7 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
       if (data?.error) throw new Error(data.error);
 
       setResult(data.skill);
-      setProvider(data.provider || "");
+      setPipeline(data.pipeline || null);
       toast.success("Skill gerada com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar skill");
@@ -86,10 +95,17 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
         <CardTitle className="text-sm flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           Criar Nova Skill com IA
-          {provider && (
-            <Badge variant="outline" className="text-[9px] ml-auto">
-              via {provider === "openai" ? "OpenAI" : "Lovable AI"}
-            </Badge>
+          {pipeline && (
+            <div className="flex items-center gap-1 ml-auto">
+              <Badge variant="outline" className="text-[9px]">
+                🧠 {pipeline.stage1}
+              </Badge>
+              {pipeline.stage2 !== "skipped" && (
+                <Badge variant="outline" className="text-[9px]">
+                  👔 {pipeline.stage2}
+                </Badge>
+              )}
+            </div>
           )}
         </CardTitle>
       </CardHeader>
@@ -181,6 +197,34 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                 <div>
                   <span className="text-[10px] text-muted-foreground font-semibold">SQL hint:</span>
                   <pre className="text-[10px] mt-0.5 bg-muted/30 rounded p-2 overflow-x-auto font-mono">{result.sql_hint}</pre>
+                </div>
+              )}
+
+              {/* Review do Claude Opus 4.6 */}
+              {result._review && (
+                <div className={`rounded-lg p-2.5 border ${
+                  result._review.error ? "bg-destructive/5 border-destructive/20" 
+                  : result._review.approved ? "bg-emerald-500/5 border-emerald-500/20" 
+                  : "bg-amber-500/5 border-amber-500/20"
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-semibold flex items-center gap-1">
+                      👔 Revisão DM — {result._review.reviewer}
+                    </span>
+                    {result._review.score != null && (
+                      <Badge variant="outline" className="text-[9px]">
+                        Score: {result._review.score}/10
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {result._review.approved === true && <Badge className="text-[9px] bg-emerald-500/20 text-emerald-400 border-0">✅ Aprovado</Badge>}
+                    {result._review.approved === false && <Badge className="text-[9px] bg-amber-500/20 text-amber-400 border-0">⚠️ Ajustes sugeridos</Badge>}
+                    {result._review.error && <Badge className="text-[9px] bg-destructive/20 text-destructive border-0">❌ Revisão falhou</Badge>}
+                  </div>
+                  {result._review.notes && (
+                    <p className="text-xs text-muted-foreground">{result._review.notes}</p>
+                  )}
                 </div>
               )}
             </CardContent>

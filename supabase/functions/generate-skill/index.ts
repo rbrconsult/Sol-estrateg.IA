@@ -6,6 +6,60 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const tablesAvailable = [
+  "sol_leads_sync (leads com telefone, nome, status, temperatura, score, etapa_funil, canal_origem, ts_cadastro, custo_total_usd)",
+  "sol_equipe_sync (vendedores com nome, cargo, taxa_conversao, leads_hoje, leads_mes)",
+  "sol_config_sync (configurações do robô SDR)",
+  "sol_funis_sync (etapas do funil)",
+  "sol_conversions_sync (conversões CAPI)",
+  "campaign_metrics (métricas de anúncios: spend, clicks, leads, cpl, roas)",
+  "analytics_ga4_daily (sessões, usuários, bounce, conversões)",
+  "make_heartbeat (saúde dos cenários de automação)",
+  "make_errors (erros de cenários)",
+  "report_templates (templates de relatórios WhatsApp)",
+];
+
+async function callOpenAI(apiKey: string, prompt: string): Promise<string> {
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+    }),
+  });
+  if (!resp.ok) {
+    const t = await resp.text();
+    throw new Error(`OpenAI error [${resp.status}]: ${t}`);
+  }
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+async function callClaude(apiKey: string, systemPrompt: string, userContent: string): Promise<string> {
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-opus-4-6",
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }],
+    }),
+  });
+  if (!resp.ok) {
+    const t = await resp.text();
+    throw new Error(`Claude error [${resp.status}]: ${t}`);
+  }
+  const data = await resp.json();
+  return data.content?.[0]?.text || "";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -29,7 +83,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check role
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
     const { data: hasAdmin } = await supabase.rpc("has_role", { _user_id: authData.user.id, _role: "super_admin" });
@@ -47,42 +100,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use OPENAI_API_KEY if available, fallback to LOVABLE_API_KEY
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-    let apiUrl: string;
-    let apiKey: string;
-    let model: string;
-
-    if (openaiKey) {
-      apiUrl = "https://api.openai.com/v1/chat/completions";
-      apiKey = openaiKey;
-      model = "gpt-4o";
-    } else if (lovableKey) {
-      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      apiKey = lovableKey;
-      model = "google/gemini-3-flash-preview";
-    } else {
+    if (!openaiKey && !lovableKey) {
       return new Response(JSON.stringify({ error: "No AI API key configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const tablesAvailable = [
-      "sol_leads_sync (leads com telefone, nome, status, temperatura, score, etapa_funil, canal_origem, ts_cadastro, custo_total_usd)",
-      "sol_equipe_sync (vendedores com nome, cargo, taxa_conversao, leads_hoje, leads_mes)",
-      "sol_config_sync (configurações do robô SDR)",
-      "sol_funis_sync (etapas do funil)",
-      "sol_conversions_sync (conversões CAPI)",
-      "campaign_metrics (métricas de anúncios: spend, clicks, leads, cpl, roas)",
-      "analytics_ga4_daily (sessões, usuários, bounce, conversões)",
-      "make_heartbeat (saúde dos cenários de automação)",
-      "make_errors (erros de cenários)",
-      "report_templates (templates de relatórios WhatsApp)",
-    ];
-
-    const prompt = `Você é um arquiteto de automações inteligentes para a plataforma Scale (multi-vertical).
+    // ═══════════════════════════════════════════════════
+    // ESTÁGIO 1: OpenAI gera o blueprint da skill
+    // ═══════════════════════════════════════════════════
+    const generatorPrompt = `Você é um arquiteto de automações inteligentes para a plataforma Scale (multi-vertical).
 
 O gestor quer criar uma nova Skill (automação inteligente). Gere a definição completa.
 
@@ -108,54 +139,123 @@ Responda APENAS com JSON válido (sem markdown):
   "alert_channel": "whatsapp|insight|dashboard|none"
 }`;
 
-    const aiResp = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!aiResp.ok) {
-      if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Tente novamente em alguns segundos." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione fundos na sua conta." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await aiResp.text();
-      console.error("AI error:", aiResp.status, errText);
-      return new Response(JSON.stringify({ error: "AI generation failed" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    let stage1Content: string;
+    if (openaiKey) {
+      stage1Content = await callOpenAI(openaiKey, generatorPrompt);
+    } else {
+      // Fallback to Lovable AI
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [{ role: "user", content: generatorPrompt }],
+          temperature: 0.7,
+        }),
       });
+      if (!resp.ok) throw new Error(`Lovable AI error [${resp.status}]`);
+      const d = await resp.json();
+      stage1Content = d.choices?.[0]?.message?.content || "";
     }
 
-    const aiData = await aiResp.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonMatch = stage1Content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return new Response(JSON.stringify({ error: "AI did not return valid JSON", raw: content }), {
+      return new Response(JSON.stringify({ error: "AI did not return valid JSON", raw: stage1Content }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const skillDef = JSON.parse(jsonMatch[0]);
+    let skillDef = JSON.parse(jsonMatch[0]);
 
-    return new Response(JSON.stringify({ success: true, skill: skillDef, provider: openaiKey ? "openai" : "lovable" }), {
+    // ═══════════════════════════════════════════════════
+    // ESTÁGIO 2: Claude Opus 4.6 revisa como gestor
+    // ═══════════════════════════════════════════════════
+    let reviewNotes: string | null = null;
+
+    if (anthropicKey) {
+      try {
+        const reviewSystem = `Você é um Diretor de Operações (DM) experiente revisando blueprints de automações inteligentes.
+Seu papel é:
+1. Validar se a lógica faz sentido para o negócio
+2. Verificar se as tabelas referenciadas existem e fazem sentido
+3. Sugerir melhorias de performance ou escopo
+4. Garantir que o trigger frequency é adequado (não pollar a cada 5min algo que muda 1x/dia)
+5. Avaliar se o output é acionável pelo time
+
+Tabelas disponíveis: ${tablesAvailable.join(", ")}
+
+Responda APENAS com JSON válido (sem markdown):
+{
+  "approved": true/false,
+  "score": 1-10,
+  "review_notes": "Notas de revisão do DM (máx 200 chars)",
+  "improvements": { ...campos do blueprint que devem ser alterados, apenas se necessário }
+}`;
+
+        const reviewContent = `PEDIDO ORIGINAL DO GESTOR: "${description}"
+
+BLUEPRINT GERADO (Estágio 1 - OpenAI):
+${JSON.stringify(skillDef, null, 2)}
+
+Revise como DM e aprove ou sugira melhorias.`;
+
+        const reviewRaw = await callClaude(anthropicKey, reviewSystem, reviewContent);
+        const reviewMatch = reviewRaw.match(/\{[\s\S]*\}/);
+
+        if (reviewMatch) {
+          const review = JSON.parse(reviewMatch[0]);
+          reviewNotes = review.review_notes || null;
+
+          // Apply improvements if any
+          if (review.improvements && typeof review.improvements === "object") {
+            skillDef = { ...skillDef, ...review.improvements };
+          }
+
+          // Add review metadata
+          skillDef._review = {
+            approved: review.approved,
+            score: review.score,
+            notes: reviewNotes,
+            reviewer: "claude-opus-4.6",
+          };
+        }
+      } catch (claudeErr) {
+        console.error("Claude review failed (non-blocking):", claudeErr);
+        skillDef._review = {
+          approved: null,
+          score: null,
+          notes: "Revisão indisponível — Claude Opus não respondeu",
+          reviewer: "claude-opus-4.6",
+          error: true,
+        };
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      skill: skillDef,
+      pipeline: {
+        stage1: openaiKey ? "openai/gpt-4o" : "lovable/gemini-3-flash",
+        stage2: anthropicKey ? "anthropic/claude-opus-4.6" : "skipped",
+      },
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     console.error("generate-skill error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
+
+    if (msg.includes("429")) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Tente novamente em alguns segundos." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (msg.includes("402")) {
+      return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
