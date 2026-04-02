@@ -208,9 +208,9 @@ export const skillCategories: SkillCategory[] = [
     key: "pos-venda", label: "Pós-Venda", emoji: "🔄",
     skills: [
       // Solar
-      { id: "10.1", name: "Tracking Homologação", desc: "Acompanha etapas pós-venda até instalação", status: "precisa_dados", verticals: SOL, fonte: "projetos (etapas pós-venda)", output: "Status por etapa" },
-      { id: "10.2", name: "Alerta Instalação", desc: "Instalações pendentes na semana", status: "precisa_dados", verticals: SOL, fonte: "projetos (etapa=instalacao)", output: "Agenda instalação" },
-      { id: "10.3", name: "Geração Monitoramento", desc: "Monitora geração do sistema solar instalado", status: "futuro", verticals: SOL, fonte: "Integração inversor", output: "% geração vs esperado" },
+      { id: "10.1", name: "Tracking Homologação", desc: "Acompanha etapas pós-venda: projeto → aprovação → instalação → homologação", status: "criar", verticals: SOL, fonte: "sol_projetos_sync (etapas pós-venda)", output: "Status por etapa" },
+      { id: "10.2", name: "Alerta Instalação", desc: "Notifica equipe técnica e cliente sobre instalações pendentes na semana", status: "criar", verticals: SOL, fonte: "sol_projetos_sync (etapa=instalacao)", output: "Agenda instalação" },
+      { id: "10.3", name: "Geração Monitoramento", desc: "Monitora geração do sistema solar instalado vs projetado", status: "futuro", verticals: SOL, fonte: "Integração inversor", output: "% geração vs esperado" },
       // Universal pós-venda
       { id: "10.4", name: "Tempo por Etapa Pós-Venda", desc: "SLA de cada etapa do pós-venda", status: "precisa_dados", verticals: ALL, fonte: "projetos (ts_evento por etapa)", output: "SLA pós-venda" },
       { id: "10.5", name: "Indicação Automática", desc: "Pede indicação para clientes satisfeitos", status: "futuro", verticals: ALL, fonte: "projetos (GANHO > X meses)", output: "Solicitação indicação" },
