@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,9 @@ import {
   RefreshCcw,
   Zap,
   CheckCircle2,
+  Clock,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
