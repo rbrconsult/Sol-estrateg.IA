@@ -474,13 +474,20 @@ export default function PainelComercial() {
                               <button
                                 key={`${l.telefone}-${i}`}
                                 onClick={() => handleOpenLead(l)}
-                                className="w-full flex flex-col rounded-md border border-border/50 bg-card p-2 text-left hover:bg-secondary/50 transition-colors"
+                                className={`w-full flex flex-col rounded-md border p-2 text-left hover:bg-secondary/50 transition-colors ${
+                                  isInactive(l.tsUltimaInteracao) ? "border-destructive/40 bg-destructive/5" : "border-border/50 bg-card"
+                                }`}
                               >
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                       <span className="text-xs font-medium truncate">{l.nome}</span>
                                       <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
+                                      {isInactive(l.tsUltimaInteracao) && (
+                                        <Badge variant="destructive" className="text-[8px] h-3.5 px-1 gap-0.5 animate-pulse">
+                                          <Clock className="h-2.5 w-2.5" /> {inactivityMinutes(l.tsUltimaInteracao) >= 60 ? `${Math.floor(inactivityMinutes(l.tsUltimaInteracao) / 60)}h` : `${inactivityMinutes(l.tsUltimaInteracao)}m`}
+                                        </Badge>
+                                      )}
                                     </div>
                                     <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
                                       <span className="font-mono">{l.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
@@ -492,7 +499,7 @@ export default function PainelComercial() {
                                   <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1 text-[9px] text-muted-foreground border-t border-border/30 pt-1">
-                                  <span>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                                  <span className={isInactive(l.tsUltimaInteracao) ? "text-destructive font-semibold" : ""}>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                   <span>📤 Transferido: {l.tsTransferido ? new Date(l.tsTransferido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                 </div>
                               </button>
