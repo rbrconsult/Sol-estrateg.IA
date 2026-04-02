@@ -530,7 +530,7 @@ export default function PainelComercial() {
                           { label: "Responderam", value: summary.responderam, icon: CalendarCheck },
                           { label: "FUP Ativos", value: summary.fupAtivos, icon: Send },
                           { label: "Score ∅", value: summary.avgScore, icon: Zap },
-                          { label: "Quentes", value: summary.quentes, icon: Flame },
+                          { label: "⚠️ Em Risco", value: summary.emRiscoInatividade, icon: Clock },
                         ].map((k) => (
                           <div key={k.label} className="rounded-lg border border-border/50 bg-secondary/30 p-2 text-center">
                             <k.icon className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-0.5" />
