@@ -118,7 +118,7 @@ export default function SiteGA4Page() {
         <h1 className="text-xl font-bold flex items-center gap-2"><Globe className="h-5 w-5" /> Site (GA4)</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas}
             extraFilters={
               <>
                 <Select value={source} onValueChange={setSource}>

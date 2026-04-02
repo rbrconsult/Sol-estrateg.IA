@@ -144,7 +144,7 @@ export default function MetaAdsPage() {
         <h1 className="text-xl font-bold">Meta Ads</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas}
             extraFilters={
               <>
                 <Select value={adset} onValueChange={setAdset}>

@@ -181,7 +181,7 @@ export default function CampanhasAdsPerformance() {
               <SelectItem value="Google Ads">Google Ads</SelectItem>
             </SelectContent>
           </Select>
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas} />
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas} />
         </div>
       </div>
 
