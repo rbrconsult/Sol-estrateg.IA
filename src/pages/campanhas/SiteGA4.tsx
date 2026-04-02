@@ -31,7 +31,7 @@ function groupByField(rows: any[], field: string) {
 export default function SiteGA4Page() {
   const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [source, setSource] = useState('all');
   const [medium, setMedium] = useState('all');
   const [landingPage, setLandingPage] = useState('all');
@@ -40,12 +40,12 @@ export default function SiteGA4Page() {
   const filtered = useMemo(() => {
     if (!rows) return [];
     let r = rows;
-    if (campanha !== 'all') r = r.filter((x: any) => x.campaign === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter((x: any) => selectedCampanhas.includes(x.campaign));
     if (source !== 'all') r = r.filter((x: any) => x.source === source);
     if (medium !== 'all') r = r.filter((x: any) => x.medium === medium);
     if (landingPage !== 'all') r = r.filter((x: any) => x.landing_page === landingPage);
     return r;
-  }, [rows, campanha, source, medium, landingPage]);
+  }, [rows, selectedCampanhas, source, medium, landingPage]);
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign).filter(Boolean))] as string[], [rows]);
   const sources = useMemo(() => [...new Set((rows || []).map((r: any) => r.source).filter(Boolean))] as string[], [rows]);
@@ -118,7 +118,7 @@ export default function SiteGA4Page() {
         <h1 className="text-xl font-bold flex items-center gap-2"><Globe className="h-5 w-5" /> Site (GA4)</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas}
             extraFilters={
               <>
                 <Select value={source} onValueChange={setSource}>

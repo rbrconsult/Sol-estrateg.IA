@@ -177,7 +177,7 @@ export default function CampanhasVisaoGeral() {
         <h1 className="text-xl font-bold">Campanhas — Visão Geral</h1>
         <div className="flex items-center gap-3">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha="all" setCampanha={() => {}} campanhas={[]} />
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={[]} setSelectedCampanhas={() => {}} campanhas={[]} />
         </div>
       </div>
 

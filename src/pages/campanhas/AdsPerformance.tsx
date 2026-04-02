@@ -24,7 +24,7 @@ const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid h
 
 export default function CampanhasAdsPerformance() {
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [canalFilter, setCanalFilter] = useState('all');
 
   const { data: metaRows, isLoading: loadingMeta } = useMetaAds(FRANQUIA, range);
@@ -68,9 +68,9 @@ export default function CampanhasAdsPerformance() {
   const filtered = useMemo(() => {
     let r = unified;
     if (canalFilter !== 'all') r = r.filter(x => x.canal === canalFilter);
-    if (campanha !== 'all') r = r.filter(x => x.campaign_name === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter(x => selectedCampanhas.includes(x.campaign_name));
     return r;
-  }, [unified, canalFilter, campanha]);
+  }, [unified, canalFilter, selectedCampanhas]);
 
   const campanhas = useMemo(() => [...new Set(unified.map(r => r.campaign_name).filter(Boolean))] as string[], [unified]);
 
@@ -181,7 +181,7 @@ export default function CampanhasAdsPerformance() {
               <SelectItem value="Google Ads">Google Ads</SelectItem>
             </SelectContent>
           </Select>
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas} />
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas} />
         </div>
       </div>
 

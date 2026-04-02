@@ -18,7 +18,7 @@ import { DollarSign, MousePointer, Target, TrendingUp, AlertTriangle, Search } f
 export default function GoogleAdsPage() {
   const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [dispositivo, setDispositivo] = useState('all');
   const [rede, setRede] = useState('all');
   const { data: rows, isLoading } = useGoogleAds(franquiaId, range);
@@ -26,11 +26,11 @@ export default function GoogleAdsPage() {
   const filtered = useMemo(() => {
     if (!rows) return [];
     let r = rows;
-    if (campanha !== 'all') r = r.filter((x: any) => x.campaign_name === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter((x: any) => selectedCampanhas.includes(x.campaign_name));
     if (dispositivo !== 'all') r = r.filter((x: any) => x.dispositivo === dispositivo);
     if (rede !== 'all') r = r.filter((x: any) => x.rede === rede);
     return r;
-  }, [rows, campanha, dispositivo, rede]);
+  }, [rows, selectedCampanhas, dispositivo, rede]);
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign_name).filter(Boolean))] as string[], [rows]);
   const dispositivos = useMemo(() => [...new Set((rows || []).map((r: any) => r.dispositivo).filter(Boolean))] as string[], [rows]);
@@ -129,7 +129,7 @@ export default function GoogleAdsPage() {
         <h1 className="text-xl font-bold">Google Ads</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas}
             extraFilters={
               <>
                 <Select value={dispositivo} onValueChange={setDispositivo}>

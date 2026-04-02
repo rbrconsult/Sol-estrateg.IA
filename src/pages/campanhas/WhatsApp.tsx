@@ -125,7 +125,7 @@ export default function WhatsAppPage() {
         <h1 className="text-xl font-bold flex items-center gap-2"><MessageSquare className="h-5 w-5" /> WhatsApp / Agent IA</h1>
         <div className="flex items-center gap-3">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha="all" setCampanha={() => {}} campanhas={[]} />
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={[]} setSelectedCampanhas={() => {}} campanhas={[]} />
         </div>
       </div>
 

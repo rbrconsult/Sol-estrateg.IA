@@ -140,7 +140,7 @@ export default function FunilConsolidado() {
               {closers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha="all" setCampanha={() => {}} campanhas={[]} />
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={[]} setSelectedCampanhas={() => {}} campanhas={[]} />
         </div>
       </div>
 

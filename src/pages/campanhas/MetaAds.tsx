@@ -39,7 +39,7 @@ function groupBy(rows: any[], field: string) {
 export default function MetaAdsPage() {
   const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [adset, setAdset] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const { data: rows, isLoading } = useMetaAds(franquiaId, range);
@@ -47,11 +47,11 @@ export default function MetaAdsPage() {
   const filtered = useMemo(() => {
     if (!rows) return [];
     let r = rows;
-    if (campanha !== 'all') r = r.filter((x: any) => x.campaign_name === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter((x: any) => selectedCampanhas.includes(x.campaign_name));
     if (adset !== 'all') r = r.filter((x: any) => x.adset_name === adset);
     if (statusFilter !== 'all') r = r.filter((x: any) => x.campaign_status === statusFilter);
     return r;
-  }, [rows, campanha, adset, statusFilter]);
+  }, [rows, selectedCampanhas, adset, statusFilter]);
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign_name).filter(Boolean))] as string[], [rows]);
   const adsets = useMemo(() => [...new Set((rows || []).map((r: any) => r.adset_name).filter(Boolean))] as string[], [rows]);
@@ -144,7 +144,7 @@ export default function MetaAdsPage() {
         <h1 className="text-xl font-bold">Meta Ads</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <SyncBadge franquiaId={franquiaId} />
-          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} campanha={campanha} setCampanha={setCampanha} campanhas={campanhas}
+          <CampanhaFilters periodo={periodo} setPeriodo={setPeriodo} selectedCampanhas={selectedCampanhas} setSelectedCampanhas={setSelectedCampanhas} campanhas={campanhas}
             extraFilters={
               <>
                 <Select value={adset} onValueChange={setAdset}>
