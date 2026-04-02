@@ -181,6 +181,8 @@ interface CloserLead {
   valor: string;
   prioridade: string;
   telefone: string;
+  tsUltimaInteracao: string | null;
+  tsTransferido: string | null;
 }
 
 interface CloserGroup {
@@ -208,6 +210,8 @@ function deriveCloserQueue(records: SolLead[]): CloserGroup[] {
       valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
       prioridade: getPrioridade(r),
       telefone: r.telefone,
+      tsUltimaInteracao: r.ts_ultima_interacao || null,
+      tsTransferido: r.ts_transferido || null,
     };
     if (temp === "QUENTE") groups["Quentes"].push(lead);
     else if (temp === "FRIO") groups["Frios"].push(lead);
@@ -413,22 +417,27 @@ export default function PainelComercial() {
                               <button
                                 key={`${l.telefone}-${i}`}
                                 onClick={() => handleOpenLead(l)}
-                                className="w-full flex items-center gap-2 rounded-md border border-border/50 bg-card p-2 text-left hover:bg-secondary/50 transition-colors"
+                                className="w-full flex flex-col rounded-md border border-border/50 bg-card p-2 text-left hover:bg-secondary/50 transition-colors"
                               >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-medium truncate">{l.nome}</span>
-                                    <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-medium truncate">{l.nome}</span>
+                                      <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                                      <span className="font-mono">{l.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
+                                      <span className={tempColor(l.temp)}>{l.temp}</span>
+                                      <span>Score {l.score}</span>
+                                      <span className="truncate">{l.etapa}</span>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                                    <span className="font-mono">{l.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
-                                    <span className={tempColor(l.temp)}>{l.temp}</span>
-                                    <span>Score {l.score}</span>
-                                    <span className="truncate">{l.etapa}</span>
-                                  </div>
+                                  <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
                                 </div>
-                                <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
-                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <div className="flex items-center gap-3 mt-1 text-[9px] text-muted-foreground border-t border-border/30 pt-1">
+                                  <span>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                                  <span>📤 Transferido: {l.tsTransferido ? new Date(l.tsTransferido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                                </div>
                               </button>
                             ))}
                           </div>
