@@ -29,9 +29,9 @@ export const verticalConfig: Record<Vertical, { label: string; emoji: string; co
 
 export const statusConfig: Record<SkillStatus, { label: string; className: string }> = {
   ativo: { label: "✅ Ativo", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  precisa_dados: { label: "⏳ Precisa Dados", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  criar: { label: "🔨 Criar", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  futuro: { label: "🔮 Futuro", className: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  precisa_dados: { label: "⏳ Aguardando Dados", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  criar: { label: "📝 Rascunho", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  futuro: { label: "🚀 Em Criação", className: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
 };
 
 // Helper: u = universal, s = solar, f = financeiro, v = viagens, sg = seguros, a = academia
