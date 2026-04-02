@@ -47,7 +47,7 @@ export default function MetaAdsPage() {
   const filtered = useMemo(() => {
     if (!rows) return [];
     let r = rows;
-    if (campanha !== 'all') r = r.filter((x: any) => x.campaign_name === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter((x: any) => selectedCampanhas.includes(x.campaign_name));
     if (adset !== 'all') r = r.filter((x: any) => x.adset_name === adset);
     if (statusFilter !== 'all') r = r.filter((x: any) => x.campaign_status === statusFilter);
     return r;
