@@ -46,7 +46,7 @@ async function callClaude(apiKey: string, systemPrompt: string, userContent: str
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-opus-4-6",
+      model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: userContent }],
@@ -102,7 +102,6 @@ Deno.serve(async (req) => {
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
     if (!openaiKey) {
       return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), {
@@ -136,13 +135,14 @@ Responda APENAS com JSON válido (sem markdown):
   "trigger": "cron_5m|cron_15m|cron_1h|cron_daily|webhook|manual",
   "logic_summary": "Resumo em 2-3 linhas da lógica que a Edge Function deve implementar",
   "sql_hint": "Query SQL aproximada que busca os dados necessários (SELECT ... FROM ...)",
-  "alert_channel": "whatsapp|insight|dashboard|none"
+  "alert_channel": "whatsapp|insight|dashboard|none",
+  "delivery_method": "whatsapp|email|inbox|dashboard|whatsapp+inbox" (como o resultado é entregue ao usuário),
+  "frequency": "realtime|5min|15min|1h|diario|semanal|mensal|manual" (com que frequência a skill executa)
 }`;
 
     let stage1Content: string;
     let stage1Provider: string;
 
-    // OpenAI GPT-4o como gerador principal
     stage1Provider = "openai/gpt-4o";
     stage1Content = await callOpenAI(openaiKey, generatorPrompt);
 
@@ -156,7 +156,7 @@ Responda APENAS com JSON válido (sem markdown):
     let skillDef = JSON.parse(jsonMatch[0]);
 
     // ═══════════════════════════════════════════════════
-    // ESTÁGIO 2: Claude Opus 4.6 revisa como gestor
+    // ESTÁGIO 2: Claude Sonnet revisa como gestor
     // ═══════════════════════════════════════════════════
     let reviewNotes: string | null = null;
 
@@ -169,6 +169,7 @@ Seu papel é:
 3. Sugerir melhorias de performance ou escopo
 4. Garantir que o trigger frequency é adequado (não pollar a cada 5min algo que muda 1x/dia)
 5. Avaliar se o output é acionável pelo time
+6. Validar se delivery_method e frequency são coerentes com o tipo de skill
 
 Tabelas disponíveis: ${tablesAvailable.join(", ")}
 
@@ -194,17 +195,15 @@ Revise como DM e aprove ou sugira melhorias.`;
           const review = JSON.parse(reviewMatch[0]);
           reviewNotes = review.review_notes || null;
 
-          // Apply improvements if any
           if (review.improvements && typeof review.improvements === "object") {
             skillDef = { ...skillDef, ...review.improvements };
           }
 
-          // Add review metadata
           skillDef._review = {
             approved: review.approved,
             score: review.score,
             notes: reviewNotes,
-            reviewer: "claude-opus-4.6",
+            reviewer: "claude-sonnet-4",
           };
         }
       } catch (claudeErr) {
@@ -212,8 +211,8 @@ Revise como DM e aprove ou sugira melhorias.`;
         skillDef._review = {
           approved: null,
           score: null,
-          notes: "Revisão indisponível — Claude Opus não respondeu",
-          reviewer: "claude-opus-4.6",
+          notes: "Revisão indisponível — Claude não respondeu",
+          reviewer: "claude-sonnet-4",
           error: true,
         };
       }
@@ -224,7 +223,7 @@ Revise como DM e aprove ou sugira melhorias.`;
       skill: skillDef,
       pipeline: {
         stage1: stage1Provider,
-        stage2: anthropicKey ? "anthropic/claude-opus-4.6" : "skipped",
+        stage2: anthropicKey ? "anthropic/claude-sonnet-4" : "skipped",
       },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

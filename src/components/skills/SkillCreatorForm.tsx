@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle2, Copy, Plus, ChevronRight } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, Copy, Plus, ChevronRight, Send, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { verticalConfig, type Vertical } from "@/data/skillsMap";
@@ -29,6 +29,8 @@ interface SkillDefinition {
   logic_summary: string;
   sql_hint: string;
   alert_channel: string;
+  delivery_method?: string;
+  frequency?: string;
   _review?: SkillReview;
 }
 
@@ -63,12 +65,18 @@ const WIZARD_QUESTIONS = [
     question: "Qual é o impacto financeiro ou operacional esperado?",
     placeholder: "Ex: Reduzir tempo médio de primeiro contato de 4h para 15min, aumentando conversão em ~12%...",
   },
+  {
+    key: "envio",
+    label: "Forma de envio e periodicidade",
+    question: "Como e com que frequência essa skill deve entregar o resultado?",
+    placeholder: "Ex: WhatsApp diário às 7h para o gestor, com insight na plataforma em tempo real...",
+  },
 ];
 
 export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: SkillDefinition) => void }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({
-    dor: "", momento: "", autonomia: "", sistemas: "", impacto: "",
+    dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "",
   });
   const [vertical, setVertical] = useState<string>("universal");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -132,6 +140,25 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
     insight: "💡 Insight na plataforma",
     dashboard: "📊 Dashboard",
     none: "— Sem alerta",
+  };
+
+  const deliveryLabels: Record<string, string> = {
+    whatsapp: "📱 WhatsApp",
+    email: "📧 Email",
+    inbox: "💡 Inbox Lovable",
+    dashboard: "📊 Dashboard",
+    "whatsapp+inbox": "📱 WhatsApp + 💡 Inbox",
+  };
+
+  const frequencyLabels: Record<string, string> = {
+    realtime: "⚡ Tempo real",
+    "5min": "⏱ A cada 5 min",
+    "15min": "⏱ A cada 15 min",
+    "1h": "⏱ A cada 1 hora",
+    diario: "📅 Diário",
+    semanal: "📆 Semanal",
+    mensal: "🗓️ Mensal",
+    manual: "👆 Manual / On-demand",
   };
 
   return (
@@ -236,12 +263,12 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
 
                 <Button onClick={handleGenerate} disabled={isGenerating || !allAnswered} className="w-full gap-2">
                   {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {isGenerating ? "Gerando com IA (GPT-4o + Claude Opus)..." : "Gerar Skill"}
+                  {isGenerating ? "Gerando com IA (GPT-4o + Claude)..." : "Gerar Skill"}
                 </Button>
 
                 {!allAnswered && (
                   <p className="text-[10px] text-amber-400 text-center">
-                    ⚠️ Preencha todas as 5 perguntas para gerar
+                    ⚠️ Preencha todas as {WIZARD_QUESTIONS.length} perguntas para gerar
                   </p>
                 )}
               </div>
@@ -308,6 +335,24 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                 </div>
               </div>
 
+              {/* Delivery & Frequency */}
+              <div className="grid grid-cols-2 gap-2 text-[10px] p-2 rounded-lg bg-muted/20 border border-border/20">
+                <div className="flex items-center gap-1.5">
+                  <Send className="h-3 w-3 text-primary" />
+                  <div>
+                    <span className="text-muted-foreground block">Forma de envio:</span>
+                    <span className="font-medium">{result.delivery_method ? (deliveryLabels[result.delivery_method] || result.delivery_method) : "—"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3 text-primary" />
+                  <div>
+                    <span className="text-muted-foreground block">Periodicidade:</span>
+                    <span className="font-medium">{result.frequency ? (frequencyLabels[result.frequency] || result.frequency) : "—"}</span>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <span className="text-[10px] text-muted-foreground font-semibold">Output:</span>
                 <p className="text-xs mt-0.5">{result.output}</p>
@@ -352,13 +397,12 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                 </div>
               )}
 
-              {/* Button to create another */}
               <Button variant="ghost" size="sm" className="w-full text-xs mt-2"
                 onClick={() => {
                   setResult(null);
                   setPipeline(null);
                   setCurrentStep(0);
-                  setAnswers({ dor: "", momento: "", autonomia: "", sistemas: "", impacto: "" });
+                  setAnswers({ dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "" });
                 }}>
                 + Criar outra skill
               </Button>
