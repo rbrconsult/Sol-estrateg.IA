@@ -302,6 +302,7 @@ const mensagensReports: { id: number; tipo: string; titulo: string; enviadoPara:
 
 export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
+  const navigate = useNavigate();
   const { openLead360 } = useLead360();
   const { data: solLeads, isLoading } = useSolLeads();
   
