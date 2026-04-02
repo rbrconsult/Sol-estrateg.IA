@@ -343,9 +343,20 @@ export default function PainelComercial() {
           <p className="text-sm text-muted-foreground mt-1">Visão operacional em tempo real — alertas, fila e ações</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate("/qualificacao")} className="text-xs gap-1">
+            <Sparkles className="h-3.5 w-3.5" /> Qualificar
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/reprocessamento")} className="text-xs gap-1">
+            <RotateCcw className="h-3.5 w-3.5" /> Reprocessar
+          </Button>
           {orgFilterActive && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
               🏢 {selectedOrgName}
+            </Badge>
+          )}
+          {summary.emRiscoInatividade > 0 && (
+            <Badge variant="destructive" className="text-xs gap-1 animate-pulse">
+              <Clock className="h-3 w-3" /> {summary.emRiscoInatividade} inativos
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
