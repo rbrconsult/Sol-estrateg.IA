@@ -286,8 +286,13 @@ function deriveSummary(records: SolLead[]) {
   const quentes = records.filter((r) => (r.temperatura || "").toUpperCase() === "QUENTE").length;
   const mornos = records.filter((r) => (r.temperatura || "").toUpperCase() === "MORNO").length;
   const frios = records.filter((r) => (r.temperatura || "").toUpperCase() === "FRIO").length;
+  const emRiscoInatividade = records.filter((r) => {
+    const s = (r.status || "").toUpperCase();
+    const active = ["WHATSAPP", "EM_QUALIFICACAO", "TRAFEGO_PAGO", "QUALIFICADO", "AGENDAMENTO", "PROPOSTA", "NEGOCIACAO"];
+    return active.includes(s) && isInactive(r.ts_ultima_interacao);
+  }).length;
 
-  return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios };
+  return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios, emRiscoInatividade };
 }
 
 /* ── report history — empty, will be populated from real data ── */
