@@ -81,11 +81,31 @@ export default function Insights() {
   return (
     <div className="space-y-6 p-1">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills — Scale</h1>
-        <p className="text-muted-foreground mt-1">
-          {totals.total} automações inteligentes • Template multi-vertical replicável
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills — Scale</h1>
+          <p className="text-muted-foreground mt-1">
+            {totals.total} automações inteligentes • Template multi-vertical replicável
+          </p>
+        </div>
+        <Dialog open={creatorOpen} onOpenChange={setCreatorOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Sparkles className="h-4 w-4" /> Criar Skill com IA
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" /> Criar Nova Skill
+              </DialogTitle>
+            </DialogHeader>
+            <SkillCreatorForm onSkillCreated={(skill) => {
+              toast.success(`Skill "${skill.name}" gerada! Adicione ao código para ativar.`);
+              setCreatorOpen(false);
+            }} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Vertical selector */}
