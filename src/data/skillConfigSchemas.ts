@@ -373,6 +373,45 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
+  // ─── SOLAR ESPECÍFICO ───
+  "1.10": {
+    skillId: "1.10",
+    title: "OCR Conta de Luz",
+    description: "GPT-4 Vision extrai valor real da foto da conta de energia",
+    fields: [
+      { key: "modelo_ocr", label: "Modelo de OCR", emoji: "🤖", type: "select", defaultValue: "gpt4-vision", options: [{ label: "GPT-4 Vision", value: "gpt4-vision" }, { label: "Gemini 2.5 Flash", value: "gemini-flash" }] },
+      { key: "confianca_minima", label: "Confiança mínima", emoji: "🎯", type: "slider", defaultValue: 80, min: 50, max: 100, step: 5, unit: "%", description: "Abaixo disso pede confirmação ao lead" },
+      { key: "solicitar_reenvio", label: "Pedir reenvio se baixa confiança", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "10.1": {
+    skillId: "10.1",
+    title: "Tracking Homologação",
+    description: "Acompanha etapas pós-venda (projeto → aprovação → instalação → homologação)",
+    fields: [
+      { key: "sla_projeto_dias", label: "SLA projeto técnico", emoji: "📐", type: "number", defaultValue: 5, min: 1, max: 30, unit: "dias" },
+      { key: "sla_aprovacao_dias", label: "SLA aprovação concessionária", emoji: "⚡", type: "number", defaultValue: 15, min: 5, max: 60, unit: "dias" },
+      { key: "sla_instalacao_dias", label: "SLA instalação", emoji: "🔧", type: "number", defaultValue: 10, min: 3, max: 30, unit: "dias" },
+      { key: "sla_homologacao_dias", label: "SLA homologação", emoji: "✅", type: "number", defaultValue: 30, min: 10, max: 90, unit: "dias" },
+      { key: "alertar_atraso", label: "Alertar ao atrasar", type: "toggle", defaultValue: true },
+      { key: "telefone_alerta", label: "Telefone alerta", emoji: "📱", type: "phone", defaultValue: "", placeholder: "5517999999999" },
+    ],
+  },
+
+  "10.2": {
+    skillId: "10.2",
+    title: "Alerta Instalação",
+    description: "Instalações pendentes e agendadas na semana",
+    fields: [
+      { key: "dias_antecedencia", label: "Dias de antecedência", emoji: "📅", type: "number", defaultValue: 3, min: 1, max: 7, unit: "dias", description: "Alertar X dias antes da instalação" },
+      { key: "horario_alerta", label: "Horário do alerta", emoji: "⏰", type: "text", defaultValue: "07:00", placeholder: "HH:MM" },
+      { key: "alertar_equipe", label: "Alertar equipe técnica", type: "toggle", defaultValue: true },
+      { key: "alertar_cliente", label: "Enviar lembrete ao cliente", type: "toggle", defaultValue: true },
+      { key: "telefone_coordenador", label: "Telefone coordenador", emoji: "📱", type: "phone", defaultValue: "", placeholder: "5517999999999" },
+    ],
+  },
+
   // ─── PÓS-VENDA ───
   "10.4": {
     skillId: "10.4",
