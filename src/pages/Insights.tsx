@@ -298,7 +298,14 @@ export default function Insights() {
                             </div>
                             <Switch
                               checked={isOn}
-                              onCheckedChange={(checked) => toggle({ skillId: skill.id, enabled: checked })}
+                              onCheckedChange={(checked) => {
+                                toggle({ skillId: skill.id, enabled: checked });
+                                if (checked && hasConfigPanel) {
+                                  setExpandedSkillId(skill.id);
+                                } else if (!checked) {
+                                  if (expandedSkillId === skill.id) setExpandedSkillId(null);
+                                }
+                              }}
                               className="shrink-0"
                               onClick={e => e.stopPropagation()}
                             />
