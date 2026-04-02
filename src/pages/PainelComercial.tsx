@@ -86,6 +86,19 @@ function getEtapa(r: SolLead): string {
   return s || "Novo";
 }
 
+const INACTIVITY_RISK_MINUTES = 10;
+
+function isInactive(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return true;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  return diff > INACTIVITY_RISK_MINUTES * 60 * 1000;
+}
+
+function inactivityMinutes(dateStr: string | null | undefined): number {
+  if (!dateStr) return 9999;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+}
+
 function timeSince(dateStr: string): string {
   if (!dateStr) return "";
   const diff = Date.now() - new Date(dateStr).getTime();
