@@ -16,6 +16,7 @@ import { type SkillConfigSchema, type ConfigField } from "@/data/skillConfigSche
 
 interface Props {
   schema: SkillConfigSchema;
+  onSaved?: () => void;
 }
 
 export function SkillConfigPanel({ schema }: Props) {
