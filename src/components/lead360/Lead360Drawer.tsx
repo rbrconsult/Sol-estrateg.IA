@@ -1,14 +1,16 @@
+import { useEffect, useState } from "react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 import {
   User, Phone, Mail, Calendar, Clock, Zap, DollarSign,
   Briefcase, MessageSquare, Bot, TrendingUp, ThermometerSun,
   Target, ArrowRight, CheckCircle2, XCircle, AlertTriangle,
-  Activity
+  Activity, FileText
 } from "lucide-react";
 
 function formatCurrency(value: number) {
@@ -448,6 +450,118 @@ function PerformanceSection() {
   );
 }
 
+// ─── Qualificação Section ───
+function QualificacaoSection() {
+  const { proposal: p } = useLead360();
+  const [qualData, setQualData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!p?.clienteTelefone) return;
+    setLoading(true);
+    // Try to match by phone
+    const phone = p.clienteTelefone.replace(/\D/g, '');
+    supabase
+      .from('sol_qualificacao_sync')
+      .select('*')
+      .eq('telefone', phone)
+      .maybeSingle()
+      .then(({ data }) => {
+        setQualData(data);
+        setLoading(false);
+      });
+  }, [p?.clienteTelefone]);
+
+  if (!p) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* Performance section first */}
+      <PerformanceSection />
+
+      <Separator />
+
+      {/* Qualification Summary */}
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          Resumo de Qualificação SOL
+        </h4>
+
+        {loading ? (
+          <p className="text-xs text-muted-foreground animate-pulse">Carregando dados de qualificação...</p>
+        ) : qualData ? (
+          <div className="space-y-2">
+            {/* Score & Temp */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-md bg-primary/10 p-2 text-center">
+                <p className="text-lg font-bold text-foreground">{qualData.score || 0}</p>
+                <p className="text-[9px] text-muted-foreground">Score</p>
+              </div>
+              <div className="rounded-md bg-accent/10 p-2 text-center">
+                <TempBadge temp={qualData.temperatura || ''} />
+                <p className="text-[9px] text-muted-foreground mt-0.5">Temperatura</p>
+              </div>
+              <div className="rounded-md bg-muted p-2 text-center">
+                <Badge variant="outline" className="text-[10px]">{qualData.acao || '—'}</Badge>
+                <p className="text-[9px] text-muted-foreground mt-0.5">Ação</p>
+              </div>
+            </div>
+
+            {/* Model */}
+            {qualData.modelo_negocio && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Modelo</span>
+                <Badge variant="secondary" className="text-[10px]">{qualData.modelo_negocio}</Badge>
+              </div>
+            )}
+
+            {/* Resumo text */}
+            {qualData.resumo_qualificacao && (
+              <div className="rounded-md bg-muted/50 p-2.5 max-h-[200px] overflow-y-auto">
+                <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                  {qualData.resumo_qualificacao}
+                </p>
+              </div>
+            )}
+
+            {/* Dados detalhados */}
+            {qualData.dados_qualificacao && typeof qualData.dados_qualificacao === 'object' && (
+              <div className="space-y-1">
+                <h5 className="text-[10px] text-muted-foreground font-semibold">Dados Coletados</h5>
+                {Object.entries(qualData.dados_qualificacao as Record<string, any>)
+                  .filter(([, v]) => v && v !== '')
+                  .map(([k, v]) => (
+                    <div key={k} className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span>
+                      <span className="text-foreground font-medium max-w-[180px] truncate text-right">{String(v)}</span>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground border-t border-border/30 pt-2 mt-2">
+              {qualData.ts_primeira_qualificacao && (
+                <span>1ª Qual: {formatDate(qualData.ts_primeira_qualificacao)}</span>
+              )}
+              {qualData.ts_ultima_atualizacao && (
+                <span>Últ. Atual: {formatDate(qualData.ts_ultima_atualizacao)}</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
+            <FileText className="h-6 w-6 mb-1 opacity-30" />
+            <p className="text-xs">Sem dados de qualificação para este lead</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Drawer ───
 export function Lead360Drawer() {
   const { isOpen, proposal, closeLead360 } = useLead360();
@@ -483,7 +597,7 @@ export function Lead360Drawer() {
               <Activity className="h-3 w-3" /> Timeline
             </TabsTrigger>
             <TabsTrigger value="performance" className="text-[11px] gap-1">
-              <TrendingUp className="h-3 w-3" /> Performance
+              <TrendingUp className="h-3 w-3" /> Perf & Qual
             </TabsTrigger>
           </TabsList>
 
@@ -492,7 +606,7 @@ export function Lead360Drawer() {
               <TabsContent value="crm" className="mt-0"><CRMSection /></TabsContent>
               <TabsContent value="robos" className="mt-0"><RobosSection /></TabsContent>
               <TabsContent value="timeline" className="mt-0"><TimelineSection /></TabsContent>
-              <TabsContent value="performance" className="mt-0"><PerformanceSection /></TabsContent>
+              <TabsContent value="performance" className="mt-0"><QualificacaoSection /></TabsContent>
             </div>
           </ScrollArea>
         </Tabs>
