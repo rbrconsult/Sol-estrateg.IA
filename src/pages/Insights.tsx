@@ -40,6 +40,26 @@ export default function Insights() {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const { toggles, toggle } = useSkillToggles();
+  const queryClient = useQueryClient();
+
+  // Track which skills have saved config
+  const { data: configuredSkills = new Set<string>() } = useQuery({
+    queryKey: ["skill-configs-status"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("organization_configs")
+        .select("config_key")
+        .eq("config_category", "skills")
+        .like("config_key", "skill_config_%");
+      const set = new Set<string>();
+      data?.forEach(r => {
+        const id = r.config_key.replace("skill_config_", "");
+        set.add(id);
+      });
+      return set;
+    },
+    staleTime: 30_000,
+  });
 
   const allSkills = useMemo(() => skillCategories.flatMap(c => c.skills), []);
 
