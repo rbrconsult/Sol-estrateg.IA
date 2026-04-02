@@ -68,7 +68,7 @@ export default function CampanhasAdsPerformance() {
   const filtered = useMemo(() => {
     let r = unified;
     if (canalFilter !== 'all') r = r.filter(x => x.canal === canalFilter);
-    if (campanha !== 'all') r = r.filter(x => x.campaign_name === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter(x => selectedCampanhas.includes(x.campaign_name));
     return r;
   }, [unified, canalFilter, campanha]);
 
