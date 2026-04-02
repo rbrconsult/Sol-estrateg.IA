@@ -34,7 +34,7 @@ import RoboFupFrio from "./pages/RoboFupFrio";
 
 import Roadmap from "./pages/Roadmap";
 import PainelComercial from "./pages/PainelComercial";
-import Reports from "./pages/Reports";
+
 import NotFound from "./pages/NotFound";
 import SLAMonitor from "./pages/SLAMonitor";
 
