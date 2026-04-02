@@ -180,7 +180,7 @@ export default function SLAMonitor() {
   const { openLead360 } = useLead360();
 
   const pf = usePageFilters({ showPeriodo: true, showSearch: true });
-  const records = useMemo(() => pf.filterRecords(solLeads), [solLeads, pf.filterRecords]);
+  const records = useMemo(() => pf.filterRecords(solLeads ?? []), [solLeads, pf.filterRecords]);
   const d = useMemo(() => deriveSLAData(records), [records]);
 
   const searchResult = useMemo(() => {
