@@ -24,9 +24,9 @@ const statusFilters: { value: SkillStatus | "all" | "pendente"; label: string }[
   { value: "all", label: "Todas" },
   { value: "ativo", label: "✅ Ativas" },
   { value: "pendente", label: "⚙️ Pendente" },
-  { value: "precisa_dados", label: "⏳ Dados" },
-  { value: "criar", label: "🔨 Criar" },
-  { value: "futuro", label: "🔮 Futuro" },
+  { value: "precisa_dados", label: "⏳ Aguardando Dados" },
+  { value: "criar", label: "📝 Rascunho" },
+  { value: "futuro", label: "🚀 Em Criação" },
 ];
 
 const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagens", "seguros", "academia"];
