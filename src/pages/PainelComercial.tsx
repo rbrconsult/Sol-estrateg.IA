@@ -418,6 +418,7 @@ export default function PainelComercial() {
                                     <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
                                   </div>
                                   <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                                    <span className="font-mono">{l.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
                                     <span className={tempColor(l.temp)}>{l.temp}</span>
                                     <span>Score {l.score}</span>
                                     <span className="truncate">{l.etapa}</span>
