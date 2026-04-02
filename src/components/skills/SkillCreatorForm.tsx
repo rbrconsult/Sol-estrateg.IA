@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, CheckCircle2, Copy, Plus } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, Copy, Plus, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { verticalConfig, type Vertical } from "@/data/skillsMap";
@@ -32,16 +32,61 @@ interface SkillDefinition {
   _review?: SkillReview;
 }
 
+const WIZARD_QUESTIONS = [
+  {
+    key: "dor",
+    label: "Dor operacional / comercial",
+    question: "Qual dor operacional ou comercial essa skill resolve?",
+    placeholder: "Ex: Leads quentes ficam 3+ dias sem contato do closer, gerando perda de vendas...",
+  },
+  {
+    key: "momento",
+    label: "Momento do fluxo",
+    question: "Em que momento do fluxo ela entra?",
+    placeholder: "Ex: Após qualificação pelo robô SDR, antes da transferência ao comercial...",
+  },
+  {
+    key: "autonomia",
+    label: "Autonomia de decisão",
+    question: "Que decisão ela toma sozinha e qual ela só recomenda?",
+    placeholder: "Ex: Toma sozinha: remarcar follow-up. Só recomenda: desqualificar lead de alto score...",
+  },
+  {
+    key: "sistemas",
+    label: "Sistemas (lê / escreve)",
+    question: "Que sistemas ela lê e em quais ela escreve?",
+    placeholder: "Ex: Lê: sol_leads_sync, sol_equipe_sync. Escreve: sol_insights, notifica via WhatsApp...",
+  },
+  {
+    key: "impacto",
+    label: "Impacto esperado",
+    question: "Qual é o impacto financeiro ou operacional esperado?",
+    placeholder: "Ex: Reduzir tempo médio de primeiro contato de 4h para 15min, aumentando conversão em ~12%...",
+  },
+];
+
 export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: SkillDefinition) => void }) {
-  const [description, setDescription] = useState("");
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({
+    dor: "", momento: "", autonomia: "", sistemas: "", impacto: "",
+  });
   const [vertical, setVertical] = useState<string>("universal");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SkillDefinition | null>(null);
   const [pipeline, setPipeline] = useState<{ stage1: string; stage2: string } | null>(null);
 
+  const currentQ = WIZARD_QUESTIONS[currentStep];
+  const isLastStep = currentStep === WIZARD_QUESTIONS.length - 1;
+  const allAnswered = WIZARD_QUESTIONS.every(q => answers[q.key].trim().length >= 5);
+
+  const buildDescription = () => {
+    return WIZARD_QUESTIONS.map(q => `**${q.label}**: ${answers[q.key]}`).join("\n\n");
+  };
+
   const handleGenerate = async () => {
+    const description = buildDescription();
     if (description.length < 10) {
-      toast.error("Descreva a skill com pelo menos 10 caracteres.");
+      toast.error("Preencha todas as perguntas do wizard.");
       return;
     }
 
@@ -110,36 +155,116 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            Descreva a automação que deseja
-          </label>
-          <Textarea
-            placeholder="Ex: Quero uma skill que detecte leads que responderam 'não tenho interesse' e automaticamente marque como desqualificado, notificando o closer via WhatsApp..."
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className="mt-1 text-sm min-h-[80px]"
-            maxLength={2000}
-          />
-          <p className="text-[10px] text-muted-foreground mt-1">{description.length}/2000</p>
-        </div>
+        {/* Step indicator */}
+        {!result && (
+          <div className="flex items-center gap-1">
+            {WIZARD_QUESTIONS.map((q, i) => (
+              <button
+                key={q.key}
+                onClick={() => setCurrentStep(i)}
+                className={`flex-1 h-1.5 rounded-full transition-all ${
+                  i === currentStep
+                    ? "bg-primary"
+                    : answers[q.key].trim().length >= 5
+                    ? "bg-primary/40"
+                    : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
-        <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Vertical</label>
-          <Select value={vertical} onValueChange={setVertical}>
-            <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {(Object.entries(verticalConfig) as [Vertical, typeof verticalConfig[Vertical]][]).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.emoji} {v.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!result && (
+          <>
+            {/* Current question */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  {currentStep + 1}/{WIZARD_QUESTIONS.length} — {currentQ.label}
+                </label>
+                {answers[currentQ.key].trim().length >= 5 && (
+                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                )}
+              </div>
+              <p className="text-xs font-medium mb-1.5">{currentQ.question}</p>
+              <Textarea
+                placeholder={currentQ.placeholder}
+                value={answers[currentQ.key]}
+                onChange={e => setAnswers(prev => ({ ...prev, [currentQ.key]: e.target.value }))}
+                className="text-sm min-h-[70px]"
+                maxLength={500}
+              />
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {answers[currentQ.key].length}/500
+              </p>
+            </div>
 
-        <Button onClick={handleGenerate} disabled={isGenerating || description.length < 10} className="w-full gap-2">
-          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {isGenerating ? "Gerando com IA..." : "Gerar Skill"}
-        </Button>
+            {/* Navigation */}
+            <div className="flex items-center gap-2">
+              {currentStep > 0 && (
+                <Button variant="ghost" size="sm" className="text-xs"
+                  onClick={() => setCurrentStep(s => s - 1)}>
+                  ← Anterior
+                </Button>
+              )}
+              <div className="flex-1" />
+              {!isLastStep ? (
+                <Button variant="outline" size="sm" className="text-xs gap-1"
+                  disabled={answers[currentQ.key].trim().length < 5}
+                  onClick={() => setCurrentStep(s => s + 1)}>
+                  Próxima <ChevronRight className="h-3 w-3" />
+                </Button>
+              ) : null}
+            </div>
+
+            {/* Vertical selector + Generate button */}
+            {isLastStep && (
+              <div className="space-y-2 pt-1 border-t border-border/30">
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                    Vertical
+                  </label>
+                  <Select value={vertical} onValueChange={setVertical}>
+                    <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.entries(verticalConfig) as [Vertical, typeof verticalConfig[Vertical]][]).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.emoji} {v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button onClick={handleGenerate} disabled={isGenerating || !allAnswered} className="w-full gap-2">
+                  {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {isGenerating ? "Gerando com IA (GPT-4o + Claude Opus)..." : "Gerar Skill"}
+                </Button>
+
+                {!allAnswered && (
+                  <p className="text-[10px] text-amber-400 text-center">
+                    ⚠️ Preencha todas as 5 perguntas para gerar
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Summary of answered questions */}
+            {WIZARD_QUESTIONS.filter((q, i) => i !== currentStep && answers[q.key].trim().length >= 5).length > 0 && (
+              <div className="space-y-1 pt-2 border-t border-border/20">
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Respostas</span>
+                {WIZARD_QUESTIONS.map((q, i) => {
+                  if (i === currentStep || answers[q.key].trim().length < 5) return null;
+                  return (
+                    <button key={q.key} onClick={() => setCurrentStep(i)}
+                      className="w-full text-left rounded px-2 py-1 hover:bg-muted/30 transition-colors">
+                      <span className="text-[9px] text-muted-foreground">{q.label}:</span>
+                      <p className="text-[10px] line-clamp-1">{answers[q.key]}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
 
         {result && (
           <Card className="bg-card/80 border-border/40">
@@ -200,7 +325,6 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                 </div>
               )}
 
-              {/* Review do Claude Opus 4.6 */}
               {result._review && (
                 <div className={`rounded-lg p-2.5 border ${
                   result._review.error ? "bg-destructive/5 border-destructive/20" 
@@ -227,6 +351,17 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                   )}
                 </div>
               )}
+
+              {/* Button to create another */}
+              <Button variant="ghost" size="sm" className="w-full text-xs mt-2"
+                onClick={() => {
+                  setResult(null);
+                  setPipeline(null);
+                  setCurrentStep(0);
+                  setAnswers({ dor: "", momento: "", autonomia: "", sistemas: "", impacto: "" });
+                }}>
+                + Criar outra skill
+              </Button>
             </CardContent>
           </Card>
         )}
