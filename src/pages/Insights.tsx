@@ -11,7 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
 import { SkillReportsPanel } from "@/components/skills/SkillReportsPanel";
-import { SkillICPConfigPanel } from "@/components/skills/SkillICPConfigPanel";
+import { SkillConfigPanel } from "@/components/skills/SkillConfigPanel";
+import { skillConfigSchemas } from "@/data/skillConfigSchemas";
 import { SkillCreatorForm } from "@/components/skills/SkillCreatorForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -231,7 +232,7 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
-                    const hasConfigPanel = skill.id === "6.11" || skill.id === "1.1";
+                    const hasConfigPanel = skill.id === "6.11" || !!skillConfigSchemas[skill.id];
                     const isExpanded = expandedSkillId === skill.id;
                     return (
                       <Card
@@ -290,8 +291,7 @@ export default function Insights() {
                           {/* Inline config panels */}
                           {isOn && isExpanded && (
                             <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
-                              {skill.id === "6.11" && <SkillReportsPanel />}
-                              {skill.id === "1.1" && <SkillICPConfigPanel />}
+                              {skill.id === "6.11" ? <SkillReportsPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} />}
                             </div>
                           )}
                         </CardContent>
