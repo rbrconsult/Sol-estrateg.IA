@@ -79,7 +79,7 @@ const menuGroups: MenuGroup[] = [
       { title: "BI Dashboard", icon: BarChart3, path: "/bi", moduleKey: "bi" },
       { title: "Monitor de SLA", icon: Clock, path: "/sla", moduleKey: "sla-monitor" },
       { title: "Analista Follow-up", icon: Target, path: "/followup", moduleKey: "followup" },
-      { title: "Reports WhatsApp", icon: FileText, path: "/reports", moduleKey: "reports" },
+      
       { title: "Skills & IA", icon: Brain, path: "/insights", moduleKey: "bi" },
     ],
   },
