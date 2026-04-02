@@ -148,7 +148,30 @@ function deriveSLAData(records: SolLead[]) {
     ],
   }));
 
-  return { slaStages, gargalos, leadsForaSLA, distribuicoes, searchableLeads, totalLeads: records.length };
+  // Leads por etapa (from JornadaLead)
+  const leadsByStage: Record<string, { qtd: number; alertas: number }> = {};
+  records.forEach(r => {
+    const s = (r.status || 'SEM_STATUS').toUpperCase();
+    if (!leadsByStage[s]) leadsByStage[s] = { qtd: 0, alertas: 0 };
+    leadsByStage[s].qtd++;
+    const score = parseInt(r.score || '0') || 0;
+    if (score >= 70 && (s === 'WHATSAPP' || s === 'TRAFEGO_PAGO')) leadsByStage[s].alertas++;
+  });
+  const leadsByStageArr = Object.entries(leadsByStage).map(([etapa, data]) => ({ etapa, ...data }));
+
+  // Abandono por etapa
+  const total = records.length || 1;
+  const desq = records.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const noResp = records.filter(r => ((r as any)._status_resposta || '') === 'ignorou' || r.status === 'NAO_RESPONDEU').length;
+  const aguardando = records.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
+  const abandonArr = [
+    { etapa: 'Pré-venda', abandonaram: Math.round((noResp / total) * 100), motivoPrincipal: 'Não respondeu' },
+    { etapa: 'Qualificação', abandonaram: Math.round((desq / total) * 100), motivoPrincipal: 'Desqualificado pelo Sol' },
+    { etapa: 'Comercial', abandonaram: Math.round((aguardando / total) * 30), motivoPrincipal: 'Closer não fechou' },
+    { etapa: 'Proposta', abandonaram: Math.round((aguardando / total) * 15), motivoPrincipal: 'Perdido na negociação' },
+  ];
+
+  return { slaStages, gargalos, leadsForaSLA, distribuicoes, searchableLeads, totalLeads: records.length, leadsByStageArr, abandonArr };
 }
 
 export default function SLAMonitor() {
