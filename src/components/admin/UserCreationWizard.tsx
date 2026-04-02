@@ -16,7 +16,7 @@ const MODULE_GROUPS = [
   { label: 'Pré-venda', icon: '📥', keys: ['conferencia', 'leads', 'robo-sol', 'robo-fup-frio'] },
   { label: 'Comercial', icon: '💼', keys: ['pipeline', 'painel-comercial', 'forecast', 'vendedores', 'comissoes'] },
   { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'sla-monitor', 'ads-performance', 'midia-receita'] },
-  { label: 'Insights', icon: '📝', keys: ['reports'] },
+  
   { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'reprocessamento', 'qualificacao', 'sanitizacao', 'ajuda'] },
   { label: 'Admin', icon: '🔒', keys: ['time-comercial', 'admin-pessoas'] },
 ];

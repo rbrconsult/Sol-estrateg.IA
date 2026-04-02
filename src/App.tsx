@@ -34,7 +34,7 @@ import RoboFupFrio from "./pages/RoboFupFrio";
 
 import Roadmap from "./pages/Roadmap";
 import PainelComercial from "./pages/PainelComercial";
-import Reports from "./pages/Reports";
+
 import NotFound from "./pages/NotFound";
 import SLAMonitor from "./pages/SLAMonitor";
 
@@ -129,7 +129,7 @@ const App = () => (
               <Route path="/jornada-lead" element={<Navigate to="/sla" replace />} />
               <Route path="/roadmap" element={<ProtectedRoute><MainLayout><Roadmap /></MainLayout></ProtectedRoute>} />
               <Route path="/painel-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="painel-comercial"><PainelComercial /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="reports"><Reports /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/reports" element={<Navigate to="/insights" replace />} />
               <Route path="/sla" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="sla-monitor"><SLAMonitor /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/followup" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="followup"><AnalistaFollowup /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/comissoes" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="comissoes"><Comissoes /></ModuleGuard></MainLayout></ProtectedRoute>} />
