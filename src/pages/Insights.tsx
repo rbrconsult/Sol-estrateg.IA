@@ -231,20 +231,20 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
-                    const isReportsSkill = skill.id === "6.11";
+                    const hasConfigPanel = skill.id === "6.11" || skill.id === "1.1";
                     const isExpanded = expandedSkillId === skill.id;
                     return (
                       <Card
                         key={skill.id}
-                        className={`border transition-colors cursor-pointer ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"} ${isExpanded && isReportsSkill ? "col-span-full" : ""}`}
-                        onClick={() => isReportsSkill && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
+                        className={`border transition-colors cursor-pointer ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"} ${isExpanded && hasConfigPanel ? "col-span-full" : ""}`}
+                        onClick={() => hasConfigPanel && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
                       >
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
                               <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
-                              {isReportsSkill && isOn && (
+                              {hasConfigPanel && isOn && (
                                 <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20">
                                   {isExpanded ? "▼ Fechar" : "▶ Configurar"}
                                 </Badge>
@@ -287,10 +287,11 @@ export default function Insights() {
                               </TooltipContent>
                             </Tooltip>
                           )}
-                          {/* Inline panel for Reports skill */}
-                          {isReportsSkill && isOn && isExpanded && (
+                          {/* Inline config panels */}
+                          {isOn && isExpanded && (
                             <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
-                              <SkillReportsPanel />
+                              {skill.id === "6.11" && <SkillReportsPanel />}
+                              {skill.id === "1.1" && <SkillICPConfigPanel />}
                             </div>
                           )}
                         </CardContent>
