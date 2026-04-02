@@ -30,7 +30,7 @@ export default function GoogleAdsPage() {
     if (dispositivo !== 'all') r = r.filter((x: any) => x.dispositivo === dispositivo);
     if (rede !== 'all') r = r.filter((x: any) => x.rede === rede);
     return r;
-  }, [rows, campanha, dispositivo, rede]);
+  }, [rows, selectedCampanhas, dispositivo, rede]);
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign_name).filter(Boolean))] as string[], [rows]);
   const dispositivos = useMemo(() => [...new Set((rows || []).map((r: any) => r.dispositivo).filter(Boolean))] as string[], [rows]);
