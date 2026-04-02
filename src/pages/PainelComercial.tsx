@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,9 @@ import {
   RefreshCcw,
   Zap,
   CheckCircle2,
+  Clock,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
@@ -82,6 +86,19 @@ function getEtapa(r: SolLead): string {
   return s || "Novo";
 }
 
+const INACTIVITY_RISK_MINUTES = 10;
+
+function isInactive(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return true;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  return diff > INACTIVITY_RISK_MINUTES * 60 * 1000;
+}
+
+function inactivityMinutes(dateStr: string | null | undefined): number {
+  if (!dateStr) return 9999;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+}
+
 function timeSince(dateStr: string): string {
   if (!dateStr) return "";
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -124,6 +141,29 @@ function deriveAlerts(records: SolLead[]): Alert[] {
     const score = parseInt(r.score || "0") || 0;
     const temp = (r.temperatura || "").toUpperCase();
     const status = (r.status || "").toUpperCase();
+
+    // ⚠️ Inactivity risk: any lead inactive >10min that is still in-progress
+    const activeStatuses = ["WHATSAPP", "EM_QUALIFICACAO", "TRAFEGO_PAGO", "QUALIFICADO", "AGENDAMENTO", "PROPOSTA", "NEGOCIACAO"];
+    if (activeStatuses.includes(status) && isInactive(r.ts_ultima_interacao)) {
+      const mins = inactivityMinutes(r.ts_ultima_interacao);
+      const label = mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60}min inativo` : `${mins}min inativo`;
+      alerts.push({
+        id: `inativo-${id++}`,
+        tipo: "inativo",
+        label: "⏰ Risco Inatividade",
+        desc: `${r.nome || r.telefone} — ${label} sem interação`,
+        severity: mins >= 60 ? "critical" : "warning",
+        time: timeSince(r.ts_ultima_interacao || r.ts_cadastro || ""),
+        leadData: {
+          nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+          telefone: r.telefone,
+          score,
+          temp: temp || "MORNO",
+          etapa: getEtapa(r),
+          valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
+        },
+      });
+    }
 
     if ((score >= 70 || temp === "QUENTE") && status !== "QUALIFICADO" && status !== "AGENDAMENTO") {
       alerts.push({
@@ -246,8 +286,13 @@ function deriveSummary(records: SolLead[]) {
   const quentes = records.filter((r) => (r.temperatura || "").toUpperCase() === "QUENTE").length;
   const mornos = records.filter((r) => (r.temperatura || "").toUpperCase() === "MORNO").length;
   const frios = records.filter((r) => (r.temperatura || "").toUpperCase() === "FRIO").length;
+  const emRiscoInatividade = records.filter((r) => {
+    const s = (r.status || "").toUpperCase();
+    const active = ["WHATSAPP", "EM_QUALIFICACAO", "TRAFEGO_PAGO", "QUALIFICADO", "AGENDAMENTO", "PROPOSTA", "NEGOCIACAO"];
+    return active.includes(s) && isInactive(r.ts_ultima_interacao);
+  }).length;
 
-  return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios };
+  return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios, emRiscoInatividade };
 }
 
 /* ── report history — empty, will be populated from real data ── */
@@ -257,6 +302,7 @@ const mensagensReports: { id: number; tipo: string; titulo: string; enviadoPara:
 
 export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
+  const navigate = useNavigate();
   const { openLead360 } = useLead360();
   const { data: solLeads, isLoading } = useSolLeads();
   
@@ -297,9 +343,20 @@ export default function PainelComercial() {
           <p className="text-sm text-muted-foreground mt-1">Visão operacional em tempo real — alertas, fila e ações</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate("/qualificacao")} className="text-xs gap-1">
+            <Sparkles className="h-3.5 w-3.5" /> Qualificar
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/reprocessamento")} className="text-xs gap-1">
+            <RotateCcw className="h-3.5 w-3.5" /> Reprocessar
+          </Button>
           {orgFilterActive && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
               🏢 {selectedOrgName}
+            </Badge>
+          )}
+          {summary.emRiscoInatividade > 0 && (
+            <Badge variant="destructive" className="text-xs gap-1 animate-pulse">
+              <Clock className="h-3 w-3" /> {summary.emRiscoInatividade} inativos
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
@@ -417,13 +474,20 @@ export default function PainelComercial() {
                               <button
                                 key={`${l.telefone}-${i}`}
                                 onClick={() => handleOpenLead(l)}
-                                className="w-full flex flex-col rounded-md border border-border/50 bg-card p-2 text-left hover:bg-secondary/50 transition-colors"
+                                className={`w-full flex flex-col rounded-md border p-2 text-left hover:bg-secondary/50 transition-colors ${
+                                  isInactive(l.tsUltimaInteracao) ? "border-destructive/40 bg-destructive/5" : "border-border/50 bg-card"
+                                }`}
                               >
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                       <span className="text-xs font-medium truncate">{l.nome}</span>
                                       <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
+                                      {isInactive(l.tsUltimaInteracao) && (
+                                        <Badge variant="destructive" className="text-[8px] h-3.5 px-1 gap-0.5 animate-pulse">
+                                          <Clock className="h-2.5 w-2.5" /> {inactivityMinutes(l.tsUltimaInteracao) >= 60 ? `${Math.floor(inactivityMinutes(l.tsUltimaInteracao) / 60)}h` : `${inactivityMinutes(l.tsUltimaInteracao)}m`}
+                                        </Badge>
+                                      )}
                                     </div>
                                     <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
                                       <span className="font-mono">{l.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
@@ -435,7 +499,7 @@ export default function PainelComercial() {
                                   <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1 text-[9px] text-muted-foreground border-t border-border/30 pt-1">
-                                  <span>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                                  <span className={isInactive(l.tsUltimaInteracao) ? "text-destructive font-semibold" : ""}>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                   <span>📤 Transferido: {l.tsTransferido ? new Date(l.tsTransferido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                 </div>
                               </button>
@@ -466,7 +530,7 @@ export default function PainelComercial() {
                           { label: "Responderam", value: summary.responderam, icon: CalendarCheck },
                           { label: "FUP Ativos", value: summary.fupAtivos, icon: Send },
                           { label: "Score ∅", value: summary.avgScore, icon: Zap },
-                          { label: "Quentes", value: summary.quentes, icon: Flame },
+                          { label: "⚠️ Em Risco", value: summary.emRiscoInatividade, icon: Clock },
                         ].map((k) => (
                           <div key={k.label} className="rounded-lg border border-border/50 bg-secondary/30 p-2 text-center">
                             <k.icon className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-0.5" />
