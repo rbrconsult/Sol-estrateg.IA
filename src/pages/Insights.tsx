@@ -230,21 +230,30 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
+                    const isReportsSkill = skill.id === "6.11";
+                    const isExpanded = expandedSkillId === skill.id;
                     return (
                       <Card
                         key={skill.id}
-                        className={`border transition-colors ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"}`}
+                        className={`border transition-colors cursor-pointer ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"} ${isExpanded && isReportsSkill ? "col-span-full" : ""}`}
+                        onClick={() => isReportsSkill && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
                       >
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
                               <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
+                              {isReportsSkill && isOn && (
+                                <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20">
+                                  {isExpanded ? "▼ Fechar" : "▶ Configurar"}
+                                </Badge>
+                              )}
                             </div>
                             <Switch
                               checked={isOn}
                               onCheckedChange={(checked) => toggle({ skillId: skill.id, enabled: checked })}
                               className="shrink-0"
+                              onClick={e => e.stopPropagation()}
                             />
                           </div>
                           <CardTitle className="text-sm mt-1 leading-tight">{skill.name}</CardTitle>
@@ -276,6 +285,12 @@ export default function Insights() {
                                 {skill.output && <p className="text-xs mt-1"><strong>Output:</strong> {skill.output}</p>}
                               </TooltipContent>
                             </Tooltip>
+                          )}
+                          {/* Inline panel for Reports skill */}
+                          {isReportsSkill && isOn && isExpanded && (
+                            <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
+                              <SkillReportsPanel />
+                            </div>
                           )}
                         </CardContent>
                       </Card>
