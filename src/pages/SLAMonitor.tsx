@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -148,7 +148,30 @@ function deriveSLAData(records: SolLead[]) {
     ],
   }));
 
-  return { slaStages, gargalos, leadsForaSLA, distribuicoes, searchableLeads, totalLeads: records.length };
+  // Leads por etapa (from JornadaLead)
+  const leadsByStage: Record<string, { qtd: number; alertas: number }> = {};
+  records.forEach(r => {
+    const s = (r.status || 'SEM_STATUS').toUpperCase();
+    if (!leadsByStage[s]) leadsByStage[s] = { qtd: 0, alertas: 0 };
+    leadsByStage[s].qtd++;
+    const score = parseInt(r.score || '0') || 0;
+    if (score >= 70 && (s === 'WHATSAPP' || s === 'TRAFEGO_PAGO')) leadsByStage[s].alertas++;
+  });
+  const leadsByStageArr = Object.entries(leadsByStage).map(([etapa, data]) => ({ etapa, ...data }));
+
+  // Abandono por etapa
+  const total = records.length || 1;
+  const desq = records.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const noResp = records.filter(r => ((r as any)._status_resposta || '') === 'ignorou' || r.status === 'NAO_RESPONDEU').length;
+  const aguardando = records.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
+  const abandonArr = [
+    { etapa: 'Pré-venda', abandonaram: Math.round((noResp / total) * 100), motivoPrincipal: 'Não respondeu' },
+    { etapa: 'Qualificação', abandonaram: Math.round((desq / total) * 100), motivoPrincipal: 'Desqualificado pelo Sol' },
+    { etapa: 'Comercial', abandonaram: Math.round((aguardando / total) * 30), motivoPrincipal: 'Closer não fechou' },
+    { etapa: 'Proposta', abandonaram: Math.round((aguardando / total) * 15), motivoPrincipal: 'Perdido na negociação' },
+  ];
+
+  return { slaStages, gargalos, leadsForaSLA, distribuicoes, searchableLeads, totalLeads: records.length, leadsByStageArr, abandonArr };
 }
 
 export default function SLAMonitor() {
@@ -437,6 +460,64 @@ export default function SLAMonitor() {
           ) : (
             <p className="text-xs text-muted-foreground">Digite nome ou telefone para buscar a jornada completa.</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Leads por Etapa */}
+      {d.leadsByStageArr.length > 0 && (
+        <Card className="border-border/50">
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-sm font-semibold">Leads por Etapa — Agora</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/30">
+                  <TableHead className="text-[10px] uppercase h-8">Etapa</TableHead>
+                  <TableHead className="text-[10px] uppercase h-8 text-right">Qtd</TableHead>
+                  <TableHead className="text-[10px] uppercase h-8 text-right">Alertas SLA</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {d.leadsByStageArr.map(l => (
+                  <TableRow key={l.etapa} className="border-border/20">
+                    <TableCell className="font-medium text-xs py-2">{l.etapa}</TableCell>
+                    <TableCell className="text-right text-xs font-semibold py-2">{l.qtd}</TableCell>
+                    <TableCell className="text-right py-2">
+                      {l.alertas > 0 ? (
+                        <Badge variant="destructive" className="text-[10px] gap-1">
+                          <AlertTriangle className="h-3 w-3" /> {l.alertas}
+                        </Badge>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Abandono por Etapa */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2 px-4 pt-4">
+          <CardTitle className="text-sm font-semibold">Taxa de Abandono por Etapa</CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          <div className="space-y-3">
+            {d.abandonArr.map(a => (
+              <div key={a.etapa} className="flex items-center gap-4">
+                <span className="text-xs text-muted-foreground w-24 text-right shrink-0">{a.etapa}</span>
+                <div className="flex-1 bg-muted rounded-full h-6 relative overflow-hidden">
+                  <div className="bg-destructive/60 h-full rounded-full flex items-center justify-end pr-2 transition-all duration-1000"
+                    style={{ width: `${Math.min(a.abandonaram, 100)}%` }}>
+                    <span className="text-[10px] font-bold text-destructive-foreground">{a.abandonaram}%</span>
+                  </div>
+                </div>
+                <span className="text-xs text-muted-foreground w-40 shrink-0">{a.motivoPrincipal}</span>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

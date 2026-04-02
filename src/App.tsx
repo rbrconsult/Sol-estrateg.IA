@@ -31,7 +31,7 @@ import BI from "./pages/BI";
 // AdsPerformance, MidiaReceita, GA4 legacy pages replaced by campanhas/* versions
 import RoboSol from "./pages/RoboSol";
 import RoboFupFrio from "./pages/RoboFupFrio";
-import JornadaLead from "./pages/JornadaLead";
+
 import Roadmap from "./pages/Roadmap";
 import PainelComercial from "./pages/PainelComercial";
 import Reports from "./pages/Reports";
@@ -126,7 +126,7 @@ const App = () => (
 
               <Route path="/robo-sol" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="robo-sol"><RoboSol /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/robo-fup-frio" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="robo-fup-frio"><RoboFupFrio /></ModuleGuard></MainLayout></ProtectedRoute>} />
-              <Route path="/jornada-lead" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="jornada-lead"><JornadaLead /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/jornada-lead" element={<Navigate to="/sla" replace />} />
               <Route path="/roadmap" element={<ProtectedRoute><MainLayout><Roadmap /></MainLayout></ProtectedRoute>} />
               <Route path="/painel-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="painel-comercial"><PainelComercial /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="reports"><Reports /></ModuleGuard></MainLayout></ProtectedRoute>} />
