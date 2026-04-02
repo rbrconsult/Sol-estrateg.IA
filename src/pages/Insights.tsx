@@ -20,9 +20,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
+const statusFilters: { value: SkillStatus | "all" | "pendente"; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "ativo", label: "✅ Ativas" },
+  { value: "pendente", label: "⚙️ Pendente" },
   { value: "precisa_dados", label: "⏳ Dados" },
   { value: "criar", label: "🔨 Criar" },
   { value: "futuro", label: "🔮 Futuro" },
@@ -31,7 +32,7 @@ const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
 const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagens", "seguros", "academia"];
 
 export default function Insights() {
-  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all" | "pendente">("all");
   const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("all");
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
@@ -68,13 +69,18 @@ export default function Insights() {
     return skillCategories.map(cat => ({
       ...cat,
       skills: cat.skills.filter(s => {
-        if (statusFilter !== "all" && s.status !== statusFilter) return false;
+        if (statusFilter === "pendente") {
+          const isOn = !!toggles[s.id];
+          const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11";
+          const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
+          if (!(isOn && hasPanel && !isConfigDone)) return false;
+        } else if (statusFilter !== "all" && s.status !== statusFilter) return false;
         if (verticalFilter !== "all" && !s.verticals.includes(verticalFilter)) return false;
         if (q && !s.name.toLowerCase().includes(q) && !s.desc.toLowerCase().includes(q) && !s.id.includes(q)) return false;
         return true;
       }),
     })).filter(cat => cat.skills.length > 0);
-  }, [statusFilter, verticalFilter, search]);
+  }, [statusFilter, verticalFilter, search, toggles, configuredSkills]);
 
   const visibleSkills = useMemo(() => filteredCategories.flatMap(c => c.skills), [filteredCategories]);
 
