@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
 import { SkillReportsPanel } from "@/components/skills/SkillReportsPanel";
+import { SkillICPConfigPanel } from "@/components/skills/SkillICPConfigPanel";
 import { SkillCreatorForm } from "@/components/skills/SkillCreatorForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
