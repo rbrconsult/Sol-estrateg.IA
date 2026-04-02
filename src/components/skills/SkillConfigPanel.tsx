@@ -83,6 +83,7 @@ export function SkillConfigPanel({ schema, onSaved }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skill-config", schema.skillId] });
       toast.success("Configuração salva!");
+      onSaved?.();
     },
     onError: (e: any) => toast.error(e.message),
   });
