@@ -19,7 +19,7 @@ interface Props {
   onSaved?: () => void;
 }
 
-export function SkillConfigPanel({ schema }: Props) {
+export function SkillConfigPanel({ schema, onSaved }: Props) {
   const queryClient = useQueryClient();
   const configKey = `skill_config_${schema.skillId}`;
 
