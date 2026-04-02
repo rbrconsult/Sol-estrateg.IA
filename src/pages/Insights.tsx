@@ -69,7 +69,12 @@ export default function Insights() {
     return skillCategories.map(cat => ({
       ...cat,
       skills: cat.skills.filter(s => {
-        if (statusFilter !== "all" && s.status !== statusFilter) return false;
+        if (statusFilter === "pendente") {
+          const isOn = !!toggles[s.id];
+          const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11";
+          const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
+          if (!(isOn && hasPanel && !isConfigDone)) return false;
+        } else if (statusFilter !== "all" && s.status !== statusFilter) return false;
         if (verticalFilter !== "all" && !s.verticals.includes(verticalFilter)) return false;
         if (q && !s.name.toLowerCase().includes(q) && !s.desc.toLowerCase().includes(q) && !s.id.includes(q)) return false;
         return true;
