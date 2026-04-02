@@ -51,7 +51,7 @@ export default function MetaAdsPage() {
     if (adset !== 'all') r = r.filter((x: any) => x.adset_name === adset);
     if (statusFilter !== 'all') r = r.filter((x: any) => x.campaign_status === statusFilter);
     return r;
-  }, [rows, campanha, adset, statusFilter]);
+  }, [rows, selectedCampanhas, adset, statusFilter]);
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign_name).filter(Boolean))] as string[], [rows]);
   const adsets = useMemo(() => [...new Set((rows || []).map((r: any) => r.adset_name).filter(Boolean))] as string[], [rows]);
