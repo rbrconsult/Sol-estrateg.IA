@@ -73,6 +73,17 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
+  "1.4": {
+    skillId: "1.4",
+    title: "Análise Canal × Conversão",
+    description: "CPL e taxa de conversão por canal de origem",
+    fields: [
+      { key: "periodo_analise", label: "Período de análise", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "agrupar_por", label: "Agrupar por", type: "select", defaultValue: "canal", options: [{ label: "Canal de origem", value: "canal" }, { label: "Campanha", value: "campanha" }, { label: "Canal + Campanha", value: "ambos" }] },
+      { key: "incluir_custo_ia", label: "Incluir custo IA no CPL", type: "toggle", defaultValue: true, description: "Soma custo do agente IA ao CPL do canal" },
+    ],
+  },
+
   "1.5": {
     skillId: "1.5",
     title: "Gerador de Script por Persona",
@@ -124,6 +135,17 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     fields: [
       { key: "dias_analise", label: "Janela de análise", emoji: "📊", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
       { key: "ajustar_fup", label: "Ajustar FUP automaticamente", type: "toggle", defaultValue: false, description: "Altera horário de envio baseado no pico detectado" },
+    ],
+  },
+
+  "1.10": {
+    skillId: "1.10",
+    title: "OCR Conta de Luz",
+    description: "GPT-4 Vision extrai valor real da foto da conta de energia",
+    fields: [
+      { key: "modelo_ocr", label: "Modelo de OCR", emoji: "🤖", type: "select", defaultValue: "gpt4-vision", options: [{ label: "GPT-4 Vision", value: "gpt4-vision" }, { label: "Gemini 2.5 Flash", value: "gemini-flash" }] },
+      { key: "confianca_minima", label: "Confiança mínima", emoji: "🎯", type: "slider", defaultValue: 80, min: 50, max: 100, step: 5, unit: "%", description: "Abaixo disso pede confirmação ao lead" },
+      { key: "solicitar_reenvio", label: "Pedir reenvio se baixa confiança", type: "toggle", defaultValue: true },
     ],
   },
 
@@ -186,6 +208,39 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
+  "2.6": {
+    skillId: "2.6",
+    title: "Ranking Performance Vendedores",
+    description: "Ranking de conversão e produtividade por vendedor",
+    fields: [
+      { key: "periodo", label: "Período do ranking", emoji: "📅", type: "select", defaultValue: "mensal", options: [{ label: "Semanal", value: "semanal" }, { label: "Mensal", value: "mensal" }, { label: "Trimestral", value: "trimestral" }] },
+      { key: "metrica_principal", label: "Métrica principal", emoji: "🎯", type: "select", defaultValue: "conversao", options: [{ label: "Taxa de conversão", value: "conversao" }, { label: "Volume de leads", value: "volume" }, { label: "Receita gerada", value: "receita" }] },
+      { key: "enviar_whatsapp", label: "Enviar ranking via WhatsApp", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "2.7": {
+    skillId: "2.7",
+    title: "Coach de Vendas",
+    description: "IA analisa conversas e sugere melhorias",
+    fields: [
+      { key: "modelo_ia", label: "Modelo IA", emoji: "🤖", type: "select", defaultValue: "gpt-5-mini", options: [{ label: "GPT-5 Mini", value: "gpt-5-mini" }, { label: "GPT-5", value: "gpt-5" }, { label: "Claude Opus", value: "claude-opus" }] },
+      { key: "analisar_perdas", label: "Analisar apenas perdas", type: "toggle", defaultValue: true, description: "Foca nas conversas que não converteram" },
+      { key: "frequencia", label: "Frequência de análise", type: "select", defaultValue: "semanal", options: [{ label: "Diário", value: "diario" }, { label: "Semanal", value: "semanal" }] },
+    ],
+  },
+
+  "2.8": {
+    skillId: "2.8",
+    title: "Gerador de Proposta",
+    description: "Gera proposta automática baseada no perfil solar do lead",
+    fields: [
+      { key: "modelo_ia", label: "Modelo IA", emoji: "🤖", type: "select", defaultValue: "gpt-5-mini", options: [{ label: "GPT-5 Mini", value: "gpt-5-mini" }, { label: "GPT-5", value: "gpt-5" }] },
+      { key: "incluir_financiamento", label: "Incluir opções de financiamento", type: "toggle", defaultValue: true },
+      { key: "margem_padrao", label: "Margem padrão", emoji: "💰", type: "slider", defaultValue: 25, min: 10, max: 50, step: 5, unit: "%" },
+    ],
+  },
+
   "2.9": {
     skillId: "2.9",
     title: "Alerta Risco de Perda",
@@ -203,12 +258,32 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     description: "Percentuais de comissão por vendedor",
     fields: [
       { key: "comissao_padrao", label: "Comissão padrão", emoji: "💰", type: "slider", defaultValue: 2, min: 0.5, max: 10, step: 0.5, unit: "%" },
-      { key: "comissao_premium", label: "Comissão premium", type: "slider", defaultValue: 3, min: 0.5, max: 10, step: 0.5, unit: "%" },
+      { key: "comissao_premium", label: "Comissão premium (Danieli)", type: "slider", defaultValue: 3, min: 0.5, max: 10, step: 0.5, unit: "%" },
       { key: "base_calculo", label: "Base de cálculo", type: "select", defaultValue: "valor_proposta", options: [{ label: "Valor da proposta", value: "valor_proposta" }, { label: "Valor kWp", value: "kwp" }] },
     ],
   },
 
   // ─── CAMPANHAS ───
+  "3.1": {
+    skillId: "3.1",
+    title: "CPL por Plataforma",
+    description: "Comparativo de custo por lead entre canais",
+    fields: [
+      { key: "periodo_analise", label: "Período de análise", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "plataformas", label: "Plataformas", type: "select", defaultValue: "todas", options: [{ label: "Todas", value: "todas" }, { label: "Apenas Meta", value: "meta" }, { label: "Apenas Google", value: "google" }] },
+    ],
+  },
+
+  "3.2": {
+    skillId: "3.2",
+    title: "ROAS Real",
+    description: "Retorno real sobre investimento em ads",
+    fields: [
+      { key: "periodo_analise", label: "Período", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "roas_minimo", label: "ROAS mínimo aceitável", emoji: "🎯", type: "number", defaultValue: 3, min: 1, max: 20, step: 0.5, description: "Alerta se ROAS < este valor" },
+    ],
+  },
+
   "3.3": {
     skillId: "3.3",
     title: "Alerta Campanha Sem Leads",
@@ -239,7 +314,164 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
+  "3.6": {
+    skillId: "3.6",
+    title: "Canal Mais Eficiente",
+    description: "Identifica canal com melhor custo-benefício",
+    fields: [
+      { key: "periodo_analise", label: "Período", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "metrica", label: "Métrica de eficiência", type: "select", defaultValue: "cpl", options: [{ label: "CPL (Custo por Lead)", value: "cpl" }, { label: "CPA (Custo por Agendamento)", value: "cpa" }, { label: "ROAS", value: "roas" }] },
+    ],
+  },
+
+  "3.7": {
+    skillId: "3.7",
+    title: "Volume de Busca (Market Intel)",
+    description: "Volume de buscas mensais por keyword solar",
+    fields: [
+      { key: "keywords", label: "Keywords para monitorar", emoji: "🔍", type: "textarea", defaultValue: "energia solar, placa solar, painel solar, instalação solar", placeholder: "Uma keyword por linha..." },
+      { key: "regiao", label: "Região", type: "text", defaultValue: "São Paulo, SP", placeholder: "Cidade, Estado" },
+    ],
+  },
+
+  "3.8": {
+    skillId: "3.8",
+    title: "Benchmark CPC",
+    description: "CPC da empresa vs mercado solar",
+    fields: [
+      { key: "cpc_alerta", label: "CPC máximo aceitável", emoji: "💸", type: "number", defaultValue: 5, min: 0.5, max: 50, step: 0.5, unit: "R$" },
+      { key: "comparar_mercado", label: "Comparar com média do mercado", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "3.9": {
+    skillId: "3.9",
+    title: "Market Share Buscas",
+    description: "% das buscas que a empresa aparece",
+    fields: [
+      { key: "meta_impression_share", label: "Meta de impression share", emoji: "🎯", type: "slider", defaultValue: 30, min: 5, max: 100, step: 5, unit: "%" },
+    ],
+  },
+
+  "3.10": {
+    skillId: "3.10",
+    title: "Sazonalidade",
+    description: "Identifica picos e vales de demanda solar no ano",
+    fields: [
+      { key: "meses_historico", label: "Meses de histórico", emoji: "📊", type: "number", defaultValue: 12, min: 6, max: 24, unit: "meses" },
+      { key: "alertar_pico", label: "Alertar em períodos de pico", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  // ─── SITE & CONVERSÃO ───
+  "4.1": {
+    skillId: "4.1",
+    title: "Taxa Conversão LP",
+    description: "% de visitantes que viram leads na landing page",
+    fields: [
+      { key: "meta_conversao", label: "Meta de conversão", emoji: "🎯", type: "slider", defaultValue: 5, min: 1, max: 30, step: 1, unit: "%" },
+      { key: "periodo_analise", label: "Período", type: "number", defaultValue: 7, min: 1, max: 30, unit: "dias" },
+    ],
+  },
+
+  "4.2": {
+    skillId: "4.2",
+    title: "Funil Site",
+    description: "Visualização de drop-off no site",
+    fields: [
+      { key: "etapas", label: "Eventos do funil", emoji: "📊", type: "textarea", defaultValue: "page_view, scroll_50, form_start, form_submit", placeholder: "Eventos GA4 separados por vírgula" },
+    ],
+  },
+
+  "4.3": {
+    skillId: "4.3",
+    title: "Fonte × Conversão",
+    description: "Qual fonte de tráfego converte melhor",
+    fields: [
+      { key: "periodo_analise", label: "Período", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "min_sessoes", label: "Mínimo de sessões", type: "number", defaultValue: 50, min: 10, max: 500, description: "Fonte precisa ter X sessões para entrar na análise" },
+    ],
+  },
+
+  "4.4": {
+    skillId: "4.4",
+    title: "Cidade × Lead",
+    description: "Distribuição geográfica do tráfego",
+    fields: [
+      { key: "top_n", label: "Top N cidades", emoji: "📍", type: "number", defaultValue: 10, min: 5, max: 50 },
+      { key: "periodo_analise", label: "Período", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+    ],
+  },
+
+  "4.5": {
+    skillId: "4.5",
+    title: "Device Performance",
+    description: "Performance mobile vs desktop",
+    fields: [
+      { key: "alerta_mobile_baixo", label: "Alertar se mobile < desktop em X%", emoji: "📱", type: "number", defaultValue: 30, min: 10, max: 80, unit: "%" },
+    ],
+  },
+
+  "4.6": {
+    skillId: "4.6",
+    title: "Horário Pico Site",
+    description: "Horários com mais tráfego no site",
+    fields: [
+      { key: "dias_analise", label: "Janela de análise", emoji: "📅", type: "number", defaultValue: 14, min: 7, max: 60, unit: "dias" },
+      { key: "ajustar_ads", label: "Sugerir ajuste de budget por horário", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "4.7": {
+    skillId: "4.7",
+    title: "Bounce Rate por Fonte",
+    description: "Taxa de rejeição por canal de origem",
+    fields: [
+      { key: "bounce_max", label: "Bounce rate máximo aceitável", emoji: "⚠️", type: "slider", defaultValue: 60, min: 20, max: 90, step: 5, unit: "%" },
+    ],
+  },
+
+  "4.8": {
+    skillId: "4.8",
+    title: "Tempo no Site",
+    description: "Correlação entre tempo de visita e conversão",
+    fields: [
+      { key: "tempo_min_seg", label: "Tempo mínimo engajado", emoji: "⏱️", type: "number", defaultValue: 60, min: 10, max: 300, unit: "segundos" },
+    ],
+  },
+
+  "4.9": {
+    skillId: "4.9",
+    title: "Página de Saída",
+    description: "Onde os visitantes abandonam o site",
+    fields: [
+      { key: "top_n", label: "Top N páginas de saída", emoji: "🚪", type: "number", defaultValue: 5, min: 3, max: 20 },
+      { key: "sugestao_ia", label: "Gerar sugestão de UX via IA", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "4.10": {
+    skillId: "4.10",
+    title: "A/B Testing Sugestão",
+    description: "Comparativo de performance entre criativos/LPs",
+    fields: [
+      { key: "confianca_min", label: "Nível de confiança mínimo", emoji: "📊", type: "slider", defaultValue: 95, min: 80, max: 99, step: 1, unit: "%" },
+      { key: "min_conversoes", label: "Mínimo de conversões", type: "number", defaultValue: 30, min: 10, max: 100 },
+    ],
+  },
+
   // ─── FINANCEIRO ───
+  "5.1": {
+    skillId: "5.1",
+    title: "CAC Real",
+    description: "Custo de aquisição de cliente completo",
+    fields: [
+      { key: "incluir_custo_ia", label: "Incluir custo IA no CAC", type: "toggle", defaultValue: true },
+      { key: "incluir_fixos", label: "Incluir custos fixos", type: "toggle", defaultValue: false },
+      { key: "custo_fixo_mensal", label: "Custos fixos mensais", emoji: "💰", type: "number", defaultValue: 5000, min: 0, max: 50000, unit: "R$", description: "Salários, ferramentas, etc." },
+    ],
+  },
+
   "5.2": {
     skillId: "5.2",
     title: "Custo IA Total",
@@ -247,6 +479,67 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     fields: [
       { key: "budget_mensal", label: "Budget mensal IA", emoji: "💰", type: "number", defaultValue: 500, min: 50, max: 5000, unit: "USD" },
       { key: "alerta_pct", label: "Alertar em % do budget", type: "slider", defaultValue: 80, min: 50, max: 100, step: 5, unit: "%" },
+    ],
+  },
+
+  "5.3": {
+    skillId: "5.3",
+    title: "Custo por Etapa do Funil",
+    description: "Quanto custa cada transição do funil",
+    fields: [
+      { key: "periodo_analise", label: "Período", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "incluir_custos_fixos", label: "Incluir custos fixos rateados", type: "toggle", defaultValue: false },
+    ],
+  },
+
+  "5.4": {
+    skillId: "5.4",
+    title: "Ticket Médio Real",
+    description: "Valor médio dos contratos fechados",
+    fields: [
+      { key: "periodo_analise", label: "Período", emoji: "📅", type: "number", defaultValue: 90, min: 30, max: 365, unit: "dias" },
+      { key: "agrupar_por", label: "Agrupar por", type: "select", defaultValue: "geral", options: [{ label: "Geral", value: "geral" }, { label: "Por vendedor", value: "vendedor" }, { label: "Por canal", value: "canal" }] },
+    ],
+  },
+
+  "5.5": {
+    skillId: "5.5",
+    title: "Payback de Campanha",
+    description: "Tempo para recuperar investimento em ads",
+    fields: [
+      { key: "meta_payback_dias", label: "Meta de payback", emoji: "⏰", type: "number", defaultValue: 30, min: 7, max: 180, unit: "dias" },
+      { key: "alertar_acima_meta", label: "Alertar acima da meta", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "5.6": {
+    skillId: "5.6",
+    title: "Projeção Receita",
+    description: "Receita projetada baseada no pipeline solar",
+    fields: [
+      { key: "horizonte_dias", label: "Horizonte de projeção", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "ticket_medio", label: "Ticket médio referência", emoji: "💰", type: "number", defaultValue: 25000, min: 5000, max: 200000, unit: "R$" },
+      { key: "taxa_conversao", label: "Taxa de conversão referência", type: "slider", defaultValue: 15, min: 5, max: 50, step: 1, unit: "%" },
+    ],
+  },
+
+  "5.7": {
+    skillId: "5.7",
+    title: "Margem por Projeto",
+    description: "Margem de lucro por venda fechada",
+    fields: [
+      { key: "margem_meta", label: "Margem meta", emoji: "🎯", type: "slider", defaultValue: 25, min: 5, max: 50, step: 5, unit: "%" },
+      { key: "alertar_abaixo", label: "Alertar se margem abaixo da meta", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "5.8": {
+    skillId: "5.8",
+    title: "Custo Operacional/Lead",
+    description: "Custo operacional total por lead processado",
+    fields: [
+      { key: "custo_make_mensal", label: "Custo Make.com mensal", emoji: "⚙️", type: "number", defaultValue: 200, min: 0, max: 2000, unit: "USD" },
+      { key: "custo_infra_mensal", label: "Custo infra mensal", emoji: "🖥️", type: "number", defaultValue: 100, min: 0, max: 1000, unit: "USD" },
     ],
   },
 
@@ -262,6 +555,46 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
   },
 
   // ─── OPERACIONAL ───
+  "6.2": {
+    skillId: "6.2",
+    title: "Alerta DLQ",
+    description: "Detecta itens presos na Dead Letter Queue do Make",
+    fields: [
+      { key: "threshold_itens", label: "Limite de itens na DLQ", emoji: "⚠️", type: "number", defaultValue: 5, min: 1, max: 50, description: "Alerta quando DLQ tiver ≥ X itens" },
+      { key: "verificar_a_cada", label: "Verificar a cada", type: "number", defaultValue: 15, min: 5, max: 60, unit: "minutos" },
+    ],
+  },
+
+  "6.3": {
+    skillId: "6.3",
+    title: "Consumo de Operações Make",
+    description: "Monitora consumo de ops vs budget",
+    fields: [
+      { key: "budget_ops_mensal", label: "Budget ops/mês", emoji: "⚙️", type: "number", defaultValue: 10000, min: 1000, max: 100000 },
+      { key: "alerta_pct", label: "Alertar em %", type: "slider", defaultValue: 80, min: 50, max: 100, step: 5, unit: "%" },
+    ],
+  },
+
+  "6.6": {
+    skillId: "6.6",
+    title: "Token Expiration",
+    description: "Alerta quando tokens de API estão expirando",
+    fields: [
+      { key: "dias_antecedencia", label: "Dias de antecedência", emoji: "⏰", type: "number", defaultValue: 7, min: 1, max: 30, unit: "dias" },
+      { key: "telefone_alerta", label: "Telefone alerta", emoji: "📱", type: "phone", defaultValue: "", placeholder: "5511999999999" },
+    ],
+  },
+
+  "6.7": {
+    skillId: "6.7",
+    title: "Volume Make vs Budget",
+    description: "Cenários mais pesados e otimização",
+    fields: [
+      { key: "top_n_cenarios", label: "Top N cenários pesados", emoji: "📊", type: "number", defaultValue: 5, min: 3, max: 20 },
+      { key: "sugestao_otimizacao", label: "Sugerir otimização via IA", type: "toggle", defaultValue: true },
+    ],
+  },
+
   "6.8": {
     skillId: "6.8",
     title: "Duplicata de Lead",
@@ -279,6 +612,38 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     fields: [
       { key: "max_fups", label: "Máximo de FUPs", emoji: "🔁", type: "number", defaultValue: 5, min: 1, max: 15, description: "Quantidade máxima antes de sugerir desqualificar" },
       { key: "acao_sugerida", label: "Ação sugerida", type: "select", defaultValue: "desqualificar", options: [{ label: "Sugerir desqualificar", value: "desqualificar" }, { label: "Mover para nurturing", value: "nurturing" }, { label: "Apenas alertar", value: "alertar" }] },
+    ],
+  },
+
+  "6.10": {
+    skillId: "6.10",
+    title: "Custo Infra por Lead",
+    description: "Custo de infraestrutura por lead processado",
+    fields: [
+      { key: "custo_make", label: "Custo Make.com/mês", emoji: "⚙️", type: "number", defaultValue: 200, min: 0, max: 2000, unit: "USD" },
+      { key: "custo_supabase", label: "Custo Supabase/mês", emoji: "🗄️", type: "number", defaultValue: 25, min: 0, max: 500, unit: "USD" },
+      { key: "custo_outros", label: "Outros custos/mês", emoji: "📦", type: "number", defaultValue: 50, min: 0, max: 1000, unit: "USD" },
+    ],
+  },
+
+  // ─── INTELIGÊNCIA DE MERCADO ───
+  "7.1": {
+    skillId: "7.1",
+    title: "Volume de Busca Mensal",
+    description: "Volume de buscas por keywords do segmento solar",
+    fields: [
+      { key: "keywords", label: "Keywords para monitorar", emoji: "🔍", type: "textarea", defaultValue: "energia solar residencial, painel solar preço, instalação solar", placeholder: "Uma keyword por linha..." },
+      { key: "regiao", label: "Região", type: "text", defaultValue: "Brasil", placeholder: "País ou Estado" },
+    ],
+  },
+
+  "7.3": {
+    skillId: "7.3",
+    title: "Concorrência",
+    description: "Mapa de concorrentes e market share",
+    fields: [
+      { key: "concorrentes", label: "Concorrentes a monitorar", emoji: "🏢", type: "textarea", defaultValue: "", placeholder: "Nome dos concorrentes, um por linha..." },
+      { key: "metricas", label: "Métricas a comparar", type: "select", defaultValue: "impression_share", options: [{ label: "Impression Share", value: "impression_share" }, { label: "Posição média", value: "posicao" }, { label: "Ambos", value: "ambos" }] },
     ],
   },
 
@@ -329,6 +694,27 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
+  "8.6": {
+    skillId: "8.6",
+    title: "Report On-Demand",
+    description: "Vendedor pede relatório e IA responde",
+    fields: [
+      { key: "modelo_ia", label: "Modelo IA", emoji: "🤖", type: "select", defaultValue: "gpt-5-mini", options: [{ label: "GPT-5 Mini", value: "gpt-5-mini" }, { label: "Gemini Flash", value: "gemini-flash" }] },
+      { key: "max_tokens", label: "Tamanho máximo da resposta", type: "number", defaultValue: 500, min: 200, max: 2000, unit: "tokens" },
+    ],
+  },
+
+  "8.7": {
+    skillId: "8.7",
+    title: "Coach WhatsApp",
+    description: "IA sugere abordagem em tempo real",
+    fields: [
+      { key: "modelo_ia", label: "Modelo IA", emoji: "🤖", type: "select", defaultValue: "gpt-5-mini", options: [{ label: "GPT-5 Mini", value: "gpt-5-mini" }, { label: "GPT-5", value: "gpt-5" }] },
+      { key: "contexto_conversa", label: "Incluir contexto da conversa", type: "toggle", defaultValue: true },
+      { key: "estilo_sugestao", label: "Estilo de sugestão", type: "select", defaultValue: "direto", options: [{ label: "Direto (ação)", value: "direto" }, { label: "Consultivo (opções)", value: "consultivo" }] },
+    ],
+  },
+
   "8.9": {
     skillId: "8.9",
     title: "Notificação Contrato Fechado",
@@ -352,6 +738,17 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
+  "9.2": {
+    skillId: "9.2",
+    title: "Golden Hour Routing",
+    description: "Roteia pro vendedor no pico de performance",
+    fields: [
+      { key: "usar_horario_pico", label: "Usar horário pico do vendedor", emoji: "⏰", type: "toggle", defaultValue: true },
+      { key: "peso_taxa_conversao", label: "Peso da taxa de conversão", type: "slider", defaultValue: 50, min: 0, max: 100, step: 10, unit: "%" },
+      { key: "fallback", label: "Fallback se ninguém no pico", type: "select", defaultValue: "roundrobin", options: [{ label: "Round-Robin", value: "roundrobin" }, { label: "Menor carga", value: "menor_carga" }] },
+    ],
+  },
+
   "9.3": {
     skillId: "9.3",
     title: "Alerta Sobrecarga",
@@ -359,6 +756,17 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     fields: [
       { key: "limite_leads", label: "Limite de leads/dia", emoji: "⚠️", type: "number", defaultValue: 12, min: 3, max: 30 },
       { key: "canal_alerta", label: "Canal do alerta", type: "select", defaultValue: "whatsapp", options: [{ label: "WhatsApp", value: "whatsapp" }, { label: "Inbox", value: "inbox" }] },
+    ],
+  },
+
+  "9.4": {
+    skillId: "9.4",
+    title: "Performance Semanal",
+    description: "Ranking de performance por vendedor",
+    fields: [
+      { key: "dia_envio", label: "Dia de envio", emoji: "📅", type: "select", defaultValue: "seg", options: [{ label: "Segunda", value: "seg" }, { label: "Sexta", value: "sex" }] },
+      { key: "telefone_grupo", label: "Telefone grupo equipe", emoji: "📱", type: "phone", defaultValue: "", placeholder: "5511999999999" },
+      { key: "incluir_ranking", label: "Incluir ranking comparativo", type: "toggle", defaultValue: true },
     ],
   },
 
@@ -373,18 +781,37 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
-  // ─── SOLAR ESPECÍFICO ───
-  "1.10": {
-    skillId: "1.10",
-    title: "OCR Conta de Luz",
-    description: "GPT-4 Vision extrai valor real da foto da conta de energia",
+  "9.7": {
+    skillId: "9.7",
+    title: "Treinamento Sugerido",
+    description: "Identifica gaps de performance e sugere treinamento",
     fields: [
-      { key: "modelo_ocr", label: "Modelo de OCR", emoji: "🤖", type: "select", defaultValue: "gpt4-vision", options: [{ label: "GPT-4 Vision", value: "gpt4-vision" }, { label: "Gemini 2.5 Flash", value: "gemini-flash" }] },
-      { key: "confianca_minima", label: "Confiança mínima", emoji: "🎯", type: "slider", defaultValue: 80, min: 50, max: 100, step: 5, unit: "%", description: "Abaixo disso pede confirmação ao lead" },
-      { key: "solicitar_reenvio", label: "Pedir reenvio se baixa confiança", type: "toggle", defaultValue: true },
+      { key: "min_leads_analise", label: "Mínimo de leads para análise", emoji: "📊", type: "number", defaultValue: 20, min: 10, max: 100 },
+      { key: "modelo_ia", label: "Modelo IA", type: "select", defaultValue: "gpt-5-mini", options: [{ label: "GPT-5 Mini", value: "gpt-5-mini" }, { label: "GPT-5", value: "gpt-5" }] },
     ],
   },
 
+  "9.8": {
+    skillId: "9.8",
+    title: "Horário Produtivo",
+    description: "Mapeia horários mais produtivos de cada vendedor",
+    fields: [
+      { key: "dias_analise", label: "Janela de análise", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "granularidade", label: "Granularidade", type: "select", defaultValue: "hora", options: [{ label: "Por hora", value: "hora" }, { label: "Por turno (manhã/tarde)", value: "turno" }] },
+    ],
+  },
+
+  "9.10": {
+    skillId: "9.10",
+    title: "NPS Lead/Cliente",
+    description: "Score de satisfação por vendedor",
+    fields: [
+      { key: "enviar_pesquisa_apos", label: "Enviar pesquisa após", emoji: "📅", type: "number", defaultValue: 7, min: 1, max: 30, unit: "dias", description: "Dias após fechamento" },
+      { key: "canal_pesquisa", label: "Canal da pesquisa", type: "select", defaultValue: "whatsapp", options: [{ label: "WhatsApp", value: "whatsapp" }, { label: "Email", value: "email" }] },
+    ],
+  },
+
+  // ─── SOLAR ESPECÍFICO ───
   "10.1": {
     skillId: "10.1",
     title: "Tracking Homologação",
@@ -412,7 +839,6 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
     ],
   },
 
-  // ─── PÓS-VENDA ───
   "10.4": {
     skillId: "10.4",
     title: "SLA Pós-Venda",
@@ -422,6 +848,37 @@ export const skillConfigSchemas: Record<string, SkillConfigSchema> = {
       { key: "sla_aprovacao_dias", label: "SLA aprovação", type: "number", defaultValue: 15, min: 5, max: 60, unit: "dias" },
       { key: "sla_instalacao_dias", label: "SLA instalação", type: "number", defaultValue: 30, min: 10, max: 90, unit: "dias" },
       { key: "alertar_atraso", label: "Alertar ao atrasar", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "10.5": {
+    skillId: "10.5",
+    title: "Indicação Automática",
+    description: "Pede indicação para clientes satisfeitos pós-entrega",
+    fields: [
+      { key: "dias_apos_entrega", label: "Dias após entrega", emoji: "📅", type: "number", defaultValue: 30, min: 7, max: 90, unit: "dias" },
+      { key: "canal_envio", label: "Canal de envio", type: "select", defaultValue: "whatsapp", options: [{ label: "WhatsApp", value: "whatsapp" }, { label: "Email", value: "email" }] },
+      { key: "oferecer_desconto", label: "Oferecer benefício por indicação", type: "toggle", defaultValue: true },
+    ],
+  },
+
+  "10.6": {
+    skillId: "10.6",
+    title: "Review Google",
+    description: "Pede review no Google pós-entrega",
+    fields: [
+      { key: "dias_apos_instalacao", label: "Dias após instalação", emoji: "📅", type: "number", defaultValue: 14, min: 3, max: 60, unit: "dias" },
+      { key: "link_review", label: "Link do Google Reviews", emoji: "🔗", type: "text", defaultValue: "", placeholder: "https://g.page/r/..." },
+    ],
+  },
+
+  "10.7": {
+    skillId: "10.7",
+    title: "Upsell Automático",
+    description: "Detecta oportunidade de upsell (ampliação de sistema)",
+    fields: [
+      { key: "meses_apos_instalacao", label: "Meses após instalação", emoji: "📅", type: "number", defaultValue: 6, min: 3, max: 24, unit: "meses" },
+      { key: "criterio", label: "Critério de upsell", type: "select", defaultValue: "consumo", options: [{ label: "Aumento de consumo", value: "consumo" }, { label: "Novo imóvel", value: "imovel" }, { label: "Bateria/Backup", value: "bateria" }] },
     ],
   },
 };
