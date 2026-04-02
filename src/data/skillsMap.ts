@@ -57,7 +57,7 @@ export const skillCategories: SkillCategory[] = [
       { id: "1.8", name: "Custo IA por Qualificação", desc: "Custo do agente IA por lead qualificado", status: "ativo", verticals: ALL, fonte: "leads_sync (custo_total_usd WHERE QUALIFICADO)", output: "Custo IA: $X/lead" },
       { id: "1.9", name: "Horário Pico de Resposta", desc: "Analisa quando leads respondem mais para otimizar FUP", status: "criar", verticals: ALL, fonte: "leads_sync (hora de interação)", output: "FUP ajusta horário" },
       // Solar-specific
-      { id: "1.10", name: "OCR Conta de Luz", desc: "GPT-4 Vision extrai valor real da foto da conta de energia", status: "ativo", verticals: SOL, fonte: "leads_sync (valor_conta_confirmado_ocr)", output: "Valor extraído da foto" },
+      { id: "1.10", name: "OCR Conta de Luz", desc: "GPT-4 Vision extrai valor real da foto da conta de energia — calibra score e dimensionamento", status: "ativo", verticals: SOL, fonte: "leads_sync (valor_conta_confirmado_ocr)", output: "Valor extraído da foto" },
       // Financeiro-specific
       { id: "1.11", name: "Score Serasa/SPC", desc: "Consulta score de crédito automaticamente para qualificação", status: "futuro", verticals: FIN, fonte: "API Serasa/SPC", output: "Score crédito + risco" },
       { id: "1.12", name: "Análise de Capacidade de Investimento", desc: "Calcula capacidade de investimento do franqueado potencial", status: "futuro", verticals: FIN, fonte: "leads_sync (patrimonio, faturamento)", output: "Capacidade calculada" },
