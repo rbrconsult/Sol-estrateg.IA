@@ -33,6 +33,8 @@ export default function Insights() {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(skillCategories.map(c => [c.key, true]))
   );
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const { toggles, toggle } = useSkillToggles();
 
   const allSkills = useMemo(() => skillCategories.flatMap(c => c.skills), []);
