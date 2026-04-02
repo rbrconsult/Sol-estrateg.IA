@@ -31,10 +31,10 @@ const atorIcon = (ator: string) => {
 
 function deriveSLAData(records: SolLead[]) {
   const stages = [
-    { id: 1, etapa: "Lead → Sol aborda", slaMeta: "3 min", slaMetaMinutos: 3, ator: "Automação" },
-    { id: 2, etapa: "Sol aborda → Responde", slaMeta: "10 min", slaMetaMinutos: 10, ator: "Cliente" },
-    { id: 3, etapa: "Sol → Qualificado", slaMeta: "10 min", slaMetaMinutos: 10, ator: "Sol IA" },
-    { id: 4, etapa: "Qualificado → Closer contata", slaMeta: "60 min", slaMetaMinutos: 60, ator: "Closer" },
+    { id: 1, etapa: "Sol aborda → Responde", slaMeta: "1 min", slaMetaMinutos: 1, ator: "Automação" },
+    { id: 2, etapa: "Sol aborda, cliente responde", slaMeta: "10 min", slaMetaMinutos: 10, ator: "Cliente" },
+    { id: 3, etapa: "Sol → Qualificado", slaMeta: "20 min", slaMetaMinutos: 20, ator: "Sol IA" },
+    { id: 4, etapa: "Qualificado → Closer contata", slaMeta: "15 min", slaMetaMinutos: 15, ator: "Closer" },
   ];
 
   const withResponseTime = records.filter(r => r.ts_cadastro && r.ts_ultima_interacao);
