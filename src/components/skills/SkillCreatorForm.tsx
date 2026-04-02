@@ -37,7 +37,7 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
   const [vertical, setVertical] = useState<string>("universal");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SkillDefinition | null>(null);
-  const [provider, setProvider] = useState<string>("");
+  const [pipeline, setPipeline] = useState<{ stage1: string; stage2: string } | null>(null);
 
   const handleGenerate = async () => {
     if (description.length < 10) {
