@@ -95,10 +95,17 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
         <CardTitle className="text-sm flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           Criar Nova Skill com IA
-          {provider && (
-            <Badge variant="outline" className="text-[9px] ml-auto">
-              via {provider === "openai" ? "OpenAI" : "Lovable AI"}
-            </Badge>
+          {pipeline && (
+            <div className="flex items-center gap-1 ml-auto">
+              <Badge variant="outline" className="text-[9px]">
+                🧠 {pipeline.stage1}
+              </Badge>
+              {pipeline.stage2 !== "skipped" && (
+                <Badge variant="outline" className="text-[9px]">
+                  👔 {pipeline.stage2}
+                </Badge>
+              )}
+            </div>
           )}
         </CardTitle>
       </CardHeader>
