@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Kanban,
   Sparkles, LogOut, Shield, Headset, RotateCcw, Presentation,
   BarChart3, TrendingUp, Megaphone, Bot, Repeat, Route,
-  Zap, FileText, DollarSign, Clock, Target, Users,
+  Zap, DollarSign, Clock, Target, Users,
   FileCheck, Handshake, Percent,
   Activity, RefreshCw, Eraser, Building2, Globe, HelpCircle,
   RefreshCcw, MessageSquare, Brain,
