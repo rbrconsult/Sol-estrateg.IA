@@ -80,7 +80,7 @@ export default function Insights() {
         return true;
       }),
     })).filter(cat => cat.skills.length > 0);
-  }, [statusFilter, verticalFilter, search]);
+  }, [statusFilter, verticalFilter, search, toggles, configuredSkills]);
 
   const visibleSkills = useMemo(() => filteredCategories.flatMap(c => c.skills), [filteredCategories]);
 
