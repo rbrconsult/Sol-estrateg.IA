@@ -26,7 +26,7 @@ export default function GoogleAdsPage() {
   const filtered = useMemo(() => {
     if (!rows) return [];
     let r = rows;
-    if (campanha !== 'all') r = r.filter((x: any) => x.campaign_name === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter((x: any) => selectedCampanhas.includes(x.campaign_name));
     if (dispositivo !== 'all') r = r.filter((x: any) => x.dispositivo === dispositivo);
     if (rede !== 'all') r = r.filter((x: any) => x.rede === rede);
     return r;
