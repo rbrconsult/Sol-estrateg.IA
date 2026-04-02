@@ -104,8 +104,8 @@ Deno.serve(async (req) => {
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!openaiKey && !lovableKey) {
-      return new Response(JSON.stringify({ error: "No AI API key configured" }), {
+    if (!openaiKey) {
+      return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -142,30 +142,9 @@ Responda APENAS com JSON válido (sem markdown):
     let stage1Content: string;
     let stage1Provider: string;
 
-    // Prefer Lovable AI (free), fallback to OpenAI
-    if (lovableKey) {
-      stage1Provider = "lovable/gemini-3-flash";
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [{ role: "user", content: generatorPrompt }],
-          temperature: 0.7,
-        }),
-      });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`Lovable AI error [${resp.status}]: ${t}`);
-      }
-      const d = await resp.json();
-      stage1Content = d.choices?.[0]?.message?.content || "";
-    } else if (openaiKey) {
-      stage1Provider = "openai/gpt-4o";
-      stage1Content = await callOpenAI(openaiKey, generatorPrompt);
-    } else {
-      throw new Error("No AI API key available for Stage 1");
-    }
+    // OpenAI GPT-4o como gerador principal
+    stage1Provider = "openai/gpt-4o";
+    stage1Content = await callOpenAI(openaiKey, generatorPrompt);
 
     const jsonMatch = stage1Content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
