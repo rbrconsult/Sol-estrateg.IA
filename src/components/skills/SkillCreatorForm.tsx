@@ -199,6 +199,34 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                   <pre className="text-[10px] mt-0.5 bg-muted/30 rounded p-2 overflow-x-auto font-mono">{result.sql_hint}</pre>
                 </div>
               )}
+
+              {/* Review do Claude Opus 4.6 */}
+              {result._review && (
+                <div className={`rounded-lg p-2.5 border ${
+                  result._review.error ? "bg-destructive/5 border-destructive/20" 
+                  : result._review.approved ? "bg-emerald-500/5 border-emerald-500/20" 
+                  : "bg-amber-500/5 border-amber-500/20"
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-semibold flex items-center gap-1">
+                      👔 Revisão DM — {result._review.reviewer}
+                    </span>
+                    {result._review.score != null && (
+                      <Badge variant="outline" className="text-[9px]">
+                        Score: {result._review.score}/10
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {result._review.approved === true && <Badge className="text-[9px] bg-emerald-500/20 text-emerald-400 border-0">✅ Aprovado</Badge>}
+                    {result._review.approved === false && <Badge className="text-[9px] bg-amber-500/20 text-amber-400 border-0">⚠️ Ajustes sugeridos</Badge>}
+                    {result._review.error && <Badge className="text-[9px] bg-destructive/20 text-destructive border-0">❌ Revisão falhou</Badge>}
+                  </div>
+                  {result._review.notes && (
+                    <p className="text-xs text-muted-foreground">{result._review.notes}</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
