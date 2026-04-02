@@ -31,7 +31,7 @@ function groupByField(rows: any[], field: string) {
 export default function SiteGA4Page() {
   const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [source, setSource] = useState('all');
   const [medium, setMedium] = useState('all');
   const [landingPage, setLandingPage] = useState('all');
