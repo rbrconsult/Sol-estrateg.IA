@@ -218,7 +218,7 @@ export default function SLAMonitor() {
   }
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 px-4 md:px-8 py-6 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
