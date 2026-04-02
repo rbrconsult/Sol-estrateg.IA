@@ -156,8 +156,9 @@ export default function AnalistaFollowup() {
   const { openLead360 } = useLead360();
   const gf = useGlobalFilters();
 
-  const canais = useMemo(() => [...new Set(solLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [solLeads]);
-  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
+  const safeSolLeads = solLeads ?? [];
+  const canais = useMemo(() => [...new Set(safeSolLeads.map(r => r.canal_origem).filter(Boolean) as string[])].sort(), [safeSolLeads]);
+  const records = useMemo(() => gf.filterRecords(safeSolLeads), [safeSolLeads, gf.filterRecords]);
 
   const d = useMemo(() => deriveFupData(records), [records]);
 
