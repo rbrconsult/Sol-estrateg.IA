@@ -4,20 +4,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { getVendedorPerformance } from "@/data/dataAdapter";
-import { DollarSign, Percent, Users, TrendingUp, RefreshCcw } from "lucide-react";
+import { getVendedorPerformance, Proposal } from "@/data/dataAdapter";
+import { DollarSign, Percent, Users, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
-// A3: Comissão padrão 2%, Danieli 3% (fixed typo — case-insensitive match)
-const COMMISSION_RATES: Record<string, number> = {
-  "danieli": 3,
-};
+const COMMISSION_RATES: Record<string, number> = { "danieli": 3 };
 const DEFAULT_RATE = 2;
 
 function getRate(nome: string, overrides: Record<string, string>): number {
@@ -29,11 +26,43 @@ function getRate(nome: string, overrides: Record<string, string>): number {
   return DEFAULT_RATE;
 }
 
+const formatCurrency = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+
+function ProposalDrillDown({ proposals, rate }: { proposals: Proposal[]; rate: number }) {
+  const ganhas = proposals.filter(p => p.status === "Ganho");
+  if (ganhas.length === 0) return (
+    <tr><td colSpan={8} className="px-8 py-3 text-xs text-muted-foreground italic">Nenhuma proposta fechada (Ganho)</td></tr>
+  );
+  return (
+    <>
+      {ganhas.map((p, i) => (
+        <TableRow key={p.id || i} className="bg-muted/20 border-border/50">
+          <TableCell />
+          <TableCell className="text-xs text-muted-foreground pl-8">
+            {p.nomeCliente || p.makeNome || p.clienteTelefone}
+          </TableCell>
+          <TableCell className="text-xs text-center text-muted-foreground">{p.etapa || p.faseSM || "—"}</TableCell>
+          <TableCell className="text-xs text-center">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">Ganho</Badge>
+          </TableCell>
+          <TableCell className="text-xs text-right text-foreground">{formatCurrency(p.valorProposta)}</TableCell>
+          <TableCell className="text-xs text-center text-muted-foreground">{rate}%</TableCell>
+          <TableCell className="text-xs text-right text-primary font-medium">{formatCurrency(p.valorProposta * rate / 100)}</TableCell>
+          <TableCell className="text-xs text-center text-muted-foreground">
+            {p.dataCriacaoProposta ? new Date(p.dataCriacaoProposta).toLocaleDateString("pt-BR") : "—"}
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
 export default function Comissoes() {
   const { proposals, isLoading, orgFilterActive } = useOrgFilteredProposals();
-  
   const { selectedOrgName } = useOrgFilter();
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const gf = useGlobalFilters();
 
   const filteredProposals = useMemo(() => gf.filterProposals(proposals), [proposals, gf.filterProposals]);
@@ -43,20 +72,31 @@ export default function Comissoes() {
     return getVendedorPerformance(filteredProposals);
   }, [filteredProposals]);
 
+  // Group proposals by vendedor for drill-down
+  const proposalsByVendedor = useMemo(() => {
+    const map: Record<string, Proposal[]> = {};
+    filteredProposals.forEach(p => {
+      const v = p.representante || p.responsavel;
+      if (!v) return;
+      if (!map[v]) map[v] = [];
+      map[v].push(p);
+    });
+    return map;
+  }, [filteredProposals]);
+
   const comissoes = useMemo(() => {
     return vendedorPerf.map(v => {
       const rate = getRate(v.nome, rateOverrides);
-      // Base de comissão = apenas propostas GANHAS (fechadas)
       const valorBase = v.valorGanho;
       const comissao = valorBase * (rate / 100);
       return {
         nome: v.nome,
         totalPropostas: v.totalPropostas,
-        ganhos: v.ganhos,           // contratos fechados
+        ganhos: v.ganhos,
         perdidos: v.perdidos,
         abertos: v.abertos,
-        valorBase,                  // só valor ganho
-        valorTotal: v.valorTotal,   // total para referência
+        valorBase,
+        valorTotal: v.valorTotal,
         rate,
         comissao,
         taxaConversao: v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0,
@@ -71,18 +111,16 @@ export default function Comissoes() {
     totalPropostas: comissoes.reduce((s, c) => s + c.totalPropostas, 0),
   }), [comissoes]);
 
-  // Chart usa ganhos (fechamentos reais), não totalPropostas
   const chartData = useMemo(() =>
     comissoes.slice(0, 10).map(c => ({
       nome: c.nome.split(" ")[0],
       comissao: c.comissao,
       valorBase: c.valorBase,
-      fechamentos: c.ganhos,  // ← CORRIGIDO: usa ganhos
+      fechamentos: c.ganhos,
     })),
   [comissoes]);
 
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+  const toggleRow = (nome: string) => setExpandedRows(prev => ({ ...prev, [nome]: !prev[nome] }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
@@ -184,18 +222,18 @@ export default function Comissoes() {
         </Card>
       )}
 
-      {/* Table */}
+      {/* Table with drill-down */}
       <Card className="opacity-0 animate-fade-up" style={{ animationDelay: "450ms", animationFillMode: "forwards" }}>
         <CardHeader>
           <CardTitle className="text-lg">Detalhamento por Vendedor</CardTitle>
-          <p className="text-xs text-muted-foreground">Base de comissão = propostas fechadas (Ganho) · Conversão = fechadas ÷ enviadas</p>
+          <p className="text-xs text-muted-foreground">Clique na linha para ver a composição (projetos fechados) · Base = propostas Ganho</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-border">
-                  <TableHead className="text-muted-foreground font-medium">#</TableHead>
+                  <TableHead className="text-muted-foreground font-medium w-8" />
                   <TableHead className="text-muted-foreground font-medium">Vendedor</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Propostas</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">Fechamentos</TableHead>
@@ -206,53 +244,70 @@ export default function Comissoes() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {comissoes.map((c, i) => (
-                  <TableRow key={c.nome} className="border-border hover:bg-muted/50 transition-colors">
-                    <TableCell>
-                      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                        i === 0 ? "bg-warning/20 text-warning" :
-                        i === 1 ? "bg-muted text-muted-foreground" :
-                        i === 2 ? "bg-warning/10 text-warning/70" : "text-muted-foreground"
-                      }`}>
-                        {i + 1}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-foreground">{c.nome}</TableCell>
-                    <TableCell className="text-center text-muted-foreground">{c.totalPropostas}</TableCell>
-                    <TableCell className="text-center">
-                      {/* CORRIGIDO: usa c.ganhos não c.totalPropostas */}
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorBase)}</TableCell>
-                    <TableCell className="text-center">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={0.5}
-                        className="h-7 w-20 text-xs text-center mx-auto"
-                        value={rateOverrides[c.nome] ?? c.rate.toString()}
-                        onChange={(e) => setRateOverrides(prev => ({ ...prev, [c.nome]: e.target.value }))}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-primary">{formatCurrency(c.comissao)}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${
-                        c.taxaConversao >= 25 ? "bg-primary/10 text-primary" :
-                        c.taxaConversao >= 15 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
-                      }`}>
-                        {c.taxaConversao.toFixed(1)}%
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {comissoes.map((c, i) => {
+                  const isExpanded = !!expandedRows[c.nome];
+                  return (
+                    <>
+                      <TableRow
+                        key={c.nome}
+                        className="border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => toggleRow(c.nome)}
+                      >
+                        <TableCell className="w-8 px-2">
+                          {isExpanded
+                            ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          }
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                              i === 0 ? "bg-warning/20 text-warning" :
+                              i === 1 ? "bg-muted text-muted-foreground" :
+                              i === 2 ? "bg-warning/10 text-warning/70" : "text-muted-foreground"
+                            }`}>
+                              {i + 1}
+                            </span>
+                            {c.nome}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">{c.totalPropostas}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">{c.ganhos}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-foreground">{formatCurrency(c.valorBase)}</TableCell>
+                        <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.5}
+                            className="h-7 w-20 text-xs text-center mx-auto"
+                            value={rateOverrides[c.nome] ?? c.rate.toString()}
+                            onChange={(e) => setRateOverrides(prev => ({ ...prev, [c.nome]: e.target.value }))}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-primary">{formatCurrency(c.comissao)}</TableCell>
+                        <TableCell className="text-center">
+                          <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${
+                            c.taxaConversao >= 25 ? "bg-primary/10 text-primary" :
+                            c.taxaConversao >= 15 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                          }`}>
+                            {c.taxaConversao.toFixed(1)}%
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && proposalsByVendedor[c.nome] && (
+                        <ProposalDrillDown proposals={proposalsByVendedor[c.nome]} rate={c.rate} />
+                      )}
+                    </>
+                  );
+                })}
                 <TableRow className="border-t-2 border-border bg-muted/30 font-bold">
-                  <TableCell colSpan={2} className="text-foreground">TOTAL</TableCell>
+                  <TableCell />
+                  <TableCell className="text-foreground">TOTAL</TableCell>
                   <TableCell className="text-center text-foreground">{totals.totalPropostas}</TableCell>
-                  <TableCell className="text-center text-foreground">
-                    {/* CORRIGIDO: usa totals.ganhos */}
-                    {totals.ganhos}
-                  </TableCell>
+                  <TableCell className="text-center text-foreground">{totals.ganhos}</TableCell>
                   <TableCell className="text-right text-foreground">{formatCurrency(totals.valorBase)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{formatCurrency(totals.comissao)}</TableCell>
