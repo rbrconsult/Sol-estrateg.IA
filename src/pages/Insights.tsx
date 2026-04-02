@@ -5,11 +5,16 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Search, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Info, Sparkles } from "lucide-react";
 import { skillCategories, statusConfig, verticalConfig, type SkillStatus, type Vertical } from "@/data/skillsMap";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
+import { SkillReportsPanel } from "@/components/skills/SkillReportsPanel";
+import { SkillCreatorForm } from "@/components/skills/SkillCreatorForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const statusFilters: { value: SkillStatus | "all"; label: string }[] = [
   { value: "all", label: "Todas" },
@@ -28,6 +33,8 @@ export default function Insights() {
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(skillCategories.map(c => [c.key, true]))
   );
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const { toggles, toggle } = useSkillToggles();
 
   const allSkills = useMemo(() => skillCategories.flatMap(c => c.skills), []);
@@ -74,11 +81,31 @@ export default function Insights() {
   return (
     <div className="space-y-6 p-1">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills — Scale</h1>
-        <p className="text-muted-foreground mt-1">
-          {totals.total} automações inteligentes • Template multi-vertical replicável
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Mapa de Skills — Scale</h1>
+          <p className="text-muted-foreground mt-1">
+            {totals.total} automações inteligentes • Template multi-vertical replicável
+          </p>
+        </div>
+        <Dialog open={creatorOpen} onOpenChange={setCreatorOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Sparkles className="h-4 w-4" /> Criar Skill com IA
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" /> Criar Nova Skill
+              </DialogTitle>
+            </DialogHeader>
+            <SkillCreatorForm onSkillCreated={(skill) => {
+              toast.success(`Skill "${skill.name}" gerada! Adicione ao código para ativar.`);
+              setCreatorOpen(false);
+            }} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Vertical selector */}
@@ -203,21 +230,30 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
+                    const isReportsSkill = skill.id === "6.11";
+                    const isExpanded = expandedSkillId === skill.id;
                     return (
                       <Card
                         key={skill.id}
-                        className={`border transition-colors ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"}`}
+                        className={`border transition-colors cursor-pointer ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"} ${isExpanded && isReportsSkill ? "col-span-full" : ""}`}
+                        onClick={() => isReportsSkill && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
                       >
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
                               <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
+                              {isReportsSkill && isOn && (
+                                <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20">
+                                  {isExpanded ? "▼ Fechar" : "▶ Configurar"}
+                                </Badge>
+                              )}
                             </div>
                             <Switch
                               checked={isOn}
                               onCheckedChange={(checked) => toggle({ skillId: skill.id, enabled: checked })}
                               className="shrink-0"
+                              onClick={e => e.stopPropagation()}
                             />
                           </div>
                           <CardTitle className="text-sm mt-1 leading-tight">{skill.name}</CardTitle>
@@ -249,6 +285,12 @@ export default function Insights() {
                                 {skill.output && <p className="text-xs mt-1"><strong>Output:</strong> {skill.output}</p>}
                               </TooltipContent>
                             </Tooltip>
+                          )}
+                          {/* Inline panel for Reports skill */}
+                          {isReportsSkill && isOn && isExpanded && (
+                            <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
+                              <SkillReportsPanel />
+                            </div>
                           )}
                         </CardContent>
                       </Card>
