@@ -18,7 +18,7 @@ import { DollarSign, MousePointer, Target, TrendingUp, AlertTriangle, Search } f
 export default function GoogleAdsPage() {
   const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [dispositivo, setDispositivo] = useState('all');
   const [rede, setRede] = useState('all');
   const { data: rows, isLoading } = useGoogleAds(franquiaId, range);
