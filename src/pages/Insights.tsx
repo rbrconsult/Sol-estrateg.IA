@@ -32,7 +32,7 @@ const statusFilters: { value: SkillStatus | "all" | "pendente"; label: string }[
 const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagens", "seguros", "academia"];
 
 export default function Insights() {
-  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all" | "pendente">("all");
   const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("all");
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
