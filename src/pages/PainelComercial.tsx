@@ -181,6 +181,8 @@ interface CloserLead {
   valor: string;
   prioridade: string;
   telefone: string;
+  tsUltimaInteracao: string | null;
+  tsTransferido: string | null;
 }
 
 interface CloserGroup {
