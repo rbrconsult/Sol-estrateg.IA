@@ -210,8 +210,9 @@ function deriveCloserQueue(records: SolLead[]): CloserGroup[] {
       valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
       prioridade: getPrioridade(r),
       telefone: r.telefone,
+      tsUltimaInteracao: r.ts_ultima_interacao || null,
+      tsTransferido: r.ts_transferido || null,
     };
-    if (temp === "QUENTE") groups["Quentes"].push(lead);
     else if (temp === "FRIO") groups["Frios"].push(lead);
     else groups["Mornos"].push(lead);
   });
