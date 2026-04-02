@@ -213,6 +213,7 @@ function deriveCloserQueue(records: SolLead[]): CloserGroup[] {
       tsUltimaInteracao: r.ts_ultima_interacao || null,
       tsTransferido: r.ts_transferido || null,
     };
+    if (temp === "QUENTE") groups["Quentes"].push(lead);
     else if (temp === "FRIO") groups["Frios"].push(lead);
     else groups["Mornos"].push(lead);
   });
