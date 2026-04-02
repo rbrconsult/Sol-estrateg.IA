@@ -39,7 +39,7 @@ function groupBy(rows: any[], field: string) {
 export default function MetaAdsPage() {
   const franquiaId = useFranquiaId();
   const { periodo, setPeriodo, range } = usePeriodo();
-  const [campanha, setCampanha] = useState('all');
+  const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [adset, setAdset] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const { data: rows, isLoading } = useMetaAds(franquiaId, range);
