@@ -142,6 +142,29 @@ function deriveAlerts(records: SolLead[]): Alert[] {
     const temp = (r.temperatura || "").toUpperCase();
     const status = (r.status || "").toUpperCase();
 
+    // ⚠️ Inactivity risk: any lead inactive >10min that is still in-progress
+    const activeStatuses = ["WHATSAPP", "EM_QUALIFICACAO", "TRAFEGO_PAGO", "QUALIFICADO", "AGENDAMENTO", "PROPOSTA", "NEGOCIACAO"];
+    if (activeStatuses.includes(status) && isInactive(r.ts_ultima_interacao)) {
+      const mins = inactivityMinutes(r.ts_ultima_interacao);
+      const label = mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60}min inativo` : `${mins}min inativo`;
+      alerts.push({
+        id: `inativo-${id++}`,
+        tipo: "inativo",
+        label: "⏰ Risco Inatividade",
+        desc: `${r.nome || r.telefone} — ${label} sem interação`,
+        severity: mins >= 60 ? "critical" : "warning",
+        time: timeSince(r.ts_ultima_interacao || r.ts_cadastro || ""),
+        leadData: {
+          nome: r.nome || `Lead ...${r.telefone.slice(-4)}`,
+          telefone: r.telefone,
+          score,
+          temp: temp || "MORNO",
+          etapa: getEtapa(r),
+          valor: r.valor_conta ? `R$ ${r.valor_conta}` : "—",
+        },
+      });
+    }
+
     if ((score >= 70 || temp === "QUENTE") && status !== "QUALIFICADO" && status !== "AGENDAMENTO") {
       alerts.push({
         id: `quente-${id++}`,
