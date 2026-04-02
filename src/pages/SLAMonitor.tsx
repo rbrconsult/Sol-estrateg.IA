@@ -462,6 +462,64 @@ export default function SLAMonitor() {
           )}
         </CardContent>
       </Card>
+
+      {/* Leads por Etapa */}
+      {d.leadsByStageArr.length > 0 && (
+        <Card className="border-border/50">
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-sm font-semibold">Leads por Etapa — Agora</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/30">
+                  <TableHead className="text-[10px] uppercase h-8">Etapa</TableHead>
+                  <TableHead className="text-[10px] uppercase h-8 text-right">Qtd</TableHead>
+                  <TableHead className="text-[10px] uppercase h-8 text-right">Alertas SLA</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {d.leadsByStageArr.map(l => (
+                  <TableRow key={l.etapa} className="border-border/20">
+                    <TableCell className="font-medium text-xs py-2">{l.etapa}</TableCell>
+                    <TableCell className="text-right text-xs font-semibold py-2">{l.qtd}</TableCell>
+                    <TableCell className="text-right py-2">
+                      {l.alertas > 0 ? (
+                        <Badge variant="destructive" className="text-[10px] gap-1">
+                          <AlertTriangle className="h-3 w-3" /> {l.alertas}
+                        </Badge>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Abandono por Etapa */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2 px-4 pt-4">
+          <CardTitle className="text-sm font-semibold">Taxa de Abandono por Etapa</CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          <div className="space-y-3">
+            {d.abandonArr.map(a => (
+              <div key={a.etapa} className="flex items-center gap-4">
+                <span className="text-xs text-muted-foreground w-24 text-right shrink-0">{a.etapa}</span>
+                <div className="flex-1 bg-muted rounded-full h-6 relative overflow-hidden">
+                  <div className="bg-destructive/60 h-full rounded-full flex items-center justify-end pr-2 transition-all duration-1000"
+                    style={{ width: `${Math.min(a.abandonaram, 100)}%` }}>
+                    <span className="text-[10px] font-bold text-destructive-foreground">{a.abandonaram}%</span>
+                  </div>
+                </div>
+                <span className="text-xs text-muted-foreground w-40 shrink-0">{a.motivoPrincipal}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
