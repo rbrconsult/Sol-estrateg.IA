@@ -45,7 +45,7 @@ export default function SiteGA4Page() {
     if (medium !== 'all') r = r.filter((x: any) => x.medium === medium);
     if (landingPage !== 'all') r = r.filter((x: any) => x.landing_page === landingPage);
     return r;
-  }, [rows, campanha, source, medium, landingPage]);
+  }, [rows, selectedCampanhas, source, medium, landingPage]);
 
   const campanhas = useMemo(() => [...new Set((rows || []).map((r: any) => r.campaign).filter(Boolean))] as string[], [rows]);
   const sources = useMemo(() => [...new Set((rows || []).map((r: any) => r.source).filter(Boolean))] as string[], [rows]);
