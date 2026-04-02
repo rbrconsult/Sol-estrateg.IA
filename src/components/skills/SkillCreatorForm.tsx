@@ -57,7 +57,7 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
       if (data?.error) throw new Error(data.error);
 
       setResult(data.skill);
-      setProvider(data.provider || "");
+      setPipeline(data.pipeline || null);
       toast.success("Skill gerada com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar skill");
