@@ -232,7 +232,7 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
-                    const hasConfigPanel = skill.id === "6.11" || skill.id === "1.1";
+                    const hasConfigPanel = skill.id === "6.11" || !!skillConfigSchemas[skill.id];
                     const isExpanded = expandedSkillId === skill.id;
                     return (
                       <Card
@@ -291,8 +291,7 @@ export default function Insights() {
                           {/* Inline config panels */}
                           {isOn && isExpanded && (
                             <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
-                              {skill.id === "6.11" && <SkillReportsPanel />}
-                              {skill.id === "1.1" && <SkillICPConfigPanel />}
+                              {skill.id === "6.11" ? <SkillReportsPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} />}
                             </div>
                           )}
                         </CardContent>
