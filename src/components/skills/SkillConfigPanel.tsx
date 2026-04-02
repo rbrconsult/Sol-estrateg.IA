@@ -16,9 +16,10 @@ import { type SkillConfigSchema, type ConfigField } from "@/data/skillConfigSche
 
 interface Props {
   schema: SkillConfigSchema;
+  onSaved?: () => void;
 }
 
-export function SkillConfigPanel({ schema }: Props) {
+export function SkillConfigPanel({ schema, onSaved }: Props) {
   const queryClient = useQueryClient();
   const configKey = `skill_config_${schema.skillId}`;
 
@@ -82,6 +83,7 @@ export function SkillConfigPanel({ schema }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skill-config", schema.skillId] });
       toast.success("Configuração salva!");
+      onSaved?.();
     },
     onError: (e: any) => toast.error(e.message),
   });

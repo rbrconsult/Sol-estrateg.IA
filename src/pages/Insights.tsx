@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -38,6 +40,26 @@ export default function Insights() {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const { toggles, toggle } = useSkillToggles();
+  const queryClient = useQueryClient();
+
+  // Track which skills have saved config
+  const { data: configuredSkills = new Set<string>() } = useQuery({
+    queryKey: ["skill-configs-status"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("organization_configs")
+        .select("config_key")
+        .eq("config_category", "skills")
+        .like("config_key", "skill_config_%");
+      const set = new Set<string>();
+      data?.forEach(r => {
+        const id = r.config_key.replace("skill_config_", "");
+        set.add(id);
+      });
+      return set;
+    },
+    staleTime: 30_000,
+  });
 
   const allSkills = useMemo(() => skillCategories.flatMap(c => c.skills), []);
 
@@ -233,11 +255,24 @@ export default function Insights() {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
                     const hasConfigPanel = skill.id === "6.11" || !!skillConfigSchemas[skill.id];
+                    const isConfigured = configuredSkills.has(skill.id) || skill.id === "6.11";
+                    const isPendingConfig = isOn && hasConfigPanel && !isConfigured;
+                    const isFullyActive = isOn && (!hasConfigPanel || isConfigured);
                     const isExpanded = expandedSkillId === skill.id;
+
+                    const handleSaved = () => {
+                      setExpandedSkillId(null);
+                      queryClient.invalidateQueries({ queryKey: ["skill-configs-status"] });
+                    };
+
                     return (
                       <Card
                         key={skill.id}
-                        className={`border transition-colors cursor-pointer ${isOn ? "bg-card border-primary/40 shadow-sm shadow-primary/5" : "bg-card/40 border-border/40 opacity-75"} ${isExpanded && hasConfigPanel ? "col-span-full" : ""}`}
+                        className={`border transition-colors cursor-pointer ${
+                          isFullyActive ? "bg-card border-primary/40 shadow-sm shadow-primary/5" 
+                          : isPendingConfig ? "bg-card border-amber-500/40 shadow-sm shadow-amber-500/5"
+                          : "bg-card/40 border-border/40 opacity-75"
+                        } ${isExpanded && hasConfigPanel ? "col-span-full" : ""}`}
                         onClick={() => hasConfigPanel && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
                       >
                         <CardHeader className="pb-2 pt-4 px-4">
@@ -245,6 +280,16 @@ export default function Insights() {
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
                               <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
+                              {isPendingConfig && (
+                                <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-400 border-amber-500/20">
+                                  ⚙️ Pendente Config
+                                </Badge>
+                              )}
+                              {isFullyActive && hasConfigPanel && (
+                                <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                  ✅ Configurado
+                                </Badge>
+                              )}
                               {hasConfigPanel && isOn && (
                                 <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20">
                                   {isExpanded ? "▼ Fechar" : "▶ Configurar"}
@@ -291,7 +336,7 @@ export default function Insights() {
                           {/* Inline config panels */}
                           {isOn && isExpanded && (
                             <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
-                              {skill.id === "6.11" ? <SkillReportsPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} />}
+                              {skill.id === "6.11" ? <SkillReportsPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} onSaved={handleSaved} />}
                             </div>
                           )}
                         </CardContent>
