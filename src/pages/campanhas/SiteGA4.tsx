@@ -40,7 +40,7 @@ export default function SiteGA4Page() {
   const filtered = useMemo(() => {
     if (!rows) return [];
     let r = rows;
-    if (campanha !== 'all') r = r.filter((x: any) => x.campaign === campanha);
+    if (selectedCampanhas.length > 0) r = r.filter((x: any) => selectedCampanhas.includes(x.campaign));
     if (source !== 'all') r = r.filter((x: any) => x.source === source);
     if (medium !== 'all') r = r.filter((x: any) => x.medium === medium);
     if (landingPage !== 'all') r = r.filter((x: any) => x.landing_page === landingPage);
