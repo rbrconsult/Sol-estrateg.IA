@@ -93,6 +93,7 @@ export type SolEquipeMembro = {
   taxa_conversao: number | null;
   horario_pico_inicio: string | null;
   horario_pico_fim: string | null;
+  gestor_key: string | null;
   updated_by: string | null;
   updated_at: string | null;
   synced_at: string | null;
