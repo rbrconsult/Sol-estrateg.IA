@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useSolLeads } from "@/hooks/useSolData";
+import { normalizePhone, type SolLead, type SolQualificacao } from "@/hooks/useSolData";
+import { useFranquiaId } from "@/hooks/useFranquiaId";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import type { Proposal } from "@/data/dataAdapter";
 import {
   User, Phone, Mail, Calendar, Clock, Zap, DollarSign,
   Briefcase, MessageSquare, Bot, TrendingUp, ThermometerSun,
@@ -14,20 +16,157 @@ import {
   Activity, FileText
 } from "lucide-react";
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+type Lead360Input = Partial<Proposal> & {
+  nome?: string;
+  telefone?: string;
+  valor?: string | number;
+  origem?: string;
+  score?: string | number;
+};
+
+function toNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
+  if (typeof value !== "string") return fallback;
+
+  const normalized = value.replace(/[^\d,.-]/g, "").replace(/\.(?=.*\.)/g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function formatDate(dateStr: string) {
+function formatCurrency(value: number | null | undefined) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(toNumber(value));
+}
+
+function formatDate(dateStr?: string | null) {
   if (!dateStr) return "-";
   try { return new Date(dateStr).toLocaleDateString("pt-BR"); } catch { return dateStr; }
 }
 
+function formatPhone(phone?: string | null) {
+  const digits = normalizePhone(phone || "");
+  if (!digits) return "";
+  if (digits.length === 11) return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  if (digits.length === 10) return digits.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+  return phone || digits;
+}
+
+function normalizeStatus(status: unknown): Proposal["status"] {
+  return status === "Ganho" || status === "Perdido" ? status : "Aberto";
+}
+
+function normalizeTemperature(temp: unknown): Proposal["temperatura"] {
+  const normalized = typeof temp === "string" ? temp.toUpperCase() : "";
+  return normalized === "QUENTE" || normalized === "MORNO" || normalized === "FRIO" ? normalized : "";
+}
+
+function buildBaseProposal(raw: Lead360Input): Proposal {
+  return {
+    id: raw.id || raw.projetoId || raw.project_id || raw.clienteTelefone || raw.telefone || crypto.randomUUID(),
+    etapa: raw.etapa || "Novo",
+    projetoId: raw.projetoId || "",
+    nomeCliente: raw.nomeCliente || raw.nome || "Lead sem nome",
+    clienteTelefone: raw.clienteTelefone || raw.telefone || "",
+    clienteEmail: raw.clienteEmail || raw.makeEmail || "",
+    status: normalizeStatus(raw.status),
+    responsavel: raw.responsavel || "",
+    responsavelId: raw.responsavelId || "",
+    representante: raw.representante || "",
+    valorProposta: toNumber(raw.valorProposta ?? raw.valor),
+    potenciaSistema: toNumber(raw.potenciaSistema),
+    nomeProposta: raw.nomeProposta || raw.nomeCliente || raw.nome || "",
+    dataCriacaoProjeto: raw.dataCriacaoProjeto || "",
+    dataCriacaoProposta: raw.dataCriacaoProposta || "",
+    slaProposta: toNumber(raw.slaProposta, 0),
+    ultimaAtualizacao: raw.ultimaAtualizacao || "",
+    solQualificado: Boolean(raw.solQualificado),
+    solScore: toNumber(raw.solScore ?? raw.score),
+    temperatura: normalizeTemperature(raw.temperatura || raw.makeTemperatura),
+    dataQualificacaoSol: raw.dataQualificacaoSol || "",
+    notaCompleta: raw.notaCompleta || "",
+    tempoNaEtapa: toNumber(raw.tempoNaEtapa, 0),
+    solSdr: Boolean(raw.solSdr),
+    tempoSolSdr: toNumber(raw.tempoSolSdr, 0),
+    etiquetas: raw.etiquetas || "",
+    origemLead: raw.origemLead || raw.origem || "",
+    probabilidade: toNumber(raw.probabilidade, 0),
+    motivoPerda: raw.motivoPerda || "",
+    faseSM: raw.faseSM || "",
+    makeStatus: raw.makeStatus,
+    makeTemperatura: raw.makeTemperatura,
+    makeScore: raw.makeScore,
+    makeRobo: raw.makeRobo,
+    makeNome: raw.makeNome,
+    makeCidade: raw.makeCidade,
+    makeEmail: raw.makeEmail,
+    makeValorConta: raw.makeValorConta,
+    makeImovel: raw.makeImovel,
+    makeSentimento: raw.makeSentimento,
+    makeInteresse: raw.makeInteresse,
+    makeUltimaMensagem: raw.makeUltimaMensagem,
+    makeHistorico: raw.makeHistorico || [],
+    makeStatusResposta: raw.makeStatusResposta,
+    makeRespondeu: Boolean(raw.makeRespondeu),
+    makeTotalMensagens: toNumber(raw.makeTotalMensagens, 0),
+    makeMensagensRecebidas: toNumber(raw.makeMensagensRecebidas, 0),
+    makeDataResposta: raw.makeDataResposta,
+  };
+}
+
+function pickBestPhoneMatch<T extends { telefone: string | null }>(rows: T[] | null | undefined, phone: string) {
+  if (!rows?.length || !phone) return null;
+
+  const exact = rows.find((row) => normalizePhone(row.telefone || "") === phone);
+  if (exact) return exact;
+
+  const last8 = phone.slice(-8);
+  return rows.find((row) => normalizePhone(row.telefone || "").endsWith(last8)) || rows[0] || null;
+}
+
+function buildEnrichedProposal(base: Proposal, syncLead: SolLead | null, qualData: SolQualificacao | null): Proposal {
+  const enriched = { ...base };
+
+  if (syncLead) {
+    if (syncLead.nome && syncLead.nome.length > 3) enriched.nomeCliente = syncLead.nome;
+    if (syncLead.telefone) enriched.clienteTelefone = syncLead.telefone;
+    if (syncLead.email) enriched.clienteEmail = syncLead.email;
+    if (syncLead.temperatura) enriched.makeTemperatura = syncLead.temperatura;
+    if (syncLead.score) enriched.makeScore = syncLead.score;
+    if (syncLead.status) enriched.makeStatus = syncLead.status;
+    if (syncLead.etapa_funil) enriched.etapa = syncLead.etapa_funil;
+    if (syncLead.canal_origem) enriched.origemLead = syncLead.canal_origem;
+    if (syncLead.closer_nome) enriched.representante = syncLead.closer_nome;
+    if (syncLead.closer_nome && !enriched.responsavel) enriched.responsavel = syncLead.closer_nome;
+    if (syncLead.cidade) enriched.makeCidade = syncLead.cidade;
+    if (syncLead.valor_conta) enriched.makeValorConta = syncLead.valor_conta;
+    if (syncLead.resumo_conversa) enriched.notaCompleta = syncLead.resumo_conversa;
+    if (syncLead.total_mensagens_ia) enriched.makeTotalMensagens = syncLead.total_mensagens_ia;
+    if (syncLead.total_audios_enviados) enriched.makeMensagensRecebidas = syncLead.total_audios_enviados;
+    if (syncLead.resumo_qualificacao) enriched.notaCompleta = syncLead.resumo_qualificacao;
+    if (syncLead.ts_ultima_interacao) enriched.ultimaAtualizacao = syncLead.ts_ultima_interacao;
+    if (syncLead.ts_qualificado) enriched.dataQualificacaoSol = syncLead.ts_qualificado;
+    enriched.makeRobo = (syncLead.fup_followup_count || 0) >= 1 ? "fup_frio" : "sol";
+    enriched.makeRespondeu = (syncLead.total_mensagens_ia || 0) > 0;
+    enriched.solScore = toNumber(syncLead.score, enriched.solScore);
+    enriched.temperatura = normalizeTemperature(syncLead.temperatura) || enriched.temperatura;
+    enriched.solQualificado = enriched.solQualificado || syncLead.status === "QUALIFICADO" || syncLead.transferido_comercial === true;
+  }
+
+  if (qualData) {
+    enriched.solScore = toNumber(qualData.score, enriched.solScore);
+    enriched.temperatura = normalizeTemperature(qualData.temperatura) || enriched.temperatura;
+    enriched.dataQualificacaoSol = qualData.ts_primeira_qualificacao || enriched.dataQualificacaoSol;
+    enriched.notaCompleta = qualData.resumo_qualificacao || enriched.notaCompleta;
+    enriched.solQualificado = true;
+  }
+
+  return enriched;
+}
+
 function TempBadge({ temp }: { temp: string }) {
   const map: Record<string, string> = {
-    QUENTE: "bg-red-500/20 text-red-400 border-red-500/30",
-    MORNO: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    FRIO: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    QUENTE: "border-destructive/30 bg-destructive/10 text-destructive",
+    MORNO: "border-warning/30 bg-warning/10 text-warning",
+    FRIO: "border-info/30 bg-info/10 text-info",
   };
   return (
     <Badge variant="outline" className={map[temp] || "bg-muted text-muted-foreground"}>
@@ -39,76 +178,93 @@ function TempBadge({ temp }: { temp: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    Aberto: "bg-blue-500/20 text-blue-400",
-    Ganho: "bg-green-500/20 text-green-400",
-    Perdido: "bg-red-500/20 text-red-400",
+    Aberto: "bg-info/10 text-info",
+    Ganho: "bg-success/10 text-success",
+    Perdido: "bg-destructive/10 text-destructive",
   };
   return <Badge className={map[status] || "bg-muted"}>{status}</Badge>;
 }
 
 function SLABadge({ sla }: { sla: number }) {
-  const color = sla <= 24 ? "text-green-400" : sla <= 48 ? "text-yellow-400" : "text-red-400";
+  const color = sla <= 24 ? "text-success" : sla <= 48 ? "text-warning" : "text-destructive";
   return <span className={`text-sm font-semibold ${color}`}>{sla}h</span>;
 }
 
 // ─── Hook to enrich proposal with real sync data ───
 function useEnrichedProposal() {
-  const { proposal } = useLead360();
-  const { data: solLeads } = useSolLeads();
-  const [qualData, setQualData] = useState<any>(null);
+  const { proposal, isOpen } = useLead360();
+  const franquiaId = useFranquiaId();
+  const [syncLead, setSyncLead] = useState<SolLead | null>(null);
+  const [qualData, setQualData] = useState<SolQualificacao | null>(null);
 
-  const phone = proposal?.clienteTelefone?.replace(/\D/g, '') || '';
+  const baseProposal = useMemo(() => (proposal ? buildBaseProposal(proposal as Lead360Input) : null), [proposal]);
+  const phone = useMemo(() => normalizePhone(baseProposal?.clienteTelefone || ""), [baseProposal?.clienteTelefone]);
 
-  // Match sol_leads_sync by phone
-  const syncLead = solLeads?.find((l) => {
-    const lPhone = l.telefone?.replace(/\D/g, '') || '';
-    return lPhone && phone && (lPhone === phone || lPhone.endsWith(phone.slice(-8)) || phone.endsWith(lPhone.slice(-8)));
-  });
-
-  // Fetch qualificacao
   useEffect(() => {
-    if (!phone) { setQualData(null); return; }
-    supabase
-      .from('sol_qualificacao_sync')
-      .select('*')
-      .eq('telefone', phone)
-      .maybeSingle()
-      .then(({ data }) => setQualData(data));
-  }, [phone]);
+    if (!isOpen || !phone) {
+      setSyncLead(null);
+      setQualData(null);
+      return;
+    }
 
-  if (!proposal) return { enriched: null, syncLead: null, qualData: null };
+    let active = true;
+    const phoneCandidates = Array.from(new Set([
+      phone,
+      phone.startsWith("55") ? phone.slice(2) : `55${phone}`,
+      phone.slice(-11),
+      phone.slice(-10),
+      phone.slice(-8),
+    ].filter((candidate) => candidate && candidate.length >= 8)));
 
-  // Build enriched proposal merging sync data over partial data
-  const enriched = { ...proposal };
-  if (syncLead) {
-    if (syncLead.nome && syncLead.nome.length > 3) enriched.nomeCliente = syncLead.nome;
-    if (syncLead.telefone) enriched.clienteTelefone = syncLead.telefone;
-    if (syncLead.email) enriched.clienteEmail = syncLead.email;
-    if (syncLead.temperatura) enriched.makeTemperatura = syncLead.temperatura;
-    if (syncLead.score) enriched.makeScore = syncLead.score;
-    if (syncLead.status) enriched.makeStatus = syncLead.status;
-    if (syncLead.etapa_funil) enriched.etapa = syncLead.etapa_funil;
-    if (syncLead.canal_origem) enriched.origemLead = syncLead.canal_origem;
-    if (syncLead.closer_nome) enriched.representante = syncLead.closer_nome;
-    if (syncLead.cidade) enriched.makeCidade = syncLead.cidade;
-    if (syncLead.valor_conta) enriched.makeValorConta = syncLead.valor_conta;
-    if (syncLead.resumo_conversa) enriched.notaCompleta = syncLead.resumo_conversa;
-    if (syncLead.total_mensagens_ia) enriched.makeTotalMensagens = syncLead.total_mensagens_ia;
-    if (syncLead.total_audios_enviados) enriched.makeMensagensRecebidas = syncLead.total_audios_enviados;
-    if (syncLead.custo_total_usd) enriched.valorProposta = syncLead.custo_total_usd;
-    if (syncLead.resumo_qualificacao) enriched.notaCompleta = syncLead.resumo_qualificacao;
-    enriched.makeRobo = (syncLead.fup_followup_count || 0) >= 1 ? 'fup_frio' : 'sol';
-    enriched.makeRespondeu = (syncLead.total_mensagens_ia || 0) > 0;
-  }
+    const orFilter = phoneCandidates.map((candidate) => `telefone.eq.${candidate}`).join(",");
 
-  return { enriched, syncLead, qualData };
+    const load = async () => {
+      try {
+        const [leadResponse, qualResponse] = await Promise.all([
+          supabase
+            .from("sol_leads_sync")
+            .select("*")
+            .eq("franquia_id", franquiaId)
+            .or(orFilter)
+            .limit(10),
+          supabase
+            .from("sol_qualificacao_sync")
+            .select("*")
+            .eq("franquia_id", franquiaId)
+            .or(orFilter)
+            .limit(10),
+        ]);
+
+        if (!active) return;
+
+        setSyncLead(pickBestPhoneMatch(leadResponse.data as SolLead[] | null, phone));
+        setQualData(pickBestPhoneMatch(qualResponse.data as SolQualificacao[] | null, phone));
+      } catch (error) {
+        console.error("Lead360 enrichment failed", error);
+        if (active) {
+          setSyncLead(null);
+          setQualData(null);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+  }, [franquiaId, isOpen, phone]);
+
+  const enriched = useMemo(() => {
+    if (!baseProposal) return null;
+    return buildEnrichedProposal(baseProposal, syncLead, qualData);
+  }, [baseProposal, qualData, syncLead]);
+
+  return { enriched, qualData };
 }
 
 // ─── CRM Tab ───
-function CRMSection() {
-  const { enriched: p } = useEnrichedProposal();
-  if (!p) return null;
-
+function CRMSection({ proposal: p }: { proposal: Proposal }) {
   return (
     <div className="space-y-4">
       {/* Valores */}
@@ -151,7 +307,7 @@ function CRMSection() {
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">Dias na etapa</span>
-          <span className={`text-sm font-semibold ${p.tempoNaEtapa > 7 ? "text-red-400" : "text-foreground"}`}>
+          <span className={`text-sm font-semibold ${p.tempoNaEtapa > 7 ? "text-destructive" : "text-foreground"}`}>
             {p.tempoNaEtapa}d
           </span>
         </div>
@@ -163,7 +319,7 @@ function CRMSection() {
         {p.clienteTelefone && (
           <div className="flex items-center gap-2 text-sm">
             <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-            <a href={`tel:${p.clienteTelefone}`} className="text-primary hover:underline">{p.clienteTelefone}</a>
+            <a href={`tel:${p.clienteTelefone}`} className="text-primary hover:underline">{formatPhone(p.clienteTelefone)}</a>
           </div>
         )}
         {p.clienteEmail && (
@@ -219,8 +375,7 @@ function CRMSection() {
 
 // ─── Robôs Tab ───
 function RobosSection() {
-  const { enriched: p } = useEnrichedProposal();
-  if (!p) return null;
+function RobosSection({ proposal: p }: { proposal: Proposal }) {
 
   const hasRobotData = p.makeRobo || p.makeStatus || p.makeStatusResposta;
 
@@ -254,9 +409,9 @@ function RobosSection() {
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Respondeu</span>
               {p.makeRespondeu ? (
-                <Badge className="bg-green-500/20 text-green-400"><CheckCircle2 className="h-3 w-3 mr-1" /> Sim</Badge>
+                <Badge className="bg-success/10 text-success"><CheckCircle2 className="h-3 w-3 mr-1" /> Sim</Badge>
               ) : (
-                <Badge className="bg-red-500/20 text-red-400"><XCircle className="h-3 w-3 mr-1" /> Não</Badge>
+                <Badge className="bg-destructive/10 text-destructive"><XCircle className="h-3 w-3 mr-1" /> Não</Badge>
               )}
             </div>
             <div className="flex items-center justify-between text-sm">
@@ -297,7 +452,7 @@ function RobosSection() {
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Qualificado</span>
               {p.solQualificado ? (
-                <Badge className="bg-green-500/20 text-green-400">Sim</Badge>
+                <Badge className="bg-success/10 text-success">Sim</Badge>
               ) : (
                 <Badge className="bg-muted text-muted-foreground">Não</Badge>
               )}
@@ -322,10 +477,7 @@ function RobosSection() {
 }
 
 // ─── Timeline Tab ───
-function TimelineSection() {
-  const { enriched: p } = useEnrichedProposal();
-  if (!p) return null;
-
+function TimelineSection({ proposal: p }: { proposal: Proposal }) {
   // Build timeline events from all available data
   const events: { date: string; label: string; icon: React.ReactNode; type: "info" | "success" | "warning" | "danger" }[] = [];
 
@@ -370,17 +522,17 @@ function TimelineSection() {
   });
 
   const typeColors = {
-    info: "border-blue-500/50 text-blue-400",
-    success: "border-green-500/50 text-green-400",
-    warning: "border-yellow-500/50 text-yellow-400",
-    danger: "border-red-500/50 text-red-400",
+    info: "border-info/50 text-info",
+    success: "border-success/50 text-success",
+    warning: "border-warning/50 text-warning",
+    danger: "border-destructive/50 text-destructive",
   };
 
   const dotColors = {
-    info: "bg-blue-500",
-    success: "bg-green-500",
-    warning: "bg-yellow-500",
-    danger: "bg-red-500",
+    info: "bg-info",
+    success: "bg-success",
+    warning: "bg-warning",
+    danger: "bg-destructive",
   };
 
   return (
@@ -411,10 +563,7 @@ function TimelineSection() {
 }
 
 // ─── Performance Tab ───
-function PerformanceSection() {
-  const { enriched: p } = useEnrichedProposal();
-  if (!p) return null;
-
+function PerformanceSection({ proposal: p }: { proposal: Proposal }) {
   return (
     <div className="space-y-4">
       {/* Vendedor info */}
@@ -468,25 +617,25 @@ function PerformanceSection() {
       {/* Alerts */}
       <div className="space-y-2">
         {p.tempoNaEtapa > 14 && (
-          <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Lead parado há {p.tempoNaEtapa} dias na etapa "{p.etapa}"
           </div>
         )}
         {p.slaProposta > 48 && (
-          <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-400">
+          <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
             <Clock className="h-4 w-4 shrink-0" />
             SLA acima de 48h ({p.slaProposta}h)
           </div>
         )}
         {p.temperatura === "QUENTE" && p.status === "Aberto" && p.tempoNaEtapa > 7 && (
-          <div className="flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 p-3 text-sm text-orange-400">
+          <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
             <ThermometerSun className="h-4 w-4 shrink-0" />
             Lead quente parado — risco de esfriar
           </div>
         )}
         {p.makeRespondeu && p.status === "Aberto" && (
-          <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+          <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             Lead respondeu ao robô — oportunidade de conversão
           </div>
@@ -505,14 +654,11 @@ function PerformanceSection() {
 }
 
 // ─── Qualificação Section ───
-function QualificacaoSection() {
-  const { enriched: p, qualData } = useEnrichedProposal();
-  if (!p) return null;
-
+function QualificacaoSection({ proposal: p, qualData }: { proposal: Proposal; qualData: SolQualificacao | null }) {
   return (
     <div className="space-y-4">
       {/* Performance section first */}
-      <PerformanceSection />
+      <PerformanceSection proposal={p} />
 
       <Separator />
 
@@ -598,9 +744,9 @@ function QualificacaoSection() {
 // ─── Main Drawer ───
 export function Lead360Drawer() {
   const { isOpen, closeLead360 } = useLead360();
-  const { enriched: proposal } = useEnrichedProposal();
+  const { enriched: proposal, qualData } = useEnrichedProposal();
 
-  if (!proposal) return null;
+  if (!isOpen || !proposal) return null;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeLead360()}>
@@ -613,7 +759,7 @@ export function Lead360Drawer() {
             <div className="min-w-0 flex-1">
               <p className="font-bold text-foreground truncate">{proposal.nomeCliente}</p>
               <p className="text-[10px] text-muted-foreground font-normal truncate">
-                {proposal.clienteTelefone ? proposal.clienteTelefone.replace(/(\d{2})(\d{2})(\d{4,5})(\d{4})/, '+$1 ($2) $3-$4') : ''} • {proposal.origemLead || proposal.etapa || ''}
+                {formatPhone(proposal.clienteTelefone)}{proposal.origemLead || proposal.etapa ? ` • ${proposal.origemLead || proposal.etapa}` : ""}
               </p>
             </div>
           </SheetTitle>
@@ -637,10 +783,10 @@ export function Lead360Drawer() {
 
           <ScrollArea className="flex-1 min-h-0">
             <div className="p-4">
-              <TabsContent value="crm" className="mt-0"><CRMSection /></TabsContent>
-              <TabsContent value="robos" className="mt-0"><RobosSection /></TabsContent>
-              <TabsContent value="timeline" className="mt-0"><TimelineSection /></TabsContent>
-              <TabsContent value="performance" className="mt-0"><QualificacaoSection /></TabsContent>
+              <TabsContent value="crm" className="mt-0"><CRMSection proposal={proposal} /></TabsContent>
+              <TabsContent value="robos" className="mt-0"><RobosSection proposal={proposal} /></TabsContent>
+              <TabsContent value="timeline" className="mt-0"><TimelineSection proposal={proposal} /></TabsContent>
+              <TabsContent value="performance" className="mt-0"><QualificacaoSection proposal={proposal} qualData={qualData} /></TabsContent>
             </div>
           </ScrollArea>
         </Tabs>
