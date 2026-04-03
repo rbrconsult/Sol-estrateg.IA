@@ -26,7 +26,10 @@ export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, App
   }
 
   private handleReload = () => {
-    window.location.reload();
+    sessionStorage.removeItem("__sol_runtime_recovery__");
+    const url = new URL(window.location.href);
+    url.searchParams.set("_hard_reload", `${Date.now()}`);
+    window.location.replace(url.toString());
   };
 
   render() {
