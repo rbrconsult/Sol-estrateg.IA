@@ -13,6 +13,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
 import Forecast from "./pages/Forecast";
@@ -77,10 +78,13 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <ImpersonationBanner />
-          <Lead360Drawer />
-          <BrowserRouter>
-            <Routes>
+          <AppErrorBoundary fallback={null}>
+            <ImpersonationBanner />
+            <Lead360Drawer />
+          </AppErrorBoundary>
+          <AppErrorBoundary>
+            <BrowserRouter>
+              <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
@@ -154,8 +158,9 @@ const App = () => (
               <Route path="/mensagens" element={<Navigate to="/dashboard" replace />} />
 
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+              </Routes>
+            </BrowserRouter>
+          </AppErrorBoundary>
         </TooltipProvider>
         </Lead360Provider>
         </GlobalFilterProvider>
