@@ -263,10 +263,10 @@ const Index = () => {
           {/* ═══════════════════════════════════════════════ */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { key: 'ROBO_SOL', label: 'Robô SOL', value: filtered.length, color: 'text-primary', icon: Bot, desc: 'Total de leads no pipeline do robô' },
-              { key: 'EM_QUAL', label: 'Em Qualificação', value: statusCounts['EM_QUALIFICACAO'] + statusCounts['TRAFEGO_PAGO'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
+              { key: 'TRAFEGO', label: 'Tráfego Pago', value: statusCounts['TRAFEGO_PAGO'], color: 'text-primary', icon: Users, desc: 'Leads que entraram pelo formulário' },
+              { key: 'ROBO_SOL', label: 'Robô SOL', value: statusCounts['EM_QUALIFICACAO'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
               { key: 'QUALIFICADOS', label: 'Qualificados', value: statusCounts['QUALIFICADO'], color: 'text-emerald-500', icon: UserCheck, desc: 'Transferidos para o closer' },
-              { key: 'COM_CLOSER', label: 'Com Closer', value: filtered.filter(l => l.closer_nome).length, color: 'text-blue-400', icon: Users, desc: 'Leads atribuídos a um vendedor' },
+              { key: 'COM_CLOSER', label: 'Com Closer', value: filtered.filter(l => l.closer_nome).length, color: 'text-blue-400', icon: Headphones, desc: 'Leads com closer atribuído' },
               ...FUNNEL_ORDER.filter(k => !['TRAFEGO_PAGO','EM_QUALIFICACAO','QUALIFICADO'].includes(k) && (statusCounts[k] > 0 || k === 'GANHO')).map(k => ({
                 key: k, label: getStatusLabel(k), value: statusCounts[k],
                 color: STATUS_META[k]?.color || 'text-muted-foreground',
