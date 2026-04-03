@@ -1462,6 +1462,7 @@ export type Database = {
           ativo: boolean | null
           cargo: string | null
           franquia_id: string | null
+          gestor_key: string | null
           horario_pico_fim: string | null
           horario_pico_inicio: string | null
           key: string
@@ -1481,6 +1482,7 @@ export type Database = {
           ativo?: boolean | null
           cargo?: string | null
           franquia_id?: string | null
+          gestor_key?: string | null
           horario_pico_fim?: string | null
           horario_pico_inicio?: string | null
           key: string
@@ -1500,6 +1502,7 @@ export type Database = {
           ativo?: boolean | null
           cargo?: string | null
           franquia_id?: string | null
+          gestor_key?: string | null
           horario_pico_fim?: string | null
           horario_pico_inicio?: string | null
           key?: string
