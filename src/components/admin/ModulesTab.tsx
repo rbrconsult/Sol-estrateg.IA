@@ -10,6 +10,7 @@ import { Loader2, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const MODULE_GROUPS = [
   { label: 'Pré-venda', icon: '📥', keys: ['conferencia', 'leads', 'robo-sol', 'robo-fup-frio'] },
