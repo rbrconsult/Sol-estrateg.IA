@@ -81,6 +81,8 @@ export default function ModulesTab({ users }: ModulesTabProps) {
         );
       if (error) throw error;
       setPermissions(prev => ({ ...prev, [moduleKey]: enabled }));
+      // Invalidate cache immediately so the user's view updates
+      queryClient.invalidateQueries({ queryKey: ['module-permissions', selectedUserId] });
       const mod = MODULE_DEFINITIONS.find(m => m.key === moduleKey);
       toast.success(`${enabled ? 'Liberado' : 'Restrito'}: ${mod?.label || moduleKey}`);
     } catch (error: any) {
