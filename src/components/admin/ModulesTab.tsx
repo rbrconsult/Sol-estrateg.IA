@@ -34,6 +34,7 @@ interface ModulesTabProps {
 }
 
 export default function ModulesTab({ users }: ModulesTabProps) {
+  const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
