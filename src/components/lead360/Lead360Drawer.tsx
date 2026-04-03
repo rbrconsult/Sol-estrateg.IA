@@ -19,6 +19,7 @@ import {
 type Lead360Input = Partial<Proposal> & {
   nome?: string;
   telefone?: string;
+  project_id?: string;
   valor?: string | number;
   origem?: string;
   score?: string | number;
@@ -374,7 +375,6 @@ function CRMSection({ proposal: p }: { proposal: Proposal }) {
 }
 
 // ─── Robôs Tab ───
-function RobosSection() {
 function RobosSection({ proposal: p }: { proposal: Proposal }) {
 
   const hasRobotData = p.makeRobo || p.makeStatus || p.makeStatusResposta;
