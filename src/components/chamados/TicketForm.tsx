@@ -164,11 +164,8 @@ export function TicketForm({ onTicketCreated, onSelectTicket }: TicketFormProps)
         return;
       }
 
-      const { data: urlData } = supabase.storage
-        .from("ticket-attachments")
-        .getPublicUrl(path);
-
-      attachmentUrl = urlData.publicUrl;
+      // Store just the path, not the full URL (bucket is private)
+      attachmentUrl = path;
     }
 
     const slaHours = SLA_HOURS[prioridade];
