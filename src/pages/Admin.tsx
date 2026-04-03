@@ -26,6 +26,7 @@ import DiscoveredDataStores from '@/components/admin/DiscoveredDataStores';
 import SkillsTab from '@/components/admin/SkillsTab';
 import { PessoasTab } from '@/components/admin/PessoasTab';
 import { InfrastructureTab } from '@/components/admin/InfrastructureTab';
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -274,7 +275,29 @@ export default function Admin() {
     }
   };
 
-  const formatDate = (dateString: string) => format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '-';
+
+    try {
+      return format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
+    } catch {
+      return '-';
+    }
+  };
+
+  const renderSectionFallback = (title: string) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>Esta seção foi isolada para evitar a tela branca do painel.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">Recarregue a página ou troque de aba para tentar novamente.</p>
+      </CardContent>
+    </Card>
+  );
 
   const getActionBadge = (action: string) => {
     const map: Record<string, { bg: string; text: string; label: string }> = {
@@ -547,34 +570,39 @@ export default function Admin() {
           {/* FILIAIS */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="filiais">
-            <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
+            <AppErrorBoundary fallback={renderSectionFallback('Filiais')}>
+              <OrganizationsTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name }))} />
+            </AppErrorBoundary>
           </TabsContent>
 
           {/* ═══════════════════════════════════════════ */}
           {/* PESSOAS — Usuários + Time Comercial */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="pessoas" className="space-y-6">
-            <PessoasTab
-              users={users}
-              organizations={organizations}
-              onRefreshUsers={fetchUsers}
-              onImpersonate={(u) => setImpersonateTarget(u)}
-              onEditUser={(u) => openEditDialog(u)}
-              onResetPassword={(u) => { setSelectedUser(u); setNewPassword(''); setIsPasswordDialogOpen(true); }}
-              onDeleteUser={(u) => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}
-              onInvalidateSessions={invalidateAllUserSessions}
-              currentUserId={user?.id || null}
-              impersonateLoading={impersonateLoading}
-            />
+            <AppErrorBoundary fallback={renderSectionFallback('Pessoas')}>
+              <PessoasTab
+                users={users}
+                organizations={organizations}
+                onRefreshUsers={fetchUsers}
+                onImpersonate={(u) => setImpersonateTarget(u)}
+                onEditUser={(u) => openEditDialog(u)}
+                onResetPassword={(u) => { setSelectedUser(u); setNewPassword(''); setIsPasswordDialogOpen(true); }}
+                onDeleteUser={(u) => { setIsDeleteDialogOpen(true); setSelectedUser(u); }}
+                onInvalidateSessions={invalidateAllUserSessions}
+                currentUserId={user?.id || null}
+                impersonateLoading={impersonateLoading}
+              />
+            </AppErrorBoundary>
           </TabsContent>
 
           {/* ═══════════════════════════════════════════ */}
           {/* SEGURANÇA — Analytics + Logs + Sessões */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="seguranca" className="space-y-6">
-            {hasAccess('admin-seguranca') && (
-              <>
-                <LoginAnalyticsTab accessLogs={accessLogs} sessions={sessions} onInvalidateAllSessions={invalidateAllUserSessions} />
+            <AppErrorBoundary fallback={renderSectionFallback('Segurança')}>
+              {hasAccess('admin-seguranca') && (
+                <>
+                  <LoginAnalyticsTab accessLogs={accessLogs} sessions={sessions} onInvalidateAllSessions={invalidateAllUserSessions} />
 
                 {/* Logs de Acesso — com busca e filtro */}
                 <Card>
@@ -628,97 +656,102 @@ export default function Admin() {
                     )}
                   </CardContent>
                 </Card>
-              </>
-            )}
+                </>
+              )}
 
-            {/* Sessões Ativas — redesign */}
-            {hasAccess('admin-sessoes') && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Fingerprint className="h-4 w-4 text-primary" />
-                        Sessões Ativas
-                      </CardTitle>
-                      <CardDescription className="mt-1">{activeSessions.length} sessões ativas no momento</CardDescription>
+              {/* Sessões Ativas — redesign */}
+              {hasAccess('admin-sessoes') && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Fingerprint className="h-4 w-4 text-primary" />
+                          Sessões Ativas
+                        </CardTitle>
+                        <CardDescription className="mt-1">{activeSessions.length} sessões ativas no momento</CardDescription>
+                      </div>
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                        {activeSessions.length} online
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                      {activeSessions.length} online
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {sessions.length === 0 ? (
-                    <div className="flex flex-col items-center py-12 text-muted-foreground">
-                      <Fingerprint className="h-8 w-8 mb-2 opacity-30" />
-                      <p className="text-sm">Nenhuma sessão registrada</p>
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-border/50 overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/30">
-                            <TableHead className="font-semibold">Usuário</TableHead>
-                            <TableHead className="font-semibold">IP</TableHead>
-                            <TableHead className="font-semibold">Navegador</TableHead>
-                            <TableHead className="font-semibold">Última Atividade</TableHead>
-                            <TableHead className="font-semibold text-center">Status</TableHead>
-                            <TableHead className="text-right font-semibold">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {sessions.slice(0, 50).map((s) => {
-                            const sessionUser = users.find(u => u.id === s.user_id);
-                            return (
-                              <TableRow key={s.id} className="hover:bg-muted/20 transition-colors">
-                                <TableCell>
-                                  <div>
-                                    <div className="font-medium text-sm">{sessionUser?.full_name || sessionUser?.email || s.user_id.slice(0, 8)}</div>
-                                    {sessionUser?.email && sessionUser?.full_name && (
-                                      <div className="text-xs text-muted-foreground">{sessionUser.email}</div>
+                  </CardHeader>
+                  <CardContent>
+                    {sessions.length === 0 ? (
+                      <div className="flex flex-col items-center py-12 text-muted-foreground">
+                        <Fingerprint className="h-8 w-8 mb-2 opacity-30" />
+                        <p className="text-sm">Nenhuma sessão registrada</p>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-border/50 overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/30">
+                              <TableHead className="font-semibold">Usuário</TableHead>
+                              <TableHead className="font-semibold">IP</TableHead>
+                              <TableHead className="font-semibold">Navegador</TableHead>
+                              <TableHead className="font-semibold">Última Atividade</TableHead>
+                              <TableHead className="font-semibold text-center">Status</TableHead>
+                              <TableHead className="text-right font-semibold">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {sessions.slice(0, 50).map((s) => {
+                              const sessionUser = users.find(u => u.id === s.user_id);
+                              return (
+                                <TableRow key={s.id} className="hover:bg-muted/20 transition-colors">
+                                  <TableCell>
+                                    <div>
+                                      <div className="font-medium text-sm">{sessionUser?.full_name || sessionUser?.email || s.user_id.slice(0, 8)}</div>
+                                      {sessionUser?.email && sessionUser?.full_name && (
+                                        <div className="text-xs text-muted-foreground">{sessionUser.email}</div>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs text-muted-foreground">{s.ip_address || 'N/A'}</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">{parseUserAgent(s.user_agent)}</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">{formatDate(s.last_activity)}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge className={s.is_active ? 'bg-success/15 text-success border-success/20' : 'bg-muted text-muted-foreground'}>
+                                      {s.is_active ? '● Ativa' : 'Inativa'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {s.is_active && (
+                                      <Button variant="ghost" size="sm" onClick={() => invalidateSession(s.id, s.user_id)} className="text-destructive text-xs hover:bg-destructive/10">
+                                        <Ban className="h-3 w-3 mr-1" /> Invalidar
+                                      </Button>
                                     )}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="font-mono text-xs text-muted-foreground">{s.ip_address || 'N/A'}</TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{parseUserAgent(s.user_agent)}</TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{formatDate(s.last_activity)}</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge className={s.is_active ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-muted text-muted-foreground'}>
-                                    {s.is_active ? '● Ativa' : 'Inativa'}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {s.is_active && (
-                                    <Button variant="ghost" size="sm" onClick={() => invalidateSession(s.id, s.user_id)} className="text-destructive text-xs hover:bg-destructive/10">
-                                      <Ban className="h-3 w-3 mr-1" /> Invalidar
-                                    </Button>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </AppErrorBoundary>
           </TabsContent>
 
           {/* ═══════════════════════════════════════════ */}
           {/* MÓDULOS */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="modulos">
-            <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
+            <AppErrorBoundary fallback={renderSectionFallback('Módulos')}>
+              <ModulesTab users={users.map(u => ({ id: u.id, email: u.email, full_name: u.full_name, role: u.role }))} />
+            </AppErrorBoundary>
           </TabsContent>
 
           {/* ═══════════════════════════════════════════ */}
           {/* INFRAESTRUTURA */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="infraestrutura">
-            <InfrastructureTab />
+            <AppErrorBoundary fallback={renderSectionFallback('Infraestrutura')}>
+              <InfrastructureTab />
+            </AppErrorBoundary>
           </TabsContent>
         </Tabs>
 
