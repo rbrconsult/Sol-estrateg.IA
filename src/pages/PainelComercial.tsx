@@ -14,9 +14,7 @@ import {
   Flame,
   Thermometer,
   CalendarCheck,
-  ChevronRight,
   Send,
-  RefreshCcw,
   Zap,
   CheckCircle2,
   Clock,
@@ -24,7 +22,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useSolLeads, type SolLead } from '@/hooks/useSolData';
 import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
@@ -46,9 +44,9 @@ interface Alert {
 }
 
 const severityStyles: Record<Severity, string> = {
-  critical: "bg-destructive/15 text-destructive border-destructive/30",
-  warning: "bg-warning/15 text-warning border-warning/30",
-  info: "bg-primary/15 text-primary border-primary/30",
+  critical: "border-destructive/25 bg-destructive/5 text-foreground",
+  warning: "border-warning/25 bg-warning/5 text-foreground",
+  info: "border-info/25 bg-info/5 text-foreground",
 };
 const severityBadge: Record<Severity, "destructive" | "secondary" | "outline"> = {
   critical: "destructive",
@@ -56,15 +54,14 @@ const severityBadge: Record<Severity, "destructive" | "secondary" | "outline"> =
   info: "outline",
 };
 
+const panelCardClass = "overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-sm";
+const metricTileClass = "rounded-xl border border-border/50 bg-background/60 p-3";
+
 const tempColor = (t: string) =>
-  t === "QUENTE" ? "text-red-400" : t === "MORNO" ? "text-yellow-400" : "text-blue-400";
+  t === "QUENTE" ? "text-destructive" : t === "MORNO" ? "text-warning" : "text-info";
 
 const prioridadeBadge = (p: string): "destructive" | "secondary" | "outline" =>
   p === "alta" ? "destructive" : p === "media" ? "secondary" : "outline";
-
-const reportIcon = (tipo: string) => {
-  switch (tipo) { case "executivo": return "☀️"; case "closer": return "📊"; case "robos": return "🤖"; case "campanha": return "📣"; default: return "📄"; }
-};
 
 function getPrioridade(r: SolLead): string {
   const score = parseInt(r.score || "0") || 0;
@@ -328,39 +325,70 @@ export default function PainelComercial() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
-            <Zap className="h-6 w-6 text-warning" />
-            Painel Comercial
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Visão operacional em tempo real — alertas, fila e ações</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate("/qualificacao")} className="text-xs gap-1">
-            <Sparkles className="h-3.5 w-3.5" /> Qualificar
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate("/reprocessamento")} className="text-xs gap-1">
-            <RotateCcw className="h-3.5 w-3.5" /> Reprocessar
-          </Button>
-          {orgFilterActive && (
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
-              🏢 {selectedOrgName}
+    <div className="space-y-5">
+      <section className="rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-muted/30 p-5 shadow-sm">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-3">
+            <Badge variant="outline" className="w-fit border-primary/20 bg-primary/10 text-[10px] uppercase tracking-[0.18em] text-primary">
+              Operação comercial
             </Badge>
-          )}
-          {summary.emRiscoInatividade > 0 && (
-            <Badge variant="destructive" className="text-xs gap-1 animate-pulse">
-              <Clock className="h-3 w-3" /> {summary.emRiscoInatividade} inativos
+
+            <div>
+              <h1 className="flex items-center gap-3 text-2xl font-black tracking-tight text-foreground">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-warning/20 bg-warning/10 text-warning shadow-sm">
+                  <Zap className="h-5 w-5" />
+                </span>
+                Painel Comercial
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Fila do closer, riscos de inatividade e oportunidades concentradas em uma visão mais limpa e objetiva.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/qualificacao")} className="gap-1.5 rounded-xl text-xs">
+              <Sparkles className="h-3.5 w-3.5" /> Qualificar
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/reprocessamento")} className="gap-1.5 rounded-xl text-xs">
+              <RotateCcw className="h-3.5 w-3.5" /> Reprocessar
+            </Button>
+            {orgFilterActive && (
+              <Badge variant="outline" className="border-primary/20 bg-primary/10 text-xs text-primary">
+                🏢 {selectedOrgName}
+              </Badge>
+            )}
+            {summary.emRiscoInatividade > 0 && (
+              <Badge variant="destructive" className="gap-1 text-xs animate-pulse">
+                <Clock className="h-3 w-3" /> {summary.emRiscoInatividade} inativos
+              </Badge>
+            )}
+            <Badge variant="outline" className="gap-1.5 text-xs">
+              <span className="inline-block h-2 w-2 rounded-full bg-success animate-pulse" />
+              {records.length} leads carregados
             </Badge>
-          )}
-          <Badge variant="outline" className="text-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse inline-block" />
-            {records.length} leads carregados
-          </Badge>
+          </div>
         </div>
-      </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {[
+            { label: "Leads na base", value: summary.total, icon: Flame, tone: "text-primary bg-primary/10 border-primary/15" },
+            { label: "SQL", value: summary.qualificados, icon: Thermometer, tone: "text-success bg-success/10 border-success/15" },
+            { label: "FUP ativos", value: summary.fupAtivos, icon: Send, tone: "text-info bg-info/10 border-info/15" },
+            { label: "Em risco", value: summary.emRiscoInatividade, icon: AlertTriangle, tone: "text-destructive bg-destructive/10 border-destructive/15" },
+          ].map((item) => (
+            <div key={item.label} className={`${metricTileClass} flex items-start gap-3`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${item.tone}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                <p className="mt-1 text-2xl font-black leading-none text-foreground">{item.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <PageFloatingFilter
         filters={gf.filters} hasFilters={gf.hasFilters} clearFilters={gf.clearFilters}
@@ -369,38 +397,48 @@ export default function PainelComercial() {
         config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true }}
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="painel">Painel</TabsTrigger>
-          <TabsTrigger value="oportunidades">
-            <TrendingUp className="h-4 w-4 mr-1" /> Oportunidades
+      <Tabs value={tab} onValueChange={setTab} className="space-y-5">
+        <TabsList className="grid h-auto w-full max-w-md grid-cols-2 rounded-2xl border border-border/60 bg-muted/40 p-1">
+          <TabsTrigger value="painel" className="gap-2 rounded-xl px-3 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+            <Zap className="h-3.5 w-3.5" /> Painel
+          </TabsTrigger>
+          <TabsTrigger value="oportunidades" className="gap-2 rounded-xl px-3 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+            <TrendingUp className="h-3.5 w-3.5" /> Oportunidades
           </TabsTrigger>
         </TabsList>
 
         {/* ── PAINEL ──────────────────────────────── */}
         <TabsContent value="painel" className="mt-4">
           {isLoading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Card key={i}><CardContent className="p-6"><Skeleton className="h-[500px] w-full" /></CardContent></Card>
+                <Card key={i} className={panelCardClass}><CardContent className="p-6"><Skeleton className="h-[500px] w-full rounded-xl" /></CardContent></Card>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.05fr_1.2fr_0.9fr]">
               {/* Col 1 — Alertas Urgentes */}
-              <Card className="border-destructive/20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Alertas Urgentes
-                    <Badge variant="destructive" className="ml-auto">{alerts.length}</Badge>
-                  </CardTitle>
+              <Card className={panelCardClass}>
+                <CardHeader className="space-y-3 pb-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Prioridade imediata</p>
+                      <CardTitle className="mt-1 flex items-center gap-2 text-base">
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
+                        Alertas Urgentes
+                      </CardTitle>
+                    </div>
+                    <Badge variant="destructive">{alerts.length}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Leads e situações que pedem ação rápida da operação.</p>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[520px]">
-                    <div className="space-y-2 px-4 pb-4">
+                  <ScrollArea className="h-[560px]">
+                    <div className="space-y-3 px-4 pb-4">
                       {alerts.length === 0 && (
-                        <p className="text-xs text-muted-foreground text-center py-8">Nenhum alerta no momento ✅</p>
+                        <div className="rounded-xl border border-border/50 bg-background/40 px-4 py-10 text-center text-xs text-muted-foreground">
+                          Nenhum alerta no momento ✅
+                        </div>
                       )}
                       {alerts.map((a) => (
                         <button
@@ -419,17 +457,17 @@ export default function PainelComercial() {
                               } as any);
                             }
                           }}
-                          className={`w-full text-left rounded-lg border p-3 ${severityStyles[a.severity]} transition-colors ${a.leadData ? "cursor-pointer hover:opacity-80" : ""}`}
+                          className={`w-full rounded-xl border px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${severityStyles[a.severity]} ${a.leadData ? "cursor-pointer" : ""}`}
                         >
-                          <div className="flex items-center justify-between mb-1">
+                          <div className="mb-2 flex items-center justify-between gap-3">
                             <Badge variant={severityBadge[a.severity]} className="text-[10px]">{a.label}</Badge>
-                            {a.time && <span className="text-[10px] opacity-70">{a.time}</span>}
+                            {a.time && <span className="text-[10px] text-muted-foreground">{a.time}</span>}
                           </div>
-                          <p className="text-xs leading-relaxed">{a.desc}</p>
+                          <p className="text-xs font-medium leading-relaxed text-foreground">{a.desc}</p>
                           {a.leadData && (
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-[10px] font-mono opacity-70">{a.leadData.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
-                              <span className="text-[9px] opacity-60">Clique para detalhes →</span>
+                            <div className="mt-2 flex items-center justify-between gap-3 border-t border-border/40 pt-2">
+                              <span className="text-[10px] font-mono text-muted-foreground">{a.leadData.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
+                              <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Abrir lead</span>
                             </div>
                           )}
                         </button>
@@ -440,41 +478,47 @@ export default function PainelComercial() {
               </Card>
 
               {/* Col 2 — Fila do Closer */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    Fila do Closer
-                  </CardTitle>
+              <Card className={panelCardClass}>
+                <CardHeader className="space-y-3 pb-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Execução comercial</p>
+                    <CardTitle className="mt-1 flex items-center gap-2 text-base">
+                      <Users className="h-5 w-5 text-primary" />
+                      Fila do Closer
+                    </CardTitle>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Agrupamento dos leads mais quentes para abordagem e fechamento.</p>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[520px]">
+                  <ScrollArea className="h-[560px]">
                     <div className="space-y-4 px-4 pb-4">
                       {closerQueue.length === 0 && (
-                        <p className="text-xs text-muted-foreground text-center py-8">Nenhum lead qualificado na fila</p>
+                        <div className="rounded-xl border border-border/50 bg-background/40 px-4 py-10 text-center text-xs text-muted-foreground">
+                          Nenhum lead qualificado na fila
+                        </div>
                       )}
                       {closerQueue.map((c) => (
                         <div key={c.nome} className="space-y-2">
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-3">
                             <span className="text-sm font-semibold text-foreground">{c.nome}</span>
                             <div className="flex gap-2 text-[10px] text-muted-foreground">
                               <span>{c.stats.count} leads</span>
                               <span>Score ∅ {c.stats.avgScore}</span>
                             </div>
                           </div>
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {c.leads.map((l, i) => (
                               <button
                                 key={`${l.telefone}-${i}`}
                                 onClick={() => handleOpenLead(l)}
-                                className={`w-full flex flex-col rounded-md border p-2 text-left hover:bg-secondary/50 transition-colors ${
-                                  isInactive(l.tsUltimaInteracao) ? "border-destructive/40 bg-destructive/5" : "border-border/50 bg-card"
+                                className={`w-full rounded-xl border px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${
+                                  isInactive(l.tsUltimaInteracao) ? "border-destructive/25 bg-destructive/5" : "border-border/50 bg-background/60"
                                 }`}
                               >
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-start gap-3">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="text-xs font-medium truncate">{l.nome}</span>
+                                      <span className="text-sm font-semibold truncate text-foreground">{l.nome}</span>
                                       <Badge variant={prioridadeBadge(l.prioridade)} className="text-[9px] h-4 px-1">{l.prioridade}</Badge>
                                       {isInactive(l.tsUltimaInteracao) && (
                                         <Badge variant="destructive" className="text-[8px] h-3.5 px-1 gap-0.5 animate-pulse">
@@ -482,16 +526,16 @@ export default function PainelComercial() {
                                         </Badge>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground">
                                       <span className="font-mono">{l.telefone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4')}</span>
-                                      <span className={tempColor(l.temp)}>{l.temp}</span>
+                                      <span className={`${tempColor(l.temp)} font-semibold`}>{l.temp}</span>
                                       <span>Score {l.score}</span>
                                       <span className="truncate">{l.etapa}</span>
                                     </div>
                                   </div>
-                                  <span className="text-xs font-semibold text-foreground whitespace-nowrap">{l.valor}</span>
+                                  <span className="whitespace-nowrap text-sm font-bold text-foreground">{l.valor}</span>
                                 </div>
-                                <div className="flex items-center gap-3 mt-1 text-[9px] text-muted-foreground border-t border-border/30 pt-1">
+                                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/40 pt-2 text-[9px] text-muted-foreground">
                                   <span className={isInactive(l.tsUltimaInteracao) ? "text-destructive font-semibold" : ""}>📩 Últ. interação: {l.tsUltimaInteracao ? new Date(l.tsUltimaInteracao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                   <span>📤 Transferido: {l.tsTransferido ? new Date(l.tsTransferido).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                                 </div>
@@ -506,15 +550,19 @@ export default function PainelComercial() {
               </Card>
 
               {/* Col 3 — Resumo do Dia */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                    Resumo Geral
-                  </CardTitle>
+              <Card className={panelCardClass}>
+                <CardHeader className="space-y-3 pb-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Leitura rápida</p>
+                    <CardTitle className="mt-1 flex items-center gap-2 text-base">
+                      <TrendingUp className="h-5 w-5 text-success" />
+                      Resumo Geral
+                    </CardTitle>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Indicadores rápidos para bater o olho e entender o momento da operação.</p>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[520px]">
+                  <ScrollArea className="h-[560px]">
                     <div className="px-4 pb-4 space-y-4">
                       <div className="grid grid-cols-3 gap-2">
                         {[
@@ -525,7 +573,7 @@ export default function PainelComercial() {
                           { label: "Score ∅", value: summary.avgScore, icon: Zap },
                           { label: "⚠️ Em Risco", value: summary.emRiscoInatividade, icon: Clock },
                         ].map((k) => (
-                          <div key={k.label} className="rounded-lg border border-border/50 bg-secondary/30 p-2 text-center">
+                          <div key={k.label} className="rounded-xl border border-border/50 bg-background/60 p-2.5 text-center">
                             <k.icon className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-0.5" />
                             <div className="text-lg font-bold text-foreground">{k.value}</div>
                             <div className="text-[10px] text-muted-foreground">{k.label}</div>
@@ -534,33 +582,33 @@ export default function PainelComercial() {
                       </div>
 
                       {/* Temperature breakdown */}
-                      <div className="rounded-lg border border-border/50 p-3">
+                      <div className="rounded-xl border border-border/50 bg-background/40 p-3">
                         <p className="text-xs font-semibold text-muted-foreground mb-2">Distribuição de Temperatura</p>
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-3">
                           <div className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-destructive" />
                             <span className="text-xs text-foreground">{summary.quentes} Quentes</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-warning" />
                             <span className="text-xs text-foreground">{summary.mornos} Mornos</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-info" />
                             <span className="text-xs text-foreground">{summary.frios} Frios</span>
                           </div>
                         </div>
                         {summary.total > 0 && (
                           <div className="flex h-2 rounded-full overflow-hidden mt-2 bg-secondary">
-                            <div className="bg-red-400" style={{ width: `${(summary.quentes / summary.total) * 100}%` }} />
-                            <div className="bg-yellow-400" style={{ width: `${(summary.mornos / summary.total) * 100}%` }} />
-                            <div className="bg-blue-400" style={{ width: `${(summary.frios / summary.total) * 100}%` }} />
+                            <div className="bg-destructive" style={{ width: `${(summary.quentes / summary.total) * 100}%` }} />
+                            <div className="bg-warning" style={{ width: `${(summary.mornos / summary.total) * 100}%` }} />
+                            <div className="bg-info" style={{ width: `${(summary.frios / summary.total) * 100}%` }} />
                           </div>
                         )}
                       </div>
 
                       {/* Status breakdown */}
-                      <div className="rounded-lg border border-border/50 p-3">
+                      <div className="rounded-xl border border-border/50 bg-background/40 p-3">
                         <p className="text-xs font-semibold text-muted-foreground mb-2">Engajamento</p>
                         <div className="space-y-1.5">
                           <div className="flex justify-between text-xs">
@@ -593,7 +641,7 @@ export default function PainelComercial() {
         <TabsContent value="oportunidades" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Alta Probabilidade */}
-            <Card className="border-border/50 overflow-hidden">
+            <Card className={panelCardClass}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <div className="h-7 w-7 rounded-lg bg-success/10 flex items-center justify-center">
@@ -640,7 +688,7 @@ export default function PainelComercial() {
             </Card>
 
             {/* Em Risco */}
-            <Card className="border-border/50 overflow-hidden">
+            <Card className={panelCardClass}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <div className="h-7 w-7 rounded-lg bg-destructive/10 flex items-center justify-center">
