@@ -688,40 +688,6 @@ export default function PainelComercial() {
           </div>
         </TabsContent>
 
-        {/* ── CENTRAL DE MENSAGENS ────────────────── */}
-        <TabsContent value="mensagens" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                Histórico de Reports Enviados
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {mensagensReports.map((m) => (
-                  <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border/50 p-3 hover:bg-secondary/30 transition-colors">
-                    <span className="text-xl">{reportIcon(m.tipo)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{m.titulo}</span>
-                        {m.status === "falhou" && <Badge variant="destructive" className="text-[9px]">Falhou</Badge>}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                        <span>Para: {m.enviadoPara}</span>
-                        <span>•</span>
-                        <span>{m.data}</span>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="shrink-0">
-                      <Eye className="h-4 w-4 mr-1" /> Ver
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

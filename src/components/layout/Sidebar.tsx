@@ -46,12 +46,6 @@ const ALL_ROLES: AppRole[] = ['super_admin', 'diretor', 'gerente', 'closer', 'ad
 
 const menuGroups: MenuGroup[] = [
   {
-    label: "",
-    items: [
-      { title: "Mensagens", icon: MessageSquare, path: "/mensagens" },
-    ],
-  },
-  {
     label: "Pré-Venda",
     items: [
       { title: "Dashboard", icon: Presentation, path: "/dashboard", moduleKey: "conferencia" },
