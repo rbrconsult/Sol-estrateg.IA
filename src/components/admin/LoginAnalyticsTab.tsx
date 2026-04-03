@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Fragment, useMemo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +78,27 @@ interface GeoInfo {
   status: string;
 }
 
+function parseDate(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getTimestamp(value: string | null | undefined) {
+  return parseDate(value)?.getTime() ?? 0;
+}
+
+function safeFormatDateTime(value: string | null | undefined, pattern = 'dd/MM HH:mm') {
+  const date = parseDate(value);
+  if (!date) return '-';
+
+  try {
+    return format(date, pattern, { locale: ptBR });
+  } catch {
+    return '-';
+  }
+}
+
 export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAllSessions }: Props) {
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [daysFilter, setDaysFilter] = useState(7);
@@ -97,6 +118,8 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
 
   // Batch lookup geolocation for all IPs (ip-api.com supports batch of up to 100)
   const lookupGeo = useCallback(async () => {
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') return;
+
     const uncached = allUniqueIPs.filter(ip => !geoCache[ip]);
     if (uncached.length === 0) return;
 
@@ -130,9 +153,9 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
 
   useEffect(() => {
     if (allUniqueIPs.length > 0) {
-      lookupGeo();
+      void lookupGeo();
     }
-  }, [allUniqueIPs.length]); // only re-run when IP count changes
+  }, [allUniqueIPs, lookupGeo]);
 
   const analysis = useMemo(() => {
     const cutoff = subDays(new Date(), daysFilter);
@@ -156,12 +179,16 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
       const suspiciousEvents: SuspiciousEvent[] = [];
 
       // Detect rapid IP switches (different IP within 30 min)
-      const sorted = [...logs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      const sorted = [...logs].sort((a, b) => getTimestamp(a.created_at) - getTimestamp(b.created_at));
       for (let i = 1; i < sorted.length; i++) {
         const prev = sorted[i - 1];
         const curr = sorted[i];
         if (prev.ip_address && curr.ip_address && prev.ip_address !== curr.ip_address) {
-          const diff = differenceInMinutes(new Date(curr.created_at), new Date(prev.created_at));
+          const prevDate = parseDate(prev.created_at);
+          const currDate = parseDate(curr.created_at);
+          if (!prevDate || !currDate) continue;
+
+          const diff = differenceInMinutes(currDate, prevDate);
           if (diff <= 30) {
             suspiciousEvents.push({
               type: 'rapid_switch',
@@ -195,7 +222,9 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
 
       // Unusual hours (login between 00:00 - 05:00)
       const unusualLogins = logs.filter(l => {
-        const h = new Date(l.created_at).getHours();
+        const date = parseDate(l.created_at);
+        if (!date) return false;
+        const h = date.getHours();
         return h >= 0 && h < 5;
       });
       if (unusualLogins.length > 0) {
@@ -203,7 +232,7 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
           type: 'unusual_hour',
           description: `${unusualLogins.length} login(s) em horário incomum (00h-05h)`,
           timestamp: unusualLogins[0].created_at,
-          details: unusualLogins.map(l => format(new Date(l.created_at), 'dd/MM HH:mm')).join(', ')
+          details: unusualLogins.map(l => safeFormatDateTime(l.created_at)).join(', ')
         });
       }
 
@@ -375,9 +404,8 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
             </TableHeader>
             <TableBody>
               {analysis.map(profile => (
-                <>
+                <Fragment key={profile.userId}>
                   <TableRow
-                    key={profile.userId}
                     className={`cursor-pointer hover:bg-muted/50 ${profile.riskLevel === 'critical' ? 'bg-red-500/5' : profile.riskLevel === 'high' ? 'bg-orange-500/5' : ''}`}
                     onClick={() => setExpandedUser(expandedUser === profile.userId ? null : profile.userId)}
                   >
@@ -387,7 +415,7 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
                         <div>
                           <div className="font-medium text-sm">{profile.email}</div>
                           <div className="text-xs text-muted-foreground">
-                            Último: {profile.lastLogin ? format(new Date(profile.lastLogin), 'dd/MM HH:mm', { locale: ptBR }) : '-'}
+                            Último: {safeFormatDateTime(profile.lastLogin)}
                           </div>
                         </div>
                       </div>
@@ -513,7 +541,7 @@ export default function LoginAnalyticsTab({ accessLogs, sessions, onInvalidateAl
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))}
               {analysis.length === 0 && (
                 <TableRow>
