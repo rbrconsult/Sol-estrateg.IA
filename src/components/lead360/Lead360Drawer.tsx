@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLead360 } from "@/contexts/Lead360Context";
+import { useSolLeads } from "@/hooks/useSolData";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,9 +51,62 @@ function SLABadge({ sla }: { sla: number }) {
   return <span className={`text-sm font-semibold ${color}`}>{sla}h</span>;
 }
 
+// ─── Hook to enrich proposal with real sync data ───
+function useEnrichedProposal() {
+  const { proposal } = useLead360();
+  const { data: solLeads } = useSolLeads();
+  const [qualData, setQualData] = useState<any>(null);
+
+  const phone = proposal?.clienteTelefone?.replace(/\D/g, '') || '';
+
+  // Match sol_leads_sync by phone
+  const syncLead = solLeads?.find((l) => {
+    const lPhone = l.telefone?.replace(/\D/g, '') || '';
+    return lPhone && phone && (lPhone === phone || lPhone.endsWith(phone.slice(-8)) || phone.endsWith(lPhone.slice(-8)));
+  });
+
+  // Fetch qualificacao
+  useEffect(() => {
+    if (!phone) { setQualData(null); return; }
+    supabase
+      .from('sol_qualificacao_sync')
+      .select('*')
+      .eq('telefone', phone)
+      .maybeSingle()
+      .then(({ data }) => setQualData(data));
+  }, [phone]);
+
+  if (!proposal) return { enriched: null, syncLead: null, qualData: null };
+
+  // Build enriched proposal merging sync data over partial data
+  const enriched = { ...proposal };
+  if (syncLead) {
+    if (syncLead.nome && syncLead.nome.length > 3) enriched.nomeCliente = syncLead.nome;
+    if (syncLead.telefone) enriched.clienteTelefone = syncLead.telefone;
+    if (syncLead.email) enriched.clienteEmail = syncLead.email;
+    if (syncLead.temperatura) enriched.makeTemperatura = syncLead.temperatura;
+    if (syncLead.score) enriched.makeScore = syncLead.score;
+    if (syncLead.status) enriched.makeStatus = syncLead.status;
+    if (syncLead.etapa_funil) enriched.etapa = syncLead.etapa_funil;
+    if (syncLead.canal_origem) enriched.origemLead = syncLead.canal_origem;
+    if (syncLead.closer_nome) enriched.representante = syncLead.closer_nome;
+    if (syncLead.cidade) enriched.makeCidade = syncLead.cidade;
+    if (syncLead.valor_conta) enriched.makeValorConta = syncLead.valor_conta;
+    if (syncLead.resumo_conversa) enriched.notaCompleta = syncLead.resumo_conversa;
+    if (syncLead.total_mensagens_ia) enriched.makeTotalMensagens = syncLead.total_mensagens_ia;
+    if (syncLead.total_audios_enviados) enriched.makeMensagensRecebidas = syncLead.total_audios_enviados;
+    if (syncLead.custo_total_usd) enriched.valorProposta = syncLead.custo_total_usd;
+    if (syncLead.resumo_qualificacao) enriched.notaCompleta = syncLead.resumo_qualificacao;
+    enriched.makeRobo = (syncLead.fup_followup_count || 0) >= 1 ? 'fup_frio' : 'sol';
+    enriched.makeRespondeu = (syncLead.total_mensagens_ia || 0) > 0;
+  }
+
+  return { enriched, syncLead, qualData };
+}
+
 // ─── CRM Tab ───
 function CRMSection() {
-  const { proposal: p } = useLead360();
+  const { enriched: p } = useEnrichedProposal();
   if (!p) return null;
 
   return (
@@ -165,7 +219,7 @@ function CRMSection() {
 
 // ─── Robôs Tab ───
 function RobosSection() {
-  const { proposal: p } = useLead360();
+  const { enriched: p } = useEnrichedProposal();
   if (!p) return null;
 
   const hasRobotData = p.makeRobo || p.makeStatus || p.makeStatusResposta;
@@ -269,7 +323,7 @@ function RobosSection() {
 
 // ─── Timeline Tab ───
 function TimelineSection() {
-  const { proposal: p } = useLead360();
+  const { enriched: p } = useEnrichedProposal();
   if (!p) return null;
 
   // Build timeline events from all available data
@@ -358,7 +412,7 @@ function TimelineSection() {
 
 // ─── Performance Tab ───
 function PerformanceSection() {
-  const { proposal: p } = useLead360();
+  const { enriched: p } = useEnrichedProposal();
   if (!p) return null;
 
   return (
@@ -452,26 +506,7 @@ function PerformanceSection() {
 
 // ─── Qualificação Section ───
 function QualificacaoSection() {
-  const { proposal: p } = useLead360();
-  const [qualData, setQualData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!p?.clienteTelefone) return;
-    setLoading(true);
-    // Try to match by phone
-    const phone = p.clienteTelefone.replace(/\D/g, '');
-    supabase
-      .from('sol_qualificacao_sync')
-      .select('*')
-      .eq('telefone', phone)
-      .maybeSingle()
-      .then(({ data }) => {
-        setQualData(data);
-        setLoading(false);
-      });
-  }, [p?.clienteTelefone]);
-
+  const { enriched: p, qualData } = useEnrichedProposal();
   if (!p) return null;
 
   return (
@@ -488,9 +523,7 @@ function QualificacaoSection() {
           Resumo de Qualificação SOL
         </h4>
 
-        {loading ? (
-          <p className="text-xs text-muted-foreground animate-pulse">Carregando dados de qualificação...</p>
-        ) : qualData ? (
+        {qualData ? (
           <div className="space-y-2">
             {/* Score & Temp */}
             <div className="grid grid-cols-3 gap-2">
@@ -564,7 +597,8 @@ function QualificacaoSection() {
 
 // ─── Main Drawer ───
 export function Lead360Drawer() {
-  const { isOpen, proposal, closeLead360 } = useLead360();
+  const { isOpen, closeLead360 } = useLead360();
+  const { enriched: proposal } = useEnrichedProposal();
 
   if (!proposal) return null;
 
@@ -579,7 +613,7 @@ export function Lead360Drawer() {
             <div className="min-w-0 flex-1">
               <p className="font-bold text-foreground truncate">{proposal.nomeCliente}</p>
               <p className="text-[10px] text-muted-foreground font-normal truncate">
-                {proposal.nomeProposta} • {proposal.projetoId}
+                {proposal.clienteTelefone ? proposal.clienteTelefone.replace(/(\d{2})(\d{2})(\d{4,5})(\d{4})/, '+$1 ($2) $3-$4') : ''} • {proposal.origemLead || proposal.etapa || ''}
               </p>
             </div>
           </SheetTitle>
