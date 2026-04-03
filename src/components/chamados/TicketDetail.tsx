@@ -498,9 +498,17 @@ export function TicketDetail({ ticketId, onClose, onUpdated }: TicketDetailProps
             {ticket.cliente_nome && <p className="text-xs"><span className="font-medium">Cliente:</span> {ticket.cliente_nome} {ticket.cliente_telefone && `• ${ticket.cliente_telefone}`}</p>}
             {ticket.detalhes && <p className="text-xs"><span className="font-medium">Detalhes:</span> {ticket.detalhes}</p>}
             {ticket.attachment_url && (
-              <a href={ticket.attachment_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline inline-flex items-center gap-1">
+              <button
+                onClick={async () => {
+                  const { data } = await supabase.storage
+                    .from("ticket-attachments")
+                    .createSignedUrl(ticket.attachment_url!, 3600);
+                  if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                }}
+                className="text-xs text-primary underline inline-flex items-center gap-1 cursor-pointer"
+              >
                 📎 Ver Anexo
-              </a>
+              </button>
             )}
           </div>
 
