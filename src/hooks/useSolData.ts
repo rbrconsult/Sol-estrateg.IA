@@ -93,6 +93,7 @@ export type SolEquipeMembro = {
   taxa_conversao: number | null;
   horario_pico_inicio: string | null;
   horario_pico_fim: string | null;
+  gestor_key: string | null;
   updated_by: string | null;
   updated_at: string | null;
   synced_at: string | null;
@@ -193,8 +194,9 @@ export function useSolLeads(statusFilter?: string[]) {
         query = query.in("status", statusFilter);
       }
 
-      // Role-based filtering: closers only see their own leads
+      // Role-based filtering: hierarchical visibility
       if (userRole === 'closer' && user) {
+        // Closer sees only their own leads
         const { data: profile } = await supabase
           .from('profiles')
           .select('full_name')
@@ -203,7 +205,39 @@ export function useSolLeads(statusFilter?: string[]) {
         if (profile?.full_name) {
           query = query.eq("closer_nome", profile.full_name);
         }
+      } else if (userRole === 'gerente' && user) {
+        // Gerente sees only leads of closers assigned to them
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        if (profile?.full_name) {
+          // Find gerente's key in equipe
+          const { data: gerenteRecord } = await supabase
+            .from('sol_equipe_sync')
+            .select('key')
+            .eq('franquia_id', franquiaId)
+            .eq('nome', profile.full_name)
+            .limit(1)
+            .maybeSingle();
+          if (gerenteRecord?.key) {
+            // Find all closers under this gerente
+            const { data: closers } = await supabase
+              .from('sol_equipe_sync')
+              .select('nome')
+              .eq('franquia_id', franquiaId)
+              .eq('gestor_key', gerenteRecord.key);
+            const closerNames = (closers || []).map(c => c.nome).filter(Boolean) as string[];
+            // Include gerente's own name too
+            closerNames.push(profile.full_name);
+            if (closerNames.length > 0) {
+              query = query.in("closer_nome", closerNames);
+            }
+          }
+        }
       }
+      // diretor and super_admin see all franchise data (no additional filter)
 
       const allRows: any[] = [];
       let offset = 0;

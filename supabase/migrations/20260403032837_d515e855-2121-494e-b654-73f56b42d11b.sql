@@ -1,0 +1,1 @@
+ALTER TABLE public.sol_equipe_sync ADD COLUMN IF NOT EXISTS gestor_key text DEFAULT NULL;
