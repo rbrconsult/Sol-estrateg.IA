@@ -63,7 +63,7 @@ export function useModulePermissions() {
       return map;
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 30, // 30s — garante que mudanças reflitam rápido
+    staleTime: 0, // sempre busca dados frescos
   });
 
   const hasAccess = (moduleKey: string): boolean => {

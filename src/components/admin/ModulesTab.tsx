@@ -10,6 +10,7 @@ import { Loader2, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const MODULE_GROUPS = [
   { label: 'Pré-venda', icon: '📥', keys: ['conferencia', 'leads', 'robo-sol', 'robo-fup-frio'] },
@@ -33,6 +34,7 @@ interface ModulesTabProps {
 }
 
 export default function ModulesTab({ users }: ModulesTabProps) {
+  const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
@@ -79,6 +81,8 @@ export default function ModulesTab({ users }: ModulesTabProps) {
         );
       if (error) throw error;
       setPermissions(prev => ({ ...prev, [moduleKey]: enabled }));
+      // Invalidate cache immediately so the user's view updates
+      queryClient.invalidateQueries({ queryKey: ['module-permissions', selectedUserId] });
       const mod = MODULE_DEFINITIONS.find(m => m.key === moduleKey);
       toast.success(`${enabled ? 'Liberado' : 'Restrito'}: ${mod?.label || moduleKey}`);
     } catch (error: any) {
