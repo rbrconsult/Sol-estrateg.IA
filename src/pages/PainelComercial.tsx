@@ -293,8 +293,6 @@ function deriveSummary(records: SolLead[]) {
   return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios, emRiscoInatividade };
 }
 
-/* ── report history — empty, will be populated from real data ── */
-const mensagensReports: { id: number; tipo: string; titulo: string; enviadoPara: string; data: string; status: string }[] = [];
 
 /* ── component ─────────────────────────────────────────── */
 
