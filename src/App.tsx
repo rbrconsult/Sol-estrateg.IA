@@ -65,7 +65,6 @@ import SolConfigPage from "./pages/admin/SolConfigPage";
 import SolEquipePage from "./pages/admin/SolEquipePage";
 import SolFunisPage from "./pages/admin/SolFunisPage";
 import Insights from "./pages/Insights";
-import Mensagens from "./pages/Mensagens";
 const queryClient = new QueryClient();
 
 const App = () => (
