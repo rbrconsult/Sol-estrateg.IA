@@ -120,6 +120,7 @@ const Pipeline = () => {
     abertos: allProposals.filter(p => p.status === 'Aberto').length,
     ganhos: allProposals.filter(p => p.status === 'Ganho').length,
     perdidos: allProposals.filter(p => p.status === 'Perdido').length,
+    desqualificados: allProposals.filter(p => p.status === 'Desqualificado').length,
   }), [allProposals]);
 
   // Filtra por aba
