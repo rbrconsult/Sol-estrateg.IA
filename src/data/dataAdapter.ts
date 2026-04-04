@@ -7,7 +7,7 @@ export interface Proposal {
   nomeCliente: string;
   clienteTelefone: string;
   clienteEmail: string;
-  status: 'Aberto' | 'Ganho' | 'Perdido';
+  status: 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado';
   responsavel: string;
   responsavelId: string;
   representante: string;
