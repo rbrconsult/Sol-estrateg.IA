@@ -73,15 +73,38 @@ const WIZARD_QUESTIONS = [
   },
 ];
 
+const STORAGE_KEY = "skill-creator-draft";
+
 export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: SkillDefinition) => void }) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({
-    dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "",
+  const [currentStep, setCurrentStep] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved).step ?? 0 : 0;
+    } catch { return 0; }
   });
-  const [vertical, setVertical] = useState<string>("universal");
+  const [answers, setAnswers] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved).answers ?? { dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "" } : { dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "" };
+    } catch { return { dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "" }; }
+  });
+  const [vertical, setVertical] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved).vertical ?? "universal" : "universal";
+    } catch { return "universal"; }
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<SkillDefinition | null>(null);
   const [pipeline, setPipeline] = useState<{ stage1: string; stage2: string } | null>(null);
+
+  // Auto-save draft to localStorage on every change
+  useEffect(() => {
+    const hasContent = Object.values(answers).some(v => v.trim().length > 0);
+    if (hasContent && !result) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, step: currentStep, vertical }));
+    }
+  }, [answers, currentStep, vertical, result]);
 
   const currentQ = WIZARD_QUESTIONS[currentStep];
   const isLastStep = currentStep === WIZARD_QUESTIONS.length - 1;
