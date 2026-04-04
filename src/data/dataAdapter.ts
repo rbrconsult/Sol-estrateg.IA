@@ -7,7 +7,7 @@ export interface Proposal {
   nomeCliente: string;
   clienteTelefone: string;
   clienteEmail: string;
-  status: 'Aberto' | 'Ganho' | 'Perdido';
+  status: 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado';
   responsavel: string;
   responsavelId: string;
   representante: string;
@@ -79,10 +79,11 @@ const PROBABILIDADE_POR_STATUS: Record<string, number> = {
   CONTRATO: 95,
 };
 
-function mapStatus(status: string | null): 'Aberto' | 'Ganho' | 'Perdido' {
+function mapStatus(status: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado' {
   const s = (status || '').toUpperCase();
   if (s === 'GANHO' || s === 'CONTRATO') return 'Ganho';
-  if (s === 'PERDIDO' || s === 'DESQUALIFICADO') return 'Perdido';
+  if (s === 'PERDIDO') return 'Perdido';
+  if (s === 'DESQUALIFICADO') return 'Desqualificado';
   return 'Aberto';
 }
 
