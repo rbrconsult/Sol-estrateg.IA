@@ -430,8 +430,6 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                 }}>
                 + Criar outra skill
               </Button>
-                + Criar outra skill
-              </Button>
             </CardContent>
           </Card>
         )}
