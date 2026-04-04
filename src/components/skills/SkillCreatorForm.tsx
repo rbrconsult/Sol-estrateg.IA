@@ -426,7 +426,10 @@ export function SkillCreatorForm({ onSkillCreated }: { onSkillCreated?: (skill: 
                   setPipeline(null);
                   setCurrentStep(0);
                   setAnswers({ dor: "", momento: "", autonomia: "", sistemas: "", impacto: "", envio: "" });
+                  localStorage.removeItem(STORAGE_KEY);
                 }}>
+                + Criar outra skill
+              </Button>
                 + Criar outra skill
               </Button>
             </CardContent>
