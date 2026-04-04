@@ -127,6 +127,7 @@ const Pipeline = () => {
   const proposalsForKanban = useMemo(() => {
     if (statusView === 'abertos') return allProposals.filter(p => p.status === 'Aberto');
     if (statusView === 'ganhos') return allProposals.filter(p => p.status === 'Ganho');
+    if (statusView === 'desqualificados') return allProposals.filter(p => p.status === 'Desqualificado');
     return allProposals.filter(p => p.status === 'Perdido');
   }, [allProposals, statusView]);
 
