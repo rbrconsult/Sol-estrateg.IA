@@ -20,9 +20,9 @@ const STATUS_TO_KANBAN: Record<string, string> = {
   'CONTRATO': 'CONTRATO ASSINADO',
 };
 
-const STATUS_EXCLUIR = new Set(['DESQUALIFICADO']);
+const STATUS_EXCLUIR = new Set<string>([]);
 
-type StatusView = 'abertos' | 'ganhos' | 'perdidos';
+type StatusView = 'abertos' | 'ganhos' | 'perdidos' | 'desqualificados';
 
 function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' {
   const up = (s || '').toUpperCase();
