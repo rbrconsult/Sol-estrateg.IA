@@ -24,10 +24,11 @@ const STATUS_EXCLUIR = new Set<string>([]);
 
 type StatusView = 'abertos' | 'ganhos' | 'perdidos' | 'desqualificados';
 
-function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' {
+function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado' {
   const up = (s || '').toUpperCase();
   if (up === 'GANHO') return 'Ganho';
   if (up === 'PERDIDO') return 'Perdido';
+  if (up === 'DESQUALIFICADO') return 'Desqualificado';
   return 'Aberto';
 }
 
