@@ -1831,34 +1831,88 @@ export type Database = {
       }
       sol_projetos_sync: {
         Row: {
+          campanha_nome: string | null
+          canal_origem: string | null
+          closer_nome: string | null
+          closer_sm_id: string | null
+          email_cliente: string | null
           etapa: string | null
+          etapa_id: string | null
           evento: string | null
           franquia_id: string | null
           identificador: string | null
-          key: string
-          project_id: string | null
+          nome_cliente: string | null
+          nome_proposta: string | null
+          potencia_sistema: string | null
+          project_id: string
+          proposta_ativa: string | null
+          representante_id: string | null
+          representante_nome: string | null
+          status_projeto: string | null
           synced_at: string | null
+          telefone: string | null
+          ts_cadastro_projeto: string | null
           ts_evento: string | null
+          ts_proposta: string | null
+          ts_proposta_aceita: string | null
+          ts_sync: string | null
+          valor_proposta: string | null
         }
         Insert: {
+          campanha_nome?: string | null
+          canal_origem?: string | null
+          closer_nome?: string | null
+          closer_sm_id?: string | null
+          email_cliente?: string | null
           etapa?: string | null
+          etapa_id?: string | null
           evento?: string | null
           franquia_id?: string | null
           identificador?: string | null
-          key: string
-          project_id?: string | null
+          nome_cliente?: string | null
+          nome_proposta?: string | null
+          potencia_sistema?: string | null
+          project_id: string
+          proposta_ativa?: string | null
+          representante_id?: string | null
+          representante_nome?: string | null
+          status_projeto?: string | null
           synced_at?: string | null
+          telefone?: string | null
+          ts_cadastro_projeto?: string | null
           ts_evento?: string | null
+          ts_proposta?: string | null
+          ts_proposta_aceita?: string | null
+          ts_sync?: string | null
+          valor_proposta?: string | null
         }
         Update: {
+          campanha_nome?: string | null
+          canal_origem?: string | null
+          closer_nome?: string | null
+          closer_sm_id?: string | null
+          email_cliente?: string | null
           etapa?: string | null
+          etapa_id?: string | null
           evento?: string | null
           franquia_id?: string | null
           identificador?: string | null
-          key?: string
-          project_id?: string | null
+          nome_cliente?: string | null
+          nome_proposta?: string | null
+          potencia_sistema?: string | null
+          project_id?: string
+          proposta_ativa?: string | null
+          representante_id?: string | null
+          representante_nome?: string | null
+          status_projeto?: string | null
           synced_at?: string | null
+          telefone?: string | null
+          ts_cadastro_projeto?: string | null
           ts_evento?: string | null
+          ts_proposta?: string | null
+          ts_proposta_aceita?: string | null
+          ts_sync?: string | null
+          valor_proposta?: string | null
         }
         Relationships: []
       }
