@@ -17,12 +17,11 @@ import {
 const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/joonk1hj7ubqeogtq1hxwymncruxslbl";
 
 const isDesqualificado = (r: SolLead): boolean => {
-  const status = (r.status || "").toUpperCase();
-  const etapa = (r.etapa_funil || "").toUpperCase();
-  const cod = (r.status || "").toUpperCase();
+  const etapa = (r.etapa_funil || "").toUpperCase().trim();
+  const status = (r.status || "").toUpperCase().trim();
   return (
-    status.includes("DESQUALIFICADO") || status.includes("DECLINIO") || status.includes("DECLÍNIO") ||
-    status.includes("LEAD_FRIO") || etapa.includes("DESQUALIFICADO") || cod.includes("DESQUALIFICADO")
+    etapa.includes("DECL") || etapa.includes("DECLÍNIO") ||
+    status === "EXCLUIDO" || status === "PERDIDO"
   );
 };
 

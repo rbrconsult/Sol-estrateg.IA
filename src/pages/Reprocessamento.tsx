@@ -18,19 +18,16 @@ import {
 const WEBHOOK_URL = "https://hook.us2.make.com/m6zaweontguh6vqsfvid3g73bxb1qg44";
 
 function isDesqualificado(r: SolLead): boolean {
-  const status = (r.status || "").toUpperCase();
-  const etapa = (r.etapa_funil || "").toUpperCase();
-  const codigo = (r.status || "").toUpperCase();
-  return status === "DESQUALIFICADO" || etapa === "DESQUALIFICADO" || etapa === "DECLINIO" || etapa === "DECLÍNIO" || codigo === "DESQUALIFICADO" || codigo === "LEAD_FRIO";
+  const etapa = (r.etapa_funil || "").toUpperCase().trim();
+  return etapa.includes("DECL");
 }
 
 function isQualificado(r: SolLead): boolean {
-  const status = (r.status || "").toUpperCase();
-  const etapa = (r.etapa_funil || "").toUpperCase();
-  return status === "QUALIFICADO" || etapa === "QUALIFICADO";
+  const etapa = (r.etapa_funil || "").toUpperCase().trim();
+  return etapa === "QUALIFICADO";
 }
 
-const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
+const STATUS_OPTIONS = ["all", "ativos", "qualificados", "declinio"] as const;
 
 export default function Reprocessamento() {
   const { data: solLeads, isLoading, isFetching } = useSolLeads();
@@ -48,7 +45,7 @@ export default function Reprocessamento() {
     let result = [...solLeads];
     if (statusFilter === "ativos") result = result.filter(r => !isDesqualificado(r) && !isQualificado(r));
     else if (statusFilter === "qualificados") result = result.filter(r => isQualificado(r));
-    else if (statusFilter === "desqualificados") result = result.filter(r => isDesqualificado(r));
+    else if (statusFilter === "declinio") result = result.filter(r => isDesqualificado(r));
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((r) =>
@@ -178,7 +175,7 @@ export default function Reprocessamento() {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="ativos">Ativos</SelectItem>
                 <SelectItem value="qualificados">Qualificados</SelectItem>
-                <SelectItem value="desqualificados">Desqualificados</SelectItem>
+                <SelectItem value="declinio">Declínio</SelectItem>
               </SelectContent>
             </Select>
           </div>
