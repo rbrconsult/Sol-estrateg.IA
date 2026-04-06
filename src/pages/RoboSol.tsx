@@ -66,11 +66,11 @@ function deriveSolData(records: SolLead[]) {
   const responderam = solRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaResposta = total > 0 ? (responderam / total) * 100 : 0;
 
-  const qualificados = solRecords.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
-  const desqualificados = solRecords.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const qualificados = solRecords.filter(r => (r.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
+  const desqualificados = solRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL')).length;
   const emQualificacao = solRecords.filter(r => {
-    const s = (r.status || '').toUpperCase();
-    return s !== 'QUALIFICADO' && s !== 'DESQUALIFICADO' && ((r as any)._status_resposta || '') === 'respondeu';
+    const etapa = (r.etapa_funil || '').toUpperCase().trim();
+    return etapa !== 'QUALIFICADO' && !etapa.includes('DECL') && ((r as any)._status_resposta || '') === 'respondeu';
   }).length;
 
   const scores = solRecords.map(r => parseInt(r.score || '0') || 0).filter(s => s > 0);
@@ -90,7 +90,7 @@ function deriveSolData(records: SolLead[]) {
     { etapa: 'Responderam', valor: responderam, pct: total > 0 ? Math.round((responderam / total) * 100) : 0 },
     { etapa: 'Em qualificação', valor: emQualificacao, pct: responderam > 0 ? Math.round((emQualificacao / responderam) * 100) : 0 },
     { etapa: 'Qualificados MQL', valor: qualificados, pct: total > 0 ? Math.round((qualificados / total) * 100) : 0 },
-    { etapa: 'Desqualificados', valor: desqualificados, pct: total > 0 ? Math.round((desqualificados / total) * 100) : 0 },
+    { etapa: 'Declínio', valor: desqualificados, pct: total > 0 ? Math.round((desqualificados / total) * 100) : 0 },
   ];
 
   // Temperature distribution
@@ -109,7 +109,7 @@ function deriveSolData(records: SolLead[]) {
 
   // Disqualification reasons from codigoStatus
   const desqualReasons: Record<string, number> = {};
-  solRecords.filter(r => (r.status || '').toUpperCase() === 'DESQUALIFICADO').forEach(r => {
+  solRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL')).forEach(r => {
     const reason = r.status || 'NAO_INFORMADO';
     desqualReasons[reason] = (desqualReasons[reason] || 0) + 1;
   });
@@ -198,8 +198,8 @@ function deriveSolData(records: SolLead[]) {
       canal: r.canal_origem || 'Direto',
       score: parseInt(r.score || '0') || 0,
       temperatura: (r.temperatura || 'FRIO').toUpperCase(),
-      status: (r.status || '').toUpperCase() === 'QUALIFICADO' ? 'Qualificado' :
-              (r.status || '').toUpperCase() === 'DESQUALIFICADO' ? 'Desqualificado' : 'Em qualificação',
+      status: (r.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO' ? 'Qualificado' :
+              (r.etapa_funil || '').toUpperCase().includes('DECL') ? 'Declínio' : 'Em qualificação',
       duracao: '—',
       data: r.ts_cadastro ? r.ts_cadastro.slice(0, 10) : '—',
     }));
@@ -289,7 +289,7 @@ export default function RoboSol() {
         <KPICardAnimated label="Taxa de resposta" value={kpis.taxaResposta} suffix="%" color="text-primary" />
         <KPICardAnimated label="Leads qualificados" value={kpis.leadsQualificados} color="text-primary" />
         <KPICardAnimated label="Taxa qualificação" value={kpis.taxaQualificacao} suffix="%" color="text-warning" />
-        <KPICardAnimated label="Desqualificados" value={kpis.leadsDesqualificados} color="text-destructive/70" />
+        <KPICardAnimated label="Declínio" value={kpis.leadsDesqualificados} color="text-destructive/70" />
         <KPICardAnimated label="Em qualificação" value={kpis.emQualificacao} color="text-info" pulse />
         <KPICardAnimated label="Score médio" value={kpis.scoreMedio} color="text-warning" />
         <Card>
@@ -306,7 +306,7 @@ export default function RoboSol() {
         <CardContent>
           <div className="space-y-2">
             {funil.map((s, i) => {
-              const isLast = s.etapa === 'Desqualificados';
+              const isLast = s.etapa === 'Declínio';
               const color = isLast ? 'bg-destructive/70' : i === 0 ? 'bg-muted-foreground' : 'bg-primary';
               return (
                 <div key={s.etapa} className="flex items-center gap-3">

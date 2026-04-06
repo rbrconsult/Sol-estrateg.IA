@@ -192,27 +192,27 @@ export default function PreVenda() {
                             <Clock className="inline h-2.5 w-2.5" /> {timeAgo(lead.ts_cadastro)}
                           </span>
                         </div>
-                        {(l.etapa_funil || '').toUpperCase().trim() === 'FOLLOW UP' && lead.fup_followup_count != null && (
+                        {(lead.etapa_funil || '').toUpperCase().trim() === 'FOLLOW UP' && lead.fup_followup_count != null && (
                           <p className="text-[10px] text-muted-foreground mt-1">FUP #{lead.fup_followup_count}/9</p>
                         )}
                         {/* Action buttons */}
                         <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>
-                          {(l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && parseInt(lead.score || '0') >= 40 && (
+                          {(lead.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && parseInt(lead.score || '0') >= 40 && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-green-600" onClick={() => handleQualificar(lead)} disabled={actions.isLoading}>
                               <UserCheck className="h-3 w-3 mr-1" /> Qualificar
                             </Button>
                           )}
-                          {['SOL SDR', 'TRAFEGO PAGO', 'FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim()) && (
+                          {['SOL SDR', 'TRAFEGO PAGO', 'FOLLOW UP'].includes((lead.etapa_funil || '').toUpperCase().trim()) && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-red-600" onClick={() => { setDesqualTarget(lead); setShowDesqualDialog(true); }} disabled={actions.isLoading}>
                               <UserX className="h-3 w-3 mr-1" /> Desqual.
                             </Button>
                           )}
-                          {['DECLÍNIO', 'FOLLOW UP', 'TRAFEGO PAGO'].includes((l.etapa_funil || '').toUpperCase().trim()) && (
+                          {['DECLÍNIO', 'FOLLOW UP', 'TRAFEGO PAGO'].includes((lead.etapa_funil || '').toUpperCase().trim()) && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => handleReprocessar(lead)} disabled={actions.isLoading}>
                               <RotateCcw className="h-3 w-3 mr-1" /> Reproc.
                             </Button>
                           )}
-                          {(l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && (
+                          {(lead.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary" onClick={() => handleTransferir(lead)} disabled={actions.isLoading}>
                               <Send className="h-3 w-3 mr-1" /> Transferir
                             </Button>

@@ -59,7 +59,7 @@ export default function WhatsAppPage() {
     const msgs = leads.reduce((a, l) => a + (l.total_mensagens_ia || 0), 0);
     const audios = leads.reduce((a, l) => a + (l.total_audios_enviados || 0), 0);
     const custo = leads.reduce((a, l) => a + (l.custo_total_usd || 0), 0);
-    const emConversa = leads.filter(l => l.status === 'EM_QUALIFICACAO').length;
+    const emConversa = leads.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR').length;
     return { total, msgs, audios, custo, emConversa };
   }, [leads]);
 
@@ -79,7 +79,7 @@ export default function WhatsAppPage() {
   const activeLeads = useMemo(() => {
     if (!leads) return [];
     return leads
-      .filter(l => l.status === 'EM_QUALIFICACAO')
+      .filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR')
       .sort((a, b) => (b.ts_ultima_interacao || '').localeCompare(a.ts_ultima_interacao || ''));
   }, [leads]);
 
@@ -112,7 +112,7 @@ export default function WhatsAppPage() {
   const fupsPendentes = useMemo(() => {
     if (!leads) return [];
     return leads
-      .filter(l => ['TRAFEGO_PAGO', 'FOLLOW_UP'].includes(l.status || '') && (l.fup_followup_count || 0) < 9)
+      .filter(l => ['TRAFEGO PAGO', 'FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim()) && (l.fup_followup_count || 0) < 9)
       .sort((a, b) => (a.ts_ultima_interacao || '').localeCompare(b.ts_ultima_interacao || ''));
   }, [leads]);
 
