@@ -272,11 +272,11 @@ const Index = () => {
           {/* ═══════════════════════════════════════════════ */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { key: 'TRAFEGO', label: 'Tráfego Pago', value: statusCounts['TRAFEGO_PAGO'], color: 'text-primary', icon: Users, desc: 'Leads que entraram pelo formulário' },
-              { key: 'ROBO_SOL', label: 'Robô SOL', value: statusCounts['EM_QUALIFICACAO'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
+              { key: 'TRAFEGO', label: 'Tráfego Pago', value: statusCounts['TRAFEGO PAGO'], color: 'text-primary', icon: Users, desc: 'Leads que entraram pelo formulário' },
+              { key: 'ROBO_SOL', label: 'Robô SOL', value: statusCounts['SOL SDR'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
               { key: 'QUALIFICADOS', label: 'Qualificados', value: statusCounts['QUALIFICADO'], color: 'text-emerald-500', icon: UserCheck, desc: 'Transferidos para o closer' },
               { key: 'COM_CLOSER', label: 'Com Closer', value: filtered.filter(l => l.closer_nome).length, color: 'text-blue-400', icon: Headphones, desc: 'Leads com closer atribuído' },
-              ...FUNNEL_ORDER.filter(k => !['TRAFEGO_PAGO','EM_QUALIFICACAO','QUALIFICADO'].includes(k) && (statusCounts[k] > 0 || k === 'GANHO')).map(k => ({
+              ...FUNNEL_ORDER.filter(k => !['TRAFEGO PAGO','SOL SDR','QUALIFICADO'].includes(k) && (statusCounts[k] > 0)).map(k => ({
                 key: k, label: getStatusLabel(k), value: statusCounts[k],
                 color: STATUS_META[k]?.color || 'text-muted-foreground',
                 icon: STATUS_META[k]?.icon || Users,
@@ -326,11 +326,11 @@ const Index = () => {
             </div>
             {/* Taxas calculadas */}
             <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-              {statusCounts['TRAFEGO_PAGO'] > 0 && (
-                <span>Recebidos → Qualificação: <b className="text-foreground">{((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(1)}%</b></span>
+              {statusCounts['TRAFEGO PAGO'] > 0 && (
+                <span>Recebidos → SOL SDR: <b className="text-foreground">{((statusCounts['SOL SDR'] / statusCounts['TRAFEGO PAGO']) * 100).toFixed(1)}%</b></span>
               )}
-              {(statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO']) > 0 && (
-                <span>Qualificação → Qualificados: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
+              {(statusCounts['SOL SDR'] + statusCounts['QUALIFICADO']) > 0 && (
+                <span>SOL SDR → Qualificados: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['SOL SDR'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
               )}
               {(statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO']) > 0 && (
                 <span>Qualificados → Ganho: <b className="text-foreground">{((statusCounts['GANHO'] / (statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO'])) * 100).toFixed(1)}%</b></span>
