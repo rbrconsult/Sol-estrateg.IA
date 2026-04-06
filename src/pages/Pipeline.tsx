@@ -151,7 +151,7 @@ const Pipeline = () => {
           <TabsTrigger value="abertos">Abertos ({counts.abertos})</TabsTrigger>
           <TabsTrigger value="ganhos">Ganhos ({counts.ganhos})</TabsTrigger>
           <TabsTrigger value="perdidos">Perdidos ({counts.perdidos})</TabsTrigger>
-          <TabsTrigger value="desqualificados">Desqualificados ({counts.desqualificados})</TabsTrigger>
+          <TabsTrigger value="excluidos">Excluídos ({counts.excluidos})</TabsTrigger>
         </TabsList>
       </Tabs>
 
