@@ -23,7 +23,7 @@ function deriveFupData(records: SolLead[]) {
   const total = fupRecords.length;
   const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const pctReativados = total > 0 ? Math.round((reativados / total) * 100) : 0;
-  const qualificadosPosFup = fupRecords.filter(r => (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const qualificadosPosFup = fupRecords.filter(r => (r.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
   const ativos = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'aguardando').length;
 
   // KPIs
@@ -53,12 +53,12 @@ function deriveFupData(records: SolLead[]) {
   });
 
   // Resultado reativados
-  const desqNovamente = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
-  const qualPosFup = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.status || '').toUpperCase() === 'QUALIFICADO').length;
+  const desqNovamente = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.etapa_funil || '').toUpperCase().trim().includes('DECL')).length;
+  const qualPosFup = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu' && (r.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
   const aindaQual = reativados - qualPosFup - desqNovamente;
   const resultadoReativados = [
     { label: "Qualificados → Closer", valor: qualPosFup, pct: reativados > 0 ? Math.round((qualPosFup / reativados) * 100) : 0, cor: "hsl(var(--success))" },
-    { label: "Desqualificados novamente", valor: desqNovamente, pct: reativados > 0 ? Math.round((desqNovamente / reativados) * 100) : 0, cor: "hsl(var(--destructive))" },
+    { label: "Declínio novamente", valor: desqNovamente, pct: reativados > 0 ? Math.round((desqNovamente / reativados) * 100) : 0, cor: "hsl(var(--destructive))" },
     { label: "Ainda em qualificação", valor: Math.max(aindaQual, 0), pct: reativados > 0 ? Math.round((Math.max(aindaQual, 0) / reativados) * 100) : 0, cor: "hsl(var(--warning))" },
   ];
 

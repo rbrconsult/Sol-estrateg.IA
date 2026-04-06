@@ -37,7 +37,7 @@ export default function Vendedores() {
     // IDs de projetos qualificados pelo SOL (etapa passou por SOL SDR/QUALIFICADO)
     const solProjectIds = new Set(
       (solLeads || [])
-        .filter(r => r.project_id && r.etapa_funil && !['TRAFEGO PAGO', 'DESQUALIFICADO'].includes(r.etapa_funil))
+        .filter(r => r.project_id && r.etapa_funil && !['TRAFEGO PAGO', 'DECLÍNIO'].includes((r.etapa_funil || '').toUpperCase().trim()))
         .map(r => r.project_id)
     );
 

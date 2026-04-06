@@ -62,7 +62,7 @@ export default function SolAgent() {
     const all = leads || [];
     const today = new Date().toISOString().split("T")[0];
     const todayLeads = all.filter(l => l.ts_cadastro?.startsWith(today));
-    const qualificados = all.filter(l => (l.status || "").toUpperCase() === "QUALIFICADO");
+    const qualificados = all.filter(l => (l.etapa_funil || "").toUpperCase().trim() === "QUALIFICADO");
     const taxa = all.length > 0 ? ((qualificados.length / all.length) * 100).toFixed(0) : "0";
     const totalMsgs = all.reduce((acc, l) => acc + (l.total_mensagens_ia || 0), 0);
     const totalCost = all.reduce((acc, l) => acc + (l.custo_total_usd || 0), 0);
@@ -241,8 +241,8 @@ export default function SolAgent() {
                     <TableCell className="font-medium">{lead.nome || "—"}</TableCell>
                     <TableCell><CanalOrigemBadge canal={lead.canal_origem} /></TableCell>
                     <TableCell>
-                      <Badge variant={(lead.status || "").toUpperCase() === "QUALIFICADO" ? "default" : "secondary"} className="text-[10px]">
-                        {lead.status || "TRAFEGO_PAGO"}
+                      <Badge variant={(lead.etapa_funil || "").toUpperCase().trim() === "QUALIFICADO" ? "default" : "secondary"} className="text-[10px]">
+                        {lead.etapa_funil || "TRAFEGO PAGO"}
                       </Badge>
                     </TableCell>
                     <TableCell><ScoreGauge score={parseInt(String(lead.score || '0')) || 0} /></TableCell>
