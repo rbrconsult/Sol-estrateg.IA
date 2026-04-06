@@ -51,20 +51,24 @@ function formatCurrencyShort(v: number): string {
 }
 
 const SOL_PIPELINE_MAP: Record<string, string> = {
-  'TRAFEGO PAGO': 'Robô SOL',
-  'PROSPECÇÃO': 'Robô SOL',
-  'QUALIFICAÇÃO': 'Qualificação',
+  'TRAFEGO PAGO': 'Tráfego Pago',
+  'SOL SDR': 'Robô SOL',
+  'FOLLOW UP': 'Robô SOL',
   'QUALIFICADO': 'Qualificado',
   'CONTATO REALIZADO': 'Closer',
   'PROPOSTA': 'Proposta',
   'NEGOCIAÇÃO': 'Proposta',
+  'COBRANÇA': 'Proposta',
+  'DECLÍNIO': 'Declínio',
+  'REMARKETING': 'Declínio',
 };
 
 function getSolStage(etapa: string, status: string): string {
   const upper = (etapa || '').toUpperCase().trim();
   const mapped = SOL_PIPELINE_MAP[upper];
-  if (status?.toLowerCase() === 'ganho') return 'Fechado';
-  return mapped || 'Robô SOL';
+  if (status?.toUpperCase() === 'GANHO') return 'Fechado';
+  if (status?.toUpperCase() === 'PERDIDO') return 'Declínio';
+  return mapped || 'Tráfego Pago';
 }
 
 // ─── Main Hook ───
