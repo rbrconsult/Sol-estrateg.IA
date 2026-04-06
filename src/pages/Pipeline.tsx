@@ -22,13 +22,13 @@ const STATUS_TO_KANBAN: Record<string, string> = {
 
 const STATUS_EXCLUIR = new Set<string>([]);
 
-type StatusView = 'abertos' | 'ganhos' | 'perdidos' | 'desqualificados';
+type StatusView = 'abertos' | 'ganhos' | 'perdidos' | 'excluidos';
 
-function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado' {
+function mapStatus(s: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Excluido' {
   const up = (s || '').toUpperCase();
   if (up === 'GANHO') return 'Ganho';
   if (up === 'PERDIDO') return 'Perdido';
-  if (up === 'DESQUALIFICADO') return 'Desqualificado';
+  if (up === 'EXCLUIDO') return 'Excluido';
   return 'Aberto';
 }
 
@@ -120,14 +120,14 @@ const Pipeline = () => {
     abertos: allProposals.filter(p => p.status === 'Aberto').length,
     ganhos: allProposals.filter(p => p.status === 'Ganho').length,
     perdidos: allProposals.filter(p => p.status === 'Perdido').length,
-    desqualificados: allProposals.filter(p => p.status === 'Desqualificado').length,
+    excluidos: allProposals.filter(p => p.status === 'Excluido').length,
   }), [allProposals]);
 
   // Filtra por aba
   const proposalsForKanban = useMemo(() => {
     if (statusView === 'abertos') return allProposals.filter(p => p.status === 'Aberto');
     if (statusView === 'ganhos') return allProposals.filter(p => p.status === 'Ganho');
-    if (statusView === 'desqualificados') return allProposals.filter(p => p.status === 'Desqualificado');
+    if (statusView === 'excluidos') return allProposals.filter(p => p.status === 'Excluido');
     return allProposals.filter(p => p.status === 'Perdido');
   }, [allProposals, statusView]);
 
@@ -151,7 +151,7 @@ const Pipeline = () => {
           <TabsTrigger value="abertos">Abertos ({counts.abertos})</TabsTrigger>
           <TabsTrigger value="ganhos">Ganhos ({counts.ganhos})</TabsTrigger>
           <TabsTrigger value="perdidos">Perdidos ({counts.perdidos})</TabsTrigger>
-          <TabsTrigger value="desqualificados">Desqualificados ({counts.desqualificados})</TabsTrigger>
+          <TabsTrigger value="excluidos">Excluídos ({counts.excluidos})</TabsTrigger>
         </TabsList>
       </Tabs>
 
