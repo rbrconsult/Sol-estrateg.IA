@@ -72,7 +72,9 @@ const Index = () => {
     const { from, to } = gf.effectiveDateRange;
     if (!from && !to) return leads;
     return leads.filter(l => {
-      const d = new Date(l.ts_cadastro || l.synced_at || '');
+      // Use the most recent relevant date: last interaction, qualification, or creation
+      const dateStr = l.ts_ultima_interacao || l.ts_qualificado || l.ts_cadastro || l.synced_at || '';
+      const d = new Date(dateStr);
       if (isNaN(d.getTime())) return true;
       if (from) { const f = new Date(from); f.setHours(0,0,0,0); if (d < f) return false; }
       if (to) { const t = new Date(to); t.setHours(23,59,59,999); if (d > t) return false; }

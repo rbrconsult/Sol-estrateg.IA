@@ -363,7 +363,7 @@ export function useSolProjetos(limit = 100) {
         .order("ts_evento", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data || []) as SolProjeto[];
+      return (data || []) as unknown as SolProjeto[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
