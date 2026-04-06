@@ -15,14 +15,14 @@ import { formatCurrency, formatNumber, formatPct } from '@/hooks/useCampaignObs'
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 import { getStatusLabel } from '@/lib/leadClassification';
 
-const FUNNEL_STAGES = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'QUALIFICADO', 'GANHO', 'PERDIDO'];
+const FUNNEL_STAGES = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP', 'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA'];
 const STAGE_COLORS: Record<string, string> = {
-  TRAFEGO_PAGO: 'hsl(210,70%,55%)',
-  EM_QUALIFICACAO: 'hsl(35,90%,55%)',
-  FOLLOW_UP: 'hsl(270,60%,55%)',
-  QUALIFICADO: 'hsl(142,70%,45%)',
-  GANHO: 'hsl(120,60%,35%)',
-  PERDIDO: 'hsl(0,70%,55%)',
+  'TRAFEGO PAGO': 'hsl(210,70%,55%)',
+  'SOL SDR': 'hsl(35,90%,55%)',
+  'FOLLOW UP': 'hsl(270,60%,55%)',
+  'QUALIFICADO': 'hsl(142,70%,45%)',
+  'CONTATO REALIZADO': 'hsl(200,70%,50%)',
+  'PROPOSTA': 'hsl(250,60%,55%)',
 };
 
 function FunnelBar({ label, value, maxValue, prevValue, color }: { label: string; value: number; maxValue: number; prevValue?: number; color: string }) {
@@ -70,7 +70,7 @@ export default function FunilConsolidado() {
     const counts: Record<string, number> = {};
     FUNNEL_STAGES.forEach(s => counts[s] = 0);
     filtered.forEach(l => {
-      const s = l.status || 'TRAFEGO_PAGO';
+      const s = (l.etapa_funil || 'TRAFEGO PAGO').toUpperCase().trim();
       if (counts[s] !== undefined) counts[s]++;
     });
     return FUNNEL_STAGES.map(s => ({ label: s, value: counts[s], color: STAGE_COLORS[s] || 'hsl(210,50%,50%)' }));
@@ -81,9 +81,9 @@ export default function FunilConsolidado() {
   // Rates
   const rates = useMemo(() => {
     const total = filtered.length || 1;
-    const qualificados = filtered.filter(l => ['QUALIFICADO', 'GANHO'].includes(l.status || '')).length;
+    const qualificados = filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
     const ganhos = filtered.filter(l => l.status === 'GANHO').length;
-    const closerPool = filtered.filter(l => ['QUALIFICADO', 'GANHO', 'PERDIDO'].includes(l.status || '')).length;
+    const closerPool = filtered.filter(l => ['GANHO', 'PERDIDO'].includes(l.status || '') || (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
     const taxaQual = (qualificados / total) * 100;
     const taxaFech = closerPool > 0 ? (ganhos / closerPool) * 100 : 0;
     const pipelineValor = filtered.reduce((a, l) => a + (parseFloat(l.valor_conta || '0') || 0), 0);

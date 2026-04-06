@@ -1,19 +1,27 @@
 /**
  * Unified lead classification utilities.
  * Works with SolLead type from useSolData.
+ * Uses etapa_funil (SM stage names with spaces) for funnel position.
+ * Uses status only for ABERTO/GANHO/PERDIDO/EXCLUIDO.
  */
 
 import type { SolLead } from '@/hooks/useSolData';
 
 export const STATUS_LABELS: Record<string, string> = {
-  TRAFEGO_PAGO: 'Leads Recebidos',
-  EM_QUALIFICACAO: 'Em Qualificação',
-  FOLLOW_UP: 'FUP Frio',
-  QUALIFICADO: 'Qualificados',
-  GANHO: 'Ganho',
-  PERDIDO: 'Perdido',
-  DESQUALIFICADO: 'Desqualificado',
-  CONTRATO: 'Contrato',
+  'TRAFEGO PAGO': 'Leads Recebidos',
+  'SOL SDR': 'Em Qualificação',
+  'FOLLOW UP': 'FUP Frio',
+  'QUALIFICADO': 'Qualificados',
+  'CONTATO REALIZADO': 'Contato Realizado',
+  'PROPOSTA': 'Proposta',
+  'NEGOCIAÇÃO': 'Negociação',
+  'COBRANÇA': 'Cobrança',
+  'DECLÍNIO': 'Declínio',
+  'REMARKETING': 'Remarketing',
+  'CONTRATO ASSINADO (FN)': 'Contrato',
+  // Backward compat for status values
+  'GANHO': 'Ganho',
+  'PERDIDO': 'Perdido',
 };
 
 export function getStatusLabel(status: string): string {
@@ -24,14 +32,20 @@ export function getLeadStage(record: {
   etapa_funil?: string | null;
   status?: string | null;
 }): string {
+  const etapa = (record.etapa_funil || '').toUpperCase().trim();
   const status = (record.status || '').toUpperCase().trim();
-  if (status === 'QUALIFICADO') return 'Qualificado';
-  if (status === 'DESQUALIFICADO') return 'Desqualificado';
-  if (status === 'GANHO' || status === 'CONTRATO') return 'Fechado';
-  if (status === 'EM_QUALIFICACAO') return 'Em Qualificação';
-  if (status === 'FOLLOW_UP') return 'FUP Frio';
-  if (status === 'TRAFEGO_PAGO') return 'Em Qualificação';
+
+  if (etapa.includes('DECL')) return 'Declínio';
+  if (status === 'GANHO') return 'Fechado';
   if (status === 'PERDIDO') return 'Perdido';
+  if (etapa === 'SOL SDR') return 'Em Qualificação';
+  if (etapa === 'FOLLOW UP') return 'FUP Frio';
+  if (etapa === 'TRAFEGO PAGO') return 'Tráfego Pago';
+  if (etapa === 'QUALIFICADO') return 'Qualificado';
+  if (etapa === 'CONTATO REALIZADO') return 'Contato Realizado';
+  if (etapa === 'PROPOSTA') return 'Proposta';
+  if (etapa.includes('NEGOCI')) return 'Negociação';
+  if (etapa.includes('COBRAN')) return 'Cobrança';
   return 'Robô SOL';
 }
 

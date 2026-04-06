@@ -15,9 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Search, RefreshCw, Phone, MessageSquare, Clock, FileText, Send, X, RotateCcw, UserCheck, UserX } from 'lucide-react';
 
 
-const KANBAN_COLUMNS = ['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP'] as const;
-const COL_LABELS: Record<string, string> = { TRAFEGO_PAGO: 'Leads Recebidos', EM_QUALIFICACAO: 'MQL', FOLLOW_UP: 'Follow Up' };
-const COL_COLORS: Record<string, string> = { TRAFEGO_PAGO: 'border-blue-500/60 bg-blue-500/10', EM_QUALIFICACAO: 'border-amber-500/60 bg-amber-500/10', FOLLOW_UP: 'border-violet-500/60 bg-violet-500/10' };
+const KANBAN_COLUMNS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'] as const;
+const COL_LABELS: Record<string, string> = { 'TRAFEGO PAGO': 'Tráfego Pago', 'SOL SDR': 'Robô SOL', 'FOLLOW UP': 'Follow Up' };
+const COL_COLORS: Record<string, string> = { 'TRAFEGO PAGO': 'border-blue-500/60 bg-blue-500/10', 'SOL SDR': 'border-amber-500/60 bg-amber-500/10', 'FOLLOW UP': 'border-violet-500/60 bg-violet-500/10' };
 
 function timeAgo(ts: string | null): string {
   if (!ts) return '—';
@@ -39,7 +39,7 @@ function scoreBadge(score: string | null) {
 
 export default function PreVenda() {
   const franquiaId = useFranquiaId();
-  const { data: leads, isLoading: l1, refetch } = useSolLeads(['TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'DESQUALIFICADO']);
+  const { data: leads, isLoading: l1, refetch } = useSolLeads();
   const { data: equipe, isLoading: l2 } = useSolEquipe();
   const { data: qualificacoes } = useSolQualificacao();
   const actions = useSolActionsV2();
@@ -72,18 +72,18 @@ export default function PreVenda() {
     const grouped: Record<string, SolLead[]> = {};
     KANBAN_COLUMNS.forEach(c => grouped[c] = []);
     filtered.forEach(l => {
-      const s = l.status || 'TRAFEGO_PAGO';
-      if (grouped[s]) grouped[s].push(l);
-      else if (s === 'DESQUALIFICADO') { /* skip */ }
-      else grouped['TRAFEGO_PAGO'].push(l);
+      const etapa = (l.etapa_funil || 'TRAFEGO PAGO').toUpperCase().trim();
+      if (grouped[etapa]) grouped[etapa].push(l);
+      else if (etapa.includes('DECL')) { /* skip declínio */ }
+      else grouped['TRAFEGO PAGO'].push(l);
     });
     return grouped;
   }, [filtered]);
 
   const kpis = useMemo(() => {
     const total = filtered.length;
-    const emQual = filtered.filter(l => l.status === 'EM_QUALIFICACAO').length;
-    const fup = filtered.filter(l => l.status === 'FOLLOW_UP').length;
+    const emQual = filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR').length;
+    const fup = filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'FOLLOW UP').length;
     const scores = filtered.map(l => parseInt(l.score || '0')).filter(s => s > 0);
     const scoreMedio = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
     return { total, emQual, fup, scoreMedio };
@@ -149,7 +149,7 @@ export default function PreVenda() {
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-3">
         <Card className="p-3"><p className="text-xs text-muted-foreground">Leads Recebidos</p><p className="text-xl font-bold">{kpis.total}</p></Card>
-        <Card className="p-3"><p className="text-xs text-muted-foreground">MQL</p><p className="text-xl font-bold">{kpis.emQual}</p></Card>
+        <Card className="p-3"><p className="text-xs text-muted-foreground">Robô SOL</p><p className="text-xl font-bold">{kpis.emQual}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">Follow Up</p><p className="text-xl font-bold">{kpis.fup}</p></Card>
         <Card className="p-3"><p className="text-xs text-muted-foreground">Score Médio</p><p className="text-xl font-bold">{kpis.scoreMedio}</p></Card>
       </div>
@@ -192,27 +192,27 @@ export default function PreVenda() {
                             <Clock className="inline h-2.5 w-2.5" /> {timeAgo(lead.ts_cadastro)}
                           </span>
                         </div>
-                        {lead.status === 'FOLLOW_UP' && lead.fup_followup_count != null && (
+                        {(lead.etapa_funil || '').toUpperCase().trim() === 'FOLLOW UP' && lead.fup_followup_count != null && (
                           <p className="text-[10px] text-muted-foreground mt-1">FUP #{lead.fup_followup_count}/9</p>
                         )}
                         {/* Action buttons */}
                         <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>
-                          {lead.status === 'EM_QUALIFICACAO' && parseInt(lead.score || '0') >= 40 && (
+                          {(lead.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && parseInt(lead.score || '0') >= 40 && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-green-600" onClick={() => handleQualificar(lead)} disabled={actions.isLoading}>
                               <UserCheck className="h-3 w-3 mr-1" /> Qualificar
                             </Button>
                           )}
-                          {['EM_QUALIFICACAO', 'TRAFEGO_PAGO', 'FOLLOW_UP'].includes(lead.status || '') && (
+                          {['SOL SDR', 'TRAFEGO PAGO', 'FOLLOW UP'].includes((lead.etapa_funil || '').toUpperCase().trim()) && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-red-600" onClick={() => { setDesqualTarget(lead); setShowDesqualDialog(true); }} disabled={actions.isLoading}>
                               <UserX className="h-3 w-3 mr-1" /> Desqual.
                             </Button>
                           )}
-                          {['DESQUALIFICADO', 'FOLLOW_UP', 'TRAFEGO_PAGO'].includes(lead.status || '') && (
+                          {['DECLÍNIO', 'FOLLOW UP', 'TRAFEGO PAGO'].includes((lead.etapa_funil || '').toUpperCase().trim()) && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => handleReprocessar(lead)} disabled={actions.isLoading}>
                               <RotateCcw className="h-3 w-3 mr-1" /> Reproc.
                             </Button>
                           )}
-                          {lead.status === 'EM_QUALIFICACAO' && (
+                          {(lead.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && (
                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary" onClick={() => handleTransferir(lead)} disabled={actions.isLoading}>
                               <Send className="h-3 w-3 mr-1" /> Transferir
                             </Button>
@@ -298,10 +298,10 @@ export default function PreVenda() {
                 </div>
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 pt-2 border-t">
-                  {selectedLead.status === 'EM_QUALIFICACAO' && parseInt(selectedLead.score || '0') >= 40 && (
+                {(selectedLead.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && parseInt(selectedLead.score || '0') >= 40 && (
                     <Button size="sm" onClick={() => handleQualificar(selectedLead)} disabled={actions.isLoading}><UserCheck className="mr-1 h-4 w-4" /> Qualificar</Button>
                   )}
-                  {selectedLead.status === 'EM_QUALIFICACAO' && (
+                  {(selectedLead.etapa_funil || '').toUpperCase().trim() === 'SOL SDR' && (
                     <Button size="sm" variant="outline" onClick={() => handleTransferir(selectedLead)} disabled={actions.isLoading}><Send className="mr-1 h-4 w-4" /> Transferir Closer</Button>
                   )}
                   <Button size="sm" variant="outline" className="text-red-600" onClick={() => { setDesqualTarget(selectedLead); setShowDesqualDialog(true); }} disabled={actions.isLoading}><UserX className="mr-1 h-4 w-4" /> Desqualificar</Button>

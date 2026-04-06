@@ -252,7 +252,7 @@ export default function Leads() {
     };
 
     // SLA por etapa: usa SOMENTE dataEntrada (sem fallback para evitar distorções)
-    const ativos = filtered.filter(r => r.status && !["PERDIDO", "DESQUALIFICADO", "GANHO"].includes(r.status.toUpperCase()));
+    const ativos = filtered.filter(r => r.status && !["PERDIDO", "EXCLUIDO", "GANHO"].includes(r.status.toUpperCase()));
     const etapaSLA = Object.entries(SLA_ETAPA).map(([etapa, config]) => {
       const leads = ativos.filter(r => getEtapaLabel(r) === etapa);
       const comData = leads.filter(r => !!r.ts_cadastro);

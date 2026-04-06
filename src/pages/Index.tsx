@@ -22,23 +22,25 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 
-// ── Status colors & icons ──
+// ── Status colors & icons (keyed by etapa_funil) ──
 const STATUS_META: Record<string, { color: string; icon: typeof Users; desc: string }> = {
-  TRAFEGO_PAGO:    { color: "text-muted-foreground", icon: Users,          desc: "Preencheu formulário — SOL não falou" },
-  EM_QUALIFICACAO: { color: "text-amber-500",        icon: Bot,            desc: "SOL está conversando / qualificando" },
-  QUALIFICADO:     { color: "text-emerald-500",      icon: UserCheck,      desc: "Transferido para o closer" },
-  DESQUALIFICADO:  { color: "text-destructive",      icon: UserX,          desc: "Descartado pela SOL" },
-  FOLLOW_UP:       { color: "text-orange-500",       icon: Repeat,         desc: "FUP Frio ativo" },
-  GANHO:           { color: "text-green-600",         icon: Trophy,         desc: "Negócio fechado" },
-  PERDIDO:         { color: "text-red-700",           icon: TrendingDown,   desc: "Negócio perdido" },
-  CONTRATO:        { color: "text-primary",           icon: Trophy,         desc: "Contrato assinado" },
+  'TRAFEGO PAGO':      { color: "text-muted-foreground", icon: Users,          desc: "Preencheu formulário — SOL não falou" },
+  'SOL SDR':           { color: "text-amber-500",        icon: Bot,            desc: "SOL está conversando / qualificando" },
+  'QUALIFICADO':       { color: "text-emerald-500",      icon: UserCheck,      desc: "Transferido para o closer" },
+  'DECLÍNIO':          { color: "text-destructive",      icon: UserX,          desc: "Não atingiu critérios" },
+  'FOLLOW UP':         { color: "text-orange-500",       icon: Repeat,         desc: "FUP Frio ativo" },
+  'CONTATO REALIZADO': { color: "text-blue-500",         icon: Headphones,     desc: "Closer em contato" },
+  'PROPOSTA':          { color: "text-indigo-500",       icon: Zap,            desc: "Proposta enviada" },
+  'NEGOCIAÇÃO':        { color: "text-violet-500",       icon: Zap,            desc: "Em negociação" },
+  GANHO:               { color: "text-green-600",         icon: Trophy,         desc: "Negócio fechado" },
+  PERDIDO:             { color: "text-red-700",           icon: TrendingDown,   desc: "Negócio perdido" },
 };
 
-const FUNNEL_ORDER = ['TRAFEGO_PAGO','EM_QUALIFICACAO','FOLLOW_UP','QUALIFICADO','DESQUALIFICADO','GANHO','PERDIDO','CONTRATO'];
+const FUNNEL_ORDER = ['TRAFEGO PAGO','SOL SDR','FOLLOW UP','QUALIFICADO','CONTATO REALIZADO','PROPOSTA','NEGOCIAÇÃO','DECLÍNIO'];
 const FUNNEL_BAR_COLORS: Record<string, string> = {
-  TRAFEGO_PAGO: 'hsl(210,50%,55%)', EM_QUALIFICACAO: 'hsl(40,90%,55%)', FOLLOW_UP: 'hsl(25,85%,55%)',
-  QUALIFICADO: 'hsl(142,60%,45%)', DESQUALIFICADO: 'hsl(0,70%,55%)', GANHO: 'hsl(130,60%,35%)',
-  PERDIDO: 'hsl(0,50%,40%)', CONTRATO: 'hsl(220,70%,55%)',
+  'TRAFEGO PAGO': 'hsl(210,50%,55%)', 'SOL SDR': 'hsl(40,90%,55%)', 'FOLLOW UP': 'hsl(25,85%,55%)',
+  'QUALIFICADO': 'hsl(142,60%,45%)', 'CONTATO REALIZADO': 'hsl(200,70%,50%)', 'PROPOSTA': 'hsl(250,60%,55%)',
+  'NEGOCIAÇÃO': 'hsl(280,60%,50%)', 'DECLÍNIO': 'hsl(0,70%,55%)',
 };
 
 const PIE_COLORS = ['#3b82f6','#1e40af','#22c55e','#6b7280','#f59e0b','#ef4444'];
@@ -84,15 +86,22 @@ const Index = () => {
   const statusCounts = useMemo(() => {
     const c: Record<string, number> = {};
     FUNNEL_ORDER.forEach(s => c[s] = 0);
+    // Also track status-based counts for GANHO/PERDIDO
+    c['GANHO'] = 0;
+    c['PERDIDO'] = 0;
     filtered.forEach(l => {
-      const s = (l.status || 'TRAFEGO_PAGO').toUpperCase();
-      if (c[s] !== undefined) c[s]++; else c['TRAFEGO_PAGO']++;
+      const etapa = (l.etapa_funil || 'TRAFEGO PAGO').toUpperCase().trim();
+      if (c[etapa] !== undefined) c[etapa]++; else c['TRAFEGO PAGO']++;
+      // Also count by status for GANHO/PERDIDO
+      const st = (l.status || '').toUpperCase();
+      if (st === 'GANHO') c['GANHO']++;
+      if (st === 'PERDIDO') c['PERDIDO']++;
     });
     return c;
   }, [filtered]);
 
   const funnelData = useMemo(() =>
-    FUNNEL_ORDER.map(k => ({ key: k, count: statusCounts[k] || 0 })).filter(d => d.count > 0 || ['TRAFEGO_PAGO','EM_QUALIFICACAO','QUALIFICADO','GANHO'].includes(d.key)),
+    FUNNEL_ORDER.map(k => ({ key: k, count: statusCounts[k] || 0 })).filter(d => d.count > 0 || ['TRAFEGO PAGO','SOL SDR','QUALIFICADO'].includes(d.key)),
   [statusCounts]);
   const maxFunnel = Math.max(...funnelData.map(d => d.count), 1);
 
@@ -115,20 +124,20 @@ const Index = () => {
   // ══════════════════════════════════════════════════════════════
   // SEÇÃO 3: DETALHAMENTO QUALIFICAÇÃO
   // ══════════════════════════════════════════════════════════════
-  const qualificados = useMemo(() => filtered.filter(l => l.status === 'QUALIFICADO').sort((a, b) => (b.ts_qualificado || '').localeCompare(a.ts_qualificado || '')), [filtered]);
-  const emQualificacao = useMemo(() => filtered.filter(l => l.status === 'EM_QUALIFICACAO').sort((a, b) => (b.ts_ultima_interacao || '').localeCompare(a.ts_ultima_interacao || '')), [filtered]);
+  const qualificados = useMemo(() => filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').sort((a, b) => (b.ts_qualificado || '').localeCompare(a.ts_qualificado || '')), [filtered]);
+  const emQualificacao = useMemo(() => filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR').sort((a, b) => (b.ts_ultima_interacao || '').localeCompare(a.ts_ultima_interacao || '')), [filtered]);
 
   // ══════════════════════════════════════════════════════════════
   // SEÇÃO 4: FUP FRIO
   // ══════════════════════════════════════════════════════════════
   const fup = useMemo(() => {
     const comFup = filtered.filter(l => (l.fup_followup_count || 0) > 0);
-    const emFupAtivo = filtered.filter(l => l.status === 'FOLLOW_UP').length;
+    const emFupAtivo = filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'FOLLOW UP').length;
     const totalFups = comFup.reduce((a, l) => a + (l.fup_followup_count || 0), 0);
     const mediaFups = comFup.length > 0 ? totalFups / comFup.length : 0;
-    const resgatadosQual = comFup.filter(l => l.status === 'QUALIFICADO').length;
-    const resgatadosConv = comFup.filter(l => l.status === 'EM_QUALIFICACAO').length;
-    const esgotados = comFup.filter(l => (l.fup_followup_count || 0) >= 9 && !['QUALIFICADO','GANHO'].includes(l.status || '')).length;
+    const resgatadosQual = comFup.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
+    const resgatadosConv = comFup.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR').length;
+    const esgotados = comFup.filter(l => (l.fup_followup_count || 0) >= 9 && !['QUALIFICADO'].includes((l.etapa_funil || '').toUpperCase().trim()) && l.status !== 'GANHO').length;
     return { comFup: comFup.length, emFupAtivo, totalFups, mediaFups, resgatadosQual, resgatadosConv, esgotados };
   }, [filtered]);
 
@@ -141,7 +150,7 @@ const Index = () => {
       const c = l.canal_origem || 'Desconhecido';
       if (!map[c]) map[c] = { total: 0, qualificados: 0, ganhos: 0, custoIA: 0 };
       map[c].total++;
-      if (l.status === 'QUALIFICADO') map[c].qualificados++;
+      if ((l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO') map[c].qualificados++;
       if (l.status === 'GANHO') map[c].ganhos++;
       map[c].custoIA += l.custo_total_usd || 0;
     });
@@ -186,7 +195,7 @@ const Index = () => {
   const alertas = useMemo(() => {
     const now = Date.now();
     const semAtividade = filtered.filter(l => {
-      if (!['EM_QUALIFICACAO','TRAFEGO_PAGO'].includes(l.status || '')) return false;
+      if (!['SOL SDR','TRAFEGO PAGO','FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim())) return false;
       if (!l.ts_ultima_interacao) return true;
       return (now - new Date(l.ts_ultima_interacao).getTime()) > 24 * 60 * 60 * 1000;
     });
@@ -197,10 +206,10 @@ const Index = () => {
 
   // ── Contagens para GoalProgress (sem valor_conta — valor_conta é conta de luz, NÃO receita) ──
   const countGanho = useMemo(() =>
-    filtered.filter(l => l.status === 'GANHO' || l.status === 'CONTRATO').length,
+    filtered.filter(l => l.status === 'GANHO').length,
   [filtered]);
   const countPipeline = useMemo(() =>
-    filtered.filter(l => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status || '')).length,
+    filtered.filter(l => ['SOL SDR','QUALIFICADO','FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim())).length,
   [filtered]);
 
   const hasData = (leads?.length ?? 0) > 0;
@@ -263,11 +272,11 @@ const Index = () => {
           {/* ═══════════════════════════════════════════════ */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { key: 'TRAFEGO', label: 'Tráfego Pago', value: statusCounts['TRAFEGO_PAGO'], color: 'text-primary', icon: Users, desc: 'Leads que entraram pelo formulário' },
-              { key: 'ROBO_SOL', label: 'Robô SOL', value: statusCounts['EM_QUALIFICACAO'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
+              { key: 'TRAFEGO', label: 'Tráfego Pago', value: statusCounts['TRAFEGO PAGO'], color: 'text-primary', icon: Users, desc: 'Leads que entraram pelo formulário' },
+              { key: 'ROBO_SOL', label: 'Robô SOL', value: statusCounts['SOL SDR'], color: 'text-amber-500', icon: Bot, desc: 'SOL está conversando / qualificando' },
               { key: 'QUALIFICADOS', label: 'Qualificados', value: statusCounts['QUALIFICADO'], color: 'text-emerald-500', icon: UserCheck, desc: 'Transferidos para o closer' },
               { key: 'COM_CLOSER', label: 'Com Closer', value: filtered.filter(l => l.closer_nome).length, color: 'text-blue-400', icon: Headphones, desc: 'Leads com closer atribuído' },
-              ...FUNNEL_ORDER.filter(k => !['TRAFEGO_PAGO','EM_QUALIFICACAO','QUALIFICADO'].includes(k) && (statusCounts[k] > 0 || k === 'GANHO')).map(k => ({
+              ...FUNNEL_ORDER.filter(k => !['TRAFEGO PAGO','SOL SDR','QUALIFICADO'].includes(k) && (statusCounts[k] > 0)).map(k => ({
                 key: k, label: getStatusLabel(k), value: statusCounts[k],
                 color: STATUS_META[k]?.color || 'text-muted-foreground',
                 icon: STATUS_META[k]?.icon || Users,
@@ -317,11 +326,11 @@ const Index = () => {
             </div>
             {/* Taxas calculadas */}
             <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-              {statusCounts['TRAFEGO_PAGO'] > 0 && (
-                <span>Recebidos → Qualificação: <b className="text-foreground">{((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(1)}%</b></span>
+              {statusCounts['TRAFEGO PAGO'] > 0 && (
+                <span>Recebidos → SOL SDR: <b className="text-foreground">{((statusCounts['SOL SDR'] / statusCounts['TRAFEGO PAGO']) * 100).toFixed(1)}%</b></span>
               )}
-              {(statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO']) > 0 && (
-                <span>Qualificação → Qualificados: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['EM_QUALIFICACAO'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
+              {(statusCounts['SOL SDR'] + statusCounts['QUALIFICADO']) > 0 && (
+                <span>SOL SDR → Qualificados: <b className="text-foreground">{((statusCounts['QUALIFICADO'] / (statusCounts['SOL SDR'] + statusCounts['QUALIFICADO'])) * 100).toFixed(1)}%</b></span>
               )}
               {(statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO']) > 0 && (
                 <span>Qualificados → Ganho: <b className="text-foreground">{((statusCounts['GANHO'] / (statusCounts['QUALIFICADO'] + statusCounts['GANHO'] + statusCounts['PERDIDO'])) * 100).toFixed(1)}%</b></span>

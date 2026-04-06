@@ -75,13 +75,13 @@ export default function CampanhasMidiaReceita() {
       const matchingLeads = leadsArr.filter(l => l.canal_origem === c.campanha);
       const isFechado = (l: any) =>
         l.status?.toUpperCase() === 'GANHO';
-      const isPipeline = (l: any) => !isFechado(l) && ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP'].includes(l.status?.toUpperCase());
+      const isPipeline = (l: any) => !isFechado(l) && ['SOL SDR','QUALIFICADO','FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim());
 
       const vendas = matchingLeads.filter(isFechado).length;
       // valor_conta é conta de luz, NÃO receita — usar apenas contagem
       const receita = 0;
       const pipelineAtivo = matchingLeads.filter(isPipeline).length;
-      const oportunidades = matchingLeads.filter((l: any) => ['EM_QUALIFICACAO','QUALIFICADO','FOLLOW_UP','GANHO'].includes(l.status?.toUpperCase())).length;
+      const oportunidades = matchingLeads.filter((l: any) => ['SOL SDR','QUALIFICADO','FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim()) || l.status?.toUpperCase() === 'GANHO').length;
       const ticketMedio = 0;
       const cac = vendas > 0 ? c.investimento / vendas : 0;
       const roas = c.investimento > 0 ? receita / c.investimento : 0;

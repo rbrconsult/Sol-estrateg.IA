@@ -5,10 +5,10 @@ import type { Proposal } from "@/data/dataAdapter";
 interface SLAConfig { label: string; maxDias: number; }
 
 const SLA_ETAPA: Record<string, SLAConfig> = {
-  "TRAFEGO_PAGO": { label: "Tráfego Pago", maxDias: 1 },
-  "EM_QUALIFICACAO": { label: "MQL", maxDias: 3 },
-  "QUALIFICADO": { label: "SQL", maxDias: 5 },
-  "FOLLOW_UP": { label: "Follow Up", maxDias: 7 },
+  "TRAFEGO PAGO": { label: "Tráfego Pago", maxDias: 1 },
+  "SOL SDR": { label: "Robô SOL", maxDias: 3 },
+  "QUALIFICADO": { label: "Qualificado", maxDias: 2 },
+  "FOLLOW UP": { label: "Follow Up", maxDias: 7 },
 };
 
 function getSLAStatus(dias: number, maxDias: number): "ok" | "warning" | "overdue" {

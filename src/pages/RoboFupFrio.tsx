@@ -55,15 +55,15 @@ function deriveFupData(records: SolLead[]) {
   });
 
   // Status anterior analysis
-  const desqEntrou = fupRecords.filter(r => (r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO').length;
+  const desqEntrou = fupRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL')).length;
   const noRespEntrou = fupRecords.filter(r => r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou').length;
-  const desqReativados = fupRecords.filter(r => ((r.status || '').includes('DESQUAL') || (r.status || '').toUpperCase() === 'DESQUALIFICADO') && ((r as any)._status_resposta || '') === 'respondeu').length;
+  const desqReativados = fupRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL') && ((r as any)._status_resposta || '') === 'respondeu').length;
   const noRespReativados = fupRecords.filter(r => (r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou') && ((r as any)._status_resposta || '') === 'respondeu').length;
 
   // C5: Removed fallback percentages — show real data only
   const hasEnoughData = totalEntrou >= 30;
   const porStatusAnterior = hasEnoughData ? [
-    { statusAnterior: 'DESQUALIFICADO', qtd: desqEntrou, reativados: desqReativados, taxa: 0 },
+    { statusAnterior: 'Declínio', qtd: desqEntrou, reativados: desqReativados, taxa: 0 },
     { statusAnterior: 'Sem resposta', qtd: noRespEntrou, reativados: noRespReativados, taxa: 0 },
   ].map(s => ({ ...s, taxa: s.qtd > 0 ? Math.round((s.reativados / s.qtd) * 100) : 0 })) : [];
 
