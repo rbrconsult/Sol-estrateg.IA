@@ -7,7 +7,7 @@ export interface Proposal {
   nomeCliente: string;
   clienteTelefone: string;
   clienteEmail: string;
-  status: 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado';
+  status: 'Aberto' | 'Ganho' | 'Perdido' | 'Excluido';
   responsavel: string;
   responsavelId: string;
   representante: string;
@@ -68,22 +68,25 @@ function calcularTempoNaEtapa(ultimaAtualizacao: string): number {
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
 
-const PROBABILIDADE_POR_STATUS: Record<string, number> = {
-  TRAFEGO_PAGO: 5,
-  EM_QUALIFICACAO: 15,
-  FOLLOW_UP: 10,
-  QUALIFICADO: 40,
-  GANHO: 100,
-  PERDIDO: 0,
-  DESQUALIFICADO: 0,
-  CONTRATO: 95,
+const PROBABILIDADE_POR_ETAPA: Record<string, number> = {
+  'TRAFEGO PAGO': 5,
+  'SOL SDR': 15,
+  'FOLLOW UP': 10,
+  'QUALIFICADO': 40,
+  'CONTATO REALIZADO': 50,
+  'PROPOSTA': 60,
+  'NEGOCIAÇÃO': 70,
+  'COBRANÇA': 80,
+  'CONTRATO ASSINADO (FN)': 95,
+  'DECLÍNIO': 0,
+  'REMARKETING': 5,
 };
 
-function mapStatus(status: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Desqualificado' {
+function mapStatus(status: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Excluido' {
   const s = (status || '').toUpperCase();
-  if (s === 'GANHO' || s === 'CONTRATO') return 'Ganho';
+  if (s === 'GANHO') return 'Ganho';
   if (s === 'PERDIDO') return 'Perdido';
-  if (s === 'DESQUALIFICADO') return 'Desqualificado';
+  if (s === 'EXCLUIDO') return 'Excluido';
   return 'Aberto';
 }
 
@@ -91,13 +94,13 @@ function mapStatus(status: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Des
 export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
   return leads.map((l, i) => {
     const status = mapStatus(l.status);
-    const etapa = l.etapa_funil || l.status || 'TRAFEGO_PAGO';
+    const etapa = l.etapa_funil || 'TRAFEGO PAGO';
     const ultimaAtualizacao = parseDate(l.ts_ultima_interacao || l.ts_cadastro || '') || '';
     const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao);
     const score = l.score ? parseFloat(l.score) : 0;
     const temp = (l.temperatura || '').toUpperCase();
     const temperatura = (['QUENTE', 'MORNO', 'FRIO'].includes(temp) ? temp : '') as Proposal['temperatura'];
-    const probabilidade = status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : (PROBABILIDADE_POR_STATUS[l.status || ''] ?? 20);
+    const probabilidade = status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : (PROBABILIDADE_POR_ETAPA[l.etapa_funil || ''] ?? 20);
 
     return {
       id: l.project_id || l.telefone || `LEAD-${i}`,
@@ -119,18 +122,18 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
       dataCriacaoProposta: parseDate(l.ts_qualificado || '') || '',
       slaProposta: 48,
       ultimaAtualizacao,
-      solQualificado: l.status === 'QUALIFICADO' || l.transferido_comercial === true,
+      solQualificado: (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO' || l.transferido_comercial === true,
       solScore: isNaN(score) ? 0 : score,
       temperatura,
       dataQualificacaoSol: parseDate(l.ts_qualificado || '') || '',
       notaCompleta: l.resumo_conversa || '',
       tempoNaEtapa,
-      solSdr: l.status === 'EM_QUALIFICACAO' || l.status === 'TRAFEGO_PAGO',
+      solSdr: ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim()),
       tempoSolSdr: 0,
       etiquetas: l.canal_origem || '',
       origemLead: l.canal_origem || '',
       probabilidade,
-      motivoPerda: l.status === 'DESQUALIFICADO' ? 'Desqualificado' : '',
+      motivoPerda: (l.etapa_funil || '').toUpperCase().includes('DECL') ? 'Declínio' : (l.status === 'PERDIDO' ? 'Perdido' : ''),
       faseSM: l.etapa_funil || '',
       makeStatus: l.status || undefined,
       makeTemperatura: l.temperatura || undefined,
@@ -156,12 +159,22 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
 // ── Etapas ──
 
 export const etapasReais = [
-  'TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'FOLLOW_UP', 'QUALIFICADO',
-  'GANHO', 'PERDIDO', 'DESQUALIFICADO', 'CONTRATO',
+  'TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP', 'QUALIFICADO',
+  'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO', 'COBRANÇA',
+  'DECLÍNIO', 'REMARKETING',
 ];
 
 export const etapasPipeline = [
-  'TRAFEGO_PAGO', 'EM_QUALIFICACAO', 'QUALIFICADO', 'GANHO',
+  'TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP', 'QUALIFICADO',
+  'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO',
+];
+
+export const etapasPreVenda = [
+  'TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP',
+];
+
+export const etapasComercial = [
+  'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO', 'COBRANÇA',
 ];
 
 // ── Analysis functions (unchanged API, work with Proposal[]) ──
