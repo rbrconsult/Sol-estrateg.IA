@@ -144,12 +144,22 @@ export function PessoasTab({
 
     // First, process all SOL users
     for (const u of users) {
-      // Match by email OR by name (sol_equipe_sync may have no email)
+      // Match by name OR by email prefix (sol_equipe_sync has no email field)
       const teamMatch = teamMembers.find(tm => {
-        if (u.full_name && tm.nome && u.full_name.toLowerCase().includes(tm.nome.toLowerCase().split(' ')[0])) {
-          return tm.nome.toLowerCase() === u.full_name.toLowerCase() ||
-                 u.full_name.toLowerCase().includes(tm.nome.toLowerCase()) ||
-                 tm.nome.toLowerCase().includes(u.full_name.toLowerCase());
+        if (!tm.nome) return false;
+        const tmFirst = tm.nome.toLowerCase().split(' ')[0];
+        // 1) Match by full_name
+        if (u.full_name) {
+          const uName = u.full_name.toLowerCase();
+          const tmName = tm.nome.toLowerCase();
+          if (uName.includes(tmFirst)) {
+            if (tmName === uName || uName.includes(tmName) || tmName.includes(uName)) return true;
+          }
+        }
+        // 2) Match by email local part (e.g. "gabriel@..." matches "Gabriel Ferrari")
+        if (u.email) {
+          const localPart = u.email.split('@')[0].toLowerCase().replace(/[._]/g, ' ');
+          if (localPart === tmFirst || tmFirst.startsWith(localPart) || localPart.startsWith(tmFirst)) return true;
         }
         return false;
       });
