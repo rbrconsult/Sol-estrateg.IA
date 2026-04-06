@@ -1835,27 +1835,46 @@ export type Database = {
           canal_origem: string | null
           closer_nome: string | null
           closer_sm_id: string | null
+          comissao_percentual: string | null
+          comissao_representante_pct: string | null
+          comissao_representante_valor: string | null
+          comissao_status: string | null
+          comissao_valor: string | null
+          custo_aquisicao: string | null
           email_cliente: string | null
           etapa: string | null
           etapa_id: string | null
+          etiquetas: string | null
           evento: string | null
+          financeira: string | null
+          forma_pagamento: string | null
           franquia_id: string | null
+          funil_nome: string | null
           identificador: string | null
+          margem_bruta: string | null
+          margem_percentual: string | null
+          motivo_perda: string | null
+          motivo_perda_id: string | null
           nome_cliente: string | null
           nome_proposta: string | null
+          parcelas: string | null
           potencia_sistema: string | null
           project_id: string
           proposta_ativa: string | null
           representante_id: string | null
           representante_nome: string | null
           status_projeto: string | null
-          synced_at: string | null
+          status_proposta: string | null
           telefone: string | null
           ts_cadastro_projeto: string | null
           ts_evento: string | null
+          ts_ganho: string | null
+          ts_pagamento_comissao: string | null
+          ts_perdido: string | null
           ts_proposta: string | null
           ts_proposta_aceita: string | null
           ts_sync: string | null
+          valor_contrato: string | null
           valor_proposta: string | null
         }
         Insert: {
@@ -1863,27 +1882,46 @@ export type Database = {
           canal_origem?: string | null
           closer_nome?: string | null
           closer_sm_id?: string | null
+          comissao_percentual?: string | null
+          comissao_representante_pct?: string | null
+          comissao_representante_valor?: string | null
+          comissao_status?: string | null
+          comissao_valor?: string | null
+          custo_aquisicao?: string | null
           email_cliente?: string | null
           etapa?: string | null
           etapa_id?: string | null
+          etiquetas?: string | null
           evento?: string | null
+          financeira?: string | null
+          forma_pagamento?: string | null
           franquia_id?: string | null
+          funil_nome?: string | null
           identificador?: string | null
+          margem_bruta?: string | null
+          margem_percentual?: string | null
+          motivo_perda?: string | null
+          motivo_perda_id?: string | null
           nome_cliente?: string | null
           nome_proposta?: string | null
+          parcelas?: string | null
           potencia_sistema?: string | null
           project_id: string
           proposta_ativa?: string | null
           representante_id?: string | null
           representante_nome?: string | null
           status_projeto?: string | null
-          synced_at?: string | null
+          status_proposta?: string | null
           telefone?: string | null
           ts_cadastro_projeto?: string | null
           ts_evento?: string | null
+          ts_ganho?: string | null
+          ts_pagamento_comissao?: string | null
+          ts_perdido?: string | null
           ts_proposta?: string | null
           ts_proposta_aceita?: string | null
           ts_sync?: string | null
+          valor_contrato?: string | null
           valor_proposta?: string | null
         }
         Update: {
@@ -1891,27 +1929,46 @@ export type Database = {
           canal_origem?: string | null
           closer_nome?: string | null
           closer_sm_id?: string | null
+          comissao_percentual?: string | null
+          comissao_representante_pct?: string | null
+          comissao_representante_valor?: string | null
+          comissao_status?: string | null
+          comissao_valor?: string | null
+          custo_aquisicao?: string | null
           email_cliente?: string | null
           etapa?: string | null
           etapa_id?: string | null
+          etiquetas?: string | null
           evento?: string | null
+          financeira?: string | null
+          forma_pagamento?: string | null
           franquia_id?: string | null
+          funil_nome?: string | null
           identificador?: string | null
+          margem_bruta?: string | null
+          margem_percentual?: string | null
+          motivo_perda?: string | null
+          motivo_perda_id?: string | null
           nome_cliente?: string | null
           nome_proposta?: string | null
+          parcelas?: string | null
           potencia_sistema?: string | null
           project_id?: string
           proposta_ativa?: string | null
           representante_id?: string | null
           representante_nome?: string | null
           status_projeto?: string | null
-          synced_at?: string | null
+          status_proposta?: string | null
           telefone?: string | null
           ts_cadastro_projeto?: string | null
           ts_evento?: string | null
+          ts_ganho?: string | null
+          ts_pagamento_comissao?: string | null
+          ts_perdido?: string | null
           ts_proposta?: string | null
           ts_proposta_aceita?: string | null
           ts_sync?: string | null
+          valor_contrato?: string | null
           valor_proposta?: string | null
         }
         Relationships: []
