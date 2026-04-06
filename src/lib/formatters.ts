@@ -5,15 +5,17 @@
  * Arredonda para baixo a cada R$ 500
  */
 export function formatCurrencyAbbrev(value: number): string {
-  if (value >= 1_000_000) {
-    const millions = Math.floor(value / 100_000) / 10;
+  const v = Number(value);
+  if (!Number.isFinite(v)) return "—";
+  if (v >= 1_000_000) {
+    const millions = Math.floor(v / 100_000) / 10;
     return `R$ ${millions.toLocaleString('pt-BR', { minimumFractionDigits: millions % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })}M`;
   }
-  if (value >= 1_000) {
-    const thousands = Math.floor(value / 500) * 0.5;
+  if (v >= 1_000) {
+    const thousands = Math.floor(v / 500) * 0.5;
     return `R$ ${thousands.toLocaleString('pt-BR', { minimumFractionDigits: thousands % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })}K`;
   }
-  return `R$ ${Math.floor(value).toLocaleString('pt-BR')}`;
+  return `R$ ${Math.floor(v).toLocaleString('pt-BR')}`;
 }
 
 /**
@@ -29,10 +31,20 @@ export function formatCurrencyFull(value: number): string {
 }
 
 /**
+ * Número seguro para tooltips Recharts (value pode vir undefined).
+ */
+export function safeToFixed(value: unknown, decimals: number): string {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n.toFixed(decimals) : "—";
+}
+
+/**
  * Formata percentual (45.5%)
  */
 export function formatPercent(value: number, decimals: number = 1): string {
-  return `${value.toFixed(decimals)}%`;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return `${n.toFixed(decimals)}%`;
 }
 
 /**
@@ -49,10 +61,12 @@ export function formatNumber(value: number, decimals: number = 0): string {
  * Formata potência (kWp ou MWp)
  */
 export function formatPower(value: number): string {
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)} MWp`;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  if (n >= 1000) {
+    return `${(n / 1000).toFixed(1)} MWp`;
   }
-  return `${value.toFixed(1)} kWp`;
+  return `${n.toFixed(1)} kWp`;
 }
 
 /**

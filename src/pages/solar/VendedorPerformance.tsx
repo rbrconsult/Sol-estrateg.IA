@@ -7,7 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSolLeads, SolLead } from "@/hooks/useSolData";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
+import type { Proposal } from "@/data/dataAdapter";
+import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
 import { formatCurrencyAbbrev, formatCurrencyFull } from "@/lib/formatters";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -38,44 +40,41 @@ const CHART_COLORS = [
   "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6",
 ];
 
-function classifyStatus(status: string): "ganho" | "perdido" | "aberto" {
-  const s = (status || "").toUpperCase();
-  if (s.includes("GANH") || s.includes("WON") || s.includes("FECHAR") || s.includes("FECHAD")) return "ganho";
-  if (s.includes("PERD") || s.includes("LOST") || s.includes("DESQUAL")) return "perdido";
+function classifyProposal(p: Proposal): "ganho" | "perdido" | "aberto" {
+  if (p.status === "Ganho") return "ganho";
+  if (p.status === "Perdido" || p.status === "Excluido") return "perdido";
   return "aberto";
 }
 
-function getValorConta(lead: SolLead): number {
-  const v = lead.valor_conta;
-  if (!v) return 0;
-  const num = parseFloat(String(v).replace(/[^\d.,]/g, "").replace(",", "."));
-  return isNaN(num) ? 0 : num;
+function vendedorKey(p: Proposal): string {
+  const k = (p.representante || p.responsavel || "").trim();
+  return k || "Não atribuído";
 }
 
-function deriveVendedorStats(records: SolLead[]): VendedorStats[] {
-  const map = new Map<string, SolLead[]>();
+function deriveVendedorStats(records: Proposal[]): VendedorStats[] {
+  const map = new Map<string, Proposal[]>();
 
-  records.forEach(r => {
-    const key = r.closer_nome || "Não atribuído";
+  records.forEach((r) => {
+    const key = vendedorKey(r);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(r);
   });
 
   return Array.from(map.entries())
     .map(([nome, recs]) => {
-      const ganhos = recs.filter(r => classifyStatus(r.status || "") === "ganho");
-      const perdidos = recs.filter(r => classifyStatus(r.status || "") === "perdido");
-      const abertos = recs.filter(r => classifyStatus(r.status || "") === "aberto");
+      const ganhos = recs.filter((r) => classifyProposal(r) === "ganho");
+      const perdidos = recs.filter((r) => classifyProposal(r) === "perdido");
+      const abertos = recs.filter((r) => classifyProposal(r) === "aberto");
 
       const etapas: Record<string, number> = {};
-      recs.forEach(r => {
-        const e = r.etapa_funil || "N/A";
+      recs.forEach((r) => {
+        const e = r.etapa || r.faseSM || "N/A";
         etapas[e] = (etapas[e] || 0) + 1;
       });
 
       const totalProjetos = recs.length;
-      const valorTotal = recs.reduce((a, r) => a + getValorConta(r), 0);
-      const valorGanho = ganhos.reduce((a, r) => a + getValorConta(r), 0);
+      const valorTotal = recs.reduce((a, r) => a + (r.valorProposta || 0), 0);
+      const valorGanho = ganhos.reduce((a, r) => a + (r.valorProposta || 0), 0);
 
       return {
         nome,
@@ -84,9 +83,9 @@ function deriveVendedorStats(records: SolLead[]): VendedorStats[] {
         ganhos: ganhos.length,
         valorGanho,
         perdidos: perdidos.length,
-        valorPerdido: perdidos.reduce((a, r) => a + getValorConta(r), 0),
+        valorPerdido: perdidos.reduce((a, r) => a + (r.valorProposta || 0), 0),
         abertos: abertos.length,
-        valorAberto: abertos.reduce((a, r) => a + getValorConta(r), 0),
+        valorAberto: abertos.reduce((a, r) => a + (r.valorProposta || 0), 0),
         taxaConversao: totalProjetos > 0 ? (ganhos.length / totalProjetos) * 100 : 0,
         ticketMedio: totalProjetos > 0 ? valorTotal / totalProjetos : 0,
         etapas,
@@ -110,12 +109,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function VendedorPerformance() {
-  const { data: records, isLoading, error, isFetching } = useSolLeads(['QUALIFICADO', 'GANHO', 'PERDIDO']);
+  const { proposals: records, isLoading, error, dataUpdatedAt, projectCount } = useCommercialProposals();
   
   const [sortBy, setSortBy] = useState<"valor" | "projetos" | "conversao">("valor");
 
   const stats = useMemo(() => {
-    if (!records?.length) return [];
+    if (!records.length) return [];
     return deriveVendedorStats(records);
   }, [records]);
 
@@ -159,7 +158,7 @@ export default function VendedorPerformance() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance por Vendedor</h1>
           <p className="text-xs text-muted-foreground">
-            Ranking e comparativo • {totals.vendedores} vendedores • {totals.projetos} projetos
+            sol_projetos_sync (dedupe) · {totals.vendedores} responsáveis · {totals.projetos} de {projectCount} projetos
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -318,6 +317,17 @@ export default function VendedorPerformance() {
               ))}
             </CardContent>
           </Card>
+
+          <DataTrustFooter
+            lines={[
+              {
+                label: "Fonte",
+                source: "sol_projetos_sync → representante / responsável · valor_proposta",
+                fetchedAt: dataUpdatedAt,
+                extra: `${records.length} projetos carregados`,
+              },
+            ]}
+          />
         </>
       )}
 

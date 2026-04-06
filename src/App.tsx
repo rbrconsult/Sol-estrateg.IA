@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Lead360Provider } from "@/contexts/Lead360Context";
@@ -68,23 +68,12 @@ import SolFunisPage from "./pages/admin/SolFunisPage";
 import Insights from "./pages/Insights";
 const queryClient = new QueryClient();
 
-const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OrgFilterProvider>
-        <GlobalFilterProvider>
-        <Lead360Provider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppErrorBoundary fallback={null}>
-            <ImpersonationBanner />
-            <Lead360Drawer />
-          </AppErrorBoundary>
-          <AppErrorBoundary>
-            <BrowserRouter>
-              <Routes>
+/** Rotas com error boundary por URL: ao mudar de página, o boundary reinicia (evita ficar preso na tela de erro). */
+function AppRoutesShell() {
+  const location = useLocation();
+  return (
+    <AppErrorBoundary key={location.pathname}>
+      <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
@@ -158,9 +147,28 @@ const App = () => (
               <Route path="/mensagens" element={<Navigate to="/dashboard" replace />} />
 
               <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+      </Routes>
+    </AppErrorBoundary>
+  );
+}
+
+const App = () => (
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <OrgFilterProvider>
+        <GlobalFilterProvider>
+        <Lead360Provider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppErrorBoundary fallback={null}>
+            <ImpersonationBanner />
+            <Lead360Drawer />
           </AppErrorBoundary>
+          <BrowserRouter>
+            <AppRoutesShell />
+          </BrowserRouter>
         </TooltipProvider>
         </Lead360Provider>
         </GlobalFilterProvider>

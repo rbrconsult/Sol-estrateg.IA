@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { usePageFilters, PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { BRAND_FOOTER_TAGLINE } from '@/constants/branding';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
@@ -462,9 +463,7 @@ export default function JornadaLead() {
         </CardContent>
       </Card>
 
-      <p className="text-center text-xs text-muted-foreground pt-4">
-        Sol Estrateg.IA — Jornada do Lead + SLAs • Dados reais do Make Data Store
-      </p>
+      <p className="text-center text-xs text-muted-foreground pt-4">{BRAND_FOOTER_TAGLINE}</p>
     </div>
   );
 }

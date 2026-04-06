@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { getForecastData, Proposal } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatCurrencyFull, formatNumber, formatPercent } from "@/lib/formatters";
@@ -10,13 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
 export default function Contratos() {
-  const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
-  const { selectedOrgName } = useOrgFilter();
+  const { proposals: allProposals, isLoading, error, dataUpdatedAt } = useCommercialProposals();
+  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const orgFilterActive = !isGlobal;
   const [selectedContrato, setSelectedContrato] = useState<Proposal | null>(null);
   const pf = useGlobalFilters();
 
@@ -314,7 +316,7 @@ export default function Contratos() {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={[
-              { label: 'Receita Prevista (28d)', valor: forecastData.forecast28 },
+              { label: 'Receita prevista (até +28d, criação +15d)', valor: forecastData.forecast28 },
               { label: 'Receita Confirmada', valor: forecastData.receitaConfirmada },
             ]}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -433,6 +435,17 @@ export default function Contratos() {
           })()}
         </SheetContent>
       </Sheet>
+
+      <DataTrustFooter
+        lines={[
+          {
+            label: "Comercial",
+            source: "sol_projetos_sync (dedupe por project_id)",
+            fetchedAt: dataUpdatedAt,
+            extra: `${filteredProposals.length} projetos no filtro global`,
+          },
+        ]}
+      />
     </div>
   );
 }

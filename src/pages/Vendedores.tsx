@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { useSolLeads } from '@/hooks/useSolData';
 import { getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrencyAbbrev } from "@/lib/formatters";
+import { formatCurrencyAbbrev, safeToFixed } from "@/lib/formatters";
 import { Users, TrendingUp, DollarSign, XCircle, RefreshCw, Bot, Target, Clock, Award } from "lucide-react";
 import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -14,9 +14,10 @@ import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 
 export default function Vendedores() {
-  const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
+  const { proposals: allProposals, isLoading, error } = useCommercialProposals();
   const { data: solLeads } = useSolLeads();
-  const { selectedOrgName } = useOrgFilter();
+  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const orgFilterActive = !isGlobal;
   const gf = useGlobalFilters();
 
   const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
@@ -246,7 +247,7 @@ export default function Vendedores() {
                 <XAxis dataKey="nome" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}%`} />
                 <Tooltip
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Conversão']}
+                  formatter={(value) => [`${safeToFixed(value, 1)}%`, 'Conversão']}
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                 />
                 <Bar dataKey="conversao" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />

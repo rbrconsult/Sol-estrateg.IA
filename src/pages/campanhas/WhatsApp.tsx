@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { MessageSquare, Users, Bot, DollarSign, Clock } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/hooks/useCampaignObs';
+import { safeToFixed } from '@/lib/formatters';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 
 const COLORS = ['hsl(210,70%,55%)', 'hsl(142,70%,45%)', 'hsl(35,90%,55%)', 'hsl(0,70%,55%)', 'hsl(270,60%,55%)', 'hsl(180,60%,45%)'];
@@ -230,7 +231,7 @@ export default function WhatsAppPage() {
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis type="number" tick={{ fontSize: 10 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={80} />
-              <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+              <Tooltip formatter={(v) => `$${safeToFixed(v, 2)}`} />
               <Bar dataKey="value" fill="hsl(var(--primary))" />
             </BarChart>
           </ResponsiveContainer>

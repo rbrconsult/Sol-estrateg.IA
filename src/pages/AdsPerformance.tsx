@@ -9,6 +9,7 @@ import { Megaphone, RefreshCcw } from 'lucide-react';
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
+import { BRAND_FOOTER_TAGLINE } from '@/constants/branding';
 
 const META_COLOR = '#1877F2';
 const GOOGLE_COLOR = '#34A853';
@@ -325,9 +326,7 @@ export default function AdsPerformance() {
         </Card>
       )}
 
-      <p className="text-center text-xs text-muted-foreground pt-4">
-        Sol Estrateg.IA — Ads Performance • Dados reais do Data Store
-      </p>
+      <p className="text-center text-xs text-muted-foreground pt-4">{BRAND_FOOTER_TAGLINE}</p>
     </div>
   );
 }

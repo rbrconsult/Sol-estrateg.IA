@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { getOrigensData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrencyAbbrev } from "@/lib/formatters";
+import { formatCurrencyAbbrev, safeToFixed } from "@/lib/formatters";
 import { Target, TrendingUp, DollarSign, Clock, Users, RefreshCw } from "lucide-react";
 import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--destructive))'];
 
 export default function Origens() {
-  const { proposals: allProposals, isLoading, error } = useOrgFilteredProposals();
+  const { proposals: allProposals, isLoading, error } = useCommercialProposals();
   const gf = useGlobalFilters();
   const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 
@@ -207,7 +207,7 @@ export default function Origens() {
                   <XAxis dataKey="origem" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
                   <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}%`} />
                   <Tooltip 
-                    formatter={(value: number) => [`${value.toFixed(1)}%`, 'Conversão']}
+                    formatter={(value) => [`${safeToFixed(value, 1)}%`, 'Conversão']}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',

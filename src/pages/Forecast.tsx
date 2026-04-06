@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
-import { getForecastData } from "@/data/dataAdapter";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
+import { FORECAST_EXPECTED_CLOSE_LAG_DAYS, getForecastData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyAbbrev, formatNumber } from "@/lib/formatters";
 import { TrendingUp, Target, Calendar, RefreshCw, BarChart3 } from "lucide-react";
@@ -12,12 +12,14 @@ import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 export default function Forecast() {
-  const { proposals: allProposals, isLoading, error, orgFilterActive } = useOrgFilteredProposals();
-  const { selectedOrgName } = useOrgFilter();
+  const { proposals: allProposals, isLoading, error, dataUpdatedAt } = useCommercialProposals();
+  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const orgFilterActive = !isGlobal;
   const [pipelineMode, setPipelineMode] = useState<"receita" | "potencia" | "ambos">("ambos");
   const pf = useGlobalFilters();
 
@@ -60,10 +62,10 @@ export default function Forecast() {
   }
 
   const chartData = [
-    { periodo: '7 dias', receita: forecastData.forecast7, potencia: forecastData.potencia7 },
-    { periodo: '14 dias', receita: forecastData.forecast14, potencia: forecastData.potencia14 },
-    { periodo: '21 dias', receita: forecastData.forecast21, potencia: forecastData.potencia21 },
-    { periodo: '28 dias', receita: forecastData.forecast28, potencia: forecastData.potencia28 },
+    { periodo: 'Até +7d', receita: forecastData.forecast7, potencia: forecastData.potencia7 },
+    { periodo: 'Até +14d', receita: forecastData.forecast14, potencia: forecastData.potencia14 },
+    { periodo: 'Até +21d', receita: forecastData.forecast21, potencia: forecastData.potencia21 },
+    { periodo: 'Até +28d', receita: forecastData.forecast28, potencia: forecastData.potencia28 },
   ];
 
   return (
@@ -72,8 +74,13 @@ export default function Forecast() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Receita Prevista</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            Previsão ponderada por etapa · Pipeline de propostas
+          <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
+            Receita em cada card = soma do valor da proposta × probabilidade da etapa, só para status{" "}
+            <span className="font-medium text-foreground">Aberto</span>. A{" "}
+            <span className="font-medium text-foreground">data esperada de fechamento</span> é{" "}
+            <span className="font-medium text-foreground">data de criação da proposta + {FORECAST_EXPECTED_CLOSE_LAG_DAYS} dias</span>{" "}
+            (proxy — não há campo de fechamento no SM). Os quadrantes 7/14/21/28 são{" "}
+            <span className="font-medium text-foreground">cumulativos</span>: entram negócios cuja data esperada cai até o fim do período (+7, +14, +21 ou +28 dias a partir de hoje), incluindo já atrasados frente a esse proxy.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -102,40 +109,40 @@ export default function Forecast() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Target className="h-4 w-4" />
-              <span className="text-xs font-medium">Forecast 7d</span>
+              <span className="text-xs font-medium">Até +7 dias</span>
             </div>
             <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast7)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWh · prob ≥ 90%</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia7)} kWp · fech. esp. até +7d</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-xs font-medium">Forecast 14d</span>
+              <span className="text-xs font-medium">Até +14 dias</span>
             </div>
             <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast14)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWh · prob ≥ 70%</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia14)} kWp · fech. esp. até +14d</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Calendar className="h-4 w-4" />
-              <span className="text-xs font-medium">Forecast 21d</span>
+              <span className="text-xs font-medium">Até +21 dias</span>
             </div>
             <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast21)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWh · prob ≥ 40%</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia21)} kWp · fech. esp. até +21d</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Calendar className="h-4 w-4" />
-              <span className="text-xs font-medium">Forecast 28d</span>
+              <span className="text-xs font-medium">Até +28 dias</span>
             </div>
             <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.forecast28)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWh · todo pipeline</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatNumber(forecastData.potencia28)} kWp · fech. esp. até +28d</p>
           </CardContent>
         </Card>
         <Card>
@@ -145,7 +152,9 @@ export default function Forecast() {
               <span className="text-xs font-medium">Pipeline Ponderado</span>
             </div>
             <p className="text-2xl font-bold">{formatCurrencyAbbrev(forecastData.pipelinePonderado)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{forecastData.totalPropostasAbertas} propostas abertas</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {forecastData.totalPropostasAbertas} abertas · valor × prob. (sem filtro de data esperada)
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -156,7 +165,7 @@ export default function Forecast() {
         <Tabs value={pipelineMode} onValueChange={(v) => setPipelineMode(v as any)}>
           <TabsList>
             <TabsTrigger value="receita">R$ Receita</TabsTrigger>
-            <TabsTrigger value="potencia">kWh Potência</TabsTrigger>
+            <TabsTrigger value="potencia">kWp Potência</TabsTrigger>
             <TabsTrigger value="ambos">Ambos</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -166,7 +175,7 @@ export default function Forecast() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Projeção por Período</CardTitle>
+            <CardTitle>Projeção por horizonte</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -177,12 +186,12 @@ export default function Forecast() {
                   <YAxis yAxisId="receita" stroke="hsl(var(--primary))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
                 )}
                 {(pipelineMode === "potencia" || pipelineMode === "ambos") && (
-                  <YAxis yAxisId="potencia" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(v) => `${formatNumber(v)} kWh`} />
+                  <YAxis yAxisId="potencia" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(v) => `${formatNumber(v)} kWp`} />
                 )}
                 <Tooltip
                   formatter={(value: number, name: string) => [
-                    name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWh`,
-                    name === 'receita' ? 'R$ Receita' : 'kWh Potência'
+                    name === 'receita' ? formatCurrencyAbbrev(value) : `${formatNumber(value)} kWp`,
+                    name === 'receita' ? 'R$ Receita' : 'kWp Potência'
                   ]}
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
@@ -190,7 +199,7 @@ export default function Forecast() {
                     borderRadius: '8px'
                   }}
                 />
-                <Legend formatter={(value) => value === 'receita' ? 'R$ Receita' : 'kWh Potência'} />
+                <Legend formatter={(value) => value === 'receita' ? 'R$ Receita' : 'kWp Potência'} />
                 {(pipelineMode === "receita" || pipelineMode === "ambos") && (
                   <Bar yAxisId="receita" dataKey="receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="receita" />
                 )}
@@ -267,7 +276,7 @@ export default function Forecast() {
                     </TableCell>
                     <TableCell className="text-right">{formatCurrencyAbbrev(row.valor)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrencyAbbrev(row.valorPonderado)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(row.potencia)} kWh</TableCell>
+                    <TableCell className="text-right">{formatNumber(row.potencia)} kWp</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -275,6 +284,17 @@ export default function Forecast() {
           </CardContent>
         </Card>
       )}
+
+      <DataTrustFooter
+        lines={[
+          {
+            label: "Comercial",
+            source: "sol_projetos_sync",
+            fetchedAt: dataUpdatedAt,
+            extra: `${filteredProposals.length} projetos no filtro global`,
+          },
+        ]}
+      />
     </div>
   );
 }

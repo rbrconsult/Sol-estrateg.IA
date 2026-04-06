@@ -13,6 +13,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useFranquiaId } from "@/hooks/useFranquiaId";
 import { toast } from "sonner";
@@ -99,16 +100,8 @@ export type SolEquipeMembro = {
   synced_at: string | null;
 };
 
-export type SolProjeto = {
-  key: string;
-  project_id: string | null;
-  identificador: string | null;
-  etapa: string | null;
-  evento: string | null;
-  franquia_id: string | null;
-  ts_evento: string | null;
-  synced_at: string | null;
-};
+/** Linha completa de sol_projetos_sync (comercial / Solar Market) */
+export type SolProjeto = Database["public"]["Tables"]["sol_projetos_sync"]["Row"];
 
 export type SolQualificacao = {
   telefone: string;
@@ -348,7 +341,8 @@ export function useSolEquipeInsert() {
 
 // ── sol_projetos ──
 
-export function useSolProjetos(limit = 100) {
+/** Limite alto: painéis comerciais agregam o histórico de eventos por franquia */
+export function useSolProjetos(limit = 15_000) {
   const { user } = useAuth();
   const franquiaId = useFranquiaId();
 
@@ -363,7 +357,7 @@ export function useSolProjetos(limit = 100) {
         .order("ts_evento", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data || []) as unknown as SolProjeto[];
+      return (data || []) as SolProjeto[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,

@@ -25,10 +25,18 @@ export function MonthlyEvolution({ data }: Props) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-2">
-        <BarChart3 className="h-4 w-4 text-primary" />
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-          Evolução Mensal — Histórico Completo
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+            Evolução Mensal — Histórico Completo
+          </p>
+        </div>
+        <p className="text-[9px] text-muted-foreground/90 leading-snug pl-6 max-w-4xl">
+          Cada mês agrupa leads pelo <span className="font-medium text-foreground">ts_cadastro</span>. % qualificação e ganhos usam o{" "}
+          <span className="font-medium text-foreground">estado atual</span> do lead (mesma regra do funil CEO: MQL+ = jornada ≥ qualificado; conversão = negócio ganho /{" "}
+          <span className="font-medium text-foreground">VENDA</span> / etapa de vitória). A série mensal considera{" "}
+          <span className="font-medium text-foreground">todos os leads carregados</span>, não só o filtro de período do topo.
         </p>
       </div>
 
@@ -54,13 +62,13 @@ export function MonthlyEvolution({ data }: Props) {
         <Card className="border-border/50">
           <CardContent className="p-3 text-center">
             <p className="text-2xl font-extrabold tabular-nums">{latest.msgEnviadas}</p>
-            <p className="text-[9px] text-muted-foreground uppercase">Msg Enviadas</p>
+            <p className="text-[9px] text-muted-foreground uppercase leading-tight">Msgs IA (soma)</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-3 text-center">
             <p className="text-2xl font-extrabold tabular-nums">{latest.msgRecebidas}</p>
-            <p className="text-[9px] text-muted-foreground uppercase">Msg Recebidas</p>
+            <p className="text-[9px] text-muted-foreground uppercase leading-tight">Leads c/ resposta</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
@@ -105,7 +113,7 @@ export function MonthlyEvolution({ data }: Props) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <MessageCircle className="h-4 w-4 text-blue-500" />
-              Mensagens Robô — Mês a Mês
+              Atividade Robô — Mês a Mês
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -119,8 +127,8 @@ export function MonthlyEvolution({ data }: Props) {
                     contentStyle={{ fontSize: 11, borderRadius: 8, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
                   />
                   <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar dataKey="msgEnviadas" name="Enviadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="msgRecebidas" name="Recebidas" fill="hsl(142 71% 45%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="msgEnviadas" name="Msgs IA (∑)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="msgRecebidas" name="Leads c/ resposta" fill="hsl(142 71% 45%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -144,8 +152,8 @@ export function MonthlyEvolution({ data }: Props) {
                 <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">Leads</th>
                 <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">Qualif.</th>
                 <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">% Qualif.</th>
-                <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">Enviadas</th>
-                <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">Recebidas</th>
+                <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">Msgs IA</th>
+                <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">C/ resposta</th>
                 <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">Fechados</th>
                 <th className="text-right py-1.5 px-2 text-muted-foreground text-xs">% Conv.</th>
               </tr>

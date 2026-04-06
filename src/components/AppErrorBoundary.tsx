@@ -10,15 +10,17 @@ interface AppErrorBoundaryProps {
 
 interface AppErrorBoundaryState {
   hasError: boolean;
+  error: Error | null;
 }
 
 export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
   state: AppErrorBoundaryState = {
     hasError: false,
+    error: null,
   };
 
-  static getDerivedStateFromError(): AppErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): Partial<AppErrorBoundaryState> {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -30,6 +32,10 @@ export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, App
     const url = new URL(window.location.href);
     url.searchParams.set("_hard_reload", `${Date.now()}`);
     window.location.replace(url.toString());
+  };
+
+  private handleTryAgain = () => {
+    this.setState({ hasError: false, error: null });
   };
 
   render() {
@@ -51,12 +57,25 @@ export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, App
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-foreground">Ocorreu um erro na interface</h2>
               <p className="text-sm text-muted-foreground">
-                A tela foi protegida para evitar nova página em branco. Recarregue para continuar.
+                A tela foi protegida para evitar nova página em branco. Use outra rota no menu ou recarregue a página.
               </p>
-              <Button onClick={this.handleReload} className="gap-2">
-                <RefreshCcw className="h-4 w-4" />
-                Recarregar
-              </Button>
+              {this.state.error?.message && (
+                <pre className="mt-2 max-h-32 overflow-auto rounded-md border border-border bg-muted/50 p-2 text-left text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+                  {this.state.error.message}
+                </pre>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Abra o console do navegador (F12) para o stack completo.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button type="button" variant="outline" size="sm" onClick={this.handleTryAgain} className="gap-2">
+                  Tentar de novo
+                </Button>
+                <Button type="button" size="sm" onClick={this.handleReload} className="gap-2">
+                  <RefreshCcw className="h-4 w-4" />
+                  Recarregar
+                </Button>
+              </div>
             </div>
           </div>
         </div>

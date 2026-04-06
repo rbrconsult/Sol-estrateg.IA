@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { safeToFixed } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Item { origem: string; scoreMedio: number; quantidade: number }
@@ -16,7 +17,7 @@ export function ScorePorOrigem({ data }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="origem" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip formatter={(v: number) => v.toFixed(1)} />
+            <Tooltip formatter={(v) => safeToFixed(v, 1)} />
             <Bar dataKey="scoreMedio" name="Score Médio" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

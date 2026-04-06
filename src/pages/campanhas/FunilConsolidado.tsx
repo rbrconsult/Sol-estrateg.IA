@@ -48,7 +48,7 @@ export default function FunilConsolidado() {
   const franquiaId = useFranquiaId();
   const { data: leads, isLoading: l1 } = useSolLeads();
   const { data: equipe, isLoading: l2 } = useSolEquipe();
-  const { data: projetos, isLoading: l3 } = useSolProjetos(50);
+  const { data: projetos, isLoading: l3 } = useSolProjetos();
   const { data: conversions, isLoading: l4 } = useSolConversions();
   const [closerFilter, setCloserFilter] = useState('all');
 

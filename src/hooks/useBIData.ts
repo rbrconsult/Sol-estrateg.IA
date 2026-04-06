@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useOrgFilteredProposals } from '@/hooks/useOrgFilteredProposals';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
-import { getVendedorPerformance, getKPIs, Proposal } from '@/data/dataAdapter';
-import type { DateRange } from '@/components/dashboard/DateFilter';
+import { useCommercialProposals } from '@/hooks/useCommercialProposals';
+import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
+import { getVendedorPerformance, getKPIs } from '@/data/dataAdapter';
 
 // ─── Helpers ───
 function parseTemp(t: string): 'QUENTE' | 'MORNO' | 'FRIO' | '' {
@@ -71,45 +71,49 @@ function getSolStage(etapa: string, status: string): string {
   return mapped || 'Tráfego Pago';
 }
 
+/** Robô SDR (qualificação inicial) — antes da sequência FUP Frio */
+function isSolSdrRecord(r: SolLead): boolean {
+  return (r.fup_followup_count ?? 0) < 1;
+}
+
+/** Leads na sequência FUP Frio (≥1 disparo) */
+function isFupFrioRecord(r: SolLead): boolean {
+  return (r.fup_followup_count ?? 0) >= 1;
+}
+
+function statusResposta(r: SolLead): string {
+  return String((r as { status_resposta?: string }).status_resposta || (r as { _status_resposta?: string })._status_resposta || '').toLowerCase();
+}
+
 // ─── Main Hook ───
-export function useBIData(dateRange?: DateRange) {
-  const { proposals: enrichedProposals, isLoading: proposalsLoading, error: proposalsError } = useOrgFilteredProposals();
-  const { data: solLeads, isLoading: makeLoading } = useSolLeads();
+export function useBIData() {
+  const gf = useGlobalFilters();
+  const {
+    proposals: enrichedProposals,
+    isLoading: proposalsLoading,
+    error: proposalsError,
+    dataUpdatedAt: projetosDataUpdatedAt,
+  } = useCommercialProposals();
+  const { data: solLeads, isLoading: makeLoading, dataUpdatedAt: leadsDataUpdatedAt } = useSolLeads();
 
-  // Filter by date range
-  const filteredProposals = useMemo(() => {
-    if (!dateRange?.from) return enrichedProposals;
-    const from = dateRange.from.getTime();
-    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
-    return enrichedProposals.filter(p => {
-      const d = safeDate(p.dataCriacaoProjeto || p.dataCriacaoProposta);
-      if (!d) return true;
-      const t = d.getTime();
-      return t >= from && t <= to;
-    });
-  }, [enrichedProposals, dateRange]);
+  const filteredProposals = useMemo(
+    () => gf.filterProposals(enrichedProposals),
+    [enrichedProposals, gf.filterProposals],
+  );
 
-  const filteredSolLeads = useMemo(() => {
-    const records = solLeads || [];
-    if (!dateRange?.from) return records;
-    const from = dateRange.from.getTime();
-    const to = dateRange.to ? dateRange.to.getTime() + 86400000 : from + 86400000;
-    return records.filter(r => {
-      const d = safeDate(r.ts_cadastro);
-      if (!d) return true;
-      const t = d.getTime();
-      return t >= from && t <= to;
-    });
-  }, [solLeads, dateRange]);
+  const filteredSolLeads = useMemo(
+    () => gf.filterRecords(solLeads || []),
+    [solLeads, gf.filterRecords],
+  );
 
   const allSolLeads = filteredSolLeads;
 
   // ═══ SOL SDR (V5-V8) ═══
   const solSDR = useMemo(() => {
-    const solRecords = allSolLeads.filter(r => 'sol' === 'sol');
+    const solRecords = allSolLeads.filter(isSolSdrRecord);
 
     // V5: Funil real-time
-    const responderam = solRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
+    const responderam = solRecords.filter(r => statusResposta(r) === 'respondeu');
     const qualificados = filteredProposals.filter(p => p.solQualificado);
     const closers = filteredProposals.filter(p => {
       const stage = getSolStage(p.etapa, p.status);
@@ -117,13 +121,19 @@ export function useBIData(dateRange?: DateRange) {
     });
     const fechados = filteredProposals.filter(p => p.status === 'Ganho');
 
-    const funil = [
+    const funilStages = [
       { etapa: 'Leads Recebidos', valor: solRecords.length, icon: '📥' },
       { etapa: 'Responderam', valor: responderam.length, icon: '💬' },
       { etapa: 'MQL', valor: qualificados.length, icon: '✅' },
       { etapa: 'Closer', valor: closers.length, icon: '🎯' },
       { etapa: 'Fechados', valor: fechados.length, icon: '🏆' },
     ];
+    const funil = funilStages.map((stage, i) => {
+      const prevVal = i > 0 ? funilStages[i - 1]!.valor : stage.valor;
+      const pctAnterior =
+        i === 0 ? 100 : prevVal > 0 ? Math.min(100, Math.round((stage.valor / prevVal) * 100)) : 0;
+      return { ...stage, pctAnterior };
+    });
 
     // V6: Motivos de desqualificação
     const desqualificados = filteredProposals.filter(p => !p.solQualificado && p.notaCompleta);
@@ -156,7 +166,7 @@ export function useBIData(dateRange?: DateRange) {
       if (!d) return;
       const turno = hourBucket(d);
       turnos[turno].total++;
-      if (((r as any)._status_resposta || '') === 'respondeu') turnos[turno].responderam++;
+      if (statusResposta(r) === 'respondeu') turnos[turno].responderam++;
     });
     const performanceTurno = Object.entries(turnos).map(([turno, v]) => ({
       turno,
@@ -192,13 +202,33 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ FUP Frio ═══
   const fupFrio = useMemo(() => {
-    const fupRecords = allSolLeads.filter(r => false);
+    const fupRecords = allSolLeads.filter(isFupFrioRecord);
     const totalFup = fupRecords.length;
-    if (totalFup === 0) return null;
+    const empty = {
+      funil: [] as { etapa: string; valor: number; icon: string }[],
+      resgate: {
+        taxaResposta: 0,
+        taxaResgate: 0,
+        taxaFechamento: 0,
+        valorResgatado: 0,
+        valorFechado: 0,
+        totalResgatados: 0,
+        totalFechados: 0,
+      },
+      tentativasConversao: [] as { faixa: string; total: number; responderam: number; resgatados: number; taxaResposta: number; taxaResgate: number }[],
+      performanceTurnoFup: [] as { turno: string; total: number; responderam: number; taxa: number }[],
+      alertas: [] as { tipo: 'danger' | 'warning' | 'success' | 'info'; titulo: string; desc: string }[],
+      totalFup: 0,
+      responderam: 0,
+      aguardando: 0,
+      ignoraram: 0,
+      etapasResposta: [] as { etapa: string; pctResposta: number }[],
+    };
+    if (totalFup === 0) return empty;
 
-    const responderam = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
-    const ignoraram = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'ignorou');
-    const aguardando = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'aguardando');
+    const responderam = fupRecords.filter(r => statusResposta(r) === 'respondeu');
+    const ignoraram = fupRecords.filter(r => statusResposta(r) === 'ignorou');
+    const aguardando = fupRecords.filter(r => statusResposta(r) === 'aguardando');
 
     // Cross-reference with proposals to find rescued leads
     const fupPhones = new Set(fupRecords.map(r => r.telefone));
@@ -240,11 +270,11 @@ export function useBIData(dateRange?: DateRange) {
 
     const tentativasMap: Record<string, { total: number; responderam: number; resgatados: number }> = {};
     fupRecords.forEach(r => {
-      const attempts = ([] as any[]).filter(h => h.tipo === 'enviada').length;
+      const attempts = Math.max(1, r.fup_followup_count ?? 1);
       const faixa = attempts <= 1 ? '1' : attempts <= 3 ? '2-3' : attempts <= 5 ? '4-5' : '6+';
       if (!tentativasMap[faixa]) tentativasMap[faixa] = { total: 0, responderam: 0, resgatados: 0 };
       tentativasMap[faixa].total++;
-      if (((r as any)._status_resposta || '') === 'respondeu') tentativasMap[faixa].responderam++;
+      if (statusResposta(r) === 'respondeu') tentativasMap[faixa].responderam++;
       const phone = r.telefone;
       const rescued = leadsResgatados.some(p => normalizePhone(p.clienteTelefone || '') === phone);
       if (rescued) tentativasMap[faixa].resgatados++;
@@ -268,7 +298,7 @@ export function useBIData(dateRange?: DateRange) {
       if (!d) return;
       const turno = hourBucket(d);
       turnos[turno].total++;
-      if (((r as any)._status_resposta || '') === 'respondeu') turnos[turno].responderam++;
+      if (statusResposta(r) === 'respondeu') turnos[turno].responderam++;
     });
     const performanceTurnoFup = Object.entries(turnos).map(([turno, v]) => ({
       turno,
@@ -284,7 +314,23 @@ export function useBIData(dateRange?: DateRange) {
     if (leadsFechados.length > 0) alertas.push({ tipo: 'success', titulo: `${leadsFechados.length} vendas fechadas`, desc: `${formatCurrencyShort(valorFechado)} em receita recuperada` });
     if (ignoraram.length > totalFup * 0.7) alertas.push({ tipo: 'danger', titulo: `${ignoraram.length} leads ignorando`, desc: 'Mais de 70% dos leads de FUP não responderam — revisar abordagem' });
 
-    return { funil, resgate, tentativasConversao, performanceTurnoFup, alertas, totalFup, responderam: responderam.length, aguardando: aguardando.length, ignoraram: ignoraram.length };
+    const etapasResposta = tentativasConversao.map(t => ({
+      etapa: `FUP ${t.faixa}`,
+      pctResposta: t.taxaResposta,
+    }));
+
+    return {
+      funil,
+      resgate,
+      tentativasConversao,
+      performanceTurnoFup,
+      alertas,
+      totalFup,
+      responderam: responderam.length,
+      aguardando: aguardando.length,
+      ignoraram: ignoraram.length,
+      etapasResposta,
+    };
   }, [allSolLeads, filteredProposals]);
 
   // ═══ SolarMarket (V9-V11) ═══
@@ -306,14 +352,19 @@ export function useBIData(dateRange?: DateRange) {
     const ganhos = filteredProposals.filter(p => p.status === 'Ganho');
     const abertos = filteredProposals.filter(p => p.status === 'Aberto');
 
+    const valorGanho = kpis.valorGanho;
+    const ticketMedioGanho = ganhos.length > 0 ? valorGanho / ganhos.length : 0;
+
     const inteligenciaProposta = {
       ticketMedio: kpis.ticketMedio,
+      ticketMedioGanho,
       cicloProposta: kpis.cicloProposta,
       taxaConversao: kpis.taxaConversao,
       valorPipeline: kpis.valorPipeline,
-      valorGanho: kpis.valorGanho,
+      valorGanho,
       negociosAbertos: abertos.length,
       negociosGanhos: ganhos.length,
+      totalNegocios: filteredProposals.length,
     };
 
     return { funilComercial, vendedores, inteligenciaProposta };
@@ -321,7 +372,7 @@ export function useBIData(dateRange?: DateRange) {
 
   // ═══ Cruzamentos Grupo B (SDR × SolarMarket) ═══
   const cruzamentosB = useMemo(() => {
-    if (filteredProposals.length === 0 || allSolLeads.length === 0) return null;
+    if (filteredProposals.length === 0 || filteredSolLeads.length === 0) return null;
 
     // C4: Aproveitamento do lead qualificado
     const qualificadosSol = filteredProposals.filter(p => p.solQualificado);
@@ -390,7 +441,7 @@ export function useBIData(dateRange?: DateRange) {
     });
 
     return { aproveitamento, perfil, velocidadeConversao };
-  }, [filteredProposals, allSolLeads]);
+  }, [filteredProposals, filteredSolLeads]);
 
   // ═══ Cruzamento D C14: Lead em risco ═══
   const leadsEmRisco = useMemo(() => {
@@ -412,8 +463,97 @@ export function useBIData(dateRange?: DateRange) {
       .slice(0, 20);
   }, [filteredProposals]);
 
+  const volumeSla = useMemo(() => {
+    const sol = allSolLeads.filter(isSolSdrRecord);
+    const totalEnviadas = sol.reduce((a, l) => a + (l.total_mensagens_ia ?? 0), 0);
+    const comDelta = sol.filter(r => {
+      const c = safeDate(r.ts_cadastro);
+      const u = safeDate(r.ts_ultima_interacao);
+      return c && u && u.getTime() > c.getTime();
+    });
+    const totalRecebidas = comDelta.length;
+    const comResposta = sol.filter(r => {
+      const c = safeDate(r.ts_cadastro);
+      const u = safeDate(r.ts_ultima_interacao);
+      return c && u && u.getTime() >= c.getTime();
+    });
+    const dentro5min = comResposta.filter(r => {
+      const c = safeDate(r.ts_cadastro)!;
+      const u = safeDate(r.ts_ultima_interacao)!;
+      const ms = u.getTime() - c.getTime();
+      return ms >= 0 && ms <= 5 * 60 * 1000;
+    }).length;
+    const slaMenos5min =
+      comResposta.length > 0 ? Math.round((dentro5min / comResposta.length) * 100) : 0;
+    const temposMin = comResposta.map(r => {
+      const c = safeDate(r.ts_cadastro)!;
+      const u = safeDate(r.ts_ultima_interacao)!;
+      return (u.getTime() - c.getTime()) / (1000 * 60);
+    }).filter(m => m >= 0 && m < 7 * 24 * 60);
+    const medMin = temposMin.length > 0 ? temposMin.reduce((a, b) => a + b, 0) / temposMin.length : 0;
+    const tempoMedioPrimeiroContato =
+      temposMin.length > 0
+        ? medMin < 60
+          ? `${Math.round(medMin)} min`
+          : `${(medMin / 60).toFixed(1)} h`
+        : '—';
+    const mediaInteracoes =
+      sol.length > 0 ? Math.round((totalEnviadas / sol.length) * 10) / 10 : 0;
+    return {
+      totalEnviadas,
+      totalRecebidas,
+      mediaInteracoes,
+      slaMenos5min,
+      tempoMedioPrimeiroContato,
+      tempoMedioRespostaLead: tempoMedioPrimeiroContato,
+    };
+  }, [allSolLeads]);
+
+  const leadsByCidade = useMemo(() => {
+    const map = new Map<string, { leads: number; qualificados: number }>();
+    for (const r of allSolLeads) {
+      const label = (r.cidade || '').trim() || 'Sem cidade';
+      const cur = map.get(label) || { leads: 0, qualificados: 0 };
+      cur.leads++;
+      if ((r.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO') cur.qualificados++;
+      map.set(label, cur);
+    }
+    return [...map.entries()]
+      .map(([cidade, v]) => ({ cidade, canal: cidade, leads: v.leads, qualificados: v.qualificados }))
+      .sort((a, b) => b.leads - a.leads)
+      .slice(0, 18);
+  }, [allSolLeads]);
+
+  const leadsRecentes = useMemo(() => {
+    const rowTemp = (r: SolLead): 'QUENTE' | 'MORNO' | 'FRIO' => {
+      const n = (r.temperatura || '').toUpperCase();
+      if (n.includes('QUENTE')) return 'QUENTE';
+      if (n.includes('MORNO')) return 'MORNO';
+      if (n.includes('FRIO')) return 'FRIO';
+      return 'FRIO';
+    };
+    return [...allSolLeads]
+      .filter(r => r.ts_cadastro)
+      .sort((a, b) => {
+        const ta = safeDate(a.ts_cadastro)?.getTime() ?? 0;
+        const tb = safeDate(b.ts_cadastro)?.getTime() ?? 0;
+        return tb - ta;
+      })
+      .slice(0, 25)
+      .map(r => ({
+        nome: r.nome || `Lead …${(r.telefone || '').slice(-4)}`,
+        cidade: (r.cidade || '').trim() || '—',
+        valor_conta: r.valor_conta || '—',
+        temperatura: rowTemp(r),
+        etapa: r.etapa_funil || '—',
+        data: r.ts_cadastro || '',
+        score: r.score || '—',
+      }));
+  }, [allSolLeads]);
+
   const hasData = filteredProposals.length > 0 || allSolLeads.length > 0;
   const isLoading = proposalsLoading || makeLoading;
+  const totalSyncedLeads = allSolLeads.length;
 
   return {
     solSDR,
@@ -421,8 +561,15 @@ export function useBIData(dateRange?: DateRange) {
     fupFrio,
     cruzamentosB,
     leadsEmRisco,
+    volumeSla,
+    leadsByCidade,
+    leadsRecentes,
+    totalSyncedLeads,
+    filteredProjectCount: filteredProposals.length,
     hasData,
     isLoading,
     error: proposalsError,
+    leadsDataUpdatedAt,
+    projetosDataUpdatedAt,
   };
 }

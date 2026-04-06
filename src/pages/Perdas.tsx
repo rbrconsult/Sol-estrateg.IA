@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { getPerdasData } from "@/data/dataAdapter";
@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const COLORS = ['hsl(var(--destructive))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--primary))'];
 
 export default function Perdas() {
-  const { proposals: allProposals, isLoading, error } = useOrgFilteredProposals();
+  const { proposals: allProposals, isLoading, error } = useCommercialProposals();
   const gf = useGlobalFilters();
   const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
 

@@ -11,6 +11,9 @@ import { format, parseISO } from 'date-fns';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 import HeatmapChart from '@/components/robo/HeatmapChart';
+import { BRAND_FOOTER_TAGLINE } from '@/constants/branding';
+import { isFupFrioLead } from '@/hooks/useConferenciaData';
+import { safeToFixed } from '@/lib/formatters';
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
@@ -61,12 +64,17 @@ function KPICardAnimated({ label, value, suffix, color, pulse }: { label: string
 }
 
 function deriveSolData(records: SolLead[]) {
-  const solRecords = records.filter(r => 'sol' === 'sol' || (!'sol'.includes('fup') && (r.fup_followup_count ?? 0) === 0));
+  /** Mesmo universo da aba Leads: fora do FUP (sem follow-up ativo). */
+  const solRecords = records.filter(r => !isFupFrioLead(r));
   const total = solRecords.length;
   const responderam = solRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaResposta = total > 0 ? (responderam / total) * 100 : 0;
 
-  const qualificados = solRecords.filter(r => (r.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
+  const qualificados = solRecords.filter(r => {
+    const e = (r.etapa_funil || '').toUpperCase().trim();
+    const s = (r.status || '').toUpperCase();
+    return e === 'QUALIFICADO' || (s.includes('QUALIFICADO') && !s.includes('DES') && !s.includes('DES_QUAL'));
+  }).length;
   const desqualificados = solRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL')).length;
   const emQualificacao = solRecords.filter(r => {
     const etapa = (r.etapa_funil || '').toUpperCase().trim();
@@ -270,7 +278,9 @@ export default function RoboSol() {
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
             <Bot className="h-6 w-6 text-primary" /> Robô SOL — SDR IA
           </h1>
-          <p className="text-sm text-muted-foreground">Performance operacional — Dados reais do Data Store</p>
+          <p className="text-sm text-muted-foreground">
+            Métricas só para leads <span className="font-medium text-foreground">fora do FUP ativo</span> (sem <code className="text-xs">fup_followup_count</code> ≥1 nem etapa FOLLOW UP) — alinhado à aba Leads.
+          </p>
         </div>
         
       </div>
@@ -438,7 +448,13 @@ export default function RoboSol() {
             ].map(k => (
               <div key={k.l} className="bg-muted/30 rounded-lg p-2 text-center">
                 <p className="text-xs text-muted-foreground">{k.l}</p>
-                <p className="text-lg font-bold">{k.d ? k.v.toFixed(1) : k.v.toLocaleString('pt-BR')}</p>
+                <p className="text-lg font-bold">
+                  {k.d
+                    ? safeToFixed(k.v, 1)
+                    : typeof k.v === 'number' && Number.isFinite(k.v)
+                      ? k.v.toLocaleString('pt-BR')
+                      : '—'}
+                </p>
               </div>
             ))}
           </div>
@@ -459,7 +475,7 @@ export default function RoboSol() {
       </Card>
 
       {/* Heatmap */}
-      <HeatmapChart records={records.filter(r => 'sol' === 'sol' || (!'sol'.includes('fup') && (r.fup_followup_count ?? 0) === 0))} dateField="data_envio" />
+      <HeatmapChart records={records.filter(r => !isFupFrioLead(r))} dateField="data_envio" />
 
       {/* Evolução Diária */}
       {evolucaoDiaria.length > 0 && (
@@ -486,7 +502,12 @@ export default function RoboSol() {
       {/* Leads Recentes */}
       {leadsRecentes.length > 0 && (
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Leads Recentes</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Últimos cadastros</CardTitle>
+            <p className="text-xs text-muted-foreground font-normal pt-1">
+              Ordenados por <code className="text-[10px]">ts_cadastro</code> no período filtrado — atalho rápido; lista completa na aba Leads.
+            </p>
+          </CardHeader>
           <CardContent className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -517,9 +538,7 @@ export default function RoboSol() {
         </Card>
       )}
 
-      <p className="text-center text-xs text-muted-foreground pt-4">
-        Sol Estrateg.IA — Robô SOL SDR • Dados reais do Data Store
-      </p>
+      <p className="text-center text-xs text-muted-foreground pt-4">{BRAND_FOOTER_TAGLINE}</p>
     </div>
   );
 }

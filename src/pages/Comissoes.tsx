@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { getVendedorPerformance, Proposal } from "@/data/dataAdapter";
 import { DollarSign, Percent, Users, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
 
 const COMMISSION_RATES: Record<string, number> = { "danieli": 3 };
 const DEFAULT_RATE = 2;
@@ -59,8 +60,9 @@ function ProposalDrillDown({ proposals, rate }: { proposals: Proposal[]; rate: n
 }
 
 export default function Comissoes() {
-  const { proposals, isLoading, orgFilterActive } = useOrgFilteredProposals();
-  const { selectedOrgName } = useOrgFilter();
+  const { proposals, isLoading, dataUpdatedAt } = useCommercialProposals();
+  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const orgFilterActive = !isGlobal;
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const gf = useGlobalFilters();
@@ -320,6 +322,17 @@ export default function Comissoes() {
           </div>
         </CardContent>
       </Card>
+
+      <DataTrustFooter
+        lines={[
+          {
+            label: "Comercial",
+            source: "sol_projetos_sync · comissões sobre propostas com status Ganho",
+            fetchedAt: dataUpdatedAt,
+            extra: `${filteredProposals.length} projetos no filtro global`,
+          },
+        ]}
+      />
     </div>
   );
 }

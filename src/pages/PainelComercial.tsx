@@ -23,11 +23,12 @@ import {
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
 import { useSolLeads, type SolLead } from '@/hooks/useSolData';
-import { useOrgFilteredProposals } from "@/hooks/useOrgFilteredProposals";
+import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
 
 /* ── helpers ───────────────────────────────────────────── */
 
@@ -300,10 +301,11 @@ export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const navigate = useNavigate();
   const { openLead360 } = useLead360();
-  const { data: solLeads, isLoading } = useSolLeads();
-  
-  const { proposals, orgFilterActive } = useOrgFilteredProposals();
-  const { selectedOrgName } = useOrgFilter();
+  const { data: solLeads, isLoading, dataUpdatedAt: leadsDataUpdatedAt } = useSolLeads();
+
+  const { proposals, dataUpdatedAt: projetosDataUpdatedAt } = useCommercialProposals();
+  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const orgFilterActive = !isGlobal;
 
   const gf = useGlobalFilters();
   const records = useMemo(() => gf.filterRecords(solLeads || []), [solLeads, gf.filterRecords]);
@@ -740,6 +742,23 @@ export default function PainelComercial() {
         </TabsContent>
 
       </Tabs>
+
+      <DataTrustFooter
+        lines={[
+          {
+            label: "Pré-venda / fila",
+            source: "sol_leads_sync",
+            fetchedAt: leadsDataUpdatedAt,
+            extra: `${records.length} leads no filtro global`,
+          },
+          {
+            label: "Oportunidades (SM)",
+            source: "sol_projetos_sync (dedupe)",
+            fetchedAt: projetosDataUpdatedAt,
+            extra: `${filteredProposals.length} projetos no filtro global`,
+          },
+        ]}
+      />
     </div>
   );
 }

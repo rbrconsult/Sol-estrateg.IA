@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
+import { safeToFixed } from '@/lib/formatters';
 
 interface PerformanceData {
   nome: string;
@@ -32,15 +33,17 @@ export function PerformanceChart({
   showCurrency = false
 }: PerformanceChartProps) {
   const formatValue = (value: number) => {
+    const n = typeof value === 'number' ? value : Number(value);
     if (showCurrency) {
+      if (!Number.isFinite(n)) return '—';
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
         notation: 'compact',
         maximumFractionDigits: 1
-      }).format(value);
+      }).format(n);
     }
-    return dataKey === 'taxaConversao' ? `${value.toFixed(1)}%` : value.toString();
+    return dataKey === 'taxaConversao' ? `${safeToFixed(value, 1)}%` : (value == null ? '—' : String(value));
   };
 
   const getBarColor = (value: number) => {

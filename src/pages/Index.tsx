@@ -620,7 +620,7 @@ const Index = () => {
           />
 
           <footer className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
-            © 2026 Sol Estrateg.IA — Inteligência Comercial
+            © 2026 Sol Estrateg.IA — RBR Tecnologia
           </footer>
         </>
       )}

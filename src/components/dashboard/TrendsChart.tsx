@@ -10,6 +10,7 @@ import {
   Line
 } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { safeToFixed } from "@/lib/formatters";
 
 interface MonthlyData {
   mes: string;
@@ -42,7 +43,7 @@ export function TrendsChart({ data }: TrendsChartProps) {
               {p.dataKey === 'valorFechado' 
                 ? formatCurrency(p.value)
                 : p.dataKey === 'taxaConversao'
-                  ? `${p.value.toFixed(1)}%`
+                  ? `${safeToFixed(p.value, 1)}%`
                   : p.value
               }
             </p>

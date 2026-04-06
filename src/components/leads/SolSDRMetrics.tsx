@@ -1,4 +1,5 @@
 import { Users, Clock, Percent } from "lucide-react";
+import { safeToFixed } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
@@ -9,7 +10,7 @@ export function SolSDRMetrics({ data }: Props) {
   const items = [
     { label: "Passaram pela Sol SDR", value: data.total, icon: Users },
     { label: "Tempo Médio na SDR", value: `${data.tempoMedio} dias`, icon: Clock },
-    { label: "Taxa de Passagem", value: `${data.taxaPassagem.toFixed(1)}%`, icon: Percent },
+    { label: "Taxa de Passagem", value: `${safeToFixed(data.taxaPassagem, 1)}%`, icon: Percent },
   ];
 
   return (

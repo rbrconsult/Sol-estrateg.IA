@@ -7,11 +7,14 @@ import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Legend } from 'recharts';
 import { Repeat, RefreshCcw } from 'lucide-react';
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { computeFupFrioBlock } from '@/hooks/useConferenciaData';
+import { FupFrioMoneyCard } from '@/components/metrics/FupFrioMoneyCard';
 import { useLead360 } from '@/contexts/Lead360Context';
 import { PageFloatingFilter } from '@/components/filters/PageFloatingFilter';
 import { useGlobalFilters } from '@/contexts/GlobalFilterContext';
 import HeatmapChart from '@/components/robo/HeatmapChart';
 import RouteStudy from '@/components/robo/RouteStudy';
+import { BRAND_FOOTER_TAGLINE } from '@/constants/branding';
 
 const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
@@ -128,6 +131,7 @@ export default function RoboFupFrio() {
   const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
 
   const fupData = useMemo(() => deriveFupData(records), [records]);
+  const fupFrioMoney = useMemo(() => computeFupFrioBlock(records), [records]);
 
   const handleOpenLead = (lead: any) => {
     openLead360({
@@ -160,7 +164,9 @@ export default function RoboFupFrio() {
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
             <Repeat className="h-6 w-6 text-primary" /> Robô FUP Frio
           </h1>
-          <p className="text-sm text-muted-foreground">Dados reais — {kpis.totalEntrou} leads no FUP</p>
+          <p className="text-sm text-muted-foreground">
+            Universo FUP: <code className="text-xs">fup_followup_count</code> ≥ 1 ou etapa FOLLOW UP ({kpis.totalEntrou} leads no recorte) — espelha a metade «FUP Frio» da aba Leads.
+          </p>
         </div>
       </div>
 
@@ -171,6 +177,8 @@ export default function RoboFupFrio() {
         canais={canais}
         config={{ showPeriodo: true, showCanal: true, showSearch: true, showTemperatura: true, showEtapa: true, showStatus: true }}
       />
+
+      <FupFrioMoneyCard fupFrio={fupFrioMoney} />
 
       {/* BLOCO 1 — KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -333,9 +341,7 @@ export default function RoboFupFrio() {
         </CardContent>
       </Card>
 
-      <p className="text-center text-xs text-muted-foreground pt-4">
-        Sol Estrateg.IA — Robô FUP Frio • Dados reais do Make Data Store
-      </p>
+      <p className="text-center text-xs text-muted-foreground pt-4">{BRAND_FOOTER_TAGLINE}</p>
     </div>
   );
 }

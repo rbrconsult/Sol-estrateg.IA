@@ -11,6 +11,7 @@ interface KanbanBoardProps {
 // Ordem das colunas do Kanban
 const KANBAN_COLUMNS = [
   'TRAFEGO PAGO',
+  'SOL SDR',
   'PROSPECÇÃO',
   'FOLLOW UP',
   'QUALIFICAÇÃO',
@@ -23,6 +24,7 @@ const KANBAN_COLUMNS = [
 
 const columnColors: Record<string, string> = {
   'TRAFEGO PAGO': 'bg-blue-500/20 border-blue-500/50',
+  'SOL SDR': 'bg-sky-500/20 border-sky-500/50',
   'PROSPECÇÃO': 'bg-indigo-500/20 border-indigo-500/50',
   'FOLLOW UP': 'bg-violet-500/20 border-violet-500/50',
   'QUALIFICAÇÃO': 'bg-cyan-500/20 border-cyan-500/50',

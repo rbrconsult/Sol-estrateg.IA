@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSolLeads, useSolMetricas } from '@/hooks/useSolData';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
 import { useBIData } from '@/hooks/useBIData';
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -28,38 +29,52 @@ const tooltipStyle = {
 
 export default function BI() {
   const gf = useGlobalFilters();
-  // Use global filter date range for BI data
-  const dateRange = useMemo(() => ({
-    from: gf.effectiveDateRange.from,
-    to: gf.effectiveDateRange.to,
-  }), [gf.effectiveDateRange]);
-  const biResult = useBIData(dateRange);
+  const biResult = useBIData();
   const hasData = biResult.hasData;
   const isLoading = biResult.isLoading;
   const data = hasData ? {
-    totalRecords: 0,
+    totalRecords: biResult.totalSyncedLeads,
     financeiro: {
       receitaFechada: biResult.solarMarket?.inteligenciaProposta?.valorGanho || 0,
       negociosGanhos: biResult.solarMarket?.inteligenciaProposta?.negociosGanhos || 0,
       valorPipeline: biResult.solarMarket?.inteligenciaProposta?.valorPipeline || 0,
       negociosAbertos: biResult.solarMarket?.inteligenciaProposta?.negociosAbertos || 0,
-      ticketMedio: biResult.solarMarket?.inteligenciaProposta?.ticketMedio || 0,
+      ticketMedioGanho: biResult.solarMarket?.inteligenciaProposta?.ticketMedioGanho || 0,
       taxaConversao: biResult.solarMarket?.inteligenciaProposta?.taxaConversao || 0,
-      totalPropostas: (biResult.solarMarket?.inteligenciaProposta?.negociosGanhos || 0) + (biResult.solarMarket?.inteligenciaProposta?.negociosAbertos || 0),
+      totalPropostas: biResult.solarMarket?.inteligenciaProposta?.totalNegocios ?? 0,
     },
-    funil: biResult.solSDR?.funil?.map((f: any) => ({ etapa: f.etapa, valor: f.valor, icon: f.icon || '📊', cor: 'default', pctAnterior: 100 })) || [],
-    origens: [] as any[],
+    funil: biResult.solSDR?.funil?.map((f) => ({
+      etapa: f.etapa,
+      valor: f.valor,
+      icon: f.icon || '📊',
+      cor: 'default',
+      pctAnterior: f.pctAnterior,
+    })) || [],
+    origens: biResult.leadsByCidade,
     temperatura: [
       { temperatura: 'QUENTE', leads: biResult.solSDR?.qualidadeLead?.quentes || 0, icon: '🔥', cor: 'text-destructive' },
       { temperatura: 'MORNO', leads: biResult.solSDR?.qualidadeLead?.mornos || 0, icon: '🌡️', cor: 'text-warning' },
       { temperatura: 'FRIO', leads: biResult.solSDR?.qualidadeLead?.frios || 0, icon: '❄️', cor: 'text-info' },
     ],
-    leadsRecentes: [] as any[],
-    fupFrio: { totalFup: biResult.fupFrio?.totalFup || 0, reativados: biResult.fupFrio?.responderam || 0, taxaReativacao: biResult.fupFrio?.totalFup ? Math.round(((biResult.fupFrio?.responderam || 0) / biResult.fupFrio.totalFup) * 100) : 0, etapasResposta: [] as any[] },
-    volumeSLA: { totalEnviadas: 0, totalRecebidas: 0, mediaInteracoes: 0, slaMenos5min: 0, tempoMedioPrimeiroContato: '—', tempoMedioRespostaLead: '—' },
-    custos: { openAI: 0, elevenLabs: 0, make: 0, total: 0 },
+    leadsRecentes: biResult.leadsRecentes,
+    fupFrio: {
+      totalFup: biResult.fupFrio?.totalFup || 0,
+      reativados: biResult.fupFrio?.responderam || 0,
+      taxaReativacao: biResult.fupFrio?.totalFup
+        ? Math.round(((biResult.fupFrio?.responderam || 0) / biResult.fupFrio.totalFup) * 100)
+        : 0,
+      etapasResposta: biResult.fupFrio?.etapasResposta || [],
+    },
+    volumeSLA: biResult.volumeSla,
     motivos: biResult.solSDR?.motivos || [],
-    horarios: biResult.solSDR?.performanceTurno?.map((t: any) => ({ dia: t.turno, hora: '', conversoes: t.responderam })) || [],
+    horarios: biResult.solSDR?.performanceTurno?.map((t) => ({
+      turno: t.turno,
+      conversoes: t.taxa,
+      responderam: t.responderam,
+      volume: t.total,
+    })) || [],
+    cruzamentos: biResult.cruzamentosB,
+    leadsEmRisco: biResult.leadsEmRisco,
   } : null;
   const [now, setNow] = useState(new Date());
 
@@ -78,7 +93,7 @@ export default function BI() {
             Business Intelligence
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Visão estratégica consolidada • {format(now, "dd MMM yyyy, HH:mm", { locale: ptBR })}
+            Pré-venda (leads) e Comercial (projetos SM) em abas • {format(now, "dd MMM yyyy, HH:mm", { locale: ptBR })}
             {gf.hasFilters && " • Filtros globais ativos"}
           </p>
         </div>
@@ -115,13 +130,24 @@ export default function BI() {
 
       {data && (
         <>
-          {/* ═══ KPIs ═══ */}
+          <Tabs defaultValue="comercial" className="w-full space-y-4">
+            <TabsList className="grid w-full max-w-[440px] grid-cols-2 h-9">
+              <TabsTrigger value="comercial" className="text-xs">
+                Comercial
+              </TabsTrigger>
+              <TabsTrigger value="prevenda" className="text-xs">
+                Pré-venda
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="comercial" className="space-y-6 mt-2 focus-visible:outline-none">
+          {/* ═══ KPIs comerciais ═══ */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: 'Receita Fechada', value: formatCurrencyAbbrev(data.financeiro.receitaFechada), icon: DollarSign, sub: `${data.financeiro.negociosGanhos} negócios ganhos` },
               { label: 'Pipeline Aberto', value: formatCurrencyAbbrev(data.financeiro.valorPipeline), icon: Briefcase, sub: `${data.financeiro.negociosAbertos} em aberto` },
-              { label: 'Ticket Médio', value: formatCurrencyAbbrev(data.financeiro.ticketMedio), icon: Target, sub: 'Por proposta ganha' },
-              { label: 'Conversão', value: `${data.financeiro.taxaConversao.toFixed(1)}%`, icon: TrendingUp, sub: `${data.financeiro.totalPropostas} propostas` },
+              { label: 'Ticket Médio (ganhos)', value: formatCurrencyAbbrev(data.financeiro.ticketMedioGanho), icon: Target, sub: 'Média só nos ganhos do recorte' },
+              { label: 'Win rate', value: `${data.financeiro.taxaConversao.toFixed(1)}%`, icon: TrendingUp, sub: `${data.financeiro.totalPropostas} negócios no recorte` },
             ].map((kpi, i) => {
               const Icon = kpi.icon;
               return (
@@ -141,6 +167,57 @@ export default function BI() {
             })}
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {data.cruzamentos ? (
+              <>
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardContent className="p-4">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SDR → comercial</p>
+                    <p className="text-2xl font-bold tabular-nums text-foreground mt-1">{data.cruzamentos.aproveitamento.taxaAproveitamento}%</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {data.cruzamentos.aproveitamento.avancaram} de {data.cruzamentos.aproveitamento.totalQualificados} qualificados avançaram
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Qualif. → ganho</p>
+                    <p className="text-2xl font-bold tabular-nums text-foreground mt-1">{data.cruzamentos.aproveitamento.taxaFechamento}%</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {data.cruzamentos.aproveitamento.fecharam} fechamentos no recorte
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
+            ) : null}
+            <Card className={data.cruzamentos ? 'lg:col-span-2' : 'sm:col-span-2 lg:col-span-4'}>
+              <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Leads em risco</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">Abertos, frios ou &gt;7 dias na etapa</p>
+                </div>
+                <p className="text-2xl font-bold tabular-nums text-warning">{data.leadsEmRisco.length}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <DataTrustFooter
+            lines={[
+              {
+                label: "Fonte comercial",
+                source: "sol_projetos_sync (último evento por project_id)",
+                fetchedAt: biResult.projetosDataUpdatedAt,
+                extra: `${biResult.filteredProjectCount} projetos no recorte filtrado`,
+              },
+              {
+                label: "KPIs",
+                source: "Receita, pipeline, ticket e win rate usam valor_proposta e status mapeados do SM.",
+              },
+            ]}
+          />
+            </TabsContent>
+
+            <TabsContent value="prevenda" className="space-y-6 mt-2 focus-visible:outline-none">
           {/* ═══ Funil horizontal ═══ */}
           <Card className="opacity-0 animate-fade-up" style={{ animationDelay: '280ms', animationFillMode: 'forwards' }}>
             <CardHeader className="pb-3">
@@ -186,6 +263,9 @@ export default function BI() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
+                {data.origens.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-12">Sem leads com cidade no recorte filtrado.</p>
+                ) : (
                 <ResponsiveContainer width="100%" height={Math.max(200, Math.min(data.origens.length * 36, 380))}>
                   <BarChart data={data.origens} layout="vertical" barGap={2}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
@@ -196,6 +276,7 @@ export default function BI() {
                     <Bar dataKey="qualificados" name="Qualificados" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={14} />
                   </BarChart>
                 </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 
@@ -303,7 +384,7 @@ export default function BI() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 text-primary" />
-                  Volume & SLA
+                  Volume & SLA (robô SDR)
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
@@ -400,12 +481,12 @@ export default function BI() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Clock className="h-4 w-4 text-warning" />
-                    Melhor Horário para Conversão
+                    Respostas por turno (cadastro SDR)
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
                   <ResponsiveContainer width="100%" height={200}>
-                    <AreaChart data={data.horarios.slice(0, 12)}>
+                    <AreaChart data={data.horarios}>
                       <defs>
                         <linearGradient id="colorConv" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.3} />
@@ -414,25 +495,24 @@ export default function BI() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis
-                        dataKey="hora"
-                        tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-                        axisLine={false} tickLine={false}
-                        tickFormatter={(_, i) => {
-                          const item = data.horarios[i];
-                          return item ? `${item.dia} ${item.hora}` : '';
-                        }}
+                        dataKey="turno"
+                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                        axisLine={false}
+                        tickLine={false}
                       />
                       <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        labelFormatter={(_, payload) => {
-                          const item = payload?.[0]?.payload;
-                          return item ? `${item.dia} ${item.hora}` : '';
-                        }}
+                        labelFormatter={(label) => String(label)}
+                        formatter={(value: number, name: string) => [
+                          name === 'taxa' ? `${value}%` : value,
+                          name === 'taxa' ? 'Taxa resposta' : 'Leads c/ resposta',
+                        ]}
                       />
-                      <Area type="monotone" dataKey="conversoes" name="Conversões" stroke="hsl(var(--warning))" fill="url(#colorConv)" strokeWidth={2} />
+                      <Area type="monotone" dataKey="conversoes" name="taxa" stroke="hsl(var(--warning))" fill="url(#colorConv)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
+                  <p className="text-[9px] text-muted-foreground mt-2">Curva = % de leads do turno que responderam ao robô (SDR).</p>
                 </CardContent>
               </Card>
             )}
@@ -492,12 +572,30 @@ export default function BI() {
               )}
             </CardContent>
           </Card>
+
+          <DataTrustFooter
+            lines={[
+              {
+                label: "Fonte pré-venda",
+                source: "sol_leads_sync",
+                fetchedAt: biResult.leadsDataUpdatedAt,
+                extra: `${data.totalRecords} leads no recorte`,
+              },
+              {
+                label: "Funil exibido",
+                source: "Etapas 1–2: robô SDR (leads). Etapas 3–5: oportunidades comerciais (projetos deduplicados).",
+              },
+            ]}
+          />
+            </TabsContent>
+          </Tabs>
         </>
       )}
 
       <div className="text-center py-2">
         <p className="text-[9px] text-muted-foreground/40">
-          BI • {format(now, "dd/MM/yyyy HH:mm", { locale: ptBR })}
+          BI • {format(now, "dd/MM/yyyy HH:mm", { locale: ptBR })} ·{" "}
+          <span className="italic">métricas: docs/metricas-fase-a.md</span>
         </p>
       </div>
     </div>

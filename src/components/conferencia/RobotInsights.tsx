@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Bot, Send, Users, Flame, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import type { PipelineStage } from "@/hooks/useConferenciaData";
 
 const iconMap = {
   bot: Bot,
@@ -18,8 +19,12 @@ interface RobotData {
   alertasUrgentes: { tipo: "danger" | "warning" | "success" | "info"; titulo: string; desc: string }[];
 }
 
-export function RobotInsights({ data }: { data: RobotData }) {
+type Props = { data: RobotData; pipelineStages: PipelineStage[] };
+
+export function RobotInsights({ data, pipelineStages }: Props) {
   const maxFunil = data.funilMensagens[0]?.valor || 1;
+  const maxPipe = Math.max(1, ...pipelineStages.map((s) => s.valor));
+  const baseJornada = pipelineStages[0]?.valor ?? 0;
 
   return (
     <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
@@ -29,25 +34,40 @@ export function RobotInsights({ data }: { data: RobotData }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Destaques positivos */}
+        {/* Mesmos números do funil cumulativo (dashboard) */}
         <div className="space-y-3">
-          <p className="text-[9px] text-success uppercase tracking-wider font-semibold">✦ Destaques</p>
+          <p className="text-[9px] text-success uppercase tracking-wider font-semibold">Funil cumulativo da jornada</p>
+          <p className="text-[8px] text-muted-foreground/90 leading-snug -mt-1">
+            Totais alinhados ao bloco <span className="font-medium text-foreground">Funil da Jornada</span> — cada estágio conta leads
+            que já alcançaram <span className="font-medium text-foreground">≥</span> aquele ponto (pré-venda → comercial,{" "}
+            <span className="font-medium text-foreground">etapa_funil</span> / handover / ganho). Base:{" "}
+            <span className="font-semibold tabular-nums text-foreground">{baseJornada.toLocaleString("pt-BR")}</span> recebidos.
+          </p>
           <div className="grid grid-cols-2 gap-2">
-            {data.destaques.map((d) => {
-              const Icon = iconMap[d.icon];
-              return (
-                <div key={d.label} className="rounded-lg border border-border/30 p-2.5 flex items-center gap-2">
-                  <Icon className={cn("h-4 w-4 shrink-0", d.color)} />
-                  <div>
-                    <p className="text-lg font-extrabold tabular-nums leading-none">{d.value.toLocaleString("pt-BR")}</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">{d.label}</p>
+            {pipelineStages.length === 0 ? (
+              <p className="text-[10px] text-muted-foreground col-span-2 py-2">Sem dados de funil no período.</p>
+            ) : (
+              pipelineStages.map((s) => {
+                const pctBar = (s.valor / maxPipe) * 100;
+                return (
+                  <div key={s.etapa} className="rounded-lg border border-border/30 p-2.5">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-base leading-none" aria-hidden>
+                        {s.icon}
+                      </span>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium truncate">{s.etapa}</p>
+                    </div>
+                    <p className="text-lg font-extrabold tabular-nums leading-none text-foreground">{s.valor.toLocaleString("pt-BR")}</p>
+                    <p className="text-[8px] text-muted-foreground/80 mt-1 line-clamp-2">{s.desc}</p>
+                    <div className="mt-2 h-1 bg-secondary/50 rounded overflow-hidden">
+                      <div className="h-full bg-primary/50 rounded transition-all duration-700" style={{ width: `${pctBar}%` }} />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
 
-          {/* Comparação SOL vs FUP */}
           <div className="rounded-lg border border-border/30 p-3">
             <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">SOL vs FUP Frio</p>
             <div className="grid grid-cols-2 gap-3 text-center">
@@ -97,16 +117,20 @@ export function RobotInsights({ data }: { data: RobotData }) {
           <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">📋 Alertas & Status</p>
           <div className="space-y-2">
             {data.alertasUrgentes.map((a, i) => {
-              const icon = a.tipo === "danger"
-                ? <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                : a.tipo === "success"
-                ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
-                : <Info className="h-3.5 w-3.5 text-warning shrink-0" />;
-              const border = a.tipo === "danger"
-                ? "border-destructive/30 bg-destructive/5"
-                : a.tipo === "success"
-                ? "border-success/30 bg-success/5"
-                : "border-warning/30 bg-warning/5";
+              const icon =
+                a.tipo === "danger" ? (
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                ) : a.tipo === "success" ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
+                ) : (
+                  <Info className="h-3.5 w-3.5 text-warning shrink-0" />
+                );
+              const border =
+                a.tipo === "danger"
+                  ? "border-destructive/30 bg-destructive/5"
+                  : a.tipo === "success"
+                    ? "border-success/30 bg-success/5"
+                    : "border-warning/30 bg-warning/5";
               return (
                 <div key={i} className={cn("rounded-md border p-2.5 flex items-start gap-2", border)}>
                   {icon}

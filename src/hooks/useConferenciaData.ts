@@ -9,12 +9,42 @@ export interface PipelineStage {
   etapa: string; valor: number; icon: string; desc: string;
 }
 export interface OrigemLead {
-  origem: string; share: number; conversao: number;
+  origem: string;
+  share: number;
+  /** % leads da origem com status/etapa de ganho (vitória comercial no lead). */
+  conversao: number;
+  /** % que atingiram qualificado ou estágio posterior (útil quando ainda não há ganhos). */
+  conversaoMql: number;
+  ganhosCount: number;
+  mqlPlusCount: number;
+  total: number;
+  /** Média do score SOL na origem (só quando existem scores válidos). */
+  scoreMedio: number | null;
 }
 export interface FupFrio {
-  entraram: number; reativados: number; pctReativados: number;
-  diasAteReativar: number; valorRecuperado: string; ticketMedio: string;
-  conversaoPosResgate: number; receitaTotal: string; pctReceitaViaFup: number;
+  /** Leads que entraram na sequência FUP (≥1 disparo). */
+  entraram: number;
+  /** Leads que responderam após estar no FUP (proxy de resgate). */
+  reativados: number;
+  pctReativados: number;
+  /** Dias médios entre cadastro e último FUP (leads que responderam no FUP). */
+  diasAteReativar: number;
+  valorRecuperado: string;
+  ticketMedio: string;
+  conversaoPosResgate: number;
+  receitaTotal: string;
+  pctReceitaViaFup: number;
+  /** Base total no período (ex.: 46 recebidos). */
+  totalRecebidos: number;
+  /** % da base que passou pelo FUP Frio. */
+  pctBaseComFup: number;
+  /** Ganhos comerciais (lead) que tiveram FUP na jornada. */
+  fechadosComFup: number;
+  valorFechadosComFup: string;
+  /** % dos ganhos (em qtd) que passaram pelo FUP. */
+  pctGanhosQuePassaramFup: number;
+  /** % do valor estimado dos ganhos atribuível a leads com FUP. */
+  pctValorGanhosViaFup: number;
 }
 export interface DesqualMotivo {
   motivo: string; pct: number; fill: string;
@@ -52,7 +82,16 @@ export interface TabelaLead {
 }
 export interface SLAMetricsData {
   primeiroAtendimento: { media: number; pctDentro24h: number; total: number };
-  porEtapa: { etapa: string; slaDias: number; mediaDias: number; status: 'ok' | 'warning' | 'overdue' }[];
+  porEtapa: {
+    etapa: string;
+    slaDias: number;
+    mediaDias: number;
+    /** ok/warning/overdue = pré-venda SOL; comercial = pós-handover (barra neutra, SLA do time comercial). */
+    status: 'ok' | 'warning' | 'overdue' | 'comercial';
+    leadsNaEtapa: number;
+    solNaJornadaCount: number;
+    solNaJornadaPct: number;
+  }[];
   robos: { tempoResposta: string; leadsAguardando: number; taxaResposta: number };
   geralProposta: { mediaDias: number };
 }
@@ -64,9 +103,6 @@ export interface RobotInsightsData {
   };
   funilMensagens: { etapa: string; valor: number }[];
   alertasUrgentes: { tipo: 'danger' | 'warning' | 'success' | 'info'; titulo: string; desc: string }[];
-}
-export interface ScoreOrigem {
-  origem: string; score: number; leads: number;
 }
 export interface MonthlyEvolutionItem {
   mes: string; mesLabel: string; totalLeads: number; qualificados: number;
@@ -156,6 +192,54 @@ function getStageAnchorDate(r: SolLead, stage: string): Date | null {
   return safeDate(r.ts_transferido || r.ts_qualificado || r.ts_ultimo_fup || r.ts_cadastro);
 }
 
+/** Negócio ganho / encerrado com vitória (para funil CEO). */
+function isWonClosed(r: SolLead): boolean {
+  const etapa = (r.etapa_funil || '').toUpperCase().trim();
+  const status = (r.status || '').toUpperCase().trim();
+  return (
+    status.includes('GANHO') ||
+    status.includes('FECHADO') ||
+    status.includes('VENDA') ||
+    etapa === 'GANHO' ||
+    etapa.includes('CONTRATO ASSINADO')
+  );
+}
+
+/**
+ * Maior estágio alcançado na jornada (0..5) para funil cumulativo do dashboard.
+ * 0 = só na base (recebido), 1 = pré-qualificação robô, 2 = qualificado, 3 = handover closer,
+ * 4 = proposta ativa, 5 = fechado (ganho).
+ */
+function getCeoJourneyMaxStage(r: SolLead): number {
+  const etapa = (r.etapa_funil || '').toUpperCase().trim();
+  const status = (r.status || '').toUpperCase().trim();
+
+  if (isWonClosed(r)) return 5;
+
+  let m = 0;
+
+  if (['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'].includes(etapa)) m = Math.max(m, 1);
+
+  if (
+    etapa === 'QUALIFICADO' ||
+    (status.includes('QUALIFICADO') &&
+      !status.includes('DESQUALIFICADO') &&
+      !status.includes('DES_QUAL'))
+  ) {
+    m = Math.max(m, 2);
+  }
+
+  if (r.transferido_comercial === true || etapa === 'CONTATO REALIZADO') m = Math.max(m, 3);
+
+  if (etapa === 'PROPOSTA' || etapa.includes('NEGOCI') || etapa.includes('NEGOCIA')) m = Math.max(m, 4);
+
+  if ((etapa.includes('COBRANÇA') || etapa.includes('COBRANCA')) && !isWonClosed(r)) m = Math.max(m, 4);
+
+  return m;
+}
+
+const CEO_PIPELINE_LABELS = ['Recebidos', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'] as const;
+
 /** Map Make status → Sol Pipeline stage */
 function getSolStageFromMake(r: SolLead): string {
   // Prioritize etapa_sm from CRM if available
@@ -195,6 +279,123 @@ function estimateValueFromBill(r: SolLead): number {
   return 17000; // default
 }
 
+/** Valor monetário do lead: tenta conta de luz; senão estimativa. */
+function parseValorContaLead(r: SolLead): number {
+  const raw = r.valor_conta;
+  if (raw == null || String(raw).trim() === '') return estimateValueFromBill(r);
+  const cleaned = String(raw).replace(/[^\d.,]/g, '');
+  if (!cleaned) return estimateValueFromBill(r);
+  const normalized = cleaned.includes(',')
+    ? cleaned.replace(/\./g, '').replace(',', '.')
+    : cleaned.replace(/,/g, '');
+  const n = parseFloat(normalized);
+  return isNaN(n) || n <= 0 ? estimateValueFromBill(r) : n;
+}
+
+/** Lead no universo FUP (disparos ou etapa de follow-up) — alinhado a Robô FUP / taxas FUP no dashboard. */
+export function isFupFrioLead(r: SolLead): boolean {
+  if ((r.fup_followup_count ?? 0) >= 1) return true;
+  const e = (r.etapa_funil || '').toUpperCase().trim();
+  return e === 'FOLLOW UP';
+}
+
+function isGanhoLeadRecord(r: SolLead): boolean {
+  const s = (r.status || '').toUpperCase();
+  return s.includes('GANHO') || s.includes('FECHADO') || s.includes('VENDA');
+}
+
+/** Lead teve atuação mensurável do robô SOL (mensagens IA, FUP ou etapa de pré-venda / qualificação SOL). */
+export function solParticipouNaJornada(r: SolLead): boolean {
+  if ((r.total_mensagens_ia ?? 0) > 0) return true;
+  if ((r.fup_followup_count ?? 0) >= 1) return true;
+  const et = (r.etapa_funil || '').toUpperCase().trim();
+  if (['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'].includes(et)) return true;
+  const q = (r.qualificado_por || '').toLowerCase();
+  if (q.includes('sol') || q.includes('robô') || q.includes('robo') || q.includes('ia')) return true;
+  return false;
+}
+
+export const EMPTY_FUP_FRIO: FupFrio = {
+  entraram: 0,
+  reativados: 0,
+  pctReativados: 0,
+  diasAteReativar: 0,
+  valorRecuperado: 'R$ 0',
+  ticketMedio: 'R$ 0',
+  conversaoPosResgate: 0,
+  receitaTotal: 'R$ 0',
+  pctReceitaViaFup: 0,
+  totalRecebidos: 0,
+  pctBaseComFup: 0,
+  fechadosComFup: 0,
+  valorFechadosComFup: 'R$ 0',
+  pctGanhosQuePassaramFup: 0,
+  pctValorGanhosViaFup: 0,
+};
+
+/** Métricas do card “FUP Frio — Dinheiro na Mesa” (Dashboard / Robô FUP). */
+export function computeFupFrioBlock(allRecords: SolLead[]): FupFrio {
+  const total = allRecords.length;
+  if (total === 0) return { ...EMPTY_FUP_FRIO };
+
+  const ganhos = allRecords.filter(isGanhoLeadRecord);
+  const fupRecords = allRecords.filter(isFupFrioLead);
+  const fupTotal = fupRecords.length;
+  const fupReativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
+
+  const fechadosViaFup = allRecords.filter(r => isFupFrioLead(r) && isGanhoLeadRecord(r));
+  const fechadosViaFupCount = fechadosViaFup.length;
+  const valorFechadosFupSum = fechadosViaFup.reduce((s, r) => s + parseValorContaLead(r), 0);
+  const valorTotalGanhosSum = ganhos.reduce((s, r) => s + parseValorContaLead(r), 0);
+  const pctValorGanhosViaFup =
+    valorTotalGanhosSum > 0 ? +((valorFechadosFupSum / valorTotalGanhosSum) * 100).toFixed(1) : 0;
+  const pctGanhosQuePassaramFup =
+    ganhos.length > 0 ? +((fechadosViaFupCount / ganhos.length) * 100).toFixed(1) : 0;
+  const pctBaseComFup = total > 0 ? +((fupTotal / total) * 100).toFixed(1) : 0;
+
+  const valorEstimado = valorTotalGanhosSum;
+  const valorFupRecuperadoEstimado = fupReativados > 0 && fechadosViaFupCount === 0 ? fupReativados * 7000 : 0;
+  const valorRecuperadoNum = fechadosViaFupCount > 0 ? valorFechadosFupSum : valorFupRecuperadoEstimado;
+
+  const fupReactivationDays = fupRecords
+    .filter(r => ((r as any)._status_resposta || '') === 'respondeu')
+    .map(r => {
+      const start = safeDate(r.ts_cadastro);
+      const end = safeDate(r.ts_ultimo_fup || r.ts_ultima_interacao);
+      if (!start || !end) return null;
+      const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      if (diff < 0 || diff > 365) return null;
+      return diff;
+    })
+    .filter((v): v is number => v !== null);
+
+  return {
+    entraram: fupTotal,
+    reativados: fupReativados,
+    pctReativados: fupTotal > 0 ? +(fupReativados / fupTotal * 100).toFixed(1) : 0,
+    diasAteReativar: fupReactivationDays.length > 0 ? +average(fupReactivationDays).toFixed(1) : 0,
+    valorRecuperado: formatCurrencyShort(valorRecuperadoNum),
+    ticketMedio:
+      fechadosViaFupCount > 0
+        ? formatCurrencyShort(valorFechadosFupSum / fechadosViaFupCount)
+        : fupReativados > 0
+          ? formatCurrencyShort(valorRecuperadoNum / fupReativados)
+          : 'R$ 0',
+    conversaoPosResgate: fupTotal > 0 ? Math.round((fupReativados / fupTotal) * 100) : 0,
+    receitaTotal: formatCurrencyShort(valorRecuperadoNum),
+    pctReceitaViaFup:
+      valorEstimado > 0 && fechadosViaFupCount > 0 ? pctValorGanhosViaFup : valorEstimado > 0 && valorRecuperadoNum > 0
+        ? +((valorRecuperadoNum / valorEstimado) * 100).toFixed(1)
+        : 0,
+    totalRecebidos: total,
+    pctBaseComFup,
+    fechadosComFup: fechadosViaFupCount,
+    valorFechadosComFup: formatCurrencyShort(valorFechadosFupSum),
+    pctGanhosQuePassaramFup,
+    pctValorGanhosViaFup,
+  };
+}
+
 // ─── Main Hook ───
 export function useConferenciaData(effectiveDateRange?: { from: Date | undefined; to: Date | undefined }) {
   const { data: solLeads, isLoading: makeLoading } = useSolLeads();
@@ -227,8 +428,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const total = allRecords.length;
     if (total === 0) return null;
 
-    const solRecords = allRecords.filter(r => 'sol' === 'sol');
-    const fupRecords = allRecords.filter(r => false);
+    const solRecords = allRecords.filter(r => (r.fup_followup_count ?? 0) < 1);
 
     // ── Stage classification ──
     const stageOrder = ['Robô SOL', 'Qualificação', 'Qualificado', 'Closer', 'Proposta', 'Fechado'];
@@ -253,17 +453,24 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const responderam = allRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
     const taxaResposta = total > 0 ? Math.round((responderam.length / total) * 100) : 0;
 
-    const ganhos = allRecords.filter(r => {
-      const s = (r.status || '').toUpperCase();
-      return s.includes('GANHO') || s.includes('FECHADO') || s.includes('VENDA');
-    });
+    const ganhos = allRecords.filter(isGanhoLeadRecord);
     const mqlCount = qualificados.length;
 
-    // ── Cumulative pipeline ──
-    const cumulativePipeline = stageOrder.map((_, i) => {
-      const laterStages = stageOrder.slice(i);
-      return allRecords.filter(r => laterStages.includes(getSolStageFromMake(r))).length;
-    });
+    // ── Funil CEO (cumulativo): coluna i = leads com estágio máximo ≥ i (alinhado à jornada pré-venda → comercial)
+    const cumulativePipeline = CEO_PIPELINE_LABELS.map((_, i) =>
+      allRecords.filter(r => getCeoJourneyMaxStage(r) >= i).length,
+    );
+
+    const emQualificacaoRobo = allRecords.filter(r => {
+      const e = (r.etapa_funil || '').toUpperCase().trim();
+      return ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'].includes(e);
+    }).length;
+
+    const qualificadosMqlCount = allRecords.filter(r => getCeoJourneyMaxStage(r) >= 2).length;
+
+    const handoverOuAlémCount = allRecords.filter(r => getCeoJourneyMaxStage(r) >= 3).length;
+
+    const fechadosGanhoCount = allRecords.filter(r => getCeoJourneyMaxStage(r) >= 5).length;
 
     // ── Make-based metrics ──
     const totalMsgsEnviadas = allRecords.reduce((sum, r) =>
@@ -273,11 +480,10 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       sum + ([] as any[]).filter(h => h.tipo === 'recebida').length, 0
     );
 
-    // ── FUP Frio ──
-    const fupReativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
-    const fupTotal = fupRecords.length;
-    const valorEstimado = ganhos.reduce((s, r) => s + estimateValueFromBill(r), 0);
-    const valorFupRecuperado = fupReativados > 0 ? fupReativados * 7000 : 0;
+    const fupFrioData = computeFupFrioBlock(allRecords);
+    const fupTotal = fupFrioData.entraram;
+    const fupReativados = fupFrioData.reativados;
+    const valorEstimado = ganhos.reduce((s, r) => s + parseValorContaLead(r), 0);
 
     // ── SQL (leads with advanced status) ──
     const sqlRecords = allRecords.filter(r => {
@@ -318,21 +524,23 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       });
     });
 
-    // ── Taxa por Tentativa ──
+    // ── Taxa por disparo FUP (base: leads com fup_followup_count ≥ 1) ──
+    const fupBase = allRecords.filter(isFupFrioLead);
     const tentativaCounts = [0, 0, 0, 0];
     const tentativaRespostas = [0, 0, 0, 0];
-    allRecords.forEach(r => {
-      const enviadas = ([] as any[]).filter(h => h.tipo === 'enviada');
-      const primeiraResposta = ([] as any[]).findIndex(h => h.tipo === 'recebida');
-      if (enviadas.length >= 1) tentativaCounts[0]++;
-      if (enviadas.length >= 2) tentativaCounts[1]++;
-      if (enviadas.length >= 3) tentativaCounts[2]++;
-      if (enviadas.length >= 4) tentativaCounts[3]++;
-      if (primeiraResposta >= 0) {
-        const msgsAntes = ([] as any[]).slice(0, primeiraResposta).filter(h => h.tipo === 'enviada').length;
-        const idx = Math.min(msgsAntes, 3);
-        tentativaRespostas[idx]++;
-      }
+    const fupBand = (r: SolLead): number => {
+      const n = r.fup_followup_count ?? 0;
+      if (n <= 0) return -1;
+      if (n === 1) return 0;
+      if (n === 2) return 1;
+      if (n === 3) return 2;
+      return 3;
+    };
+    fupBase.forEach(r => {
+      const b = fupBand(r);
+      if (b < 0) return;
+      tentativaCounts[b]++;
+      if (((r as any)._status_resposta || '') === 'respondeu') tentativaRespostas[b]++;
     });
 
     // ── SLA ──
@@ -414,13 +622,14 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     const totalDesqual = desqualificados.length || 1;
 
     // C3: Use canal_origem exclusively — no message text inference
-    const origemCounts: Record<string, { total: number; ganhos: number }> = {};
+    const origemCounts: Record<string, { total: number; ganhos: number; mqlPlus: number }> = {};
     allRecords.forEach(r => {
       const origem = getOrigemLabel(r);
 
-      if (!origemCounts[origem]) origemCounts[origem] = { total: 0, ganhos: 0 };
+      if (!origemCounts[origem]) origemCounts[origem] = { total: 0, ganhos: 0, mqlPlus: 0 };
       origemCounts[origem].total++;
-      if (ganhos.includes(r)) origemCounts[origem].ganhos++;
+      if (isGanhoLeadRecord(r)) origemCounts[origem].ganhos++;
+      if (getCeoJourneyMaxStage(r) >= 2) origemCounts[origem].mqlPlus++;
     });
 
     // ── Score por Origem ──
@@ -540,49 +749,62 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
 
     // ── Build all data structures ──
     const kpiCards: KPICard[] = [
-      { label: 'Leads Recebidos', value: total, suffix: '', detail: `${solRecords.length} SOL + ${fupRecords.length} FUP` },
-      { label: 'Em Qualificação', value: mqlCount, suffix: '', detail: `${total > 0 ? ((mqlCount / total) * 100).toFixed(0) : 0}%` },
-      { label: 'Qualificados', value: sqlCount, suffix: '', detail: `${mqlCount > 0 ? ((sqlCount / mqlCount) * 100).toFixed(0) : 0}%` },
-      { label: 'Fechados', value: ganhos.length, suffix: '', detail: `${total > 0 ? ((ganhos.length / total) * 100).toFixed(0) : 0}%`, tooltip: 'Taxa de conversão geral' },
-      { label: 'Resgatados FUP', value: fupReativados, suffix: '', detail: formatCurrencyShort(valorFupRecuperado), tooltip: 'Leads recuperados via FUP Frio' },
+      { label: 'Leads Recebidos', value: total, suffix: '', detail: 'Base no período (captura)' },
+      {
+        label: 'Em qualif. (robô)',
+        value: emQualificacaoRobo,
+        suffix: '',
+        detail: 'Tráfego pago / SOL SDR / Follow up',
+        tooltip: 'Leads cuja etapa_funil ainda está na pré-qualificação',
+      },
+      {
+        label: 'Qualificados (MQL+)',
+        value: qualificadosMqlCount,
+        suffix: '',
+        detail: `${total > 0 ? ((qualificadosMqlCount / total) * 100).toFixed(0) : 0}% da base`,
+        tooltip: 'Alcançaram etapa ou status de qualificado (ou estágios posteriores)',
+      },
+      {
+        label: 'Handover / Closer+',
+        value: handoverOuAlémCount,
+        suffix: '',
+        detail: `${qualificadosMqlCount > 0 ? ((handoverOuAlémCount / qualificadosMqlCount) * 100).toFixed(0) : 0}% após MQL`,
+        tooltip: 'transferido_comercial ou contato realizado (ou posteriores)',
+      },
+      {
+        label: 'Fechados (ganho)',
+        value: fechadosGanhoCount,
+        suffix: '',
+        detail: `${total > 0 ? ((fechadosGanhoCount / total) * 100).toFixed(0) : 0}% da base`,
+        tooltip: 'Status/etapa de negócio ganho (vitória)',
+      },
     ];
 
-    const pipelineStages: PipelineStage[] = stageOrder.map((etapa, i) => ({
+    const pipelineStages: PipelineStage[] = CEO_PIPELINE_LABELS.map((etapa, i) => ({
       etapa,
-      valor: cumulativePipeline[i],
-      icon: ['🤖', '🎯', '✅', '📞', '📋', '🏆'][i],
-      desc: `${cumulativePipeline[i]} leads`,
+      valor: cumulativePipeline[i] ?? 0,
+      icon: ['📥', '🤖', '✅', '📞', '📋', '🏆'][i],
+      desc: `${cumulativePipeline[i] ?? 0} leads (≥ este estágio)`,
     }));
 
     const origemEntries = Object.entries(origemCounts).sort((a, b) => b[1].total - a[1].total);
-    const origemLeads: OrigemLead[] = origemEntries.map(([origem, data]) => ({
-      origem,
-      share: total > 0 ? Math.round((data.total / total) * 100) : 0,
-      conversao: data.total > 0 ? Math.round((data.ganhos / data.total) * 100) : 0,
-    }));
-
-    const fupReactivationDays = fupRecords
-      .map(r => {
-        const start = safeDate(r.ts_cadastro || r.ts_cadastro);
-        const end = safeDate(r.ts_ultimo_fup || r.ts_ultima_interacao);
-        if (!start || !end) return null;
-        const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-        if (diff < 0 || diff > 180) return null;
-        return diff;
-      })
-      .filter((v): v is number => v !== null);
-
-    const fupFrioData: FupFrio = {
-      entraram: fupTotal,
-      reativados: fupReativados,
-      pctReativados: fupTotal > 0 ? +(fupReativados / fupTotal * 100).toFixed(1) : 0,
-      diasAteReativar: +average(fupReactivationDays).toFixed(1),
-      valorRecuperado: formatCurrencyShort(valorFupRecuperado),
-      ticketMedio: fupReativados > 0 ? formatCurrencyShort(valorFupRecuperado / fupReativados) : 'R$ 0',
-      conversaoPosResgate: fupReativados > 0 ? Math.round((fupReativados / Math.max(fupTotal, 1)) * 100) : 0,
-      receitaTotal: formatCurrencyShort(valorFupRecuperado),
-      pctReceitaViaFup: valorEstimado > 0 ? +((valorFupRecuperado / valorEstimado) * 100).toFixed(1) : 0,
-    };
+    const origemLeads: OrigemLead[] = origemEntries.map(([origem, data]) => {
+      const sb = scoreByOrigem[origem];
+      const scoreMedio =
+        sb && sb.scores.length > 0
+          ? Math.round(sb.scores.reduce((a, b) => a + b, 0) / sb.scores.length)
+          : null;
+      return {
+        origem,
+        share: total > 0 ? Math.round((data.total / total) * 100) : 0,
+        conversao: data.total > 0 ? Math.round((data.ganhos / data.total) * 100) : 0,
+        conversaoMql: data.total > 0 ? Math.round((data.mqlPlus / data.total) * 100) : 0,
+        ganhosCount: data.ganhos,
+        mqlPlusCount: data.mqlPlus,
+        total: data.total,
+        scoreMedio,
+      };
+    });
 
     const desqualFills = ['hsl(var(--destructive))', 'hsl(var(--warning))', 'hsl(var(--primary))', 'hsl(var(--muted-foreground))', 'hsl(var(--accent-foreground))', 'hsl(var(--info))'];
     const desqualMotivos: DesqualMotivo[] = Object.entries(motivoCounts)
@@ -616,10 +838,10 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
     };
 
     const taxaPorTentativa: TaxaTentativa[] = [
-      { tentativa: '1ª msg', pct: tentativaCounts[0] > 0 ? Math.round((tentativaRespostas[0] / tentativaCounts[0]) * 100) : 0 },
-      { tentativa: '2ª msg', pct: tentativaCounts[1] > 0 ? Math.round((tentativaRespostas[1] / tentativaCounts[1]) * 100) : 0 },
-      { tentativa: '3ª msg', pct: tentativaCounts[2] > 0 ? Math.round((tentativaRespostas[2] / tentativaCounts[2]) * 100) : 0 },
-      { tentativa: '4ª+', pct: tentativaCounts[3] > 0 ? Math.round((tentativaRespostas[3] / tentativaCounts[3]) * 100) : 0 },
+      { tentativa: 'FUP 1', pct: tentativaCounts[0] > 0 ? Math.round((tentativaRespostas[0] / tentativaCounts[0]) * 100) : 0 },
+      { tentativa: 'FUP 2', pct: tentativaCounts[1] > 0 ? Math.round((tentativaRespostas[1] / tentativaCounts[1]) * 100) : 0 },
+      { tentativa: 'FUP 3', pct: tentativaCounts[2] > 0 ? Math.round((tentativaRespostas[2] / tentativaCounts[2]) * 100) : 0 },
+      { tentativa: 'FUP 4+', pct: tentativaCounts[3] > 0 ? Math.round((tentativaRespostas[3] / tentativaCounts[3]) * 100) : 0 },
     ];
 
     const tempEtapa: TempEtapa[] = stageOrder
@@ -634,7 +856,11 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       },
       porEtapa: stageOrder.slice(0, 5).map(etapa => {
         const slaMap: Record<string, number> = { 'Robô SOL': 1, 'Qualificação': 3, 'Qualificado': 5, 'Closer': 7, 'Proposta': 10 };
+        const posComercial = etapa === 'Closer' || etapa === 'Proposta';
         const leadsInStage = allRecords.filter(r => getSolStageFromMake(r) === etapa);
+        const solNaJornadaCount = leadsInStage.filter(solParticipouNaJornada).length;
+        const solNaJornadaPct =
+          leadsInStage.length > 0 ? Math.round((solNaJornadaCount / leadsInStage.length) * 100) : 0;
         const stageDurations = leadsInStage
           .map(r => {
             const anchor = getStageAnchorDate(r, etapa);
@@ -647,11 +873,16 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
 
         const mediaDias = average(stageDurations);
         const slaDias = slaMap[etapa] || 5;
+        const statusPreSol: 'ok' | 'warning' | 'overdue' =
+          mediaDias <= slaDias * 0.7 ? 'ok' : mediaDias <= slaDias ? 'warning' : 'overdue';
         return {
           etapa,
           slaDias,
           mediaDias: +mediaDias.toFixed(1),
-          status: (mediaDias <= slaDias * 0.7 ? 'ok' : mediaDias <= slaDias ? 'warning' : 'overdue') as 'ok' | 'warning' | 'overdue',
+          status: (posComercial ? 'comercial' : statusPreSol) as 'ok' | 'warning' | 'overdue' | 'comercial',
+          leadsNaEtapa: leadsInStage.length,
+          solNaJornadaCount,
+          solNaJornadaPct,
         };
       }),
       robos: { tempoResposta: tempoRespostaStr, leadsAguardando, taxaResposta },
@@ -679,7 +910,13 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
         { label: 'Leads Quentes', value: quentes.length, icon: 'flame', color: 'text-orange-500' },
       ],
       comparacao: {
-        sol: { nome: 'SOL SDR (IA)', taxaResposta, tempoMedioResposta: tempoRespostaStr, leadsProcessados: solRecords.length },
+        sol: {
+          nome: 'SOL SDR (IA)',
+          taxaResposta,
+          tempoMedioResposta: tempoRespostaStr,
+          /** Alinhado à coluna «Qualificação» do funil cumulativo (jornada máx. ≥ pré-qualificação robô). */
+          leadsProcessados: cumulativePipeline[1] ?? 0,
+        },
         fup: { nome: 'FUP Frio', taxaResposta: fupTotal > 0 ? Math.round((fupReativados / fupTotal) * 100) : 0, tempoMedioResposta: '—', leadsProcessados: fupTotal },
       },
       funilMensagens: [
@@ -692,33 +929,24 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       alertasUrgentes: alertas.slice(0, 3).map(a => ({ tipo: a.type, titulo: a.title, desc: a.desc })),
     };
 
-    const scorePorOrigem: ScoreOrigem[] = Object.entries(scoreByOrigem)
-      .filter(([, v]) => v.scores.length > 0)
-      .map(([origem, v]) => ({
-        origem,
-        score: Math.round(v.scores.reduce((a, b) => a + b, 0) / v.scores.length),
-        leads: v.count,
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    // ─── Monthly Evolution ───
+    // ─── Monthly Evolution (histórico completo: usa todos os leads, não o recorte do filtro global) ───
     const monthlyMap: Record<string, { total: number; qualificados: number; fechados: number; msgEnviadas: number; msgRecebidas: number }> = {};
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const nowForMonthly = new Date();
     const currentMonthKey = `${nowForMonthly.getFullYear()}-${String(nowForMonthly.getMonth() + 1).padStart(2, '0')}`;
-    allRecords.forEach(r => {
-      const d = safeDate(r.ts_cadastro || r.ts_cadastro);
+    const rawForMonthly = solLeads || [];
+    rawForMonthly.forEach(r => {
+      const d = safeDate(r.ts_cadastro);
       if (!d) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      // Ignore future months
       if (key > currentMonthKey) return;
       if (!monthlyMap[key]) monthlyMap[key] = { total: 0, qualificados: 0, fechados: 0, msgEnviadas: 0, msgRecebidas: 0 };
       monthlyMap[key].total++;
-      const s = (r.status || '').toUpperCase();
-      if (s.includes('QUALIFICADO') && !s.includes('DES')) monthlyMap[key].qualificados++;
-      if (s.includes('GANHO') || s.includes('FECHADO')) monthlyMap[key].fechados++;
-      monthlyMap[key].msgEnviadas += Math.max(([] as any[]).filter(h => h.tipo === 'enviada').length, 1);
-      monthlyMap[key].msgRecebidas += ([] as any[]).filter(h => h.tipo === 'recebida').length;
+      if (getCeoJourneyMaxStage(r) >= 2) monthlyMap[key].qualificados++;
+      if (isWonClosed(r)) monthlyMap[key].fechados++;
+      const ia = r.total_mensagens_ia;
+      monthlyMap[key].msgEnviadas += ia != null && ia > 0 ? ia : 1;
+      if (((r as any)._status_resposta || '') === 'respondeu') monthlyMap[key].msgRecebidas++;
     });
 
     const monthlyEvolution: MonthlyEvolutionItem[] = Object.keys(monthlyMap)
@@ -745,9 +973,9 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       desqualMotivos, mensagens, sla: slaData, heatmap: heatmapData,
       taxaPorTentativa, solHoje, alertas, temperaturaPorEtapa: tempEtapa,
       tabelaLeads, slaMetrics: slaMetricsData, robotInsights: robotInsightsData,
-      scorePorOrigem, monthlyEvolution,
+      monthlyEvolution,
     };
-  }, [allRecords]);
+  }, [allRecords, solLeads]);
 
   return {
     data: computed,

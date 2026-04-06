@@ -1,4 +1,13 @@
-import type { SolLead } from '@/hooks/useSolData';
+import { addDays, endOfDay, startOfDay } from 'date-fns';
+import type { SolLead, SolProjeto } from '@/hooks/useSolData';
+import {
+  mapLeadStatusToProjetoStatus,
+  mapProjetoRowToStatus,
+  type ProjetoStatus,
+} from '@/lib/projetoStatus';
+
+export type { ProjetoStatus } from '@/lib/projetoStatus';
+export { PROJETO_STATUS_KEYS, PROJETO_STATUS_LABEL, projetoStatusLabel } from '@/lib/projetoStatus';
 
 export interface Proposal {
   id: string;
@@ -7,7 +16,7 @@ export interface Proposal {
   nomeCliente: string;
   clienteTelefone: string;
   clienteEmail: string;
-  status: 'Aberto' | 'Ganho' | 'Perdido' | 'Excluido';
+  status: ProjetoStatus;
   responsavel: string;
   responsavelId: string;
   representante: string;
@@ -82,18 +91,10 @@ const PROBABILIDADE_POR_ETAPA: Record<string, number> = {
   'REMARKETING': 5,
 };
 
-function mapStatus(status: string | null): 'Aberto' | 'Ganho' | 'Perdido' | 'Excluido' {
-  const s = (status || '').toUpperCase();
-  if (s === 'GANHO') return 'Ganho';
-  if (s === 'PERDIDO') return 'Perdido';
-  if (s === 'EXCLUIDO') return 'Excluido';
-  return 'Aberto';
-}
-
 /** Convert SolLead[] to Proposal[] for backward compat with existing pages */
 export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
   return leads.map((l, i) => {
-    const status = mapStatus(l.status);
+    const status = mapLeadStatusToProjetoStatus(l.status);
     const etapa = l.etapa_funil || 'TRAFEGO PAGO';
     const ultimaAtualizacao = parseDate(l.ts_ultima_interacao || l.ts_cadastro || '') || '';
     const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao);
@@ -152,6 +153,195 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
       makeTotalMensagens: l.total_mensagens_ia || 0,
       makeMensagensRecebidas: 0,
       makeDataResposta: l.ts_ultima_interacao || undefined,
+    };
+  });
+}
+
+function tsToMs(s: string | null | undefined): number {
+  if (!s) return 0;
+  const t = new Date(s).getTime();
+  return Number.isNaN(t) ? 0 : t;
+}
+
+function isNonEmptySyncField(v: string | number | null | undefined): boolean {
+  if (v == null) return false;
+  if (typeof v === "number") return Number.isFinite(v);
+  return String(v).trim() !== "";
+}
+
+/**
+ * sol_projetos_sync é log de eventos: linhas recentes costumam trazer etapa/status atualizados
+ * mas com valor_proposta / potencia_sistema vazios. Recupera o último valor não vazio no histórico.
+ */
+function coalesceValorPotenciaFromHistory(group: SolProjeto[]): {
+  valor_proposta: SolProjeto["valor_proposta"];
+  potencia_sistema: SolProjeto["potencia_sistema"];
+} {
+  const sorted = [...group].sort(
+    (a, b) => tsToMs(b.ts_evento || b.synced_at) - tsToMs(a.ts_evento || a.synced_at),
+  );
+  let valor_proposta: SolProjeto["valor_proposta"] = null;
+  let potencia_sistema: SolProjeto["potencia_sistema"] = null;
+  for (const r of sorted) {
+    if (valor_proposta == null || !isNonEmptySyncField(valor_proposta)) {
+      if (isNonEmptySyncField(r.valor_proposta)) valor_proposta = r.valor_proposta;
+    }
+    if (potencia_sistema == null || !isNonEmptySyncField(potencia_sistema)) {
+      if (isNonEmptySyncField(r.potencia_sistema)) potencia_sistema = r.potencia_sistema;
+    }
+    if (isNonEmptySyncField(valor_proposta) && isNonEmptySyncField(potencia_sistema)) break;
+  }
+  return { valor_proposta, potencia_sistema };
+}
+
+/** Uma linha por project_id: estado atual = evento mais recente; valor/potência = último preenchido no histórico. */
+export function dedupeProjetosLatest(rows: SolProjeto[]): SolProjeto[] {
+  const byProject = new Map<string, SolProjeto[]>();
+  for (const r of rows) {
+    const id = r.project_id;
+    if (!id) continue;
+    if (!byProject.has(id)) byProject.set(id, []);
+    byProject.get(id)!.push(r);
+  }
+  const out: SolProjeto[] = [];
+  for (const [, group] of byProject) {
+    const sorted = [...group].sort(
+      (a, b) => tsToMs(b.ts_evento || b.synced_at) - tsToMs(a.ts_evento || a.synced_at),
+    );
+    const latest = sorted[0];
+    const { valor_proposta, potencia_sistema } = coalesceValorPotenciaFromHistory(sorted);
+    const v =
+      valor_proposta != null && isNonEmptySyncField(valor_proposta) ? valor_proposta : latest.valor_proposta;
+    const p =
+      potencia_sistema != null && isNonEmptySyncField(potencia_sistema)
+        ? potencia_sistema
+        : latest.potencia_sistema;
+    out.push({ ...latest, valor_proposta: v ?? latest.valor_proposta, potencia_sistema: p ?? latest.potencia_sistema });
+  }
+  return out;
+}
+
+function parseValorPropostaBR(raw: string | number | null | undefined): number {
+  if (raw == null) return 0;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : 0;
+  let s = String(raw).trim();
+  if (s === "") return 0;
+  s = s.replace(/R\$\s?/gi, "").replace(/\u00a0/g, "").replace(/\s/g, "");
+  if (s.includes(",")) {
+    const norm = s.replace(/\./g, "").replace(",", ".");
+    const n = parseFloat(norm);
+    return Number.isNaN(n) ? 0 : n;
+  }
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+function parsePotenciaKwp(raw: string | number | null | undefined): number {
+  if (raw == null) return 0;
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : 0;
+  const s = String(raw)
+    .trim()
+    .replace(/kwp?/gi, "")
+    .replace(/\s/g, "")
+    .replace(",", ".");
+  if (s === "") return 0;
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+function normalizeEtapaKanban(
+  raw: string | null,
+  status: ProjetoStatus,
+): string {
+  if (status === "Ganho") return "CONTRATO ASSINADO";
+  const e = (raw || "").toUpperCase().trim();
+  /** Ordem: strings mais específicas antes de includes genéricos ("CONTATO" vs "CONTATO REALIZADO"). */
+  const pairs: [string, string][] = [
+    ["SOL SDR", "SOL SDR"],
+    ["SDR", "SOL SDR"],
+    ["TRAFEGO PAGO", "TRAFEGO PAGO"],
+    ["TRAFEGO", "TRAFEGO PAGO"],
+    ["PROSPECÇÃO", "PROSPECÇÃO"],
+    ["PROSPEC", "PROSPECÇÃO"],
+    ["FOLLOW UP", "FOLLOW UP"],
+    ["FOLLOW", "FOLLOW UP"],
+    ["QUALIFICAÇÃO", "QUALIFICAÇÃO"],
+    ["QUALIFICADO", "QUALIFICADO"],
+    ["CONTATO REALIZADO", "CONTATO REALIZADO"],
+    ["CONTATO", "CONTATO REALIZADO"],
+    ["PROPOSTA", "PROPOSTA"],
+    ["NEGOCIAÇÃO", "NEGOCIAÇÃO"],
+    ["NEGOCIA", "NEGOCIAÇÃO"],
+    ["COBRAN", "NEGOCIAÇÃO"],
+    ["CONTRATO ASSINADO", "CONTRATO ASSINADO"],
+    ["CONTRATO", "CONTRATO ASSINADO"],
+    ["INSTALA", "NEGOCIAÇÃO"],
+    ["DECLÍNIO", "QUALIFICADO"],
+    ["DECLINIO", "QUALIFICADO"],
+    ["REMARKETING", "TRAFEGO PAGO"],
+  ];
+  for (const [k, col] of pairs) {
+    if (e.includes(k)) return col;
+  }
+  /** Não enviar etapas SM desconhecidas para PROPOSTA (gera coluna cheia de R$ 0 fora do contexto). */
+  if (e) return "QUALIFICADO";
+  return "QUALIFICADO";
+}
+
+/** Converte sol_projetos_sync (estado atual por projeto) em Proposal[] para telas comerciais existentes. */
+export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
+  return rows.map((r, i) => {
+    const status = mapProjetoRowToStatus(r);
+    const ultimaAtualizacao = parseDate(r.ts_evento || r.synced_at || '') || '';
+    const dataCriacaoProjeto = parseDate(r.ts_cadastro_projeto || '') || '';
+    const dataCriacaoProposta =
+      parseDate(r.ts_proposta || '') ||
+      parseDate(r.ts_proposta_aceita || '') ||
+      parseDate(r.ts_evento || '') ||
+      dataCriacaoProjeto ||
+      ultimaAtualizacao;
+    const etapa = normalizeEtapaKanban(r.etapa, status);
+    const valorProposta = parseValorPropostaBR(r.valor_proposta);
+    const potenciaSistema = parsePotenciaKwp(r.potencia_sistema);
+    const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao || dataCriacaoProposta);
+    const probKey = (r.etapa || etapa).toUpperCase();
+    const probabilidade =
+      status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : (PROBABILIDADE_POR_ETAPA[probKey] ?? PROBABILIDADE_POR_ETAPA[etapa] ?? 50);
+
+    return {
+      id: r.project_id || r.key || `SM-${i}`,
+      etapa,
+      projetoId: r.project_id || '',
+      nomeCliente:
+        r.nome_cliente || r.nome_proposta || r.telefone || `Projeto …${String(r.project_id || '').slice(-4)}`,
+      clienteTelefone: r.telefone || '',
+      clienteEmail: r.email_cliente || '',
+      status,
+      responsavel: r.closer_nome || r.representante_nome || '',
+      responsavelId: r.closer_sm_id || r.representante_id || '',
+      representante: r.representante_nome || r.closer_nome || '',
+      valorProposta,
+      potenciaSistema,
+      nomeProposta: r.nome_proposta || r.nome_cliente || '',
+      dataCriacaoProjeto: dataCriacaoProjeto || dataCriacaoProposta,
+      dataCriacaoProposta,
+      slaProposta: 48,
+      ultimaAtualizacao: ultimaAtualizacao || dataCriacaoProposta,
+      solQualificado: true,
+      solScore: 0,
+      temperatura: '',
+      dataQualificacaoSol: dataCriacaoProposta,
+      notaCompleta: '',
+      tempoNaEtapa,
+      solSdr: false,
+      tempoSolSdr: 0,
+      etiquetas: [r.canal_origem, r.campanha_nome].filter(Boolean).join(', '),
+      origemLead: r.canal_origem || '',
+      probabilidade,
+      motivoPerda: status === 'Perdido' ? (r.evento || r.status_projeto || 'Perdido') : '',
+      faseSM: r.etapa || '',
+      makeNome: r.nome_cliente || undefined,
+      makeEmail: r.email_cliente || undefined,
     };
   });
 }
@@ -255,14 +445,78 @@ export function getVendedorPerformance(proposals: Proposal[]) {
   }).sort((a, b) => b.valorTotal - a.valorTotal);
 }
 
+/**
+ * Sem campo de “data de fechamento” no SM: usamos **data de criação da proposta + N dias** como proxy.
+ * Exportado para copy de UI / documentação.
+ */
+export const FORECAST_EXPECTED_CLOSE_LAG_DAYS = 15;
+
+function parseLocalDateYmd(s: string | undefined): Date | null {
+  if (!s?.trim()) return null;
+  const m = s.trim().slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (!y || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return startOfDay(dt);
+}
+
+/** Data esperada de fechamento (proxy): criação da proposta + {@link FORECAST_EXPECTED_CLOSE_LAG_DAYS} dias. */
+export function expectedCloseDateFromProposal(p: Proposal): Date | null {
+  const base = parseLocalDateYmd(p.dataCriacaoProposta);
+  if (!base) return null;
+  return addDays(base, FORECAST_EXPECTED_CLOSE_LAG_DAYS);
+}
+
+function weightedValorProposta(p: Proposal): number {
+  return p.valorProposta * (p.probabilidade / 100);
+}
+
+/**
+ * Forecast por horizonte **cumulativo** em calendário: soma receita ponderada (e kWp) dos **abertos** cuja
+ * data esperada de fechamento cai até o fim do dia `hoje + horizonDays` (inclui negócios já “atrasados” vs o proxy).
+ * Propostas sem `dataCriacaoProposta` válida não entram nesses quadrantes (ainda entram no pipeline ponderado total).
+ */
+function sumForecastByCloseHorizon(
+  abertos: Proposal[],
+  horizonDays: number,
+  today: Date = new Date(),
+): { receita: number; potencia: number } {
+  const limit = endOfDay(addDays(startOfDay(today), horizonDays));
+  let receita = 0;
+  let potencia = 0;
+  for (const p of abertos) {
+    const exp = expectedCloseDateFromProposal(p);
+    if (!exp) continue;
+    if (exp.getTime() <= limit.getTime()) {
+      receita += weightedValorProposta(p);
+      potencia += p.potenciaSistema || 0;
+    }
+  }
+  return { receita, potencia };
+}
+
 export function getForecastData(proposals: Proposal[]) {
   const abertos = proposals.filter(p => p.status === 'Aberto');
   const ganhos = proposals.filter(p => p.status === 'Ganho');
-  const mkForecast = (minProb: number) => abertos.filter(p => p.probabilidade >= minProb).reduce((a, p) => a + (p.valorProposta * p.probabilidade / 100), 0);
   const receitaConfirmada = ganhos.reduce((a, p) => a + p.valorProposta, 0);
+  const f7 = sumForecastByCloseHorizon(abertos, 7);
+  const f14 = sumForecastByCloseHorizon(abertos, 14);
+  const f21 = sumForecastByCloseHorizon(abertos, 21);
+  const f28 = sumForecastByCloseHorizon(abertos, 28);
+  const pipelinePonderado = abertos.reduce((a, p) => a + weightedValorProposta(p), 0);
   return {
-    forecast7: mkForecast(90), forecast14: mkForecast(70), forecast21: mkForecast(40), forecast28: mkForecast(0),
-    potencia7: 0, potencia14: 0, potencia21: 0, potencia28: 0,
+    forecast7: f7.receita,
+    forecast14: f14.receita,
+    forecast21: f21.receita,
+    forecast28: f28.receita,
+    potencia7: f7.potencia,
+    potencia14: f14.potencia,
+    potencia21: f21.potencia,
+    potencia28: f28.potencia,
     altaProbabilidade: abertos.filter(p => p.probabilidade >= 70),
     emRisco: abertos.filter(p => p.probabilidade < 30 || p.tempoNaEtapa > 30),
     distribuicao: [
@@ -271,7 +525,7 @@ export function getForecastData(proposals: Proposal[]) {
       { faixa: '51-75%', quantidade: abertos.filter(p => p.probabilidade > 50 && p.probabilidade <= 75).length, valor: abertos.filter(p => p.probabilidade > 50 && p.probabilidade <= 75).reduce((a, p) => a + p.valorProposta, 0) },
       { faixa: '76-100%', quantidade: abertos.filter(p => p.probabilidade > 75).length, valor: abertos.filter(p => p.probabilidade > 75).reduce((a, p) => a + p.valorProposta, 0) },
     ],
-    pipelinePonderado: mkForecast(0),
+    pipelinePonderado,
     receitaConfirmada, potenciaConfirmada: 0,
     totalContratos: ganhos.length, ticketMedioContrato: ganhos.length > 0 ? receitaConfirmada / ganhos.length : 0,
     totalPropostasAbertas: abertos.length,

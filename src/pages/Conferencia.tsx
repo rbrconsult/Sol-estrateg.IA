@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, differenceInDays, subDays, startOfMonth, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useConferenciaData } from "@/hooks/useConferenciaData";
 import { RobotInsights } from "@/components/conferencia/RobotInsights";
-import { ScorePorOrigem } from "@/components/conferencia/ScorePorOrigem";
 import { MonthlyEvolution } from "@/components/conferencia/MonthlyEvolution";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { BRAND_FOOTER_TAGLINE } from "@/constants/branding";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -133,7 +133,6 @@ export default function Conferencia() {
 
   const pipelineStages = realData?.pipelineStages ?? [];
   const origemLeads = realData?.origemLeads ?? [];
-  const fupFrio = realData?.fupFrio ?? { entraram: 0, reativados: 0, pctReativados: 0, diasAteReativar: 0, valorRecuperado: 'R$ 0', ticketMedio: 'R$ 0', conversaoPosResgate: 0, receitaTotal: 'R$ 0', pctReceitaViaFup: 0 };
   const desqualMotivos = realData?.desqualMotivos ?? [];
   const mensagens = realData?.mensagens ?? { enviadas: 0, recebidas: 0, interacoesPorConv: 0 };
   const sla = realData?.sla ?? { pctAbordados5min: 0, tempoMedioRespostaLead: '—' };
@@ -145,7 +144,6 @@ export default function Conferencia() {
   const tabelaLeads = realData?.tabelaLeads ?? [];
   const slaMetrics = realData?.slaMetrics ?? { primeiroAtendimento: { media: 0, pctDentro24h: 0, total: 0 }, porEtapa: [], robos: { tempoResposta: '—', leadsAguardando: 0, taxaResposta: 0 }, geralProposta: { mediaDias: 0 } };
   const robotInsightsData = realData?.robotInsights ?? { destaques: [], comparacao: { sol: { nome: 'SOL', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 }, fup: { nome: 'FUP', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 } }, funilMensagens: [], alertasUrgentes: [] };
-  const scorePorOrigemData = realData?.scorePorOrigem ?? [];
   const monthlyEvolution = realData?.monthlyEvolution ?? [];
 
   // Secondary filters (etapa, temp, search) applied on top of pre-filtered data
@@ -168,6 +166,14 @@ export default function Conferencia() {
 
   const maxPipeline = Math.max(...pipelineStages.map((s) => s.valor), 1);
   const maxShare = Math.max(...origemLeads.map((o) => o.share), 1);
+  const maxScoreOrigem = useMemo(
+    () => Math.max(1, ...origemLeads.map((o) => o.scoreMedio ?? 0)),
+    [origemLeads]
+  );
+  const maxTaxaTentativaPct = useMemo(
+    () => Math.max(1, ...taxaPorTentativa.map((t) => t.pct)),
+    [taxaPorTentativa]
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -197,9 +203,9 @@ export default function Conferencia() {
           </div>
         </header>
 
-        {/* ══════ ROW 2 — Pipeline Visual ══════ */}
+        {/* ══════ ROW 2 — Funil da Jornada ══════ */}
         <section className="mt-4 rounded-lg border border-border/50 bg-card p-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-4">Pipeline Real — Fluxo do Lead</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-4">Funil da Jornada —</p>
 
           {/* Pipeline horizontal */}
           <div className="flex items-stretch gap-0 overflow-x-auto pb-2">
@@ -219,7 +225,11 @@ export default function Conferencia() {
                     </div>
                     {i < pipelineStages.length - 1 && (
                       <p className="text-[9px] text-muted-foreground/70 mt-1 tabular-nums">
-                        ↓ {((pipelineStages[i + 1].valor / s.valor) * 100).toFixed(0)}%
+                        ↓{' '}
+                        {s.valor > 0
+                          ? ((pipelineStages[i + 1].valor / s.valor) * 100).toFixed(0)
+                          : '—'}
+                        %
                       </p>
                     )}
                   </div>
@@ -231,9 +241,9 @@ export default function Conferencia() {
             })}
           </div>
 
-          {/* ── MICRO FUNIL DA JORNADA ── */}
+          {/* ── % acumulada por estágio ── */}
           <div className="mt-4 pt-3 border-t border-border/30">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">Funil da Jornada — % acumulada</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-2">% da base por estágio (cumulativo)</p>
             <div className="flex flex-col gap-1.5">
               {pipelineStages.map((s, i) => {
                 const pctJornada = pipelineStages[0].valor > 0
@@ -262,72 +272,47 @@ export default function Conferencia() {
               })}
             </div>
           </div>
-
-          {/* FUP Frio rescue loop indicator */}
-          <div className="mt-3 pt-3 border-t border-dashed border-success/30 flex items-center gap-2">
-            <RotateCcw className="h-3.5 w-3.5 text-success" />
-            <span className="text-[10px] text-success font-semibold uppercase tracking-wider">Repescagem FUP Frio</span>
-            <span className="text-[10px] text-muted-foreground">
-              — {fupFrio.reativados} leads resgatados voltam para
-            </span>
-            <span className="text-[10px] font-semibold text-foreground">Closer</span>
-            <ArrowRight className="h-3 w-3 text-success/60" />
-            <span className="text-[10px] font-semibold text-foreground">Proposta</span>
-            <ArrowRight className="h-3 w-3 text-success/60" />
-            <span className="text-[10px] font-semibold text-foreground">Fechamento</span>
-          </div>
         </section>
 
-        {/* ══════ ROW 3 — FUP Frio ROI + Origem + Alertas ══════ */}
-        <section className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* FUP Frio — Repescagem com ROI */}
-          <div className="rounded-lg border border-success/30 bg-success/5 p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <RotateCcw className="h-4 w-4 text-success" />
-              <p className="text-[10px] text-success uppercase tracking-wider font-bold">FUP Frio — Dinheiro na Mesa</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center">
-                <p className="text-3xl font-extrabold text-success tabular-nums">{fupFrio.reativados}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">leads resgatados</p>
-                <p className="text-[10px] text-success/70 tabular-nums">de {fupFrio.entraram} que esfriaram</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-extrabold text-success tabular-nums">{fupFrio.valorRecuperado}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">valor recuperado</p>
-                <p className="text-[10px] text-success/70 tabular-nums">ticket médio {fupFrio.ticketMedio}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.conversaoPosResgate}%</p>
-                <p className="text-[10px] text-muted-foreground mt-1">conversão pós-resgate</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-extrabold text-foreground tabular-nums">{fupFrio.diasAteReativar}d</p>
-                <p className="text-[10px] text-muted-foreground mt-1">tempo médio reativação</p>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-success/20 text-center">
-              <p className="text-[10px] text-muted-foreground">
-                <span className="font-bold text-success">{fupFrio.pctReceitaViaFup}%</span> da receita total veio da repescagem
-              </p>
-            </div>
-          </div>
-
+        {/* ══════ ROW 3 — Origem + Alertas ══════ */}
+        <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Origem */}
           <div className="rounded-lg border border-border/50 bg-card p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Origem dos Leads</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Origem dos Leads</p>
+            <p className="text-[9px] text-muted-foreground/90 mb-3 leading-snug">
+              <span className="font-medium text-foreground">Conv. ganho</span> = % com vitória no lead.{" "}
+              <span className="font-medium text-foreground">MQL+</span> = % que chegaram a qualificado ou além (útil sem fechamento).{" "}
+              <span className="font-medium text-foreground">Score</span> = média do score SOL na origem (quando houver scores válidos).
+            </p>
             <div className="space-y-3">
               {origemLeads.map((o) => (
-                <div key={o.origem} className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground w-16 shrink-0 truncate">{o.origem}</span>
-                  <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
-                    <div
-                      className="h-full bg-primary/60 rounded transition-all duration-700"
-                      style={{ width: `${(o.share / maxShare) * 100}%` }}
-                    />
+                <div key={o.origem} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground w-20 shrink-0 truncate">{o.origem}</span>
+                    <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
+                      <div
+                        className="h-full bg-primary/60 rounded transition-all duration-700"
+                        style={{ width: `${maxShare > 0 ? (o.share / maxShare) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-semibold text-foreground tabular-nums w-9 text-right">{o.share}%</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-foreground tabular-nums w-9 text-right">{o.share}%</span>
-                  <span className="text-[10px] text-success font-medium tabular-nums w-16 text-right">{o.conversao}% conv</span>
+                  <div className="flex flex-wrap justify-end items-center gap-x-2 gap-y-1 pl-[5.5rem] text-[9px] tabular-nums">
+                    <span className="text-success font-medium">{o.conversao}% ganho</span>
+                    <span className="text-muted-foreground">({o.ganhosCount}/{o.total})</span>
+                    <span className="text-primary/90 font-medium">{o.conversaoMql}% MQL+</span>
+                    {o.scoreMedio != null && (
+                      <span className="text-foreground/90 font-medium flex items-center gap-1">
+                        score {o.scoreMedio}
+                        <span className="inline-flex h-1 w-8 rounded overflow-hidden bg-secondary/60 align-middle">
+                          <span
+                            className="h-full bg-chart-3/80 rounded"
+                            style={{ width: `${maxScoreOrigem > 0 ? (o.scoreMedio / maxScoreOrigem) * 100 : 0}%` }}
+                          />
+                        </span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -480,7 +465,11 @@ export default function Conferencia() {
         {/* ══════ ROW 6 — Taxa por Tentativa + Temperatura por Etapa ══════ */}
         <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="rounded-lg border border-border/50 bg-card p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Taxa de Resposta por Tentativa</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Taxa de Resposta por Tentativa</p>
+            <p className="text-[9px] text-muted-foreground/90 mb-3 leading-snug">
+              Base: leads com FUP (<span className="font-medium text-foreground">fup_followup_count</span> 1, 2, 3 ou 4+). % =
+              responderam / leads na faixa.
+            </p>
             <div className="space-y-2">
               {taxaPorTentativa.map((t) => (
                 <div key={t.tentativa} className="flex items-center gap-2">
@@ -488,7 +477,7 @@ export default function Conferencia() {
                   <div className="flex-1 h-5 bg-secondary/50 rounded overflow-hidden">
                     <div
                       className="h-full bg-primary/60 rounded transition-all duration-700"
-                      style={{ width: `${(t.pct / 42) * 100}%` }}
+                      style={{ width: `${(t.pct / maxTaxaTentativaPct) * 100}%` }}
                     />
                   </div>
                   <span className="text-[10px] font-bold text-foreground tabular-nums w-8 text-right">{t.pct}%</span>
@@ -564,23 +553,16 @@ export default function Conferencia() {
 
 
         {/* ══════ ROW 9 — Robot Insights ══════ */}
-        <RobotInsights data={robotInsightsData} />
+        <RobotInsights data={robotInsightsData} pipelineStages={pipelineStages} />
 
-        {/* ══════ ROW 10 — Score por Origem ══════ */}
-        <section className="mt-4">
-          <ScorePorOrigem data={scorePorOrigemData} />
-        </section>
-
-        {/* ══════ ROW 11 — Monthly Evolution ══════ */}
+        {/* ══════ ROW 10 — Monthly Evolution ══════ */}
         <div className="mt-6">
           <MonthlyEvolution data={monthlyEvolution} />
         </div>
 
         {/* ══════ RODAPÉ ══════ */}
         <footer className="mt-8 text-center">
-          <p className="text-[10px] text-muted-foreground/50">
-            Sol Estrateg.IA · RBR Consult
-          </p>
+          <p className="text-[10px] text-muted-foreground/50">{BRAND_FOOTER_TAGLINE}</p>
         </footer>
       </div>
     </div>
