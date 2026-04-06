@@ -477,29 +477,64 @@ export function useFunnelStats() {
 
   const stats = {
     total: 0,
+    // Por etapa_funil (posição real no processo)
     trafego_pago: 0,
-    em_qualificacao: 0,
-    qualificados: 0,
-    desqualificados: 0,
+    sol_sdr: 0,
     follow_up: 0,
+    qualificados: 0,
+    contato_realizado: 0,
+    proposta: 0,
+    negociacao: 0,
     ganhos: 0,
     perdidos: 0,
+    cobranca: 0,
     contrato: 0,
+    declinio: 0,
+    // Por status SM
+    abertos: 0,
+    // Agrupamentos
+    pre_venda: 0,
+    comercial: 0,
+    pos_venda: 0,
+    // Backward compat aliases
+    em_qualificacao: 0,
+    desqualificados: 0,
   };
 
   if (leads) {
     stats.total = leads.length;
     for (const l of leads) {
-      const s = l.status;
-      if (s === 'TRAFEGO_PAGO') stats.trafego_pago++;
-      else if (s === 'EM_QUALIFICACAO') stats.em_qualificacao++;
-      else if (s === 'QUALIFICADO') stats.qualificados++;
-      else if (s === 'DESQUALIFICADO') stats.desqualificados++;
-      else if (s === 'FOLLOW_UP') stats.follow_up++;
-      else if (s === 'GANHO') stats.ganhos++;
-      else if (s === 'PERDIDO') stats.perdidos++;
-      else if (s === 'CONTRATO') stats.contrato++;
+      const etapa = (l.etapa_funil || '').toUpperCase().trim();
+      const status = (l.status || '').toUpperCase().trim();
+
+      // Contagem por etapa_funil
+      if (etapa === 'TRAFEGO PAGO') stats.trafego_pago++;
+      else if (etapa === 'SOL SDR') stats.sol_sdr++;
+      else if (etapa === 'FOLLOW UP') stats.follow_up++;
+      else if (etapa === 'QUALIFICADO') stats.qualificados++;
+      else if (etapa === 'CONTATO REALIZADO') stats.contato_realizado++;
+      else if (etapa === 'PROPOSTA') stats.proposta++;
+      else if (etapa === 'NEGOCIAÇÃO' || etapa === 'NEGOCIACAO') stats.negociacao++;
+      else if (etapa === 'GANHO') stats.ganhos++;
+      else if (etapa === 'PERDIDO') stats.perdidos++;
+      else if (etapa === 'COBRANÇA' || etapa === 'COBRANCA') stats.cobranca++;
+      else if (etapa === 'CONTRATO') stats.contrato++;
+      else if (etapa === 'DECLÍNIO' || etapa === 'DECLINIO') stats.declinio++;
+
+      // Contagem por status SM
+      if (status === 'ABERTO') stats.abertos++;
+      else if (status === 'GANHO') stats.ganhos++;
+      else if (status === 'PERDIDO') stats.perdidos++;
+
+      // Agrupamento por área
+      if (['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'].includes(etapa)) stats.pre_venda++;
+      else if (['QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA', 'NEGOCIAÇÃO', 'NEGOCIACAO'].includes(etapa)) stats.comercial++;
+      else if (['GANHO', 'COBRANÇA', 'COBRANCA', 'CONTRATO'].includes(etapa)) stats.pos_venda++;
     }
+
+    // Backward compat
+    stats.em_qualificacao = stats.sol_sdr;
+    stats.desqualificados = stats.declinio;
   }
 
   return { stats, isLoading, error, leads };
