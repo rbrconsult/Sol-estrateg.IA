@@ -71,14 +71,17 @@ function getPrioridade(r: SolLead): string {
 }
 
 function getEtapa(r: SolLead): string {
+  const etapa = (r.etapa_funil || "").toUpperCase().trim();
   const s = (r.status || "").toUpperCase();
-  if (s === "QUALIFICADO") return "Qualificado";
-  if (s === "WHATSAPP") return "Em Qualificação";
-  if (s === "DESQUALIFICADO") return "Desqualificado";
-  if (s === "AGENDAMENTO" || s === "AGENDADO") return "Agendamento";
-  if (s === "PROPOSTA") return "Proposta Enviada";
-  if (s === "NEGOCIACAO") return "Negociação";
-  return s || "Novo";
+  if (etapa === 'QUALIFICADO') return "Qualificado";
+  if (etapa === 'SOL SDR') return "Em Qualificação";
+  if (etapa.includes('DECL')) return "Declínio";
+  if (etapa === 'CONTATO REALIZADO') return "Contato Realizado";
+  if (etapa === 'PROPOSTA') return "Proposta Enviada";
+  if (etapa.includes('NEGOCI')) return "Negociação";
+  if (etapa === 'TRAFEGO PAGO') return "Tráfego Pago";
+  if (etapa === 'FOLLOW UP') return "Follow Up";
+  return etapa || s || "Novo";
 }
 
 const INACTIVITY_RISK_MINUTES = 10;
@@ -138,8 +141,8 @@ function deriveAlerts(records: SolLead[]): Alert[] {
     const status = (r.status || "").toUpperCase();
 
     // ⚠️ Inactivity risk: any lead inactive >10min that is still in-progress
-    const activeStatuses = ["WHATSAPP", "EM_QUALIFICACAO", "TRAFEGO_PAGO", "QUALIFICADO", "AGENDAMENTO", "PROPOSTA", "NEGOCIACAO"];
-    if (activeStatuses.includes(status) && isInactive(r.ts_ultima_interacao)) {
+    const activeEtapas = ["SOL SDR", "TRAFEGO PAGO", "QUALIFICADO", "CONTATO REALIZADO", "PROPOSTA", "NEGOCIAÇÃO"];
+    if (activeEtapas.includes((r.etapa_funil || '').toUpperCase().trim()) && isInactive(r.ts_ultima_interacao)) {
       const mins = inactivityMinutes(r.ts_ultima_interacao);
       const label = mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60}min inativo` : `${mins}min inativo`;
       alerts.push({
@@ -282,9 +285,9 @@ function deriveSummary(records: SolLead[]) {
   const mornos = records.filter((r) => (r.temperatura || "").toUpperCase() === "MORNO").length;
   const frios = records.filter((r) => (r.temperatura || "").toUpperCase() === "FRIO").length;
   const emRiscoInatividade = records.filter((r) => {
-    const s = (r.status || "").toUpperCase();
-    const active = ["WHATSAPP", "EM_QUALIFICACAO", "TRAFEGO_PAGO", "QUALIFICADO", "AGENDAMENTO", "PROPOSTA", "NEGOCIACAO"];
-    return active.includes(s) && isInactive(r.ts_ultima_interacao);
+    const etapa = (r.etapa_funil || "").toUpperCase().trim();
+    const activeEtapas = ["SOL SDR", "TRAFEGO PAGO", "QUALIFICADO", "CONTATO REALIZADO", "PROPOSTA", "NEGOCIAÇÃO"];
+    return activeEtapas.includes(etapa) && isInactive(r.ts_ultima_interacao);
   }).length;
 
   return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios, emRiscoInatividade };

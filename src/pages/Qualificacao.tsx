@@ -26,14 +26,9 @@ function classifyLead(r: SolLead): string {
 }
 
 function isDesqualificado(r: SolLead): boolean {
-  const status = (r.status || "").toUpperCase();
   const etapa = (r.etapa_funil || "").toUpperCase();
-  const codigo = (r.status || "").toUpperCase();
   return (
-    status === "DESQUALIFICADO" || status === "DECLINIO" || status === "DECLÍNIO" ||
-    status.includes("DECLINIO") || status.includes("DECLÍNIO") ||
-    etapa === "DESQUALIFICADO" || etapa === "DECLINIO" || etapa === "DECLÍNIO" ||
-    codigo === "DESQUALIFICADO" || codigo === "LEAD_FRIO"
+    etapa.includes("DECLINIO") || etapa.includes("DECLÍNIO") || etapa === "DESQUALIFICADO"
   );
 }
 
@@ -109,7 +104,7 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
-    const roboStatuses = ['EM_QUALIFICACAO', 'AGUARDANDO_ACAO_MANUAL', 'NAO_RESPONDEU'];
+    const roboEtapas = ['SOL SDR', 'TRAFEGO PAGO', 'FOLLOW UP'];
     const { from: effFrom, to: effTo } = gf.effectiveDateRange;
     return solLeads
       .filter((r) => {
@@ -121,9 +116,10 @@ export default function Qualificacao() {
           if (effFrom) { const fs = new Date(effFrom); fs.setHours(0,0,0,0); if (d < fs) return false; }
           if (effTo) { const es = new Date(effTo); es.setHours(23,59,59,999); if (d > es) return false; }
         }
+        const etapa = (r.etapa_funil || '').toUpperCase().trim();
         const status = (r.status || '').toUpperCase();
-        const isRoboStage = !status || roboStatuses.includes(status) || status === 'WHATSAPP';
-        return isRoboStage || status === 'QUALIFICADO' || isDesqualificado(r);
+        const isPreVenda = roboEtapas.includes(etapa) || !etapa || status === 'ABERTO';
+        return isPreVenda || (r.etapa_funil || '').toUpperCase().includes('QUALIFICADO') || isDesqualificado(r);
       })
       .map((r) => ({
         ...r,

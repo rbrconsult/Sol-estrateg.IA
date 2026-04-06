@@ -249,7 +249,7 @@ export function useConferenciaData(effectiveDateRange?: { from: Date | undefined
       const s = (r.status || '').toUpperCase();
       return s.includes('QUALIFICADO') && !s.includes('DES');
     });
-    const desqualificados = allRecords.filter(r => (r.status || '').includes('DESQUALIFICADO'));
+    const desqualificados = allRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL'));
     const responderam = allRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu');
     const taxaResposta = total > 0 ? Math.round((responderam.length / total) * 100) : 0;
 
