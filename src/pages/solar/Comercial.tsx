@@ -356,7 +356,7 @@ export default function Comercial() {
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {projetos.slice(0, 20).map((p, i) => (
                 <div
-                  key={`${p.project_id}-${i}`}
+                  key={`${p.project_id ?? "proj"}-${p.ts_evento ?? ""}-${i}`}
                   className="flex items-center gap-3 text-xs text-muted-foreground border-b border-border/50 pb-2"
                 >
                   <span className="font-mono text-[10px] shrink-0">
