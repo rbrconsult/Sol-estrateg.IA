@@ -195,8 +195,8 @@ export function useSolLeads(statusFilter?: string[]) {
       }
 
       // Role-based filtering: hierarchical visibility
+      // closer → own leads only | gerente/diretor/super_admin → all franchise data
       if (userRole === 'closer' && user) {
-        // Closer sees only their own leads
         const { data: profile } = await supabase
           .from('profiles')
           .select('full_name')
@@ -205,39 +205,7 @@ export function useSolLeads(statusFilter?: string[]) {
         if (profile?.full_name) {
           query = query.eq("closer_nome", profile.full_name);
         }
-      } else if (userRole === 'gerente' && user) {
-        // Gerente sees only leads of closers assigned to them
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .single();
-        if (profile?.full_name) {
-          // Find gerente's key in equipe
-          const { data: gerenteRecord } = await supabase
-            .from('sol_equipe_sync')
-            .select('key')
-            .in('franquia_id', franquiaFilter)
-            .eq('nome', profile.full_name)
-            .limit(1)
-            .maybeSingle();
-          if (gerenteRecord?.key) {
-            // Find all closers under this gerente
-            const { data: closers } = await supabase
-              .from('sol_equipe_sync')
-              .select('nome')
-              .in('franquia_id', franquiaFilter)
-              .eq('gestor_key', gerenteRecord.key);
-            const closerNames = (closers || []).map(c => c.nome).filter(Boolean) as string[];
-            // Include gerente's own name too
-            closerNames.push(profile.full_name);
-            if (closerNames.length > 0) {
-              query = query.in("closer_nome", closerNames);
-            }
-          }
-        }
       }
-      // diretor and super_admin see all franchise data (no additional filter)
 
       const allRows: any[] = [];
       let offset = 0;
