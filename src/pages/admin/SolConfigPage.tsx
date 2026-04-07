@@ -17,6 +17,7 @@ const FUP_KEYS = Array.from({ length: 9 }, (_, i) => `fup_frio_${i}`);
 
 export default function SolConfigPage() {
   const navigate = useNavigate();
+  const { data: configs, isLoading } = useSolConfig();
   const updateConfig = useSolConfigUpdate();
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
