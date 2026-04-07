@@ -112,7 +112,7 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
     description: 'Gera relatórios com dados reais (DS v2: sol_leads + sol_qualificacao + sol_metricas + sol_equipe) + insights via Lovable AI.',
     category: 'ai',
     status: 'active',
-    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'organization_configs (sol_leads, sol_qualificacao, sol_config, sol_equipe, sol_metricas)', 'time_comercial'],
+    dependencies: ['LOVABLE_API_KEY', 'MAKE_API_KEY', 'organization_configs (sol_leads, sol_qualificacao, sol_config, sol_equipe, sol_metricas)', 'sol_equipe_sync'],
     notes: 'Busca DS v2 em paralelo: sol_leads (87418), sol_qualificacao (87715), sol_config (87419), sol_equipe (87420), sol_metricas (87422). Calcula KPIs de investimento, CPL, CAC, ROI e produção de robôs. Filtra por org/franquia_id.',
   },
   // Auth
