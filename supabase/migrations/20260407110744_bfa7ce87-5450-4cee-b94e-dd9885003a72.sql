@@ -1,0 +1,1 @@
+DROP POLICY "Users can view own franchise projetos sync" ON sol_projetos_sync;
