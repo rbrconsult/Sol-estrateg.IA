@@ -224,7 +224,7 @@ export default function FunilConsolidado() {
             <h3 className="text-sm font-semibold mb-3">Timeline Eventos SM</h3>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {projetos.slice(0, 20).map(p => (
-                <div key={p.key} className="flex items-center justify-between text-xs border-b border-border pb-1">
+                <div key={p.project_id} className="flex items-center justify-between text-xs border-b border-border pb-1">
                   <div>
                     <span className="font-medium">{p.identificador || p.project_id}</span>
                     <span className="text-muted-foreground ml-2">{p.etapa}</span>
