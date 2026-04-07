@@ -51,14 +51,14 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
     description: 'Busca dados do Data Store sol_leads (DS 87418) com filtro multi-tenant por org.',
     category: 'data',
     status: 'active',
-    dependencies: ['MAKE_API_KEY', 'MAKE_DATASTORE_ID', 'organization_configs', 'time_comercial'],
+    dependencies: ['MAKE_API_KEY', 'MAKE_DATASTORE_ID', 'organization_configs', 'sol_equipe_sync'],
   },
   {
     name: 'fetch-make-comercial',
     description: 'Busca dados do Data Store sol_qualificacao (DS 87715) com filtro por responsáveis da org.',
     category: 'data',
     status: 'active',
-    dependencies: ['MAKE_API_KEY', 'MAKE_COMERCIAL_DATASTORE_ID', 'organization_configs', 'time_comercial'],
+    dependencies: ['MAKE_API_KEY', 'MAKE_COMERCIAL_DATASTORE_ID', 'organization_configs', 'sol_equipe_sync'],
   },
   {
     name: 'fetch-make-errors',
@@ -84,11 +84,11 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   },
   {
     name: 'sync-time-comercial',
-    description: 'Sincroniza time_comercial do Supabase → Data Store 85466 no Make.',
+    description: 'Sincroniza sol_equipe_sync do Supabase → Data Store 87420 (sol_equipe v2) no Make.',
     category: 'data',
     status: 'active',
-    dependencies: ['MAKE_API_KEY', 'app_settings.make_ds_time_comercial', 'time_comercial'],
-    notes: 'Chave composta: {franquia_id}_{krolik_id}',
+    dependencies: ['MAKE_API_KEY', 'app_settings.make_ds_time_comercial', 'sol_equipe_sync'],
+    notes: 'Chave composta: {franquia_id}_{sm_id || krolik_id || nome}. Sync reverso: front → Supabase → Make DS.',
   },
   // Cron
   {
