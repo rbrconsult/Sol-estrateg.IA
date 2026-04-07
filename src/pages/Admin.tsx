@@ -401,13 +401,13 @@ export default function Admin() {
     hasAccess('admin-filiais');
 
   // Determine default tab — prioriza filial/equipe para quem opera cadastros no dia a dia
-  const getDefaultTab = () => {
+   const getDefaultTab = () => {
     if (hasAccess('admin-filiais')) return 'filiais';
     if (hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) return 'pessoas';
-    if (hasAccess('admin-whatsapp') || hasAccess('admin-skills') || userRole === 'super_admin') return 'config-global';
-    if (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) return 'seguranca';
     if (hasAccess('admin-modulos')) return 'modulos';
-    return showConfigGlobalTab ? 'config-global' : 'filiais';
+    if (userRole === 'super_admin' && (hasAccess('admin-seguranca') || hasAccess('admin-sessoes'))) return 'seguranca';
+    if (userRole === 'super_admin' && showConfigGlobalTab) return 'config-global';
+    return 'filiais';
   };
 
   return (
@@ -469,15 +469,9 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* Tabs — 5 grupos */}
+        {/* Tabs — reordenadas: Filiais → Pessoas → Módulos → Segurança → Config Global */}
         <Tabs defaultValue={getDefaultTab()} className="space-y-4">
           <TabsList className="flex-wrap">
-            {showConfigGlobalTab && (
-              <TabsTrigger value="config-global" className="flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5" />
-                Configurações globais
-              </TabsTrigger>
-            )}
             {hasAccess('admin-filiais') && (
               <TabsTrigger value="filiais" className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
@@ -490,16 +484,22 @@ export default function Admin() {
                 Pessoas
               </TabsTrigger>
             )}
-            {(hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
+            {hasAccess('admin-modulos') && (
+              <TabsTrigger value="modulos" className="flex items-center gap-1.5">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Módulos
+              </TabsTrigger>
+            )}
+            {userRole === 'super_admin' && (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
               <TabsTrigger value="seguranca" className="flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5" />
                 Segurança
               </TabsTrigger>
             )}
-            {hasAccess('admin-modulos') && (
-              <TabsTrigger value="modulos" className="flex items-center gap-1.5">
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Módulos
+            {userRole === 'super_admin' && showConfigGlobalTab && (
+              <TabsTrigger value="config-global" className="flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5" />
+                Configurações globais
               </TabsTrigger>
             )}
           </TabsList>
