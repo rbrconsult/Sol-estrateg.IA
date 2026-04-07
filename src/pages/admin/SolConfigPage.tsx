@@ -41,11 +41,16 @@ export default function SolConfigPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Settings className="h-6 w-6" /> Configurações SOL v2
-        </h1>
-        <p className="text-sm text-muted-foreground">Prompts, templates e variáveis do Agent IA</p>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Settings className="h-6 w-6" /> Configurações SOL v2
+          </h1>
+          <p className="text-sm text-muted-foreground">Prompts, templates e variáveis do Agent IA</p>
+        </div>
       </div>
 
       {/* Prompts */}
