@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { type, organization_id, records } = body;
+    const { type, organization_id, company_id, franquia_id, records } = body;
 
     if (!type || !Array.isArray(records) || records.length === 0) {
       return new Response(JSON.stringify({ error: "Missing type or records" }), {
@@ -71,75 +71,126 @@ Deno.serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY_VAL = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY_VAL);
 
-    const orgId = organization_id || "00000000-0000-0000-0000-000000000001";
+    // Resolve IDs — accept both old (organization_id) and new (company_id/franquia_id) formats
+    const resolvedCompanyId = company_id || organization_id || "00000000-0000-0000-0000-000000000001";
+    const resolvedFranquiaId = franquia_id || "evolve_olimpia";
     let upserted = 0;
 
-    if (type === "campaign" || type === "google_ads" || type === "meta_ads") {
-      const plataforma = type === "campaign" ? (records[0]?.plataforma || "google_ads") : type;
-
+    if (type === "campaign" || type === "google_ads") {
+      // → ads_google_campaigns_daily
       const rows = records.map((r: any) => ({
-        organization_id: orgId,
-        plataforma: r.plataforma || plataforma,
+        company_id: r.company_id || resolvedCompanyId,
+        franquia_id: r.franquia_id || resolvedFranquiaId,
+        customer_id: r.customer_id || r.external_account_id || "0",
         campaign_id: String(r.campaign_id || r.id || ""),
         campaign_name: r.campaign_name || r.name || r.campaign || "",
-        adset_name: r.adset_name || r.ad_group || "",
-        ad_name: r.ad_name || "",
-        data_referencia: r.data_referencia || r.date || new Date().toISOString().slice(0, 10),
+        campaign_status: r.campaign_status || null,
+        campaign_type: r.campaign_type || null,
+        objetivo: r.objetivo || r.plataforma || null,
+        ad_group_id: r.ad_group_id || null,
+        ad_group_name: r.ad_group_name || r.adset_name || r.ad_group || null,
+        ad_id: r.ad_id || null,
+        date: r.date || r.data_referencia || new Date().toISOString().slice(0, 10),
         impressions: parseInt(r.impressions) || 0,
         clicks: parseInt(r.clicks) || 0,
-        spend: parseFloat(r.spend || r.cost) || 0,
-        conversions: parseInt(r.conversions) || 0,
-        leads: parseInt(r.leads) || 0,
+        cost: parseFloat(r.cost || r.spend) || 0,
+        conversions: parseFloat(r.conversions) || 0,
+        conversion_value: parseFloat(r.conversion_value || r.receita || r.revenue) || 0,
         ctr: parseFloat(r.ctr) || 0,
         cpc: parseFloat(r.cpc) || 0,
-        cpl: parseFloat(r.cpl || r.cost_per_lead) || 0,
-        roas: parseFloat(r.roas) || 0,
-        receita: parseFloat(r.receita || r.revenue) || 0,
-        raw_data: r.raw_data || r,
-        synced_at: new Date().toISOString(),
+        cpm: parseFloat(r.cpm) || 0,
+        roas: parseFloat(r.roas) || null,
+        rede: r.rede || null,
+        dispositivo: r.dispositivo || null,
+        raw_payload: r.raw_data || r.raw_payload || r,
       }));
 
       for (let i = 0; i < rows.length; i += 50) {
         const batch = rows.slice(i, i + 50);
         const { error } = await supabase
-          .from("campaign_metrics")
+          .from("ads_google_campaigns_daily")
           .upsert(batch, {
-            onConflict: "organization_id,plataforma,campaign_id,data_referencia",
+            onConflict: "company_id,campaign_id,date",
             ignoreDuplicates: false,
           });
         if (error) {
-          console.error("Campaign upsert error:", error.message);
+          console.error("Google Ads upsert error:", error.message);
+        } else {
+          upserted += batch.length;
+        }
+      }
+    } else if (type === "meta_ads") {
+      // → ads_meta_campaigns_daily
+      const rows = records.map((r: any) => ({
+        company_id: r.company_id || resolvedCompanyId,
+        franquia_id: r.franquia_id || resolvedFranquiaId,
+        external_account_id: r.external_account_id || r.account_id || "act_0",
+        campaign_id: String(r.campaign_id || r.id || ""),
+        campaign_name: r.campaign_name || r.name || r.campaign || "",
+        campaign_status: r.campaign_status || null,
+        adset_id: r.adset_id || null,
+        adset_name: r.adset_name || null,
+        ad_id: String(r.ad_id || r.id || "0"),
+        ad_name: r.ad_name || null,
+        objetivo: r.objetivo || null,
+        date: r.date || r.data_referencia || new Date().toISOString().slice(0, 10),
+        impressions: parseInt(r.impressions) || 0,
+        clicks: parseInt(r.clicks) || 0,
+        spend: parseFloat(r.spend || r.cost) || 0,
+        reach: parseInt(r.reach) || 0,
+        frequency: parseFloat(r.frequency) || 0,
+        leads: parseInt(r.leads) || 0,
+        ctr: parseFloat(r.ctr) || 0,
+        cpc: parseFloat(r.cpc) || 0,
+        cpm: parseFloat(r.cpm) || 0,
+        cpl: parseFloat(r.cpl || r.cost_per_lead) || 0,
+        roas: parseFloat(r.roas) || null,
+        receita_gerada: parseFloat(r.receita || r.receita_gerada || r.revenue) || 0,
+        raw_payload: r.raw_data || r.raw_payload || r,
+      }));
+
+      for (let i = 0; i < rows.length; i += 50) {
+        const batch = rows.slice(i, i + 50);
+        const { error } = await supabase
+          .from("ads_meta_campaigns_daily")
+          .upsert(batch, {
+            onConflict: "company_id,campaign_id,ad_id,date",
+            ignoreDuplicates: false,
+          });
+        if (error) {
+          console.error("Meta Ads upsert error:", error.message);
         } else {
           upserted += batch.length;
         }
       }
     } else if (type === "ga4") {
+      // → analytics_ga4_daily
       const rows = records.map((r: any) => ({
-        organization_id: orgId,
-        data_referencia: r.data_referencia || r.date || new Date().toISOString().slice(0, 10),
+        company_id: r.company_id || resolvedCompanyId,
+        franquia_id: r.franquia_id || resolvedFranquiaId,
+        property_id: r.property_id || "0",
+        date: r.date || r.data_referencia || new Date().toISOString().slice(0, 10),
         source: r.source || "(direct)",
         medium: r.medium || "(none)",
         campaign: r.campaign || "(not set)",
         landing_page: r.landing_page || r.page || "/",
         sessions: parseInt(r.sessions) || 0,
-        users_count: parseInt(r.users_count || r.users) || 0,
+        users: parseInt(r.users || r.users_count) || 0,
         new_users: parseInt(r.new_users || r.newUsers) || 0,
         bounce_rate: parseFloat(r.bounce_rate || r.bounceRate) || 0,
         avg_session_duration: parseFloat(r.avg_session_duration || r.avgSessionDuration) || 0,
         pages_per_session: parseFloat(r.pages_per_session || r.pagesPerSession) || 0,
         conversions: parseInt(r.conversions) || 0,
-        conversion_rate: parseFloat(r.conversion_rate || r.conversionRate) || 0,
-        events: r.events || {},
-        raw_data: r.raw_data || r,
-        synced_at: new Date().toISOString(),
+        revenue: parseFloat(r.revenue) || 0,
+        raw_payload: r.raw_data || r.raw_payload || r,
       }));
 
       for (let i = 0; i < rows.length; i += 50) {
         const batch = rows.slice(i, i + 50);
         const { error } = await supabase
-          .from("ga4_metrics")
+          .from("analytics_ga4_daily")
           .upsert(batch, {
-            onConflict: "organization_id,data_referencia,source,medium,campaign,landing_page",
+            onConflict: "company_id,property_id,date,source,medium,campaign,landing_page",
             ignoreDuplicates: false,
           });
         if (error) {
