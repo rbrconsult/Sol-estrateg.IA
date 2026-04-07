@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, Globe, Lock, Server } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Shield, Ban, RefreshCw, Loader2, Pencil, Trash2, UserPlus, Key, Eye, Settings, Save, Building2, LayoutGrid, Fingerprint, Zap, Globe, Lock, Server, Bot, ChevronRight } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import OrganizationsTab from '@/components/admin/OrganizationsTab';
 import ModulesTab from '@/components/admin/ModulesTab';
@@ -578,6 +578,20 @@ export default function Admin() {
 
             {/* DataStores Descobertos */}
             {hasAccess('admin-whatsapp') && <DiscoveredDataStores />}
+
+            {/* SOL v2 — Configuração do Robô */}
+            {(userRole === 'super_admin' || userRole === 'diretor') && (
+              <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/config')}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-primary" />
+                    Configuração SOL v2 (Robô IA)
+                    <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
+                  </CardTitle>
+                  <CardDescription>Prompts, templates FUP Frio e variáveis globais do Agent IA</CardDescription>
+                </CardHeader>
+              </Card>
+            )}
 
             {/* Skills / Edge Functions */}
             {hasAccess('admin-skills') && <SkillsTab />}
