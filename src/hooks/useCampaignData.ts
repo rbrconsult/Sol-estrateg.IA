@@ -46,7 +46,7 @@ export interface GA4Metric {
 
 async function fetchCampaignMetrics(): Promise<CampaignMetric[]> {
   const { data, error } = await supabase
-    .from("campaign_metrics")
+    .from("ads_meta_campaigns_daily")
     .select("*")
     .order("data_referencia", { ascending: false });
   if (error) throw new Error(error.message);
@@ -55,7 +55,7 @@ async function fetchCampaignMetrics(): Promise<CampaignMetric[]> {
 
 async function fetchGA4Metrics(): Promise<GA4Metric[]> {
   const { data, error } = await supabase
-    .from("ga4_metrics")
+    .from("analytics_ga4_daily")
     .select("*")
     .order("data_referencia", { ascending: false });
   if (error) throw new Error(error.message);
