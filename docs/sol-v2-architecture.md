@@ -6,6 +6,8 @@
 **Supabase Project:** `xffzjdulkdgyicsllznp`  
 **Make Team ID:** `1934898`
 
+**Operação / produção:** racional de dados comerciais (comissões, RLS slug ↔ `franquia_id`, checklist de deploy Live) em **[producao-dados-comerciais-e-deploy.md](./producao-dados-comerciais-e-deploy.md)**.
+
 ---
 
 ## 1. Banco de Dados — 38 Tabelas

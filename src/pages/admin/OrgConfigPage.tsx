@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -48,6 +49,7 @@ const CATEGORY_ORDER = CATEGORIES.map(c => c.value);
 export default function OrgConfigPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [org, setOrg] = useState<OrgInfo | null>(null);
   const [configs, setConfigs] = useState<OrgConfig[]>([]);
@@ -150,6 +152,7 @@ export default function OrgConfigPage() {
       setAddForm({ config_key: "", config_value: "", config_category: "general", is_secret: false });
       setIsAdding(false);
       await fetchData();
+      await queryClient.invalidateQueries({ queryKey: ["comercial-closer-allowlist", orgId] });
     } catch (e: any) {
       toast.error(e.message || "Erro ao adicionar");
     } finally {
@@ -170,6 +173,7 @@ export default function OrgConfigPage() {
       toast.success("Configuração atualizada!");
       setEditingId(null);
       await fetchData();
+      await queryClient.invalidateQueries({ queryKey: ["comercial-closer-allowlist", orgId] });
     } catch (e: any) {
       toast.error(e.message || "Erro ao atualizar");
     } finally {
@@ -186,6 +190,7 @@ export default function OrgConfigPage() {
       toast.success("Configuração excluída!");
       setDeleteTarget(null);
       await fetchData();
+      await queryClient.invalidateQueries({ queryKey: ["comercial-closer-allowlist", orgId] });
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir");
     } finally {

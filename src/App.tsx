@@ -1,79 +1,74 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/hooks/useAuth";
-import { Lead360Provider } from "@/contexts/Lead360Context";
-import { OrgFilterProvider } from "@/contexts/OrgFilterContext";
-import { GlobalFilterProvider } from "@/contexts/GlobalFilterContext";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { Lead360Drawer } from "@/components/lead360/Lead360Drawer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/ModuleGuard";
-import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { AppErrorBoundary } from "@/components/AppErrorBoundary";
-import Index from "./pages/Index";
-import Pipeline from "./pages/Pipeline";
-import Forecast from "./pages/Forecast";
-import Contratos from "./pages/Contratos";
-import Performance from "./pages/Performance";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Selecao from "./pages/Selecao";
-import Admin from "./pages/Admin";
-import Chamados from "./pages/Chamados";
-import Operacoes from "./pages/Operacoes";
+import { SolarLayout } from "@/components/layout/SolarLayout";
+import { AppProviders } from "@/providers/AppProviders";
+import { PageLoader } from "@/components/ui/PageLoader";
 
-import Leads from "./pages/Leads";
-import Conferencia from "./pages/Conferencia";
-import BI from "./pages/BI";
-// AdsPerformance, MidiaReceita, GA4 legacy pages replaced by campanhas/* versions
-import RoboSol from "./pages/RoboSol";
-import RoboFupFrio from "./pages/RoboFupFrio";
+// Lazy Loaded Pages
+const Index = lazy(() => import("./pages/Index"));
+const Pipeline = lazy(() => import("./pages/Pipeline"));
+const Forecast = lazy(() => import("./pages/Forecast"));
+const Contratos = lazy(() => import("./pages/Contratos"));
+const Performance = lazy(() => import("./pages/Performance"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Selecao = lazy(() => import("./pages/Selecao"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Chamados = lazy(() => import("./pages/Chamados"));
+const Operacoes = lazy(() => import("./pages/Operacoes"));
 
-import Roadmap from "./pages/Roadmap";
-import PainelComercial from "./pages/PainelComercial";
+const Leads = lazy(() => import("./pages/Leads"));
+const Conferencia = lazy(() => import("./pages/Conferencia"));
+const BI = lazy(() => import("./pages/BI"));
+const RoboSol = lazy(() => import("./pages/RoboSol"));
+const RoboFupFrio = lazy(() => import("./pages/RoboFupFrio"));
 
-import NotFound from "./pages/NotFound";
-import SLAMonitor from "./pages/SLAMonitor";
+const Roadmap = lazy(() => import("./pages/Roadmap"));
+const PainelComercial = lazy(() => import("./pages/PainelComercial"));
 
-import AnalistaFollowup from "./pages/AnalistaFollowup";
-import Comissoes from "./pages/Comissoes";
-import Sanitizacao from "./pages/Sanitizacao";
-import Qualificacao from "./pages/Qualificacao";
-import Desqualificar from "./pages/Desqualificar";
-import Reprocessamento from "./pages/Reprocessamento";
-import OrgConfigPage from "./pages/admin/OrgConfigPage";
-import PreVenda from "./pages/solar/PreVenda";
-import Comercial from "./pages/solar/Comercial";
-import VendedorPerformance from "./pages/solar/VendedorPerformance";
-import { SolarLayout } from "./components/layout/SolarLayout";
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SLAMonitor = lazy(() => import("./pages/SLAMonitor"));
 
-import CampanhasVisaoGeral from "./pages/campanhas/VisaoGeral";
-import MetaAdsPage from "./pages/campanhas/MetaAds";
-import GoogleAdsPage from "./pages/campanhas/GoogleAds";
-import SiteGA4Page from "./pages/campanhas/SiteGA4";
-import WhatsAppPage from "./pages/campanhas/WhatsApp";
-import FunilConsolidado from "./pages/campanhas/FunilConsolidado";
-import CampanhasAdsPerformance from "./pages/campanhas/AdsPerformance";
-import CampanhasMidiaReceita from "./pages/campanhas/MidiaReceita";
-import GA4Campanhas from "./pages/campanhas/GA4Campanhas";
-import TimeComercialPage from "./pages/TimeComercialPage";
-// SolInsights removed — route redirects to /leads
-import SolConfigPage from "./pages/admin/SolConfigPage";
-import SolEquipePage from "./pages/admin/SolEquipePage";
-import SolFunisPage from "./pages/admin/SolFunisPage";
-import Insights from "./pages/Insights";
-const queryClient = new QueryClient();
+const AnalistaFollowup = lazy(() => import("./pages/AnalistaFollowup"));
+const Comissoes = lazy(() => import("./pages/Comissoes"));
+const Sanitizacao = lazy(() => import("./pages/Sanitizacao"));
+const Qualificacao = lazy(() => import("./pages/Qualificacao"));
+const Desqualificar = lazy(() => import("./pages/Desqualificar"));
+const Reprocessamento = lazy(() => import("./pages/Reprocessamento"));
+const OrgConfigPage = lazy(() => import("./pages/admin/OrgConfigPage"));
+const PreVenda = lazy(() => import("./pages/solar/PreVenda"));
+const Comercial = lazy(() => import("./pages/solar/Comercial"));
+const VendedorPerformance = lazy(() => import("./pages/solar/VendedorPerformance"));
+
+const CampanhasVisaoGeral = lazy(() => import("./pages/campanhas/VisaoGeral"));
+const MetaAdsPage = lazy(() => import("./pages/campanhas/MetaAds"));
+const GoogleAdsPage = lazy(() => import("./pages/campanhas/GoogleAds"));
+const SiteGA4Page = lazy(() => import("./pages/campanhas/SiteGA4"));
+const WhatsAppPage = lazy(() => import("./pages/campanhas/WhatsApp"));
+const FunilConsolidado = lazy(() => import("./pages/campanhas/FunilConsolidado"));
+const CampanhasAdsPerformance = lazy(() => import("./pages/campanhas/AdsPerformance"));
+const CampanhasMidiaReceita = lazy(() => import("./pages/campanhas/MidiaReceita"));
+const GA4Campanhas = lazy(() => import("./pages/campanhas/GA4Campanhas"));
+const TimeComercialPage = lazy(() => import("./pages/TimeComercialPage"));
+const SolConfigPage = lazy(() => import("./pages/admin/SolConfigPage"));
+const SolEquipePage = lazy(() => import("./pages/admin/SolEquipePage"));
+const SolFunisPage = lazy(() => import("./pages/admin/SolFunisPage"));
+const Insights = lazy(() => import("./pages/Insights"));
+
 
 /** Rotas com error boundary por URL: ao mudar de página, o boundary reinicia (evita ficar preso na tela de erro). */
 function AppRoutesShell() {
   const location = useLocation();
   return (
     <AppErrorBoundary key={location.pathname}>
-      <Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
@@ -110,7 +105,7 @@ function AppRoutesShell() {
               <Route path="/leads" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="leads"><Leads /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><MainLayout><Admin /></MainLayout></ProtectedRoute>} />
               <Route path="/admin/filial/:orgId" element={<ProtectedRoute><MainLayout><OrgConfigPage /></MainLayout></ProtectedRoute>} />
-              {/* /ajuda removido — Bug B8 */}
+              
               {/* Legacy redirects */}
               <Route path="/ads-performance" element={<Navigate to="/campanhas/ads" replace />} />
               <Route path="/midia" element={<Navigate to="/campanhas/receita" replace />} />
@@ -147,35 +142,22 @@ function AppRoutesShell() {
               <Route path="/mensagens" element={<Navigate to="/dashboard" replace />} />
 
               <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </AppErrorBoundary>
   );
 }
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OrgFilterProvider>
-        <GlobalFilterProvider>
-        <Lead360Provider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppErrorBoundary fallback={null}>
-            <ImpersonationBanner />
-            <Lead360Drawer />
-          </AppErrorBoundary>
-          <BrowserRouter>
-            <AppRoutesShell />
-          </BrowserRouter>
-        </TooltipProvider>
-        </Lead360Provider>
-        </GlobalFilterProvider>
-        </OrgFilterProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
+  <AppProviders>
+    <AppErrorBoundary fallback={null}>
+      <ImpersonationBanner />
+      <Lead360Drawer />
+    </AppErrorBoundary>
+    <BrowserRouter>
+      <AppRoutesShell />
+    </BrowserRouter>
+  </AppProviders>
 );
 
 export default App;

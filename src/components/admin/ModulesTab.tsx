@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Loader2, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MODULE_DEFINITIONS } from '@/hooks/useModulePermissions';
+import { appRoleLabel } from '@/lib/appRoleLabels';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -115,7 +116,8 @@ export default function ModulesTab({ users }: ModulesTabProps) {
       <CardHeader>
         <CardTitle>Gestão de Módulos por Usuário</CardTitle>
         <CardDescription>
-          Selecione um usuário e controle quais módulos ele pode acessar.
+          Aqui você define <strong>quais telas</strong> (módulos) cada login pode abrir. O <strong>papel</strong> da pessoa (Diretor, Closer,
+          Gerente…) é definido em <strong>Pessoas</strong> — conceitos separados.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -130,8 +132,8 @@ export default function ModulesTab({ users }: ModulesTabProps) {
                 <SelectItem key={u.id} value={u.id}>
                   <span className="flex items-center gap-2">
                     {u.full_name || u.email}
-                    <Badge variant="outline" className="text-xs ml-1">
-                      {u.role === 'admin' ? 'Admin' : 'Usuário'}
+                    <Badge variant="outline" className="text-xs ml-1 shrink-0">
+                      {appRoleLabel(u.role)}
                     </Badge>
                   </span>
                 </SelectItem>

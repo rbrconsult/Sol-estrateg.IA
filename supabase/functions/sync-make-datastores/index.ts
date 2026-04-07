@@ -92,6 +92,8 @@ function pickColumns(data: Record<string, unknown>, columns: string[]): Record<s
     dadosQualificacao: "dados_qualificacao",
     tsPrimeiraQualificacao: "ts_primeira_qualificacao",
     tsUltimaAtualizacao: "ts_ultima_atualizacao",
+    valorComissao: "valor_comissao",
+    percentualComissao: "percentual_comissao",
   };
 
   const result: Record<string, unknown> = {};
@@ -134,7 +136,16 @@ const METRICAS_COLS = [
   "data", "robo", "franquia_id", "leads_novos", "leads_qualificados",
   "leads_transferidos", "custo_total",
 ];
-const PROJETOS_COLS = ["project_id", "identificador", "etapa", "evento", "franquia_id", "ts_evento"];
+const PROJETOS_COLS = [
+  "project_id",
+  "identificador",
+  "etapa",
+  "evento",
+  "franquia_id",
+  "ts_evento",
+  "valor_comissao",
+  "percentual_comissao",
+];
 const QUALIFICACAO_COLS = [
   "franquia_id", "modelo_negocio", "dados_qualificacao", "resumo_qualificacao",
   "score", "temperatura", "acao", "ts_primeira_qualificacao", "ts_ultima_atualizacao",

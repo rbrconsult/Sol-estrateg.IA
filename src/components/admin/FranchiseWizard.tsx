@@ -272,9 +272,12 @@ export default function FranchiseWizard({ open, onOpenChange, users, onComplete 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Nova Franquia
+            Nova filial — integração técnica
           </DialogTitle>
-          <DialogDescription>Cadastro de nova franquia em {STEPS.length} etapas</DialogDescription>
+          <DialogDescription>
+            Assistente completo em {STEPS.length} etapas (Make, data stores, webhooks, responsáveis CRM). Para só cadastrar filial e
+            equipe, use &quot;Nova filial + equipe&quot; na lista de filiais.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Stepper */}

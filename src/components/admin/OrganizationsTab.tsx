@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { ptBR } from 'date-fns/locale';
 import { Plus, Pencil, Trash2, Users, UserPlus, UserMinus, Loader2, Building2, Webhook, Database, Key, Settings, Eye, EyeOff, ShieldCheck, Save, X, Check } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import FranchiseWizard from './FranchiseWizard';
+import FilialPessoasWizard from './FilialPessoasWizard';
 
 const MATRIZ_ORG_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -55,6 +57,7 @@ interface UserOption {
 
 export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
@@ -83,8 +86,9 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
   const [configSaving, setConfigSaving] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState<OrgConfig | null>(null);
 
-  // Wizard
+  // Wizards
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [filialPessoasOpen, setFilialPessoasOpen] = useState(false);
 
   useEffect(() => {
     fetchOrganizations();
@@ -144,6 +148,9 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       setIsOrgDialogOpen(false);
       setEditingOrg(null);
       fetchOrganizations();
+      await queryClient.invalidateQueries({ queryKey: ['franquia-slug'] });
+      await queryClient.invalidateQueries({ queryKey: ['sol-projetos'] });
+      await queryClient.invalidateQueries({ queryKey: ['sol-leads'] });
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar organização');
     } finally {
@@ -263,6 +270,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       setIsAddingConfig(false);
       await openConfigs(configsOrg);
       fetchOrganizations();
+      await queryClient.invalidateQueries({ queryKey: ['comercial-closer-allowlist', configsOrg.id] });
     } catch (error: any) { toast.error(error.message || 'Erro ao adicionar'); }
     finally { setConfigSaving(false); }
   };
@@ -281,6 +289,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       toast.success('Configuração atualizada!');
       setEditingConfig(null);
       await openConfigs(configsOrg);
+      await queryClient.invalidateQueries({ queryKey: ['comercial-closer-allowlist', configsOrg.id] });
     } catch (error: any) { toast.error(error.message || 'Erro ao atualizar'); }
     finally { setConfigSaving(false); }
   };
@@ -295,6 +304,7 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       setDeleteConfig(null);
       await openConfigs(configsOrg);
       fetchOrganizations();
+      await queryClient.invalidateQueries({ queryKey: ['comercial-closer-allowlist', configsOrg.id] });
     } catch (error: any) { toast.error(error.message || 'Erro ao excluir'); }
     finally { setConfigSaving(false); }
   };
@@ -341,9 +351,15 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
             <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" />Filiais</CardTitle>
             <CardDescription>Gerencie filiais, integrações e membros</CardDescription>
           </div>
-          <Button onClick={() => setWizardOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />Nova Franquia
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => setFilialPessoasOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova filial + equipe
+            </Button>
+            <Button variant="outline" onClick={() => setWizardOpen(true)} title="Make, webhooks, data stores e integrações">
+              Assistente técnico completo
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 mb-4 p-3 rounded-lg border border-border bg-muted/50">
@@ -414,6 +430,11 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
             <div className="space-y-2">
               <Label>Slug</Label>
               <Input value={orgForm.slug} onChange={e => setOrgForm({ ...orgForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })} placeholder="slug-da-organizacao" />
+              <p className="text-xs text-muted-foreground leading-snug">
+                Deve coincidir com <code className="text-[10px]">franquia_id</code> gravado pelo Solar Market (RLS no Supabase).
+                Quem entra em Performance/Comissões por filial é definido pelos IDs SM em{" "}
+                <code className="text-[10px]">organization_configs.comercial_closer_sm_ids</code> (JSON array de strings).
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -652,6 +673,12 @@ export default function OrganizationsTab({ users }: { users: UserOption[] }) {
       </AlertDialog>
 
       {/* Franchise Wizard */}
+      <FilialPessoasWizard
+        open={filialPessoasOpen}
+        onOpenChange={setFilialPessoasOpen}
+        existingUsers={users}
+        onComplete={fetchOrganizations}
+      />
       <FranchiseWizard open={wizardOpen} onOpenChange={setWizardOpen} users={users} onComplete={fetchOrganizations} />
     </>
   );

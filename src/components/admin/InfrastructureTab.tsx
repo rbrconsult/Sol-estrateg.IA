@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Server, Clock, Zap, Database, RefreshCw, Shield } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Server } from "lucide-react";
 
 const EDGE_FUNCTIONS = [
   { name: "sync-make-datastores", purpose: "Sincroniza DataStores Make → tabelas _sync no Supabase", trigger: "pg_cron + manual", auth: "anon/service_role" },
@@ -81,228 +82,178 @@ const VPS_MIGRATION_NOTES = [
   "10. Monitoramento: PM2 + logs centralizados (Loki/Grafana ou similar)",
 ];
 
+const denseTh = "h-7 px-1.5 py-0 text-[10px] font-medium";
+const denseTd = "px-1.5 py-1 text-[10px] align-top";
+
+/** Referência técnica compacta (abas + scroll interno) — para não ocupar a página inteira. */
+export function InfrastructureReferenceContent() {
+  return (
+    <Card className="border-dashed">
+      <CardHeader className="py-2 px-3 space-y-0">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Server className="h-3.5 w-3.5 text-muted-foreground" />
+          Referência de infraestrutura
+        </CardTitle>
+        <CardDescription className="text-[11px] leading-snug">
+          Documentação estática (Make → cron-sync → _sync → React). Uma aba por tópico; rolagem só dentro da tabela.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="px-2 pb-2 pt-0">
+        <Tabs defaultValue="resumo" className="w-full">
+          <TabsList className="h-7 flex-wrap gap-0.5 bg-muted/50 p-0.5 mb-2 w-full justify-start">
+            <TabsTrigger value="resumo" className="text-[10px] px-2 py-0 h-6">
+              Resumo
+            </TabsTrigger>
+            <TabsTrigger value="cron" className="text-[10px] px-2 py-0 h-6">
+              Cron
+            </TabsTrigger>
+            <TabsTrigger value="sync" className="text-[10px] px-2 py-0 h-6">
+              Tabelas _sync
+            </TabsTrigger>
+            <TabsTrigger value="edges" className="text-[10px] px-2 py-0 h-6">
+              Edge ({EDGE_FUNCTIONS.length})
+            </TabsTrigger>
+            <TabsTrigger value="db" className="text-[10px] px-2 py-0 h-6">
+              DB
+            </TabsTrigger>
+            <TabsTrigger value="secrets" className="text-[10px] px-2 py-0 h-6">
+              Secrets
+            </TabsTrigger>
+            <TabsTrigger value="vps" className="text-[10px] px-2 py-0 h-6">
+              VPS
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumo" className="mt-0">
+            <p className="text-[10px] text-muted-foreground mb-2">{EDGE_FUNCTIONS.length} edge functions · {CRON_JOBS.length} crons · {SYNC_TABLES.length} tabelas _sync</p>
+            <div className="flex flex-wrap gap-2 text-[10px]">
+              <Badge variant="outline" className="font-normal">Make → Edge → Supabase</Badge>
+              <Badge variant="outline" className="font-normal">Auth JWT + RLS</Badge>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="cron" className="mt-0 max-h-48 overflow-y-auto border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className={denseTh}>Schedule</TableHead>
+                  <TableHead className={denseTh}>Int.</TableHead>
+                  <TableHead className={denseTh}>Fn</TableHead>
+                  <TableHead className={denseTh}>Nota</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {CRON_JOBS.map((job, i) => (
+                  <TableRow key={i}>
+                    <TableCell className={`${denseTd} font-mono whitespace-nowrap`}>{job.schedule}</TableCell>
+                    <TableCell className={denseTd}>{job.interval}</TableCell>
+                    <TableCell className={`${denseTd} font-mono`}>{job.function}</TableCell>
+                    <TableCell className={`${denseTd} text-muted-foreground`}>{job.note}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TabsContent>
+
+          <TabsContent value="sync" className="mt-0 max-h-48 overflow-y-auto border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className={denseTh}>Tabela</TableHead>
+                  <TableHead className={denseTh}>DS</TableHead>
+                  <TableHead className={denseTh}>Sync</TableHead>
+                  <TableHead className={denseTh}>Uso</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {SYNC_TABLES.map((t, i) => (
+                  <TableRow key={i}>
+                    <TableCell className={`${denseTd} font-mono`}>{t.table}</TableCell>
+                    <TableCell className={`${denseTd} font-mono max-w-[100px] truncate`} title={t.ds_make}>
+                      {t.ds_make}
+                    </TableCell>
+                    <TableCell className={denseTd}>{t.sync}</TableCell>
+                    <TableCell className={`${denseTd} text-muted-foreground`}>{t.purpose}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TabsContent>
+
+          <TabsContent value="edges" className="mt-0 max-h-52 overflow-y-auto border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className={denseTh}>Nome</TableHead>
+                  <TableHead className={denseTh}>Propósito</TableHead>
+                  <TableHead className={denseTh}>Auth</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {EDGE_FUNCTIONS.map((fn, i) => (
+                  <TableRow key={i}>
+                    <TableCell className={`${denseTd} font-mono whitespace-nowrap`}>{fn.name}</TableCell>
+                    <TableCell className={denseTd}>{fn.purpose}</TableCell>
+                    <TableCell className={`${denseTd} text-muted-foreground`}>{fn.auth}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TabsContent>
+
+          <TabsContent value="db" className="mt-0 max-h-44 overflow-y-auto border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className={denseTh}>Função</TableHead>
+                  <TableHead className={denseTh}>Uso</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {DB_FUNCTIONS.map((fn, i) => (
+                  <TableRow key={i}>
+                    <TableCell className={`${denseTd} font-mono`}>{fn.name}</TableCell>
+                    <TableCell className={`${denseTd} text-muted-foreground`}>{fn.purpose}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TabsContent>
+
+          <TabsContent value="secrets" className="mt-0 max-h-44 overflow-y-auto border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className={denseTh}>Secret</TableHead>
+                  <TableHead className={denseTh}>Onde</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {SECRETS.map((s, i) => (
+                  <TableRow key={i}>
+                    <TableCell className={`${denseTd} font-mono`}>{s.name}</TableCell>
+                    <TableCell className={`${denseTd} text-muted-foreground`}>{s.usage} — {s.purpose}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TabsContent>
+
+          <TabsContent value="vps" className="mt-0 max-h-40 overflow-y-auto text-[10px] text-muted-foreground space-y-1 pl-1 border rounded-md p-2">
+            {VPS_MIGRATION_NOTES.map((note, i) => (
+              <p key={i}>{note.replace(/^\d+\.\s*/, "")}</p>
+            ))}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function InfrastructureTab() {
   return (
     <div className="space-y-6">
-      {/* Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Server className="h-5 w-5" />
-            Arquitetura SOL v2
-          </CardTitle>
-          <CardDescription>
-            Make DataStores → Edge Function (cron-sync) → Tabelas _sync (Supabase) → Frontend React
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-lg border border-border p-4 space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Edge Functions</div>
-              <div className="text-2xl font-bold">{EDGE_FUNCTIONS.length}</div>
-            </div>
-            <div className="rounded-lg border border-border p-4 space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Cron Jobs</div>
-              <div className="text-2xl font-bold">{CRON_JOBS.length}</div>
-            </div>
-            <div className="rounded-lg border border-border p-4 space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Tabelas Sync</div>
-              <div className="text-2xl font-bold">{SYNC_TABLES.length}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cron Jobs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="h-4 w-4" />
-            Cron Jobs (pg_cron)
-          </CardTitle>
-          <CardDescription>Agendamentos automáticos de sincronização</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Schedule</TableHead>
-                <TableHead>Intervalo</TableHead>
-                <TableHead>Function</TableHead>
-                <TableHead>Tabelas</TableHead>
-                <TableHead>Nota</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {CRON_JOBS.map((job, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-mono text-xs">{job.schedule}</TableCell>
-                  <TableCell><Badge variant="outline">{job.interval}</Badge></TableCell>
-                  <TableCell className="font-mono text-xs">{job.function}</TableCell>
-                  <TableCell className="text-xs max-w-[200px]">{job.tables}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{job.note}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Sync Tables */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Database className="h-4 w-4" />
-            Tabelas de Sincronização (_sync)
-          </CardTitle>
-          <CardDescription>Espelho dos DataStores Make no Supabase</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tabela Supabase</TableHead>
-                <TableHead>DS Make</TableHead>
-                <TableHead>Registros</TableHead>
-                <TableHead>Modo</TableHead>
-                <TableHead>Sync</TableHead>
-                <TableHead>Propósito</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {SYNC_TABLES.map((t, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-mono text-xs">{t.table}</TableCell>
-                  <TableCell className="font-mono text-xs">{t.ds_make}</TableCell>
-                  <TableCell>{t.records}</TableCell>
-                  <TableCell>
-                    <Badge variant={t.mode.includes("WRITE") ? "default" : "outline"} className="text-xs">
-                      {t.mode}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs">{t.sync}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{t.purpose}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Edge Functions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Zap className="h-4 w-4" />
-            Edge Functions ({EDGE_FUNCTIONS.length})
-          </CardTitle>
-          <CardDescription>Funções serverless Deno no Supabase</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Propósito</TableHead>
-                <TableHead>Trigger</TableHead>
-                <TableHead>Auth</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {EDGE_FUNCTIONS.map((fn, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-mono text-xs">{fn.name}</TableCell>
-                  <TableCell className="text-xs max-w-[300px]">{fn.purpose}</TableCell>
-                  <TableCell className="text-xs">{fn.trigger}</TableCell>
-                  <TableCell className="text-xs">{fn.auth}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* DB Functions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Database className="h-4 w-4" />
-            Database Functions & Triggers
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Função</TableHead>
-                <TableHead>Trigger/Uso</TableHead>
-                <TableHead>Propósito</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {DB_FUNCTIONS.map((fn, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-mono text-xs">{fn.name}</TableCell>
-                  <TableCell className="text-xs">{fn.trigger}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{fn.purpose}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Secrets */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Shield className="h-4 w-4" />
-            Secrets / Variáveis de Ambiente ({SECRETS.length})
-          </CardTitle>
-          <CardDescription>Necessários para migração VPS</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Secret</TableHead>
-                <TableHead>Usado em</TableHead>
-                <TableHead>Propósito</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {SECRETS.map((s, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-mono text-xs">{s.name}</TableCell>
-                  <TableCell className="text-xs">{s.usage}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{s.purpose}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* VPS Migration Checklist */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <RefreshCw className="h-4 w-4" />
-            Checklist — Migração para VPS
-          </CardTitle>
-          <CardDescription>Passos para replicar a infraestrutura em servidor próprio</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ol className="space-y-2">
-            {VPS_MIGRATION_NOTES.map((note, i) => (
-              <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                <span className="font-mono text-xs text-primary mt-0.5">{String(i + 1).padStart(2, '0')}</span>
-                <span>{note.replace(/^\d+\.\s*/, '')}</span>
-              </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+      <InfrastructureReferenceContent />
     </div>
   );
 }

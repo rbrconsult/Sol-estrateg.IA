@@ -145,11 +145,13 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     });
   }, [effectiveDateRange, filters.canal, filters.temperatura, filters.searchTerm, filters.etapa, filters.status]);
 
-  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string; etapa?: string; status?: string }>(proposals: T[]): T[] => {
+  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; ultimaAtualizacao?: string; dataCriacaoProjeto?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string; etapa?: string; status?: string }>(proposals: T[]): T[] => {
     return proposals.filter(p => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
-        const dateStr = p.dataCriacaoProposta;
+        /** SM nem sempre manda ts_proposta; usar última data conhecida do projeto para não “zerar” a visão. */
+        const dateStr =
+          p.dataCriacaoProposta || p.ultimaAtualizacao || p.dataCriacaoProjeto;
         if (!dateStr) return false;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return false;

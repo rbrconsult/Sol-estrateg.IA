@@ -25,7 +25,8 @@ import MonitoredScenariosSettings from '@/components/admin/MonitoredScenariosSet
 import DiscoveredDataStores from '@/components/admin/DiscoveredDataStores';
 import SkillsTab from '@/components/admin/SkillsTab';
 import { PessoasTab } from '@/components/admin/PessoasTab';
-import { InfrastructureTab } from '@/components/admin/InfrastructureTab';
+import { InfrastructureReferenceContent } from '@/components/admin/InfrastructureTab';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -392,14 +393,21 @@ export default function Admin() {
 
   const activeSessions = sessions.filter(s => s.is_active);
 
-  // Determine default tab
+  const showConfigGlobalTab =
+    userRole === 'super_admin' ||
+    hasAccess('admin') ||
+    hasAccess('admin-whatsapp') ||
+    hasAccess('admin-skills') ||
+    hasAccess('admin-filiais');
+
+  // Determine default tab — prioriza filial/equipe para quem opera cadastros no dia a dia
   const getDefaultTab = () => {
-    if (hasAccess('admin-whatsapp') || hasAccess('admin-skills')) return 'config-global';
     if (hasAccess('admin-filiais')) return 'filiais';
-    if (hasAccess('admin-usuarios') || hasAccess('time-comercial')) return 'pessoas';
+    if (hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) return 'pessoas';
+    if (hasAccess('admin-whatsapp') || hasAccess('admin-skills') || userRole === 'super_admin') return 'config-global';
     if (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) return 'seguranca';
     if (hasAccess('admin-modulos')) return 'modulos';
-    return 'config-global';
+    return showConfigGlobalTab ? 'config-global' : 'filiais';
   };
 
   return (
@@ -464,10 +472,10 @@ export default function Admin() {
         {/* Tabs — 5 grupos */}
         <Tabs defaultValue={getDefaultTab()} className="space-y-4">
           <TabsList className="flex-wrap">
-            {(hasAccess('admin-whatsapp') || hasAccess('admin-skills')) && (
+            {showConfigGlobalTab && (
               <TabsTrigger value="config-global" className="flex items-center gap-1.5">
                 <Globe className="h-3.5 w-3.5" />
-                Config Global
+                Configurações globais
               </TabsTrigger>
             )}
             {hasAccess('admin-filiais') && (
@@ -494,18 +502,27 @@ export default function Admin() {
                 Módulos
               </TabsTrigger>
             )}
-            {userRole === 'super_admin' && (
-              <TabsTrigger value="infraestrutura" className="flex items-center gap-1.5">
-                <Server className="h-3.5 w-3.5" />
-                Infraestrutura
-              </TabsTrigger>
-            )}
           </TabsList>
 
           {/* ═══════════════════════════════════════════ */}
           {/* CONFIG GLOBAL — Krolic, Cenários, DS, Skills */}
           {/* ═══════════════════════════════════════════ */}
           <TabsContent value="config-global" className="space-y-6">
+            {showConfigGlobalTab &&
+              !hasAccess('admin-whatsapp') &&
+              !hasAccess('admin-skills') &&
+              userRole !== 'super_admin' && (
+                <Card className="border-dashed">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Configurações editáveis</CardTitle>
+                    <CardDescription>
+                      Krolic/WhatsApp, cenários monitorados, data stores e skills aparecem aqui quando seu usuário tiver as permissões
+                      correspondentes (ex.: <strong>WhatsApp Config</strong>, <strong>Skills / Edges</strong>) ou perfil super admin.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              )}
+
             {/* Krolic / WhatsApp — Compact */}
             {hasAccess('admin-whatsapp') && (
               <Card>
@@ -564,6 +581,22 @@ export default function Admin() {
 
             {/* Skills / Edge Functions */}
             {hasAccess('admin-skills') && <SkillsTab />}
+
+            {userRole === 'super_admin' && (
+              <Accordion type="single" collapsible className="rounded-lg border border-border px-4">
+                <AccordionItem value="infra-ref" className="border-0">
+                  <AccordionTrigger className="text-sm font-medium hover:no-underline py-4">
+                    <span className="flex items-center gap-2">
+                      <Server className="h-4 w-4 text-muted-foreground" />
+                      Arquitetura e referência técnica (somente leitura)
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3 pt-0">
+                    <InfrastructureReferenceContent />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
           </TabsContent>
 
           {/* ═══════════════════════════════════════════ */}
@@ -745,14 +778,6 @@ export default function Admin() {
             </AppErrorBoundary>
           </TabsContent>
 
-          {/* ═══════════════════════════════════════════ */}
-          {/* INFRAESTRUTURA */}
-          {/* ═══════════════════════════════════════════ */}
-          <TabsContent value="infraestrutura">
-            <AppErrorBoundary fallback={renderSectionFallback('Infraestrutura')}>
-              <InfrastructureTab />
-            </AppErrorBoundary>
-          </TabsContent>
         </Tabs>
 
         {/* ═══════════════════════════════════════════ */}

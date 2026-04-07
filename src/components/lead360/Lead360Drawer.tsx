@@ -63,6 +63,7 @@ function normalizeTemperature(temp: unknown): Proposal["temperatura"] {
 function buildBaseProposal(raw: Lead360Input): Proposal {
   return {
     id: raw.id || raw.projetoId || raw.project_id || raw.clienteTelefone || raw.telefone || crypto.randomUUID(),
+    franquiaId: raw.franquiaId || "",
     etapa: raw.etapa || "Novo",
     projetoId: raw.projetoId || "",
     nomeCliente: raw.nomeCliente || raw.nome || "Lead sem nome",
@@ -127,6 +128,7 @@ function buildEnrichedProposal(base: Proposal, syncLead: SolLead | null, qualDat
   const enriched = { ...base };
 
   if (syncLead) {
+    if (syncLead.franquia_id) enriched.franquiaId = syncLead.franquia_id;
     if (syncLead.nome && syncLead.nome.length > 3) enriched.nomeCliente = syncLead.nome;
     if (syncLead.telefone) enriched.clienteTelefone = syncLead.telefone;
     if (syncLead.email) enriched.clienteEmail = syncLead.email;

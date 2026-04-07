@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { RefreshCw, AlertCircle } from "lucide-react";
+import { RefreshCw, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
+import { isOportunidadeNaMesaDiretoria } from "@/lib/oportunidadeMesa";
 
 type StatusView = "abertos" | "ganhos" | "perdidos" | "excluidos";
 
@@ -39,13 +40,21 @@ const Pipeline = () => {
     return allProposals.filter((p) => p.status === "Perdido");
   }, [allProposals, statusView]);
 
+  const mesaDiretoriaCount = useMemo(
+    () => allProposals.filter(isOportunidadeNaMesaDiretoria).length,
+    [allProposals],
+  );
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Pipeline</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            Visão Kanban · Projetos Solar Market · Fonte: sol_projetos_sync (1 card por project_id)
+          <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
+            Visão Kanban · Solar Market · <span className="font-medium text-foreground">sol_projetos_sync</span> (1 card por{" "}
+            <span className="font-medium text-foreground">project_id</span>). A aba «Abertos» usa o status da sync: sem
+            ganho/perda/exclusão explícitos no SM, o registro cai em Aberto — o número pode ser maior que as oportunidades
+            reais «na mesa».
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -64,6 +73,19 @@ const Pipeline = () => {
           <TabsTrigger value="excluidos">Excluidos ({counts.excluidos})</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {statusView === "abertos" && counts.abertos > 0 && (
+        <Alert className="border-primary/20 bg-primary/5">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-medium text-foreground">{counts.abertos} abertos (sync)</span> — inclui cadastros que o SM
+            ainda não fechou como ganho ou perda. Para leitura de diretoria,{" "}
+            <span className="font-medium text-foreground">{mesaDiretoriaCount} na mesa</span> (regra: valor ou kWp preenchidos,
+            ou etapa a partir de qualificado/contato/proposta/negociação). Detalhe em{" "}
+            <span className="font-medium text-foreground">Contratos fechados</span>.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <PageFloatingFilter
         filters={gf.filters}

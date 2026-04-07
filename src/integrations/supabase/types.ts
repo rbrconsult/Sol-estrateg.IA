@@ -1858,6 +1858,7 @@ export type Database = {
           nome_cliente: string | null
           nome_proposta: string | null
           parcelas: string | null
+          percentual_comissao: string | null
           potencia_sistema: string | null
           project_id: string
           proposta_ativa: string | null
@@ -1874,6 +1875,7 @@ export type Database = {
           ts_proposta: string | null
           ts_proposta_aceita: string | null
           ts_sync: string | null
+          valor_comissao: string | null
           valor_contrato: string | null
           valor_proposta: string | null
         }
@@ -1905,6 +1907,7 @@ export type Database = {
           nome_cliente?: string | null
           nome_proposta?: string | null
           parcelas?: string | null
+          percentual_comissao?: string | null
           potencia_sistema?: string | null
           project_id: string
           proposta_ativa?: string | null
@@ -1921,6 +1924,7 @@ export type Database = {
           ts_proposta?: string | null
           ts_proposta_aceita?: string | null
           ts_sync?: string | null
+          valor_comissao?: string | null
           valor_contrato?: string | null
           valor_proposta?: string | null
         }
@@ -1952,6 +1956,7 @@ export type Database = {
           nome_cliente?: string | null
           nome_proposta?: string | null
           parcelas?: string | null
+          percentual_comissao?: string | null
           potencia_sistema?: string | null
           project_id?: string
           proposta_ativa?: string | null
@@ -1968,6 +1973,7 @@ export type Database = {
           ts_proposta?: string | null
           ts_proposta_aceita?: string | null
           ts_sync?: string | null
+          valor_comissao?: string | null
           valor_contrato?: string | null
           valor_proposta?: string | null
         }

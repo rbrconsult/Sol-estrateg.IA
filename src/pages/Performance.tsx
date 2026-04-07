@@ -3,10 +3,12 @@ import { Users, XCircle, Target } from "lucide-react";
 import Vendedores from "./Vendedores";
 import Perdas from "./Perdas";
 import Origens from "./Origens";
+import { CommercialDataPipelineNote } from "@/components/metrics/CommercialDataPipelineNote";
 
 export default function Performance() {
   return (
     <div className="p-4 md:p-6 space-y-6">
+      <CommercialDataPipelineNote />
       <Tabs defaultValue="vendedores" className="space-y-4">
         <TabsList>
           <TabsTrigger value="vendedores" className="gap-1.5">

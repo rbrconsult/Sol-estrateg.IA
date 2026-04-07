@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useFranquiaId } from "@/hooks/useFranquiaId";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { franquiaColumnValuesForSlug } from "@/lib/franquiaSync";
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
 
@@ -172,15 +174,20 @@ export function normalizePhone(phone: string): string {
 
 export function useSolLeads(statusFilter?: string[]) {
   const { user, userRole } = useAuth();
+  const { selectedOrgId } = useOrgFilter();
   const franquiaId = useFranquiaId();
+  const franchiseQueryReady = !selectedOrgId || franquiaId.trim().length > 0;
 
   return useQuery({
-    queryKey: ["sol-leads", franquiaId, statusFilter, userRole],
+    queryKey: ["sol-leads", franquiaId, statusFilter, userRole, selectedOrgId],
     queryFn: async (): Promise<SolLead[]> => {
+      if (selectedOrgId && !franquiaId.trim()) return [];
+      const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
+      const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
       let query = supabase
         .from("sol_leads_sync")
         .select("*")
-        .eq("franquia_id", franquiaId)
+        .in("franquia_id", franquiaFilter)
         .order("ts_cadastro", { ascending: false });
 
       if (statusFilter?.length) {
@@ -210,7 +217,7 @@ export function useSolLeads(statusFilter?: string[]) {
           const { data: gerenteRecord } = await supabase
             .from('sol_equipe_sync')
             .select('key')
-            .eq('franquia_id', franquiaId)
+            .in('franquia_id', franquiaFilter)
             .eq('nome', profile.full_name)
             .limit(1)
             .maybeSingle();
@@ -219,7 +226,7 @@ export function useSolLeads(statusFilter?: string[]) {
             const { data: closers } = await supabase
               .from('sol_equipe_sync')
               .select('nome')
-              .eq('franquia_id', franquiaId)
+              .in('franquia_id', franquiaFilter)
               .eq('gestor_key', gerenteRecord.key);
             const closerNames = (closers || []).map(c => c.nome).filter(Boolean) as string[];
             // Include gerente's own name too
@@ -251,7 +258,7 @@ export function useSolLeads(statusFilter?: string[]) {
 
       return allRows as SolLead[];
     },
-    enabled: !!user,
+    enabled: !!user && franchiseQueryReady,
     staleTime: 30_000,
     refetchInterval: 30_000,
   });
@@ -344,22 +351,27 @@ export function useSolEquipeInsert() {
 /** Limite alto: painéis comerciais agregam o histórico de eventos por franquia */
 export function useSolProjetos(limit = 15_000) {
   const { user } = useAuth();
+  const { selectedOrgId } = useOrgFilter();
   const franquiaId = useFranquiaId();
+  const franchiseQueryReady = !selectedOrgId || franquiaId.trim().length > 0;
 
   return useQuery({
-    queryKey: ["sol-projetos", franquiaId, limit],
+    queryKey: ["sol-projetos", franquiaId, limit, selectedOrgId],
     queryFn: async (): Promise<SolProjeto[]> => {
+      if (selectedOrgId && !franquiaId.trim()) return [];
+      const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
+      const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
       const { data, error } = await supabase
         .from("sol_projetos_sync")
         .select("*")
-        .eq("franquia_id", franquiaId)
+        .in("franquia_id", franquiaFilter)
         .not("project_id", "is", null)
         .order("ts_evento", { ascending: false })
         .limit(limit);
       if (error) throw error;
       return (data || []) as SolProjeto[];
     },
-    enabled: !!user,
+    enabled: !!user && franchiseQueryReady,
     staleTime: 5 * 60 * 1000,
   });
 }

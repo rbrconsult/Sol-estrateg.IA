@@ -212,6 +212,10 @@ npm run dev
 
 > As variáveis de ambiente Supabase são provisionadas automaticamente pelo Lovable Cloud.
 
+## 🚀 Produção (Live): frontend + banco + funções
+
+Alterações que mexem em **RLS**, **colunas** ou **Edge Functions** não valem só com *Publish* do app: o SQL em `supabase/migrations/` precisa ser **aplicado no projeto Supabase de produção**, e funções alteradas precisam de **redeploy**. Passo a passo e racional (comissões, slug vs `franquia_id`, checklist): **[docs/producao-dados-comerciais-e-deploy.md](./docs/producao-dados-comerciais-e-deploy.md)**.
+
 ## 📝 Licença
 
 Projeto proprietário — **RBR Consult**. Todos os direitos reservados.

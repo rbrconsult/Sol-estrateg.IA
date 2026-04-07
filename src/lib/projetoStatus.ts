@@ -67,6 +67,10 @@ export function mapProjetoRowToStatus(row: SolProjeto): ProjetoStatus {
     return "Ganho";
   }
 
+  /**
+   * Fallback: sem sinal explícito de ganho/perda/exclusão na sync → Aberto.
+   * Isso infla “abertos” vs o que a diretoria chama de oportunidade na mesa; ver `isOportunidadeNaMesaDiretoria`.
+   */
   return "Aberto";
 }
 

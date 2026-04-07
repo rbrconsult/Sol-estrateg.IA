@@ -3,30 +3,55 @@ import { useCommercialProposals } from "@/hooks/useCommercialProposals";
 import { useSolLeads } from '@/hooks/useSolData';
 import { getVendedorPerformance, getPerdasData } from "@/data/dataAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrencyAbbrev, safeToFixed } from "@/lib/formatters";
-import { Users, TrendingUp, DollarSign, XCircle, RefreshCw, Bot, Target, Clock, Award } from "lucide-react";
+import { Users, TrendingUp, DollarSign, XCircle, RefreshCw, Bot, Info } from "lucide-react";
 import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
+import { useFranquiaId } from "@/hooks/useFranquiaId";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
+import {
+  closerAllowlistCount,
+  filterProposalsByAllowedCloserIds,
+  hasCloserAllowlist,
+} from "@/lib/orgCloserAllowlist";
+import { filterProposalsToSelectedFranquia } from "@/lib/franquiaSync";
+import { useComercialCloserAllowlist } from "@/hooks/useComercialCloserAllowlist";
 
 export default function Vendedores() {
   const { proposals: allProposals, isLoading, error } = useCommercialProposals();
   const { data: solLeads } = useSolLeads();
-  const { selectedOrgName, isGlobal } = useOrgFilter();
+  const { selectedOrgName, isGlobal, selectedOrgId } = useOrgFilter();
+  const franquiaSlug = useFranquiaId();
+  const { allowedCloserIds, source: closerSource } = useComercialCloserAllowlist();
+  const franchiseSlugMissing = Boolean(selectedOrgId && !franquiaSlug.trim());
   const orgFilterActive = !isGlobal;
   const gf = useGlobalFilters();
 
-  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
+  const filteredProposals = useMemo(() => {
+    const scoped = filterProposalsToSelectedFranquia(
+      allProposals,
+      isGlobal,
+      isGlobal ? "" : franquiaSlug,
+    );
+    let list = gf.filterProposals(scoped);
+    if (!isGlobal) {
+      list = filterProposalsByAllowedCloserIds(list, allowedCloserIds);
+    }
+    return list;
+  }, [allProposals, gf.filterProposals, isGlobal, franquiaSlug, allowedCloserIds]);
+
+  const closerAllowlistActive = !isGlobal && hasCloserAllowlist(allowedCloserIds);
 
   const { vendedorPerformance, perdasData } = useMemo(() => {
     if (filteredProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
     return {
-      vendedorPerformance: getVendedorPerformance(filteredProposals),
-      perdasData: getPerdasData(filteredProposals),
+      vendedorPerformance: getVendedorPerformance(filteredProposals, "closer"),
+      perdasData: getPerdasData(filteredProposals, "closer"),
     };
   }, [filteredProposals]);
 
@@ -78,38 +103,60 @@ export default function Vendedores() {
   }
 
   if (error) {
-    return <div className="p-6"><p className="text-destructive">Erro ao carregar dados</p></div>;
+    return (
+      <div className="p-6 space-y-2">
+        <p className="text-destructive font-medium">Erro ao carregar dados</p>
+        <p className="text-sm text-muted-foreground">{(error as Error)?.message || String(error)}</p>
+      </div>
+    );
   }
 
   const maxValor = Math.max(...vendedorPerformance.map(v => v.valorTotal), 1);
 
-  const chartData = vendedorPerformance.slice(0, 10).map(v => ({
-    nome: v.nome.split(' ')[0],
+  const chartData = vendedorPerformance.slice(0, 12).map((v) => ({
+    nome: v.nome.length > 24 ? `${v.nome.slice(0, 22)}…` : v.nome,
+    nomeCompleto: v.nome,
     ganho: v.valorGanho,
     perdido: v.valorPerdido,
     aberto: v.valorAberto,
   }));
 
-  const conversaoData = vendedorPerformance.slice(0, 10).map(v => ({
-    nome: v.nome.split(' ')[0],
+  const conversaoData = vendedorPerformance.slice(0, 12).map((v) => ({
+    nome: v.nome.length > 24 ? `${v.nome.slice(0, 22)}…` : v.nome,
+    nomeCompleto: v.nome,
     conversao: v.totalPropostas > 0 ? (v.ganhos / v.totalPropostas) * 100 : 0,
   }));
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
 
+  const chartRows = Math.min(vendedorPerformance.length, 12);
+  const chartHeight = Math.max(320, chartRows * 40 + 72);
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Vendedores</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Performance comercial · Evolve Filial Olímpia</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance comercial</h1>
+          <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
+            Fonte: <span className="font-medium text-foreground">sol_projetos_sync</span>.{" "}
+            <span className="font-medium text-foreground">Slug</span> da filial alinha{" "}
+            <code className="text-[10px]">franquia_id</code> (RLS). O recorte mandatório por filial é por{" "}
+            <span className="font-medium text-foreground">responsável</span> (ID SM em{" "}
+            <code className="text-[10px]">organization_configs.comercial_closer_sm_ids</code>, com legado em código se vazio).
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {orgFilterActive && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
               🏢 {selectedOrgName}
+            </Badge>
+          )}
+          {closerAllowlistActive && (
+            <Badge variant="secondary" className="text-xs max-w-[260px] whitespace-normal text-center leading-tight">
+              Responsáveis: {closerAllowlistCount(allowedCloserIds)} IDs SM
+              {closerSource === "database" ? " (BD)" : " (legado)"}
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">{filteredProposals.length} propostas</Badge>
@@ -124,82 +171,59 @@ export default function Vendedores() {
         config={{ showPeriodo: true, showTemperatura: true, showSearch: true, showEtapa: true, showStatus: true, searchPlaceholder: "Buscar vendedor..." }}
       />
 
-      {/* ── ROI SOL ── */}
-      <Card className="border-primary/30 bg-primary/5">
+      {franchiseSlugMissing && (
+        <Alert>
+          <AlertDescription className="text-sm text-muted-foreground">
+            Nenhum dado comercial carregado para esta filial: falta <code className="text-xs">organizations.slug</code> coerente com{" "}
+            <code className="text-xs">franquia_id</code> nas tabelas de sync. Ajuste no banco de dados.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* ── Pré-venda SOL × contrato ganho (cruzamento project_id) ── */}
+      <Card className="border-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <Bot className="h-5 w-5" />
-            ROI Sol Estrateg.IA — Do Lead ao Contrato
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Bot className="h-5 w-5 text-primary shrink-0" />
+            Contratos ganhos: origem pré-venda (SOL) vs demais
           </CardTitle>
-          <p className="text-xs text-muted-foreground">Dos contratos fechados, quantos passaram pela qualificação do Robô SOL</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Só entra negócio com status <span className="font-medium text-foreground">Ganho</span> na sync de projetos. «Via
+            pré-venda SOL» = mesmo <code className="text-[10px]">project_id</code> encontrado em{" "}
+            <code className="text-[10px]">sol_leads_sync</code> com etapa além de tráfego bruto/declínio. Se tudo estiver zero,
+            ou não há ganhos no filtro ou os IDs não batem entre bases.
+          </p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="rounded-lg bg-card border border-border p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Contratos Fechados</p>
-              <p className="text-3xl font-bold text-foreground">{roiSol.total}</p>
+        <CardContent className="space-y-4">
+          {roiSol.total === 0 && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs leading-relaxed">
+                Nenhum <strong>Ganho</strong> no período/filtro atual — por isso tickets e percentuais aparecem vazios. Ajuste
+                filtros de data ou confira se o SM está gravando ganhos e alinhando <code className="text-[10px]">project_id</code>{" "}
+                entre lead e projeto.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="rounded-lg bg-muted/40 border border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Contratos ganhos</p>
+              <p className="text-2xl font-bold tabular-nums">{roiSol.total}</p>
             </div>
-            <div className="rounded-lg bg-primary/10 border border-primary/30 p-4 text-center">
-              <p className="text-xs text-primary mb-1">Via Robô SOL</p>
-              <p className="text-3xl font-bold text-primary">{roiSol.viaSol}</p>
-              <p className="text-sm text-primary font-semibold">{roiSol.pct.toFixed(0)}% do total</p>
+            <div className="rounded-lg bg-primary/10 border border-primary/25 p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Com histórico SOL (project_id)</p>
+              <p className="text-2xl font-bold text-primary tabular-nums">{roiSol.viaSol}</p>
+              <p className="text-[11px] text-primary/90 mt-1">{roiSol.total > 0 ? `${roiSol.pct.toFixed(0)}% dos ganhos` : "—"}</p>
             </div>
-            <div className="rounded-lg bg-card border border-border p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Ticket Médio SOL</p>
-              <p className="text-2xl font-bold text-chart-2">{formatCurrencyAbbrev(roiSol.ticketSol)}</p>
+            <div className="rounded-lg bg-muted/40 border border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Ticket médio (com SOL)</p>
+              <p className="text-lg font-bold tabular-nums">{roiSol.viaSol > 0 ? formatCurrencyAbbrev(roiSol.ticketSol) : "—"}</p>
             </div>
-            <div className="rounded-lg bg-card border border-border p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Ticket Médio Manual</p>
-              <p className="text-2xl font-bold text-muted-foreground">{roiSol.ticketManual > 0 ? formatCurrencyAbbrev(roiSol.ticketManual) : '—'}</p>
-            </div>
-          </div>
-
-          {/* Jornada Lead → Contrato */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Jornada Lead → Contrato</p>
-            <div className="flex items-center gap-1 flex-wrap">
-              {[
-                { label: 'Tráfego Pago', sub: 'entrada', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-                { label: 'SOL SDR', sub: '1ª qualif.', color: 'bg-primary/20 text-primary border-primary/30' },
-                { label: 'Qualificado', sub: 'MQL', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-                { label: 'Closer', sub: 'contato', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-                { label: 'Proposta', sub: 'negócio', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-                { label: 'Contrato', sub: 'fechado ✓', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-              ].map((step, i, arr) => (
-                <div key={step.label} className="flex items-center gap-1">
-                  <div className={`rounded-lg border px-3 py-2 text-center ${step.color}`}>
-                    <p className="text-xs font-bold">{step.label}</p>
-                    <p className="text-[10px] opacity-70">{step.sub}</p>
-                  </div>
-                  {i < arr.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Com SOL vs Sem SOL */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div className="rounded-lg bg-primary/10 border border-primary/30 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Bot className="h-4 w-4 text-primary" />
-                <p className="font-semibold text-primary text-sm">Com Sol Estrateg.IA</p>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Contratos via SOL</span><span className="font-bold">{roiSol.viaSol}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">% do total</span><span className="font-bold text-primary">{roiSol.pct.toFixed(1)}%</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Ticket médio</span><span className="font-bold">{formatCurrencyAbbrev(roiSol.ticketSol)}</span></div>
-              </div>
-            </div>
-            <div className="rounded-lg bg-muted/30 border border-border p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <p className="font-semibold text-muted-foreground text-sm">Sem Sol Estrateg.IA (Manual)</p>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Contratos manuais</span><span className="font-bold">{roiSol.total - roiSol.viaSol}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">% do total</span><span className="font-bold">{roiSol.total > 0 ? (100 - roiSol.pct).toFixed(1) : 0}%</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Ticket médio</span><span className="font-bold">{roiSol.ticketManual > 0 ? formatCurrencyAbbrev(roiSol.ticketManual) : '—'}</span></div>
-              </div>
+            <div className="rounded-lg bg-muted/40 border border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Ticket médio (sem match SOL)</p>
+              <p className="text-lg font-bold tabular-nums text-muted-foreground">
+                {roiSol.total > roiSol.viaSol && roiSol.ticketManual > 0 ? formatCurrencyAbbrev(roiSol.ticketManual) : "—"}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -211,22 +235,47 @@ export default function Vendedores() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-primary" />
-              Receita por Vendedor
+              Receita por closer
             </CardTitle>
+            <p className="text-xs text-muted-foreground">Barras horizontais · passe o mouse para o nome completo</p>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatCurrencyAbbrev(v)} />
-                <YAxis dataKey="nome" type="category" stroke="hsl(var(--muted-foreground))" width={70} />
-                <Tooltip
-                  formatter={(value: number, name: string) => [formatCurrencyAbbrev(value), name === 'ganho' ? 'Ganho' : name === 'perdido' ? 'Perdido' : 'Em Aberto']}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={chartHeight}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 8, right: 20, left: 4, bottom: 8 }}
+                barCategoryGap="12%"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrencyAbbrev(v)} />
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  stroke="hsl(var(--muted-foreground))"
+                  width={156}
+                  tick={{ fontSize: 10 }}
+                  interval={0}
                 />
-                <Legend />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const row = payload[0].payload as { nomeCompleto: string; ganho: number; aberto: number; perdido: number };
+                    return (
+                      <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md max-w-xs">
+                        <p className="font-medium text-foreground mb-1.5 leading-snug">{row.nomeCompleto}</p>
+                        <ul className="space-y-0.5 text-muted-foreground">
+                          <li>Ganho: <span className="text-foreground font-medium">{formatCurrencyAbbrev(row.ganho)}</span></li>
+                          <li>Em aberto: <span className="text-foreground font-medium">{formatCurrencyAbbrev(row.aberto)}</span></li>
+                          <li>Perdido: <span className="text-foreground font-medium">{formatCurrencyAbbrev(row.perdido)}</span></li>
+                        </ul>
+                      </div>
+                    );
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="ganho" stackId="a" fill="hsl(var(--chart-2))" name="Ganho" />
-                <Bar dataKey="aberto" stackId="a" fill="hsl(var(--primary))" name="Em Aberto" />
+                <Bar dataKey="aberto" stackId="a" fill="hsl(var(--primary))" name="Em aberto" />
                 <Bar dataKey="perdido" stackId="a" fill="hsl(var(--destructive))" name="Perdido" />
               </BarChart>
             </ResponsiveContainer>
@@ -237,20 +286,49 @@ export default function Vendedores() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Taxa de Conversão (Fechadas ÷ Enviadas)
+              Taxa de conversão (ganhos ÷ propostas)
             </CardTitle>
+            <p className="text-xs text-muted-foreground">Mesmo eixo de nomes que o gráfico ao lado — evita rótulos sobrepostos</p>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={conversaoData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="nome" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}%`} />
-                <Tooltip
-                  formatter={(value) => [`${safeToFixed(value, 1)}%`, 'Conversão']}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={chartHeight}>
+              <BarChart
+                data={conversaoData}
+                layout="vertical"
+                margin={{ top: 8, right: 20, left: 4, bottom: 8 }}
+                barCategoryGap="18%"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, 100]}
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(v) => `${v}%`}
                 />
-                <Bar dataKey="conversao" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  stroke="hsl(var(--muted-foreground))"
+                  width={156}
+                  tick={{ fontSize: 10 }}
+                  interval={0}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const row = payload[0].payload as { nomeCompleto: string; conversao: number };
+                    return (
+                      <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md max-w-xs">
+                        <p className="font-medium text-foreground mb-1 leading-snug">{row.nomeCompleto}</p>
+                        <p className="text-muted-foreground">
+                          Conversão: <span className="text-foreground font-semibold">{safeToFixed(row.conversao, 1)}%</span>
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar dataKey="conversao" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} name="Conversão %" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -262,16 +340,19 @@ export default function Vendedores() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Detalhamento por Vendedor
+            Detalhamento por closer
           </CardTitle>
-          <p className="text-xs text-muted-foreground">Performance individual · Conversão = Contratos ÷ Propostas</p>
+          <p className="text-xs text-muted-foreground">
+            Linhas agrupadas pelo closer comercial na sync (<code className="text-[10px]">closer_nome</code> →{" "}
+            <code className="text-[10px]">responsavel</code>). Conversão = contratos ganhos ÷ propostas enviadas.
+          </p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-3 font-semibold text-muted-foreground">Vendedor</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground">Closer</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Propostas</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Contratos</th>
                   <th className="text-right p-3 font-semibold text-muted-foreground">Valor Ganho</th>
@@ -350,7 +431,7 @@ export default function Vendedores() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <XCircle className="h-5 w-5" />
-              Perdas por Vendedor
+              Perdas por closer
             </CardTitle>
           </CardHeader>
           <CardContent>

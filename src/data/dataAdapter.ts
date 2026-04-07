@@ -11,6 +11,8 @@ export { PROJETO_STATUS_KEYS, PROJETO_STATUS_LABEL, projetoStatusLabel } from '@
 
 export interface Proposal {
   id: string;
+  /** `sol_projetos_sync.franquia_id` — alinhado ao slug da org no sync (hífen ou underscore). */
+  franquiaId: string;
   etapa: string;
   projetoId: string;
   nomeCliente: string;
@@ -58,6 +60,10 @@ export interface Proposal {
   makeTotalMensagens?: number;
   makeMensagensRecebidas?: number;
   makeDataResposta?: string;
+  /** `sol_projetos_sync.valor_comissao` (R$), quando preenchido no banco. */
+  comissaoValorSync?: number;
+  /** `sol_projetos_sync.percentual_comissao` (% sobre valor_proposta), quando preenchido no banco. */
+  comissaoPercentualSync?: number;
 }
 
 // ── Helpers ──
@@ -105,6 +111,7 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
 
     return {
       id: l.project_id || l.telefone || `LEAD-${i}`,
+      franquiaId: l.franquia_id || "",
       etapa,
       projetoId: l.project_id || '',
       nomeCliente: l.nome || `Lead ...${(l.telefone || '').slice(-4)}`,
@@ -236,6 +243,15 @@ function parseValorPropostaBR(raw: string | number | null | undefined): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
+function parsePercentualComissao(raw: string | number | null | undefined): number | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const s = String(raw).trim().replace("%", "").replace(/\s/g, "").replace(",", ".");
+  if (s === "") return undefined;
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 function parsePotenciaKwp(raw: string | number | null | undefined): number {
   if (raw == null) return 0;
   if (typeof raw === "number") return Number.isFinite(raw) ? raw : 0;
@@ -303,6 +319,12 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
     const etapa = normalizeEtapaKanban(r.etapa, status);
     const valorProposta = parseValorPropostaBR(r.valor_proposta);
     const potenciaSistema = parsePotenciaKwp(r.potencia_sistema);
+    const rawVc = r.valor_comissao;
+    const rawPct = r.percentual_comissao;
+    const comissaoValorSync =
+      rawVc != null && String(rawVc).trim() !== "" ? parseValorPropostaBR(rawVc) : undefined;
+    const comissaoPercentualSync =
+      rawPct != null && String(rawPct).trim() !== "" ? parsePercentualComissao(rawPct) : undefined;
     const tempoNaEtapa = calcularTempoNaEtapa(ultimaAtualizacao || dataCriacaoProposta);
     const probKey = (r.etapa || etapa).toUpperCase();
     const probabilidade =
@@ -310,6 +332,7 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
 
     return {
       id: r.project_id || r.key || `SM-${i}`,
+      franquiaId: (r.franquia_id as string) || '',
       etapa,
       projetoId: r.project_id || '',
       nomeCliente:
@@ -342,6 +365,8 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
       faseSM: r.etapa || '',
       makeNome: r.nome_cliente || undefined,
       makeEmail: r.email_cliente || undefined,
+      comissaoValorSync,
+      comissaoPercentualSync,
     };
   });
 }
@@ -424,10 +449,25 @@ export function getFunnelData(proposals: Proposal[]) {
   }).sort((a, b) => b.quantidade - a.quantidade);
 }
 
-export function getVendedorPerformance(proposals: Proposal[]) {
-  const vendedores = [...new Set(proposals.map(p => p.representante || p.responsavel).filter(Boolean))];
-  return vendedores.map(v => {
-    const ps = proposals.filter(p => (p.representante || p.responsavel) === v);
+/** Agrupamento de performance: closer = campo comercial (closer na sync, mapeado em `responsavel`); representante = legado rep+closer. */
+export type VendedorPerformanceGroupBy = "closer" | "representante";
+
+export function vendedorPerformanceKey(p: Proposal, groupBy: VendedorPerformanceGroupBy = "closer"): string {
+  if (groupBy === "closer") {
+    const c = (p.responsavel || "").trim();
+    return c || "Closer não preenchido na sync";
+  }
+  const s = (p.representante || p.responsavel || "").trim();
+  return s || "Sem identificação";
+}
+
+export function getVendedorPerformance(
+  proposals: Proposal[],
+  groupBy: VendedorPerformanceGroupBy = "closer",
+) {
+  const vendedores = [...new Set(proposals.map((p) => vendedorPerformanceKey(p, groupBy)))];
+  return vendedores.map((v) => {
+    const ps = proposals.filter((p) => vendedorPerformanceKey(p, groupBy) === v);
     const ganhos = ps.filter(p => p.status === 'Ganho');
     const perdidos = ps.filter(p => p.status === 'Perdido');
     const abertos = ps.filter(p => p.status === 'Aberto');
@@ -503,6 +543,7 @@ export function getForecastData(proposals: Proposal[]) {
   const abertos = proposals.filter(p => p.status === 'Aberto');
   const ganhos = proposals.filter(p => p.status === 'Ganho');
   const receitaConfirmada = ganhos.reduce((a, p) => a + p.valorProposta, 0);
+  const potenciaConfirmada = ganhos.reduce((a, p) => a + (p.potenciaSistema || 0), 0);
   const f7 = sumForecastByCloseHorizon(abertos, 7);
   const f14 = sumForecastByCloseHorizon(abertos, 14);
   const f21 = sumForecastByCloseHorizon(abertos, 21);
@@ -526,7 +567,8 @@ export function getForecastData(proposals: Proposal[]) {
       { faixa: '76-100%', quantidade: abertos.filter(p => p.probabilidade > 75).length, valor: abertos.filter(p => p.probabilidade > 75).reduce((a, p) => a + p.valorProposta, 0) },
     ],
     pipelinePonderado,
-    receitaConfirmada, potenciaConfirmada: 0,
+    receitaConfirmada,
+    potenciaConfirmada,
     totalContratos: ganhos.length, ticketMedioContrato: ganhos.length > 0 ? receitaConfirmada / ganhos.length : 0,
     totalPropostasAbertas: abertos.length,
     distribuicaoPorEtapa: [],
@@ -551,7 +593,10 @@ export function getAtividadesData(proposals: Proposal[]) {
   };
 }
 
-export function getPerdasData(proposals: Proposal[]) {
+export function getPerdasData(
+  proposals: Proposal[],
+  vendedorGroupBy: VendedorPerformanceGroupBy = "representante",
+) {
   const perdidos = proposals.filter(p => p.status === 'Perdido');
   const byKey = <T extends string>(key: (p: Proposal) => T) => {
     const map = new Map<T, { quantidade: number; valor: number }>();
@@ -564,7 +609,7 @@ export function getPerdasData(proposals: Proposal[]) {
   };
   const porMotivo = byKey(p => (p.motivoPerda || 'Não informado') as string).map(({ key, ...r }) => ({ motivo: key, ...r }));
   const porEtapa = byKey(p => p.etapa).map(({ key, ...r }) => ({ etapa: key, ...r }));
-  const porVendedor = byKey(p => (p.representante || 'Não atribuído') as string).map(({ key, ...r }) => ({ vendedor: key, ...r }));
+  const porVendedor = byKey(p => vendedorPerformanceKey(p, vendedorGroupBy) as string).map(({ key, ...r }) => ({ vendedor: key, ...r }));
   const porOrigem = byKey(p => (p.origemLead || 'Não informado') as string).map(({ key, ...r }) => ({ origem: key, ...r }));
   return {
     totalPerdidos: perdidos.length,

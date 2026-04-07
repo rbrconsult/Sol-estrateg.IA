@@ -9,17 +9,37 @@ import { XCircle, TrendingDown, AlertTriangle, Target, Users, Lightbulb, Refresh
 import { HelpButton } from "@/components/HelpButton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useOrgFilter } from "@/contexts/OrgFilterContext";
+import { useFranquiaId } from "@/hooks/useFranquiaId";
+import { filterProposalsToSelectedFranquia } from "@/lib/franquiaSync";
+import { filterProposalsByAllowedCloserIds } from "@/lib/orgCloserAllowlist";
+import { useComercialCloserAllowlist } from "@/hooks/useComercialCloserAllowlist";
 
 const COLORS = ['hsl(var(--destructive))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--primary))'];
 
 export default function Perdas() {
   const { proposals: allProposals, isLoading, error } = useCommercialProposals();
   const gf = useGlobalFilters();
-  const filteredProposals = useMemo(() => gf.filterProposals(allProposals), [allProposals, gf.filterProposals]);
+  const { isGlobal } = useOrgFilter();
+  const franquiaSlug = useFranquiaId();
+  const { allowedCloserIds } = useComercialCloserAllowlist();
+
+  const filteredProposals = useMemo(() => {
+    const scoped = filterProposalsToSelectedFranquia(
+      allProposals,
+      isGlobal,
+      isGlobal ? "" : franquiaSlug,
+    );
+    let list = gf.filterProposals(scoped);
+    if (!isGlobal) {
+      list = filterProposalsByAllowedCloserIds(list, allowedCloserIds);
+    }
+    return list;
+  }, [allProposals, gf.filterProposals, isGlobal, franquiaSlug, allowedCloserIds]);
 
   const perdasData = useMemo(() => {
     if (filteredProposals.length === 0) return null;
-    return getPerdasData(filteredProposals);
+    return getPerdasData(filteredProposals, "closer");
   }, [filteredProposals]);
 
   if (isLoading) {
