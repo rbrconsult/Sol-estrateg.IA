@@ -573,12 +573,6 @@ export default function Admin() {
               </Card>
             )}
 
-            {/* Cenários Monitorados */}
-            {hasAccess('admin-whatsapp') && <MonitoredScenariosSettings />}
-
-            {/* DataStores Descobertos */}
-            {hasAccess('admin-whatsapp') && <DiscoveredDataStores />}
-
             {/* SOL v2 — Configuração do Robô */}
             {(userRole === 'super_admin' || userRole === 'diretor') && (
               <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/config')}>
@@ -592,6 +586,12 @@ export default function Admin() {
                 </CardHeader>
               </Card>
             )}
+
+            {/* Cenários Monitorados */}
+            {hasAccess('admin-whatsapp') && <MonitoredScenariosSettings />}
+
+            {/* DataStores Descobertos */}
+            {hasAccess('admin-whatsapp') && <DiscoveredDataStores />}
 
             {/* Skills / Edge Functions */}
             {hasAccess('admin-skills') && <SkillsTab />}
