@@ -1,33 +1,59 @@
 project_id = "xffzjdulkdgyicsllznp"
 
 [functions]
-  [functions.auth-email-hook]
+
+  # --- Cron / Make / Webhooks externos (sem JWT) ---
+  [functions.sync-make-datastores]
     verify_jwt = false
-  [functions.fetch-make-data]
+  [functions.cron-sync]
+    verify_jwt = false
+  [functions.skill-golden-hour]
+    verify_jwt = false
+  [functions.sync-time-comercial]
+    verify_jwt = false
+  [functions.webhook-campaign-data]
+    verify_jwt = false
+  [functions.sync-campaign-data]
     verify_jwt = false
   [functions.fetch-make-errors]
     verify_jwt = false
   [functions.fetch-make-heartbeat]
     verify_jwt = false
-  [functions.impersonate-user]
+
+  # --- Webhooks / usuário não autenticado ---
+  [functions.whatsapp-webhook]
     verify_jwt = false
+  [functions.whatsapp-proxy]
+    verify_jwt = false
+  [functions.turnstile-verify]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+
+  # --- Ações operacionais sem JWT ---
   [functions.make-action]
     verify_jwt = false
-  [functions.manage-users]
+  [functions.sol-actions]
     verify_jwt = false
   [functions.notify-ticket-whatsapp]
     verify_jwt = false
   [functions.send-whatsapp-alert]
     verify_jwt = false
+  [functions.manage-users]
+    verify_jwt = false
+  [functions.impersonate-user]
+    verify_jwt = false
   [functions.track-session]
     verify_jwt = false
-  [functions.whatsapp-proxy]
-    verify_jwt = false
-  [functions.whatsapp-webhook]
-    verify_jwt = false
-  [functions.cron-sync]
-    verify_jwt = false
-  [functions.sol-actions]
-    verify_jwt = false
-  [functions.sync-campaign-data]
-    verify_jwt = false
+
+  # --- Frontend autenticado (JWT obrigatório) ---
+  [functions.fetch-make-data]
+    verify_jwt = true
+  [functions.fetch-make-comercial]
+    verify_jwt = true
+  [functions.executive-summary]
+    verify_jwt = true
+  [functions.generate-report]
+    verify_jwt = true
+  [functions.generate-skill]
+    verify_jwt = true
