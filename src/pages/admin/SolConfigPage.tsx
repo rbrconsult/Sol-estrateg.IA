@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save, Settings } from "lucide-react";
+import { Loader2, Save, Settings, ArrowLeft } from "lucide-react";
 import { useSolConfig, useSolConfigUpdate } from "@/hooks/useSolData";
 
 const PROMPT_KEYS = [
@@ -15,6 +16,7 @@ const PROMPT_KEYS = [
 const FUP_KEYS = Array.from({ length: 9 }, (_, i) => `fup_frio_${i}`);
 
 export default function SolConfigPage() {
+  const navigate = useNavigate();
   const { data: configs, isLoading } = useSolConfig();
   const updateConfig = useSolConfigUpdate();
   const [editValues, setEditValues] = useState<Record<string, string>>({});
@@ -39,11 +41,16 @@ export default function SolConfigPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Settings className="h-6 w-6" /> Configurações SOL v2
-        </h1>
-        <p className="text-sm text-muted-foreground">Prompts, templates e variáveis do Agent IA</p>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Settings className="h-6 w-6" /> Configurações SOL v2
+          </h1>
+          <p className="text-sm text-muted-foreground">Prompts, templates e variáveis do Agent IA</p>
+        </div>
       </div>
 
       {/* Prompts */}
