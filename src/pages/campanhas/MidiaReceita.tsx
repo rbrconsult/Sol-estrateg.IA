@@ -50,21 +50,21 @@ export default function CampanhasMidiaReceita() {
     let rows = campaignData || [];
     if (gf.effectiveDateRange?.from) {
       const from = gf.effectiveDateRange.from.toISOString().slice(0, 10);
-      rows = rows.filter(r => r.data_referencia >= from);
+      rows = rows.filter(r => r.date >= from);
     }
     if (gf.effectiveDateRange?.to) {
       const to = gf.effectiveDateRange.to.toISOString().slice(0, 10);
-      rows = rows.filter(r => r.data_referencia <= to);
+      rows = rows.filter(r => r.date <= to);
     }
-    if (canalFilter !== 'all') rows = rows.filter(r => r.plataforma === canalFilter);
+    if (canalFilter !== 'all') rows = rows.filter(r => r.objetivo === canalFilter);
     return rows;
   }, [campaignData, gf.effectiveDateRange, canalFilter]);
 
   const byCampaign = useMemo(() => {
     const invMap = new Map<string, { canal: string; campanha: string; investimento: number; leadsMedia: number }>();
     for (const r of filteredCampaigns) {
-      const key = `${r.plataforma}||${r.campaign_name || 'Sem campanha'}`;
-      if (!invMap.has(key)) invMap.set(key, { canal: r.plataforma, campanha: r.campaign_name || 'Sem campanha', investimento: 0, leadsMedia: 0 });
+      const key = `${r.objetivo || 'Meta'}||${r.campaign_name || 'Sem campanha'}`;
+      if (!invMap.has(key)) invMap.set(key, { canal: r.objetivo || 'Meta', campanha: r.campaign_name || 'Sem campanha', investimento: 0, leadsMedia: 0 });
       const m = invMap.get(key)!;
       m.investimento += Number(r.spend) || 0;
       m.leadsMedia += Number(r.leads) || 0;

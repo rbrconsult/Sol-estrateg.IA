@@ -12,7 +12,7 @@ const tablesAvailable = [
   "sol_config_sync (configurações do robô SDR)",
   "sol_funis_sync (etapas do funil)",
   "sol_conversions_sync (conversões CAPI)",
-  "campaign_metrics (métricas de anúncios: spend, clicks, leads, cpl, roas)",
+  "ads_meta_campaigns_daily (métricas de anúncios: spend, clicks, leads, cpl, roas)",
   "analytics_ga4_daily (sessões, usuários, bounce, conversões)",
   "make_heartbeat (saúde dos cenários de automação)",
   "make_errors (erros de cenários)",

@@ -240,12 +240,12 @@ Deno.serve(async (req) => {
       fetchSupabaseTable(supabase, "sol_leads_sync",
         "telefone, nome, canal_origem, status, temperatura, score, closer_nome, etapa_funil, valor_conta, ts_cadastro, ts_qualificado, transferido_comercial",
         orgSlug ? { franquia_id: orgSlug } : {}),
-      fetchSupabaseTable(supabase, "campaign_metrics",
-        "plataforma, campaign_name, campaign_id, data_referencia, spend, impressions, clicks, leads, ctr, cpc, cpl, roas, receita, conversions",
-        orgFilter),
-      fetchSupabaseTable(supabase, "ga4_metrics",
-        "data_referencia, source, medium, campaign, landing_page, sessions, users_count, new_users, bounce_rate, avg_session_duration, conversions, conversion_rate",
-        orgFilter),
+      fetchSupabaseTable(supabase, "ads_meta_campaigns_daily",
+        "campaign_name, campaign_id, date, spend, impressions, clicks, leads, ctr, cpc, cpl, roas, receita_gerada, objetivo",
+        orgSlug ? { franquia_id: orgSlug } : {}),
+      fetchSupabaseTable(supabase, "analytics_ga4_daily",
+        "date, source, medium, campaign, landing_page, sessions, users, new_users, bounce_rate, avg_session_duration, conversions",
+        orgSlug ? { franquia_id: orgSlug } : {}),
     ]);
 
     // Normalize Make DS

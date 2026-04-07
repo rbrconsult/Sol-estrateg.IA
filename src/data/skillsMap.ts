@@ -156,7 +156,7 @@ export const skillCategories: SkillCategory[] = [
       { id: "6.8", name: "Duplicata de Lead", desc: "Detecta leads duplicados entre canais", status: "ativo", verticals: ALL, fonte: "leads_sync (telefone duplicado)", output: "Dedup necessário" },
       { id: "6.9", name: "FUP Esgotado Alert", desc: "Leads que receberam máximo de FUPs sem converter", status: "ativo", verticals: ALL, fonte: "leads_sync (fup_count >= max)", output: "Sugestão desqualificar" },
       { id: "6.10", name: "Custo Infra por Lead", desc: "Custo de infraestrutura por lead processado", status: "ativo", verticals: ALL, fonte: "Make ops + infra / leads", output: "Custo unitário" },
-      { id: "6.11", name: "Relatórios Automáticos WhatsApp", desc: "Gera e envia relatórios programados (diário/semanal) via WhatsApp com dados reais + IA", status: "ativo", verticals: ALL, fonte: "report_templates + sol_leads_sync + campaign_metrics", output: "📊 Relatório WhatsApp" },
+      { id: "6.11", name: "Relatórios Automáticos WhatsApp", desc: "Gera e envia relatórios programados (diário/semanal) via WhatsApp com dados reais + IA", status: "ativo", verticals: ALL, fonte: "report_templates + sol_leads_sync + ads_meta_campaigns_daily", output: "📊 Relatório WhatsApp" },
     ],
   },
   {

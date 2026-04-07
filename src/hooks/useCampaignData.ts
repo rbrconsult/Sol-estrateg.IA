@@ -1,65 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 
-export interface CampaignMetric {
-  id: string;
-  organization_id: string;
-  plataforma: string;
-  campaign_id: string;
-  campaign_name: string;
-  adset_name: string;
-  ad_name: string;
-  data_referencia: string;
-  impressions: number;
-  clicks: number;
-  spend: number;
-  conversions: number;
-  leads: number;
-  ctr: number;
-  cpc: number;
-  cpl: number;
-  roas: number;
-  receita: number;
-  synced_at: string;
-}
-
-export interface GA4Metric {
-  id: string;
-  organization_id: string;
-  data_referencia: string;
-  source: string;
-  medium: string;
-  campaign: string;
-  landing_page: string;
-  sessions: number;
-  users_count: number;
-  new_users: number;
-  bounce_rate: number;
-  avg_session_duration: number;
-  pages_per_session: number;
-  conversions: number;
-  conversion_rate: number;
-  events: Record<string, any>;
-  synced_at: string;
-}
+export type CampaignMetric = Database["public"]["Tables"]["ads_meta_campaigns_daily"]["Row"];
+export type GA4Metric = Database["public"]["Tables"]["analytics_ga4_daily"]["Row"];
 
 async function fetchCampaignMetrics(): Promise<CampaignMetric[]> {
   const { data, error } = await supabase
-    .from("campaign_metrics")
+    .from("ads_meta_campaigns_daily")
     .select("*")
-    .order("data_referencia", { ascending: false });
+    .order("date", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data || []) as CampaignMetric[];
+  return data || [];
 }
 
 async function fetchGA4Metrics(): Promise<GA4Metric[]> {
   const { data, error } = await supabase
-    .from("ga4_metrics")
+    .from("analytics_ga4_daily")
     .select("*")
-    .order("data_referencia", { ascending: false });
+    .order("date", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data || []) as GA4Metric[];
+  return data || [];
 }
 
 export function useCampaignMetrics() {
