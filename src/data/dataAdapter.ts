@@ -185,7 +185,7 @@ function coalesceValorPotenciaFromHistory(group: SolProjeto[]): {
   potencia_sistema: SolProjeto["potencia_sistema"];
 } {
   const sorted = [...group].sort(
-    (a, b) => tsToMs(b.ts_evento || b.synced_at) - tsToMs(a.ts_evento || a.synced_at),
+     (a, b) => tsToMs(b.ts_evento || (b as any).synced_at) - tsToMs(a.ts_evento || (a as any).synced_at),
   );
   let valor_proposta: SolProjeto["valor_proposta"] = null;
   let potencia_sistema: SolProjeto["potencia_sistema"] = null;
@@ -213,7 +213,7 @@ export function dedupeProjetosLatest(rows: SolProjeto[]): SolProjeto[] {
   const out: SolProjeto[] = [];
   for (const [, group] of byProject) {
     const sorted = [...group].sort(
-      (a, b) => tsToMs(b.ts_evento || b.synced_at) - tsToMs(a.ts_evento || a.synced_at),
+      (a, b) => tsToMs(b.ts_evento || (b as any).synced_at) - tsToMs(a.ts_evento || (a as any).synced_at),
     );
     const latest = sorted[0];
     const { valor_proposta, potencia_sistema } = coalesceValorPotenciaFromHistory(sorted);
@@ -308,7 +308,7 @@ function normalizeEtapaKanban(
 export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
   return rows.map((r, i) => {
     const status = mapProjetoRowToStatus(r);
-    const ultimaAtualizacao = parseDate(r.ts_evento || r.synced_at || '') || '';
+    const ultimaAtualizacao = parseDate(r.ts_evento || (r as any).synced_at || '') || '';
     const dataCriacaoProjeto = parseDate(r.ts_cadastro_projeto || '') || '';
     const dataCriacaoProposta =
       parseDate(r.ts_proposta || '') ||
@@ -331,7 +331,7 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
       status === 'Ganho' ? 100 : status === 'Perdido' ? 0 : (PROBABILIDADE_POR_ETAPA[probKey] ?? PROBABILIDADE_POR_ETAPA[etapa] ?? 50);
 
     return {
-      id: r.project_id || r.key || `SM-${i}`,
+      id: r.project_id || `SM-${i}`,
       franquiaId: (r.franquia_id as string) || '',
       etapa,
       projetoId: r.project_id || '',
