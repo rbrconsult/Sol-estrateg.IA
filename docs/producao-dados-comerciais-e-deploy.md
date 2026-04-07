@@ -2,6 +2,9 @@
 
 **Objetivo:** registrar o **racional** das mudanças recentes (Performance, Comissões, filial, RLS) e deixar claro **como fazer isso valer no ambiente Live**, onde o código no Git não altera o banco sozinho.
 
+> **Não rode este arquivo no SQL Editor.** Este documento é Markdown (texto com `#`, listas, etc.). O Postgres acusa erro `syntax error at or near "#"` se você colar a página inteira.  
+> **O que colar no Supabase:** somente o conteúdo dos arquivos **`.sql`** em `supabase/migrations/` (veja a seção 3.2), ou **apenas** os blocos `SELECT` de verificação mais abaixo — nada de título `#` nem parágrafos.
+
 ---
 
 ## 1. Racional — o que o produto assume
