@@ -2380,6 +2380,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      franquia_id_matches_org_slug: {
+        Args: { p_fid: string; p_org_slug: string }
+        Returns: boolean
+      }
       get_user_org: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
