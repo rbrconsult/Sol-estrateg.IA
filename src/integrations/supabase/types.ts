@@ -1842,54 +1842,6 @@ export type Database = {
           },
         ]
       }
-      time_comercial: {
-        Row: {
-          ativo: boolean | null
-          cargo: string | null
-          created_at: string | null
-          email: string | null
-          franquia_id: string
-          id: string
-          krolic: boolean | null
-          krolik_id: string | null
-          krolik_setor_id: string | null
-          nome: string
-          sm_id: number | null
-          telefone: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          ativo?: boolean | null
-          cargo?: string | null
-          created_at?: string | null
-          email?: string | null
-          franquia_id: string
-          id?: string
-          krolic?: boolean | null
-          krolik_id?: string | null
-          krolik_setor_id?: string | null
-          nome: string
-          sm_id?: number | null
-          telefone?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          ativo?: boolean | null
-          cargo?: string | null
-          created_at?: string | null
-          email?: string | null
-          franquia_id?: string
-          id?: string
-          krolic?: boolean | null
-          krolik_id?: string | null
-          krolik_setor_id?: string | null
-          nome?: string
-          sm_id?: number | null
-          telefone?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       user_module_permissions: {
         Row: {
           created_at: string
