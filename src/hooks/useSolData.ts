@@ -446,10 +446,32 @@ export function useSolConfigUpdate() {
         .update({ valor_text, updated_by: "lovable", updated_at: new Date().toISOString() })
         .eq("key", key);
       if (error) throw error;
+
+      // Trigger reverse sync to Make DS 87419
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+          await fetch(
+            `https://${projectId}.supabase.co/functions/v1/sync-sol-config`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              },
+              body: JSON.stringify({ keys: [key] }),
+            }
+          );
+        }
+      } catch (syncErr) {
+        console.warn("Reverse sync to Make failed (non-blocking):", syncErr);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sol-config"] });
-      toast.success("Configuração salva. O Agent usará na próxima mensagem.");
+      toast.success("Configuração salva e sincronizada com o Agent.");
     },
     onError: (err: any) => toast.error(`Erro: ${err.message}`),
   });

@@ -11,6 +11,8 @@ project_id = "xffzjdulkdgyicsllznp"
     verify_jwt = false
   [functions.sync-time-comercial]
     verify_jwt = false
+  [functions.sync-sol-config]
+    verify_jwt = false
   [functions.webhook-campaign-data]
     verify_jwt = false
   [functions.sync-campaign-data]
