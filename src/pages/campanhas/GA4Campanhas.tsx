@@ -24,18 +24,18 @@ export default function GA4Campanhas() {
     let records = ga4Data;
     if (gf.effectiveDateRange?.from) {
       const from = gf.effectiveDateRange.from.toISOString().slice(0, 10);
-      records = records.filter(r => r.data_referencia >= from);
+      records = records.filter(r => r.date >= from);
     }
     if (gf.effectiveDateRange?.to) {
       const to = gf.effectiveDateRange.to.toISOString().slice(0, 10);
-      records = records.filter(r => r.data_referencia <= to);
+      records = records.filter(r => r.date <= to);
     }
     return records;
   }, [ga4Data, gf.effectiveDateRange]);
 
   const kpis = useMemo(() => {
     const sessions = filtered.reduce((s, r) => s + (r.sessions || 0), 0);
-    const users = filtered.reduce((s, r) => s + (r.users_count || 0), 0);
+    const users = filtered.reduce((s, r) => s + (r.users || 0), 0);
     const engaged = filtered.reduce((s, r) => s + ((r as any).engaged_sessions || 0), 0);
     const conversions = filtered.reduce((s, r) => s + (r.conversions || 0), 0);
     const newUsers = filtered.reduce((s, r) => s + (r.new_users || 0), 0);
@@ -54,7 +54,7 @@ export default function GA4Campanhas() {
       if (!map.has(key)) map.set(key, { source: r.source || '(direct)', medium: r.medium || '(none)', campaign: r.campaign || '(not set)', sessions: 0, users: 0, engaged: 0, conversions: 0 });
       const m = map.get(key)!;
       m.sessions += r.sessions || 0;
-      m.users += r.users_count || 0;
+      m.users += r.users || 0;
       m.engaged += (r as any).engaged_sessions || 0;
       m.conversions += r.conversions || 0;
     }

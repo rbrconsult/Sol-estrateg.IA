@@ -37,18 +37,18 @@ export default function GA4Page() {
     let records = ga4Data;
     if (pf.effectiveDateRange?.from) {
       const from = pf.effectiveDateRange.from.toISOString().slice(0, 10);
-      records = records.filter((r) => r.data_referencia >= from);
+      records = records.filter((r) => r.date >= from);
     }
     if (pf.effectiveDateRange?.to) {
       const to = pf.effectiveDateRange.to.toISOString().slice(0, 10);
-      records = records.filter((r) => r.data_referencia <= to);
+      records = records.filter((r) => r.date <= to);
     }
     return records;
   }, [ga4Data, pf.effectiveDateRange]);
 
   const kpis = useMemo(() => {
     const totalSessions = filtered.reduce((s, r) => s + r.sessions, 0);
-    const totalUsers = filtered.reduce((s, r) => s + r.users_count, 0);
+    const totalUsers = filtered.reduce((s, r) => s + (r.users || 0), 0);
     const totalNewUsers = filtered.reduce((s, r) => s + r.new_users, 0);
     const totalConversions = filtered.reduce((s, r) => s + r.conversions, 0);
     const avgBounce = filtered.length > 0
@@ -66,7 +66,7 @@ export default function GA4Page() {
       const key = r.source || "(direct)";
       if (!map[key]) map[key] = { source: key, sessions: 0, users: 0, conversions: 0 };
       map[key].sessions += r.sessions;
-      map[key].users += r.users_count;
+      map[key].users += r.users || 0;
       map[key].conversions += r.conversions;
     });
     return Object.values(map).sort((a, b) => b.sessions - a.sessions).slice(0, 10);
