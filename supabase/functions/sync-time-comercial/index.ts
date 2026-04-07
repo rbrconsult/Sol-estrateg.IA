@@ -38,9 +38,24 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { franquia_id, nome, ativo, krolic, sm_id, krolik_id, krolik_setor_id } = body;
+    const {
+      franquia_id,
+      nome,
+      cargo,
+      ativo,
+      sm_id,
+      krolik_id,
+      krolik_setor_id,
+      krolik_ativo,
+      horario_pico_inicio,
+      horario_pico_fim,
+      gestor_key,
+      taxa_conversao,
+      leads_hoje,
+      leads_mes,
+    } = body;
 
-    // Get DS ID from app_settings or env
+    // Get DS ID from app_settings — should be 87420 (sol_equipe v2)
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -64,21 +79,27 @@ Deno.serve(async (req) => {
 
     const makeApiKey = Deno.env.get("MAKE_API_KEY");
     const teamId = Deno.env.get("MAKE_TEAM_ID") || "1934898";
-    const key = `${franquia_id}_${krolik_id || sm_id || nome}`;
+    // Key matches sol_equipe_sync convention
+    const key = body.key || `${franquia_id}_${sm_id || krolik_id || nome}`;
 
-    const makePayload = {
-      dataStoreId: parseInt(dsId),
-      teamId: parseInt(teamId),
-      key,
-      data: {
-        franquia_id,
-        nome,
-        ativo: ativo ?? true,
-        krolic: krolic ?? true,
-        sm_id: sm_id ?? null,
-        krolik_id: krolik_id ?? null,
-        krolik_setor_id: krolik_setor_id ?? null,
-      },
+    // Payload aligned with sol_equipe_sync columns
+    const data: Record<string, unknown> = {
+      franquia_id,
+      nome,
+      cargo: cargo ?? null,
+      ativo: ativo ?? true,
+      sm_id: sm_id ?? null,
+      krolik_id: krolik_id ?? null,
+      krolik_setor_id: krolik_setor_id ?? null,
+      krolik_ativo: krolik_ativo ?? false,
+      horario_pico_inicio: horario_pico_inicio ?? null,
+      horario_pico_fim: horario_pico_fim ?? null,
+      gestor_key: gestor_key ?? null,
+      taxa_conversao: taxa_conversao ?? 0,
+      leads_hoje: leads_hoje ?? 0,
+      leads_mes: leads_mes ?? 0,
+      updated_by: "lovable",
+      updated_at: new Date().toISOString(),
     };
 
     const makeRes = await fetch(
@@ -89,21 +110,34 @@ Deno.serve(async (req) => {
           Authorization: `Token ${makeApiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ key, data: makePayload.data }),
+        body: JSON.stringify({ key, data }),
       }
     );
 
     const makeResult = await makeRes.text();
     console.log("Make sync result:", makeRes.status, makeResult);
 
+    // Also update sol_equipe_sync locally so UI reflects immediately
+    const { error: upsertErr } = await adminClient
+      .from("sol_equipe_sync")
+      .upsert(
+        { key, ...data, synced_at: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+
+    if (upsertErr) {
+      console.error("sol_equipe_sync upsert error:", upsertErr.message);
+    }
+
     return new Response(
       JSON.stringify({ ok: true, synced: true, makeStatus: makeRes.status }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("sync-time-comercial error:", err);
+    const msg = err instanceof Error ? err.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
