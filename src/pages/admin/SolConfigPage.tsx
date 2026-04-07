@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save, Settings } from "lucide-react";
+import { Loader2, Save, Settings, ArrowLeft } from "lucide-react";
 import { useSolConfig, useSolConfigUpdate } from "@/hooks/useSolData";
 
 const PROMPT_KEYS = [
