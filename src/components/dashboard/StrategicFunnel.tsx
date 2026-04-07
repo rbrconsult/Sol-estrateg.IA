@@ -3,6 +3,7 @@ import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
 import { formatCurrencyAbbrev } from "@/lib/formatters";
 import { DollarSign, ChevronRight, AlertTriangle } from "lucide-react";
+import { JOURNEY_ORDER } from "@/lib/leads-utils";
 
 interface FunnelStage {
   etapa: string;
@@ -16,28 +17,18 @@ interface StrategicFunnelProps {
   proposals: Proposal[];
 }
 
-const FUNNEL_ORDER = [
-  'TRAFEGO PAGO',
-  'PROSPECÇÃO',
-  'FOLLOW UP',
-  'QUALIFICAÇÃO',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO',
-  'CONTRATO ASSINADO',
-];
+const FUNNEL_ORDER = JOURNEY_ORDER;
 
 const stageColors = [
   'bg-blue-500',
-  'bg-indigo-500',
+  'bg-sky-500',
   'bg-violet-500',
-  'bg-amber-400',
   'bg-emerald-500',
   'bg-teal-500',
   'bg-green-500',
   'bg-lime-500',
   'bg-orange-500',
+  'bg-red-500',
 ];
 
 export function StrategicFunnel({ data, proposals }: StrategicFunnelProps) {

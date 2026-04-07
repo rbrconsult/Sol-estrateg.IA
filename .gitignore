@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Make.com audit exports (may contain scenario details)
+make_audit/
+make_audit_v2/

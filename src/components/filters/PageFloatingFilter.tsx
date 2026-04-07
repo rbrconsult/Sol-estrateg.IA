@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { JOURNEY_ORDER } from "@/lib/leads-utils";
 
 export interface FilterConfig {
   showPeriodo?: boolean;
@@ -60,16 +61,7 @@ const defaultState: FilterState = {
 };
 
 // Etapa = posição no funil comercial (onde o lead está)
-const ALL_ETAPAS = [
-  'TRAFEGO PAGO',
-  'SOL SDR',
-  'FOLLOW UP',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO',
-  'DECLÍNIO',
-];
+const ALL_ETAPAS = JOURNEY_ORDER;
 
 // Status = estado vital do lead
 const ALL_STATUSES = [

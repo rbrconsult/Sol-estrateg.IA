@@ -1,20 +1,13 @@
 import { useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Proposal } from "@/data/dataAdapter";
+import { JOURNEY_ORDER } from "@/lib/leads-utils";
 
 interface StageProgressProps {
   proposals: Proposal[];
 }
 
-const FUNNEL_ORDER = [
-  'TRAFEGO PAGO',
-  'PROSPECÇÃO',
-  'QUALIFICAÇÃO',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO'
-];
+const FUNNEL_ORDER = JOURNEY_ORDER;
 
 export function StageProgress({ proposals }: StageProgressProps) {
   const stageData = useMemo(() => {

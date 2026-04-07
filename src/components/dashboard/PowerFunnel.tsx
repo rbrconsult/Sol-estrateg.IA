@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ProjectsModal } from "./ProjectsModal";
 import { Proposal } from "@/data/dataAdapter";
 import { Zap, ChevronRight } from "lucide-react";
+import { JOURNEY_ORDER } from "@/lib/leads-utils";
 
 interface PowerStage {
   etapa: string;
@@ -16,24 +17,18 @@ interface PowerFunnelProps {
 }
 
 // Ordem estratégica do funil de vendas
-const FUNNEL_ORDER = [
-  'TRAFEGO PAGO',
-  'PROSPECÇÃO',
-  'QUALIFICAÇÃO',
-  'QUALIFICADO',
-  'CONTATO REALIZADO',
-  'PROPOSTA',
-  'NEGOCIAÇÃO'
-];
+const FUNNEL_ORDER = JOURNEY_ORDER;
 
 const stageColors = [
   'bg-amber-500',
-  'bg-orange-400',
-  'bg-yellow-500',
+  'bg-sky-500',
+  'bg-violet-500',
   'bg-lime-500',
-  'bg-green-500',
+  'bg-teal-500',
   'bg-emerald-500',
-  'bg-teal-500'
+  'bg-green-500',
+  'bg-orange-500',
+  'bg-red-500',
 ];
 
 export function PowerFunnel({ data, proposals }: PowerFunnelProps) {

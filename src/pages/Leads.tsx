@@ -13,7 +13,7 @@ import { LeadDetailDrawer } from "@/components/sol/LeadDetailDrawer";
 import { useSolActionsV2 as useSolActions } from '@/hooks/useSolActionsV2';
 import { BRAND_FOOTER_TAGLINE } from "@/constants/branding";
 
-import { normalizeCloser, getEtapaLabel } from "@/lib/leads-utils";
+import { normalizeCloser, getEtapaLabel, JOURNEY_ORDER } from "@/lib/leads-utils";
 import { useLeadsDashboard } from "@/hooks/useLeadsDashboard";
 
 // Importando os novos sub-componentes (Módulos) extraídos
@@ -23,6 +23,16 @@ import { LeadsSLAMonitor } from "@/components/leads/LeadsSLAMonitor";
 import { LeadsRobotics } from "@/components/leads/LeadsRobotics";
 import { LeadsTable } from "@/components/leads/LeadsTable";
 import { LeadsTemperaturePipeline } from "@/components/leads/LeadsTemperaturePipeline";
+
+const ETAPAS_PRE_VENDA_COMERCIAL = JOURNEY_ORDER;
+
+function normalizeEtapaKey(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
+}
 
 export default function Leads() {
   const queryClient = useQueryClient();
@@ -59,31 +69,36 @@ export default function Leads() {
     return pf.filterRecords ? pf.filterRecords(records) : records;
   }, [solLeads, pf.filterRecords]);
 
+  const scopedByFunnel = useMemo(() => {
+    const allowed = new Set(ETAPAS_PRE_VENDA_COMERCIAL.map(normalizeEtapaKey));
+    return periodFiltered.filter((r) => allowed.has(normalizeEtapaKey(getEtapaLabel(r))));
+  }, [periodFiltered]);
+
   /* ── Extract unique values for filters (normalized) ── */
   const etapas = useMemo(() => {
     const set = new Set<string>();
-    periodFiltered.forEach(r => set.add(getEtapaLabel(r)));
+    scopedByFunnel.forEach(r => set.add(getEtapaLabel(r)));
     return Array.from(set).sort();
-  }, [periodFiltered]);
+  }, [scopedByFunnel]);
 
   const closers = useMemo(() => {
     const set = new Set<string>();
-    periodFiltered.forEach(r => {
+    scopedByFunnel.forEach(r => {
       const c = normalizeCloser(r.closer_nome);
       if (c && c.toUpperCase() !== "SOL SDR") set.add(c);
     });
     return Array.from(set).sort();
-  }, [periodFiltered]);
+  }, [scopedByFunnel]);
 
   const statuses = useMemo(() => {
     const set = new Set<string>();
-    periodFiltered.forEach(r => { if (r.status) set.add(r.status); });
+    scopedByFunnel.forEach(r => { if (r.status) set.add(r.status); });
     return Array.from(set).sort();
-  }, [periodFiltered]);
+  }, [scopedByFunnel]);
 
   /* ── Filtered records ── */
   const filtered = useMemo(() => {
-    return periodFiltered.filter(r => {
+    return scopedByFunnel.filter(r => {
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         const match = (r.nome || "").toLowerCase().includes(term) ||
@@ -98,7 +113,7 @@ export default function Leads() {
       if (filterDsSource !== "todos" && (r.franquia_id || "sol_leads") !== filterDsSource) return false;
       return true;
     });
-  }, [periodFiltered, searchTerm, filterEtapa, filterStatus, filterCloser, filterCanal, filterDsSource]);
+  }, [scopedByFunnel, searchTerm, filterEtapa, filterStatus, filterCloser, filterCanal, filterDsSource]);
 
   // Hook isolado com o Heavy-Lifting matemático
   const dashboardData = useLeadsDashboard(filtered);
@@ -130,7 +145,7 @@ export default function Leads() {
           filters={pf.filters} hasFilters={pf.hasFilters} clearFilters={pf.clearFilters}
           setPeriodo={pf.setPeriodo} setDateFrom={pf.setDateFrom} setDateTo={pf.setDateTo}
           setTemperatura={pf.setTemperatura} setSearchTerm={pf.setSearchTerm} setEtapa={pf.setEtapa} setStatus={pf.setStatus}
-          config={{ showPeriodo: true, showTemperatura: true, showSearch: false, showEtapa: true, showStatus: true }}
+          config={{ showPeriodo: true, showTemperatura: true, showSearch: false, showEtapa: true, showStatus: true, etapas: ETAPAS_PRE_VENDA_COMERCIAL }}
         />
 
         {/* Cabeçalho */}

@@ -21,6 +21,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { JOURNEY_ORDER } from "@/lib/leads-utils";
 
 // ── Status colors & icons (keyed by etapa_funil) ──
 const STATUS_META: Record<string, { color: string; icon: typeof Users; desc: string }> = {
@@ -32,15 +33,16 @@ const STATUS_META: Record<string, { color: string; icon: typeof Users; desc: str
   'CONTATO REALIZADO': { color: "text-blue-500",         icon: Headphones,     desc: "Closer em contato" },
   'PROPOSTA':          { color: "text-indigo-500",       icon: Zap,            desc: "Proposta enviada" },
   'NEGOCIAÇÃO':        { color: "text-violet-500",       icon: Zap,            desc: "Em negociação" },
+  'CONTRATO ASSINADO': { color: "text-green-700",        icon: Trophy,         desc: "Contrato assinado" },
   GANHO:               { color: "text-green-600",         icon: Trophy,         desc: "Negócio fechado" },
   PERDIDO:             { color: "text-red-700",           icon: TrendingDown,   desc: "Negócio perdido" },
 };
 
-const FUNNEL_ORDER = ['TRAFEGO PAGO','SOL SDR','FOLLOW UP','QUALIFICADO','CONTATO REALIZADO','PROPOSTA','NEGOCIAÇÃO','DECLÍNIO'];
+const FUNNEL_ORDER = JOURNEY_ORDER;
 const FUNNEL_BAR_COLORS: Record<string, string> = {
   'TRAFEGO PAGO': 'hsl(210,50%,55%)', 'SOL SDR': 'hsl(40,90%,55%)', 'FOLLOW UP': 'hsl(25,85%,55%)',
   'QUALIFICADO': 'hsl(142,60%,45%)', 'CONTATO REALIZADO': 'hsl(200,70%,50%)', 'PROPOSTA': 'hsl(250,60%,55%)',
-  'NEGOCIAÇÃO': 'hsl(280,60%,50%)', 'DECLÍNIO': 'hsl(0,70%,55%)',
+  'NEGOCIAÇÃO': 'hsl(280,60%,50%)', 'CONTRATO ASSINADO': 'hsl(142,55%,35%)', 'DECLÍNIO': 'hsl(0,70%,55%)',
 };
 
 const PIE_COLORS = ['#3b82f6','#1e40af','#22c55e','#6b7280','#f59e0b','#ef4444'];
@@ -124,7 +126,7 @@ const Index = () => {
   }, [filtered]);
 
   // ══════════════════════════════════════════════════════════════
-  // SEÇÃO 3: DETALHAMENTO QUALIFICAÇÃO
+  // SEÇÃO 3: SOL SDR + qualificados (pré-comercial)
   // ══════════════════════════════════════════════════════════════
   const qualificados = useMemo(() => filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').sort((a, b) => (b.ts_qualificado || '').localeCompare(a.ts_qualificado || '')), [filtered]);
   const emQualificacao = useMemo(() => filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'SOL SDR').sort((a, b) => (b.ts_ultima_interacao || '').localeCompare(a.ts_ultima_interacao || '')), [filtered]);
@@ -213,6 +215,24 @@ const Index = () => {
   const countPipeline = useMemo(() =>
     filtered.filter(l => ['SOL SDR','QUALIFICADO','FOLLOW UP'].includes((l.etapa_funil || '').toUpperCase().trim())).length,
   [filtered]);
+
+  const negociosAbertosCount = useMemo(
+    () =>
+      (statusCounts['SOL SDR'] ?? 0) +
+      (statusCounts['FOLLOW UP'] ?? 0) +
+      (statusCounts['QUALIFICADO'] ?? 0),
+    [statusCounts],
+  );
+
+  const negociosPerdidosCount = useMemo(
+    () =>
+      filtered.filter(l => {
+        const st = (l.status || '').toUpperCase();
+        const et = (l.etapa_funil || '').toUpperCase().trim();
+        return st === 'PERDIDO' || et === 'DECLÍNIO';
+      }).length,
+    [filtered],
+  );
 
   const hasData = (leads?.length ?? 0) > 0;
   const isEmpty = !isLoading && !hasData && !error;
@@ -374,7 +394,7 @@ const Index = () => {
           </Card>
 
           {/* ═══════════════════════════════════════════════ */}
-          {/* SEÇÃO 3: DETALHAMENTO QUALIFICAÇÃO */}
+          {/* SEÇÃO 3: SOL SDR + qualificados */}
           {/* ═══════════════════════════════════════════════ */}
           {qualificados.length > 0 && (
             <Card className="p-4">
@@ -415,8 +435,8 @@ const Index = () => {
 
           {emQualificacao.length > 0 && (
             <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-1">Em Qualificação (SOL conversando)</h3>
-              <p className="text-xs text-muted-foreground mb-3">{emQualificacao.length} leads em conversa ativa</p>
+              <h3 className="text-sm font-semibold mb-1">SOL SDR (conversando)</h3>
+              <p className="text-xs text-muted-foreground mb-3">{emQualificacao.length} leads na etapa SOL SDR</p>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -457,7 +477,7 @@ const Index = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: 'Leads com FUP', value: fup.comFup, desc: 'Receberam ≥1 follow-up' },
-                { label: 'Em FUP ativo', value: fup.emFupAtivo, desc: 'No fluxo FOLLOW_UP agora' },
+                { label: 'Em FUP ativo', value: fup.emFupAtivo, desc: 'Na etapa FOLLOW UP' },
                 { label: 'Total FUPs enviados', value: fup.totalFups, desc: 'Soma de msgs FUP' },
                 { label: 'Média FUPs/lead', value: fup.mediaFups.toFixed(1), desc: 'FUPs por lead' },
                 { label: 'Resgatados (qual.)', value: fup.resgatadosQual, desc: 'Frios → Qualificados' },
@@ -609,14 +629,14 @@ const Index = () => {
               receitaPrevista: countPipeline, valorGanho: countGanho, taxaConversao: solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0,
               ticketMedio: 0,
               totalNegocios: filtered.length, negociosGanhos: statusCounts['GANHO'],
-              negociosPerdidos: statusCounts['PERDIDO'] + statusCounts['DESQUALIFICADO'],
-              negociosAbertos: statusCounts['EM_QUALIFICACAO'] + statusCounts['FOLLOW_UP'] + statusCounts['QUALIFICADO'],
+              negociosPerdidos: negociosPerdidosCount,
+              negociosAbertos: negociosAbertosCount,
               valorPipeline: countPipeline, cicloProposta: 0,
             }}
             healthScore={Math.min(Math.round((solPerf.total > 0 ? (statusCounts['QUALIFICADO'] / solPerf.total) * 100 : 0) * 4), 100)}
             alertCount={alertas.semAtividade.length + alertas.aguardandoCL.length}
             topVendedor="SOL Agent"
-            funnelBottleneck={statusCounts['TRAFEGO_PAGO'] > 0 ? `Recebidos → Qualificação (${((statusCounts['EM_QUALIFICACAO'] / statusCounts['TRAFEGO_PAGO']) * 100).toFixed(0)}%)` : "Dados insuficientes"}
+            funnelBottleneck={statusCounts['TRAFEGO PAGO'] > 0 ? `Tráfego pago → SOL SDR (${((statusCounts['SOL SDR'] / statusCounts['TRAFEGO PAGO']) * 100).toFixed(0)}%)` : "Dados insuficientes"}
           />
 
           <footer className="border-t border-border pt-4 text-center text-xs text-muted-foreground">

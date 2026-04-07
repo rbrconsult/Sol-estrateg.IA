@@ -15,8 +15,8 @@ import { CampanhaFilters } from '@/components/campanhas/CampanhaFilters';
 import { SyncBadge } from '@/components/campanhas/SyncBadge';
 import { KPICard } from '@/components/campanhas/KPICard';
 import { EmptyState } from '@/components/campanhas/EmptyState';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
 
-const FRANQUIA = 'evolve_olimpia';
 const META_COLOR = 'hsl(210,80%,55%)';
 const GOOGLE_COLOR = 'hsl(140,60%,45%)';
 const COLORS = [META_COLOR, GOOGLE_COLOR, 'hsl(35,90%,55%)', 'hsl(0,70%,55%)', 'hsl(270,60%,55%)'];
@@ -24,11 +24,12 @@ const tooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid h
 
 export default function CampanhasAdsPerformance() {
   const { periodo, setPeriodo, range } = usePeriodo();
+  const franquiaId = useFranquiaId();
   const [selectedCampanhas, setSelectedCampanhas] = useState<string[]>([]);
   const [canalFilter, setCanalFilter] = useState('all');
 
-  const { data: metaRows, isLoading: loadingMeta } = useMetaAds(FRANQUIA, range);
-  const { data: googleRows, isLoading: loadingGoogle } = useGoogleAds(FRANQUIA, range);
+  const { data: metaRows, isLoading: loadingMeta } = useMetaAds(franquiaId, range);
+  const { data: googleRows, isLoading: loadingGoogle } = useGoogleAds(franquiaId, range);
 
   // Normalize both sources into a unified format
   const unified = useMemo(() => {
@@ -153,7 +154,7 @@ export default function CampanhasAdsPerformance() {
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Megaphone className="h-5 w-5 text-primary" /> Ads Performance
           </h1>
-          <SyncBadge franquiaId={FRANQUIA} />
+          <SyncBadge franquiaId={franquiaId} />
         </div>
         <EmptyState message="Nenhum dado de mídia paga sincronizado ainda" />
       </div>
@@ -172,7 +173,7 @@ export default function CampanhasAdsPerformance() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <SyncBadge franquiaId={FRANQUIA} />
+          <SyncBadge franquiaId={franquiaId} />
           <Select value={canalFilter} onValueChange={setCanalFilter}>
             <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>

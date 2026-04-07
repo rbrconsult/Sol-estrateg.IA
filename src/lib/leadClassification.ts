@@ -15,10 +15,9 @@ export const STATUS_LABELS: Record<string, string> = {
   'CONTATO REALIZADO': 'Contato Realizado',
   'PROPOSTA': 'Proposta',
   'NEGOCIAÇÃO': 'Negociação',
-  'COBRANÇA': 'Cobrança',
+  'CONTRATO ASSINADO': 'Contrato Assinado',
   'DECLÍNIO': 'Declínio',
-  'REMARKETING': 'Remarketing',
-  'CONTRATO ASSINADO (FN)': 'Contrato',
+  'CONTRATO ASSINADO (FN)': 'Contrato Assinado',
   // Backward compat for status values
   'GANHO': 'Ganho',
   'PERDIDO': 'Perdido',
@@ -45,7 +44,7 @@ export function getLeadStage(record: {
   if (etapa === 'CONTATO REALIZADO') return 'Contato Realizado';
   if (etapa === 'PROPOSTA') return 'Proposta';
   if (etapa.includes('NEGOCI')) return 'Negociação';
-  if (etapa.includes('COBRAN')) return 'Cobrança';
+  if (etapa.includes('CONTRATO ASSINADO')) return 'Contrato Assinado';
   return 'Robô SOL';
 }
 

@@ -29,6 +29,7 @@ import { getForecastData } from "@/data/dataAdapter";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { DataTrustFooter } from "@/components/metrics/DataTrustFooter";
+import { JOURNEY_ORDER } from "@/lib/leads-utils";
 
 /* ── helpers ───────────────────────────────────────────── */
 
@@ -86,6 +87,7 @@ function getEtapa(r: SolLead): string {
 }
 
 const INACTIVITY_RISK_MINUTES = 10;
+const ACTIVE_FUNNEL_STAGES = JOURNEY_ORDER.filter((stage) => stage !== "DECLÍNIO");
 
 function isInactive(dateStr: string | null | undefined): boolean {
   if (!dateStr) return true;
@@ -142,8 +144,7 @@ function deriveAlerts(records: SolLead[]): Alert[] {
     const status = (r.status || "").toUpperCase();
 
     // ⚠️ Inactivity risk: any lead inactive >10min that is still in-progress
-    const activeEtapas = ["SOL SDR", "TRAFEGO PAGO", "QUALIFICADO", "CONTATO REALIZADO", "PROPOSTA", "NEGOCIAÇÃO"];
-    if (activeEtapas.includes((r.etapa_funil || '').toUpperCase().trim()) && isInactive(r.ts_ultima_interacao)) {
+    if (ACTIVE_FUNNEL_STAGES.includes((r.etapa_funil || '').toUpperCase().trim()) && isInactive(r.ts_ultima_interacao)) {
       const mins = inactivityMinutes(r.ts_ultima_interacao);
       const label = mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60}min inativo` : `${mins}min inativo`;
       alerts.push({
@@ -287,8 +288,7 @@ function deriveSummary(records: SolLead[]) {
   const frios = records.filter((r) => (r.temperatura || "").toUpperCase() === "FRIO").length;
   const emRiscoInatividade = records.filter((r) => {
     const etapa = (r.etapa_funil || "").toUpperCase().trim();
-    const activeEtapas = ["SOL SDR", "TRAFEGO PAGO", "QUALIFICADO", "CONTATO REALIZADO", "PROPOSTA", "NEGOCIAÇÃO"];
-    return activeEtapas.includes(etapa) && isInactive(r.ts_ultima_interacao);
+    return ACTIVE_FUNNEL_STAGES.includes(etapa) && isInactive(r.ts_ultima_interacao);
   }).length;
 
   return { total, qualificados, responderam, fupAtivos, avgScore, quentes, mornos, frios, emRiscoInatividade };

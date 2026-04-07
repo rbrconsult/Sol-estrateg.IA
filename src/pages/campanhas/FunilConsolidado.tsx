@@ -14,8 +14,9 @@ import { ArrowRight, DollarSign, Users, Target, TrendingUp, Clock } from 'lucide
 import { formatCurrency, formatNumber, formatPct } from '@/hooks/useCampaignObs';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 import { getStatusLabel } from '@/lib/leadClassification';
+import { JOURNEY_ORDER } from '@/lib/leads-utils';
 
-const FUNNEL_STAGES = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP', 'QUALIFICADO', 'CONTATO REALIZADO', 'PROPOSTA'];
+const FUNNEL_STAGES = JOURNEY_ORDER;
 const STAGE_COLORS: Record<string, string> = {
   'TRAFEGO PAGO': 'hsl(210,70%,55%)',
   'SOL SDR': 'hsl(35,90%,55%)',
@@ -23,6 +24,9 @@ const STAGE_COLORS: Record<string, string> = {
   'QUALIFICADO': 'hsl(142,70%,45%)',
   'CONTATO REALIZADO': 'hsl(200,70%,50%)',
   'PROPOSTA': 'hsl(250,60%,55%)',
+  'NEGOCIAÇÃO': 'hsl(280,60%,50%)',
+  'CONTRATO ASSINADO': 'hsl(142,55%,35%)',
+  'DECLÍNIO': 'hsl(0,70%,55%)',
 };
 
 function FunnelBar({ label, value, maxValue, prevValue, color }: { label: string; value: number; maxValue: number; prevValue?: number; color: string }) {

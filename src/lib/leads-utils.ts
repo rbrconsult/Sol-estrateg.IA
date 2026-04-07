@@ -3,14 +3,12 @@ import { SolLead } from "@/hooks/useSolData";
 export const JOURNEY_ORDER = [
   'TRAFEGO PAGO',
   'SOL SDR',
-  'PROSPECÇÃO',
   'FOLLOW UP',
-  'QUALIFICAÇÃO',
   'QUALIFICADO',
   'CONTATO REALIZADO',
   'PROPOSTA',
   'NEGOCIAÇÃO',
-  'REMARKETING',
+  'CONTRATO ASSINADO',
   'DECLÍNIO',
 ];
 

@@ -50,12 +50,13 @@ export function useLeadsDashboard(filtered: SolLead[]) {
     const SLA_ETAPA: Record<string, { label: string; maxDias: number }> = {
       "TRAFEGO PAGO": { label: "Tráfego Pago", maxDias: 1 },
       "SOL SDR": { label: "Sol SDR", maxDias: 2 },
-      "PROSPECÇÃO": { label: "Prospecção", maxDias: 2 },
-      "QUALIFICAÇÃO": { label: "Qualificação", maxDias: 3 },
+      "FOLLOW UP": { label: "Follow Up", maxDias: 3 },
       "QUALIFICADO": { label: "Qualificado", maxDias: 5 },
       "CONTATO REALIZADO": { label: "Contato Realizado", maxDias: 3 },
       "PROPOSTA": { label: "Proposta", maxDias: 5 },
       "NEGOCIAÇÃO": { label: "Negociação", maxDias: 7 },
+      "CONTRATO ASSINADO": { label: "Contrato Assinado", maxDias: 2 },
+      "DECLÍNIO": { label: "Declínio", maxDias: 1 },
     };
 
     const ativos = filtered.filter(r => r.status && !["PERDIDO", "EXCLUIDO", "GANHO"].includes(r.status.toUpperCase()));
