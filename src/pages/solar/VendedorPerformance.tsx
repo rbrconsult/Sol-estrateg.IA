@@ -158,7 +158,7 @@ export default function VendedorPerformance() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance por Vendedor</h1>
           <p className="text-xs text-muted-foreground">
-            sol_projetos_sync (dedupe) · {totals.vendedores} responsáveis · {totals.projetos} de {projectCount} projetos
+            sol_propostas (dedupe) · {totals.vendedores} responsáveis · {totals.projetos} de {projectCount} projetos
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export default function VendedorPerformance() {
             lines={[
               {
                 label: "Fonte",
-                source: "sol_projetos_sync → representante / responsável · valor_proposta",
+                source: "sol_propostas → representante / responsável · valor_proposta",
                 fetchedAt: dataUpdatedAt,
                 extra: `${records.length} projetos carregados`,
               },

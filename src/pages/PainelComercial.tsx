@@ -753,7 +753,7 @@ export default function PainelComercial() {
           },
           {
             label: "Oportunidades (SM)",
-            source: "sol_projetos_sync (dedupe)",
+            source: "sol_propostas (dedupe)",
             fetchedAt: projetosDataUpdatedAt,
             extra: `${filteredProposals.length} projetos no filtro global`,
           },

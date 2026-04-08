@@ -289,7 +289,7 @@ export default function Forecast() {
         lines={[
           {
             label: "Comercial",
-            source: "sol_projetos_sync",
+            source: "sol_propostas",
             fetchedAt: dataUpdatedAt,
             extra: `${filteredProposals.length} projetos no filtro global`,
           },

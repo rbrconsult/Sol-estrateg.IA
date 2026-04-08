@@ -379,7 +379,7 @@ export default function Comercial() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {projectCount === 0
-              ? "Nenhum projeto sincronizado ainda (sol_projetos_sync)."
+              ? "Nenhum projeto sincronizado ainda (sol_propostas)."
               : "Nenhum projeto no recorte dos filtros locais."}
           </AlertDescription>
         </Alert>
@@ -389,7 +389,7 @@ export default function Comercial() {
         lines={[
           {
             label: "Comercial (esta página)",
-            source: "sol_projetos_sync → 1 card por project_id (último evento)",
+            source: "sol_propostas → 1 card por project_id (último evento)",
             fetchedAt: dataUpdatedAt,
             extra: `${filtered.length} projetos exibidos após busca/filtro local`,
           },

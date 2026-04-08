@@ -231,7 +231,7 @@ export default function Comissoes() {
           <h1 className="text-2xl font-bold text-foreground">Comissões</h1>
           <p className="text-sm text-muted-foreground max-w-3xl">
             <span className="font-medium text-foreground">Racional:</span> tudo parte de{" "}
-            <span className="font-medium text-foreground">sol_projetos_sync</span>. Por contrato fechado (Ganho), a comissão usa
+            <span className="font-medium text-foreground">sol_propostas</span>. Por contrato fechado (Ganho), a comissão usa
             nesta ordem o que estiver no banco em <code className="text-xs">valor_comissao</code>, depois{" "}
             <code className="text-xs">percentual_comissao</code> sobre <code className="text-xs">valor_proposta</code>, e por último
             o percentual da interface (padrão 2% / regra por nome).
@@ -514,7 +514,7 @@ export default function Comissoes() {
           {
             label: "Comercial",
             source:
-              "sol_projetos_sync — comissão: valor_comissao → percentual_comissao × valor_proposta → % editável",
+              "sol_propostas — comissão: valor_comissao → percentual_comissao × valor_proposta → % editável",
             fetchedAt: dataUpdatedAt,
             extra: `${filteredProposals.length} linhas após filtro global e escopo de filial (allowlist quando houver)`,
           },

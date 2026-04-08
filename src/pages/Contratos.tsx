@@ -99,7 +99,7 @@ export default function Contratos() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Contratos Fechados</h1>
           <p className="text-xs md:text-sm text-muted-foreground max-w-3xl">
-            Somente dados derivados de <span className="font-medium text-foreground">sol_projetos_sync</span> (1 registro por{" "}
+            Somente dados derivados de <span className="font-medium text-foreground">sol_propostas</span> (1 registro por{" "}
             <span className="font-medium text-foreground">project_id</span> após dedupe). Não exibimos funil de pré-venda
             (leads) aqui — só o que a sync comercial traz. A receita prevista usa o mesmo proxy do Forecast: data de criação da
             proposta + <span className="font-medium text-foreground">{FORECAST_EXPECTED_CLOSE_LAG_DAYS} dias</span>, horizonte
@@ -517,7 +517,7 @@ export default function Contratos() {
         lines={[
           {
             label: "Comercial",
-            source: "sol_projetos_sync (dedupe por project_id)",
+            source: "sol_propostas (dedupe por project_id)",
             fetchedAt: dataUpdatedAt,
             extra: `${filteredProposals.length} projetos no filtro global`,
           },

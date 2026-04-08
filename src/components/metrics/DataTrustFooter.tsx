@@ -40,7 +40,7 @@ export function DataTrustFooter({ lines, className }: DataTrustFooterProps) {
       ))}
       <p className="text-[9px] text-muted-foreground/70 pt-1">
         Valores monetários do comercial usam <code className="text-[9px]">valor_proposta</code> em{" "}
-        <code className="text-[9px]">sol_projetos_sync</code> (último evento por <code className="text-[9px]">project_id</code>
+        <code className="text-[9px]">sol_propostas</code> (último evento por <code className="text-[9px]">project_id</code>
         ). Detalhes em <code className="text-[9px]">docs/metricas-fase-a.md</code>.
       </p>
       <p className="text-[9px] text-muted-foreground/60 pt-2 text-center">{BRAND_FOOTER_TAGLINE}</p>

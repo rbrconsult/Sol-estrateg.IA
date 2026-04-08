@@ -140,7 +140,7 @@ export default function Vendedores() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance comercial</h1>
           <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-            Fonte: <span className="font-medium text-foreground">sol_projetos_sync</span>.{" "}
+            Fonte: <span className="font-medium text-foreground">sol_propostas</span>.{" "}
             <span className="font-medium text-foreground">Slug</span> da filial alinha{" "}
             <code className="text-[10px]">franquia_id</code> (RLS). O recorte mandatório por filial é por{" "}
             <span className="font-medium text-foreground">responsável</span> (ID SM em{" "}

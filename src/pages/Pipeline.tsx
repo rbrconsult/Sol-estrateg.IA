@@ -51,7 +51,7 @@ const Pipeline = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Pipeline</h1>
           <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-            Visão Kanban · Solar Market · <span className="font-medium text-foreground">sol_projetos_sync</span> (1 card por{" "}
+            Visão Kanban · Solar Market · <span className="font-medium text-foreground">sol_propostas</span> (1 card por{" "}
             <span className="font-medium text-foreground">project_id</span>). A aba «Abertos» usa o status da sync: sem
             ganho/perda/exclusão explícitos no SM, o registro cai em Aberto — o número pode ser maior que as oportunidades
             reais «na mesa».
@@ -127,7 +127,7 @@ const Pipeline = () => {
           <AlertCircle className="h-4 w-4 text-muted-foreground" />
           <AlertDescription>
             {projectCount === 0
-              ? "Aguardando sincronização — sol_projetos_sync será populada pelo cron-sync."
+              ? "Aguardando sincronização — sol_propostas será populada pelo cron-sync."
               : "Nenhum projeto encontrado para a visualização e filtros selecionados."}
           </AlertDescription>
         </Alert>
@@ -139,7 +139,7 @@ const Pipeline = () => {
         lines={[
           {
             label: "Comercial",
-            source: "sol_projetos_sync (1 card por project_id)",
+            source: "sol_propostas (1 card por project_id)",
             fetchedAt: dataUpdatedAt,
             extra: `${allProposals.length} projetos após filtros globais`,
           },
