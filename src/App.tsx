@@ -18,6 +18,7 @@ const Contratos = lazy(() => import("./pages/Contratos"));
 const Performance = lazy(() => import("./pages/Performance"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Selecao = lazy(() => import("./pages/Selecao"));
 
 const Admin = lazy(() => import("./pages/Admin"));
 const Chamados = lazy(() => import("./pages/Chamados"));
@@ -68,8 +69,8 @@ function AppRoutesShell() {
         <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/selecao" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+              <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Navigate to="/selecao" replace /></ProtectedRoute>} />
               <Route path="/solarmarket/*" element={<Navigate to="/dashboard" replace />} />
 
               {/* Dashboard Pré-Venda */}

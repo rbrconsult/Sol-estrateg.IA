@@ -34,7 +34,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate('/dashboard');
+      navigate('/selecao');
     }
   }, [user, authLoading, navigate]);
 
@@ -122,7 +122,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
+      navigate('/selecao');
     }
   };
 
