@@ -32,6 +32,7 @@ export default function SolConfigPage() {
   const [aiInstruction, setAiInstruction] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiFupTarget, setAiFupTarget] = useState<string | null>(null);
 
   const getVal = (key: string) => editValues[key] ?? configs?.find(c => c.key === key)?.valor_text ?? "";
   const getOriginal = (key: string) => configs?.find(c => c.key === key)?.valor_text ?? "";
@@ -331,7 +332,7 @@ export default function SolConfigPage() {
 
       {/* ═══ DIALOG: FUP Templates ═══ */}
       <Dialog open={openDialog === "fup_templates"} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
@@ -340,21 +341,90 @@ export default function SolConfigPage() {
             <p className="text-sm text-muted-foreground">Sequência alternada de áudio e texto para follow-up de leads frios</p>
           </DialogHeader>
 
-          <div className="space-y-4 mt-4">
-            {FUP_KEYS.map((key, i) => (
-              <div key={key} className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                  <Badge variant="outline" className="text-[9px]">#{i + 1}</Badge>
-                  {i % 2 === 0 ? "🎙 Áudio" : "💬 Texto"}
-                </label>
-                <Textarea
-                  value={getVal(key)}
-                  onChange={e => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
-                  className="min-h-[60px] font-mono text-xs"
-                  placeholder={`Template FUP #${i + 1}...`}
-                />
-              </div>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+            {/* Left: Templates */}
+            <div className="lg:col-span-2 space-y-5">
+              {FUP_KEYS.map((key, i) => (
+                <div key={key} className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <Badge variant="outline" className="text-[9px]">#{i + 1}</Badge>
+                    {i % 2 === 0 ? "🎙 Áudio" : "💬 Texto"}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto h-5 px-2 text-[9px] gap-1 text-primary"
+                      onClick={() => { setAiFupTarget(key); setAiInstruction(""); setAiResponse(""); }}
+                    >
+                      <Sparkles className="h-3 w-3" /> IA
+                    </Button>
+                  </label>
+                  <Textarea
+                    value={getVal(key)}
+                    onChange={e => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
+                    className="min-h-[100px] font-mono text-sm leading-relaxed"
+                    placeholder={`Template FUP #${i + 1}...`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Right: AI Assistant */}
+            <div className="space-y-3 border-l border-border/40 pl-4 sticky top-0">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> Assistente IA
+              </label>
+              {aiFupTarget ? (
+                <>
+                  <p className="text-[11px] text-muted-foreground">
+                    Editando: <span className="font-semibold text-foreground">FUP #{FUP_KEYS.indexOf(aiFupTarget) + 1}</span>
+                  </p>
+                  <Textarea
+                    value={aiInstruction}
+                    onChange={e => setAiInstruction(e.target.value)}
+                    className="min-h-[80px] text-sm"
+                    placeholder="Ex: Torne mais persuasivo, adicione urgência..."
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => handleAIAssist(aiFupTarget)}
+                    disabled={aiLoading || !aiInstruction.trim()}
+                  >
+                    {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {aiLoading ? "Gerando..." : "Pedir sugestão"}
+                  </Button>
+
+                  {aiResponse && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Sugestão</label>
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 max-h-[300px] overflow-y-auto">
+                        <pre className="text-xs font-mono whitespace-pre-wrap break-words text-foreground/80 leading-relaxed">
+                          {aiResponse}
+                        </pre>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="w-full gap-2"
+                        onClick={() => {
+                          if (aiFupTarget) {
+                            setEditValues(prev => ({ ...prev, [aiFupTarget]: aiResponse }));
+                          }
+                          setAiResponse("");
+                          setAiInstruction("");
+                          toast.success("Sugestão aplicada no template.");
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" /> Aplicar
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">Clique no botão <span className="text-primary font-semibold">IA</span> ao lado de qualquer template para usar o assistente.</p>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
