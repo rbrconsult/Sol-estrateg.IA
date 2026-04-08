@@ -169,7 +169,7 @@ const METRICAS_COLS = [
   "data", "robo", "franquia_id", "leads_novos", "leads_qualificados",
   "leads_transferidos", "custo_total",
 ];
-/** Colunas alinhadas ao schema sol_projetos_sync — tudo que existir no registro do Make DS 87423 é persistido. */
+/** Colunas alinhadas ao schema sol_propostas — tudo que existir no registro do Make DS 87423 é persistido. */
 const PROJETOS_COLS = [
   "project_id",
   "identificador",
@@ -250,7 +250,7 @@ const DS_CONFIGS: DSConfig[] = [
     mapRecord: (key, data) => ({ key, ...pickColumns(data, METRICAS_COLS), synced_at: new Date().toISOString() }),
   },
   {
-    dsId: 87423, table: "sol_projetos_sync", pk: "key",
+    dsId: 87423, table: "sol_propostas", pk: "key",
     mapRecord: (key, data) => ({ key, ...pickColumns(data, PROJETOS_COLS), synced_at: new Date().toISOString() }),
   },
   {

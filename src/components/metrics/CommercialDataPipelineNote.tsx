@@ -79,7 +79,7 @@ export function CommercialDataPipelineNote() {
       )}
       {zeroFromApi && (
         <Alert className="py-2">
-          <AlertTitle className="text-sm text-foreground">0 eventos em sol_projetos_sync (resposta da API)</AlertTitle>
+          <AlertTitle className="text-sm text-foreground">0 eventos em sol_propostas (resposta da API)</AlertTitle>
           <AlertDescription className="text-xs space-y-2">
             <p>
               O app <strong>não recebeu nenhuma linha</strong> do Supabase (antes de filtros de período). Isso costuma ser{" "}
@@ -101,7 +101,7 @@ export function CommercialDataPipelineNote() {
       <p>
         <span className="font-medium text-foreground">Sobre os números:</span>{" "}
         <span className="tabular-nums">{rawCount}</span> eventos brutos na{" "}
-        <code className="text-[10px]">sol_projetos_sync</code> →{" "}
+        <code className="text-[10px]">sol_propostas</code> →{" "}
         <span className="tabular-nums">{proposals.length}</span> projetos únicos (último evento por{" "}
         <code className="text-[10px]">project_id</code>) → <span className="tabular-nums">{audit.afterFranquia}</span> após
         escopo de filial → <span className="tabular-nums">{audit.afterGlobalFilters}</span> após filtro global (

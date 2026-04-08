@@ -6,7 +6,7 @@
  * sol_equipe → sol_equipe_sync → useSolEquipe()
  * sol_funis → sol_funis_sync → useSolFunis()
  * sol_metricas → sol_metricas_sync → useSolMetricas()
- * sol_projetos → sol_projetos_sync → useSolProjetos()
+ * sol_projetos → sol_propostas → useSolProjetos()
  * sol_qualificacao → sol_qualificacao_sync → useSolQualificacao()
  * sol_conversions → sol_conversions_sync → useSolConversions()
  */
@@ -102,8 +102,8 @@ export type SolEquipeMembro = {
   synced_at: string | null;
 };
 
-/** Linha completa de sol_projetos_sync (comercial / Solar Market) */
-export type SolProjeto = Database["public"]["Tables"]["sol_projetos_sync"]["Row"];
+/** Linha completa de sol_propostas (comercial / Solar Market) */
+export type SolProjeto = Database["public"]["Tables"]["sol_propostas"]["Row"];
 
 export type SolQualificacao = {
   telefone: string;
@@ -330,7 +330,7 @@ export function useSolProjetos(limit = 15_000) {
       const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
       const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
       const { data, error } = await supabase
-        .from("sol_projetos_sync")
+        .from("sol_propostas")
         .select("*")
         .in("franquia_id", franquiaFilter)
         .not("project_id", "is", null)

@@ -40,10 +40,10 @@ export function mapProjetoRowToStatus(row: SolProjeto): ProjetoStatus {
   const direct =
     matchExplicitStatus(row.status_projeto) ||
     matchExplicitStatus(row.evento) ||
-    matchExplicitStatus(row.proposta_ativa);
+    matchExplicitStatus(row.proposta_ativa != null ? String(row.proposta_ativa) : null);
   if (direct) return direct;
 
-  const su = `${row.status_projeto || ""} ${row.evento || ""} ${row.proposta_ativa || ""}`.toUpperCase();
+  const su = `${row.status_projeto || ""} ${row.evento || ""} ${row.proposta_ativa != null ? String(row.proposta_ativa) : ""}`.toUpperCase();
 
   if (su.includes("EXCLU") || su.includes("EXCLUÍ")) return "Excluido";
   if (

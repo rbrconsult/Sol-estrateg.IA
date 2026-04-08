@@ -5,7 +5,7 @@ import { useOrgFilter } from '@/contexts/OrgFilterContext';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 
 /**
- * Fonte única para telas comerciais: sol_projetos_sync → Proposal[] (1 linha por project_id).
+ * Fonte única para telas comerciais: sol_propostas → Proposal[] (1 linha por project_id).
  * Mesmo shape que useOrgFilteredProposals, com valores de proposta e etapas do SM.
  */
 export function useCommercialProposals() {

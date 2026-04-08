@@ -1,6 +1,6 @@
 import type { Proposal } from "@/data/dataAdapter";
 
-/** Chave em `organization_configs` — JSON array de strings (IDs SM do closer em `sol_projetos_sync`). */
+/** Chave em `organization_configs` — JSON array de strings (IDs SM do closer em `sol_propostas`). */
 export const COMMERCIAL_CLOSER_SM_IDS_CONFIG_KEY = "comercial_closer_sm_ids";
 
 /**

@@ -28,7 +28,7 @@ const EDGE_FUNCTIONS = [
 
 const CRON_JOBS = [
   { schedule: "*/5 * * * *", interval: "5 min", function: "cron-sync", tables: "sol_leads_sync, sol_qualificacao_sync, sol_conversions_sync, make_heartbeat, make_errors", note: "Dados operacionais em tempo quase-real" },
-  { schedule: "*/15 * * * *", interval: "15 min", function: "cron-sync", tables: "sol_metricas_sync, sol_projetos_sync", note: "Métricas e eventos SM" },
+  { schedule: "*/15 * * * *", interval: "15 min", function: "cron-sync", tables: "sol_metricas_sync, sol_propostas", note: "Métricas e eventos SM" },
   { schedule: "0 * * * *", interval: "1 hora", function: "cron-sync", tables: "sol_config_sync, sol_equipe_sync, sol_funis_sync", note: "Configurações (baixa frequência)" },
 ];
 
@@ -37,7 +37,7 @@ const SYNC_TABLES = [
   { table: "sol_qualificacao_sync", ds_make: "sol_qualificacao (87715)", records: "~7", mode: "READ", sync: "5 min", purpose: "Dados de qualificação por lead" },
   { table: "sol_conversions_sync", ds_make: "sol_conversions (87775)", records: "~0", mode: "READ", sync: "5 min", purpose: "Eventos CAPI/Google Ads" },
   { table: "sol_metricas_sync", ds_make: "sol_metricas (87422)", records: "~2", mode: "READ", sync: "15 min", purpose: "Métricas diárias do robô" },
-  { table: "sol_projetos_sync", ds_make: "sol_projetos (87423)", records: "~79", mode: "READ", sync: "15 min", purpose: "Eventos SM (ganho/perdido/etapa)" },
+  { table: "sol_propostas", ds_make: "sol_projetos (87423)", records: "~79", mode: "READ", sync: "15 min", purpose: "Eventos SM (ganho/perdido/etapa)" },
   { table: "sol_config_sync", ds_make: "sol_config (87419)", records: "~16", mode: "READ+WRITE", sync: "1 hora", purpose: "Prompts, variáveis, config do agente" },
   { table: "sol_equipe_sync", ds_make: "sol_equipe (87420)", records: "~5", mode: "READ+WRITE", sync: "1 hora", purpose: "Closers e SDRs ativos" },
   { table: "sol_funis_sync", ds_make: "sol_funis (87421)", records: "~1", mode: "READ+WRITE", sync: "1 hora", purpose: "Funis e etapas SM mapeadas" },

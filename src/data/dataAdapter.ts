@@ -11,7 +11,7 @@ export { PROJETO_STATUS_KEYS, PROJETO_STATUS_LABEL, projetoStatusLabel } from '@
 
 export interface Proposal {
   id: string;
-  /** `sol_projetos_sync.franquia_id` — alinhado ao slug da org no sync (hífen ou underscore). */
+  /** `sol_propostas.franquia_id` — alinhado ao slug da org no sync (hífen ou underscore). */
   franquiaId: string;
   etapa: string;
   projetoId: string;
@@ -60,9 +60,9 @@ export interface Proposal {
   makeTotalMensagens?: number;
   makeMensagensRecebidas?: number;
   makeDataResposta?: string;
-  /** `sol_projetos_sync.valor_comissao` (R$), quando preenchido no banco. */
+  /** `sol_propostas.valor_comissao` (R$), quando preenchido no banco. */
   comissaoValorSync?: number;
-  /** `sol_projetos_sync.percentual_comissao` (% sobre valor_proposta), quando preenchido no banco. */
+  /** `sol_propostas.percentual_comissao` (% sobre valor_proposta), quando preenchido no banco. */
   comissaoPercentualSync?: number;
 }
 
@@ -122,7 +122,7 @@ export function solLeadsToProposals(leads: SolLead[]): Proposal[] {
       responsavelId: l.closer_sm_id || '',
       representante: l.closer_nome || '',
       // B4 FIX: valor_conta = conta de luz do lead (pré-venda), NÃO é valor da proposta comercial
-      // valor_proposta deveria vir de sol_projetos_sync (hoje vazio)
+      // valor_proposta deveria vir de sol_propostas (hoje vazio)
       valorProposta: 0,
       potenciaSistema: 0,
       nomeProposta: l.nome || '',
@@ -187,7 +187,7 @@ function projetosRowKey(r: SolProjeto): string | null | undefined {
 }
 
 /**
- * sol_projetos_sync é log de eventos: linhas recentes costumam trazer etapa/status atualizados
+ * sol_propostas é log de eventos: linhas recentes costumam trazer etapa/status atualizados
  * mas com valor_proposta / potencia_sistema vazios. Recupera o último valor não vazio no histórico.
  */
 function coalesceValorPotenciaFromHistory(group: SolProjeto[]): {
@@ -316,7 +316,7 @@ function normalizeEtapaKanban(
   return "QUALIFICADO";
 }
 
-/** Converte sol_projetos_sync (estado atual por projeto) em Proposal[] para telas comerciais existentes. */
+/** Converte sol_propostas (estado atual por projeto) em Proposal[] para telas comerciais existentes. */
 export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
   return rows.map((r, i) => {
     const status = mapProjetoRowToStatus(r);
@@ -331,8 +331,8 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
     const etapa = normalizeEtapaKanban(r.etapa, status);
     const valorProposta = parseValorPropostaBR(r.valor_proposta);
     const potenciaSistema = parsePotenciaKwp(r.potencia_sistema);
-    const rawVc = r.valor_comissao;
-    const rawPct = r.percentual_comissao;
+    const rawVc = r.comissao_valor;
+    const rawPct = r.comissao_percentual;
     const comissaoValorSync =
       rawVc != null && String(rawVc).trim() !== "" ? parseValorPropostaBR(rawVc) : undefined;
     const comissaoPercentualSync =
