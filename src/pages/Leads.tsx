@@ -265,8 +265,8 @@ export default function Leads() {
           onQualificar={(l: any) => {
             solActions.qualificar.mutate({
               telefone: l.telefone,
-              chat_id: l.chat_id || "",
-              contact_id: l.contact_id || "",
+              chatid: l.chatid || l.chat_id || "",
+              contactid: l.contactid || l.contact_id || "",
               nome: l.nome,
               score: l.score || undefined,
               valor_conta: l.valor_conta,
@@ -275,8 +275,8 @@ export default function Leads() {
           onDesqualificar={(l: any) => {
             solActions.desqualificar.mutate({
               telefone: l.telefone,
-              chat_id: l.chat_id || "",
-              contact_id: l.contact_id || "",
+              chatid: l.chatid || l.chat_id || "",
+              contactid: l.contactid || l.contact_id || "",
               motivo: "Desqualificado via drawer",
             });
           }}
