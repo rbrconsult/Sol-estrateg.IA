@@ -112,10 +112,11 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return records.filter(r => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
-        const dateStr = r.data_envio || r.ts_cadastro || r.synced_at;
-        if (!dateStr) return false;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return false;
+        // sol_projetos: COALESCE(ts_cadastro, ts_cadastro_projeto). If both null → always include.
+        const dateStr = r.data_envio || r.ts_cadastro || (r as any).ts_cadastro_projeto || r.synced_at;
+        if (!dateStr) return true; // No date → always include
+        const d = parseDateFlexible(dateStr);
+        if (!d) return true; // Unparseable → include
         if (from) {
           const fromStart = new Date(from);
           fromStart.setHours(0, 0, 0, 0);
