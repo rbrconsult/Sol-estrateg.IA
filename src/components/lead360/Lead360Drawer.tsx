@@ -225,7 +225,7 @@ function useEnrichedProposal() {
       try {
         const [leadResponse, qualResponse] = await Promise.all([
           supabase
-            .from("sol_leads_sync")
+            .from("sol_projetos")
             .select("*")
             .eq("franquia_id", franquiaId)
             .or(orFilter)
@@ -240,7 +240,7 @@ function useEnrichedProposal() {
 
         if (!active) return;
 
-        setSyncLead(pickBestPhoneMatch(leadResponse.data as SolLead[] | null, phone));
+        setSyncLead(pickBestPhoneMatch(leadResponse.data as unknown as SolLead[] | null, phone));
         setQualData(pickBestPhoneMatch(qualResponse.data as SolQualificacao[] | null, phone));
       } catch (error) {
         console.error("Lead360 enrichment failed", error);

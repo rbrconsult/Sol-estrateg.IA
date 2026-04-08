@@ -67,7 +67,7 @@ export function FupFrioMoneyCard({ fupFrio, className }: Props) {
           Ticket médio (bloco): <span className="font-semibold text-foreground">{fupFrio.ticketMedio}</span>
         </p>
         <p className="text-[9px] text-muted-foreground/80 leading-snug">
-          Ganhos = status no <code className="text-[9px]">sol_leads_sync</code> (GANHO/FECHADO/VENDA). Cruzamento com SM via{" "}
+          Ganhos = status no <code className="text-[9px]">sol_projetos</code> (GANHO/FECHADO/VENDA). Cruzamento com SM via{" "}
           <code className="text-[9px]">project_id</code> quando necessário.
         </p>
       </div>

@@ -26,16 +26,16 @@ interface QualificarData {
   valor_conta?: string | null;
   preferencia_contato?: string | null;
   email?: string | null;
-  chat_id?: string | null;
-  contact_id?: string | null;
+  chatid?: string | null;
+  contactid?: string | null;
   project_id?: string | null;
   canal_origem?: string | null;
 }
 
 interface DesqualificarData {
   telefone: string;
-  chat_id?: string | null;
-  contact_id?: string | null;
+  chatid?: string | null;
+  contactid?: string | null;
   motivo: string;
 }
 
@@ -51,8 +51,8 @@ interface TransferirData {
   valor_conta?: string | null;
   preferencia_contato?: string | null;
   email?: string | null;
-  chat_id?: string | null;
-  contact_id?: string | null;
+  chatid?: string | null;
+  contactid?: string | null;
   project_id?: string | null;
   canal_origem?: string | null;
 }
@@ -68,8 +68,8 @@ export function useSolActionsV2() {
         valor_conta: data.valor_conta,
         preferencia_contato: data.preferencia_contato,
         email: data.email,
-        chatId: data.chat_id,       // snake → camel
-        contactId: data.contact_id, // snake → camel
+        chatId: data.chatid,
+        contactId: data.contactid,
         project_id: data.project_id,
         canal_origem: data.canal_origem,
       }),
@@ -81,8 +81,8 @@ export function useSolActionsV2() {
     mutationFn: (data: DesqualificarData) =>
       callWebhook(WEBHOOKS.desqualificar, {
         telefone: data.telefone,
-        chatId: data.chat_id,
-        contactId: data.contact_id,
+        chatId: data.chatid,
+        contactId: data.contactid,
         motivo: data.motivo,
       }),
     onSuccess: () => toast.success("Lead desqualificado com sucesso"),
@@ -100,8 +100,8 @@ export function useSolActionsV2() {
     mutationFn: (data: TransferirData) =>
       callWebhook(WEBHOOKS.transferir, {
         telefone: data.telefone,
-        chatId: data.chat_id,
-        contactId: data.contact_id,
+        chatId: data.chatid,
+        contactId: data.contactid,
         nome: data.nome,
         score: data.score,
         temperatura: data.temperatura,

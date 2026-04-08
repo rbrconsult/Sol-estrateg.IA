@@ -130,8 +130,8 @@ export default function SolAgent() {
         if (action === "qualificar") {
           await qualificar.mutateAsync({
             telefone: lead.telefone,
-            chat_id: lead.chat_id || "",
-            contact_id: lead.contact_id || "",
+            chatid: lead.chatid || "",
+            contactid: lead.contactid || "",
             nome: lead.nome || "",
             score: String(parseInt(String(lead.score || '0')) || 0),
             valor_conta: lead.valor_conta || "",
@@ -139,8 +139,8 @@ export default function SolAgent() {
         } else if (action === "desqualificar") {
           await desqualificar.mutateAsync({
             telefone: lead.telefone,
-            chat_id: lead.chat_id || "",
-            contact_id: lead.contact_id || "",
+            chatid: lead.chatid || "",
+            contactid: lead.contactid || "",
             motivo: "Desqualificado em lote",
           });
         } else if (action === "reprocessar") {
