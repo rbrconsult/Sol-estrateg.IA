@@ -1515,6 +1515,7 @@ export type Database = {
           total_mensagens_ia: number | null
           transferido_comercial: boolean | null
           ts_cadastro: string | null
+          ts_cadastro_projeto: string | null
           ts_desqualificado: string | null
           ts_pedido_conta_luz: string | null
           ts_primeira_resposta: string | null
@@ -1599,6 +1600,7 @@ export type Database = {
           total_mensagens_ia?: number | null
           transferido_comercial?: boolean | null
           ts_cadastro?: string | null
+          ts_cadastro_projeto?: string | null
           ts_desqualificado?: string | null
           ts_pedido_conta_luz?: string | null
           ts_primeira_resposta?: string | null
@@ -1683,6 +1685,7 @@ export type Database = {
           total_mensagens_ia?: number | null
           transferido_comercial?: boolean | null
           ts_cadastro?: string | null
+          ts_cadastro_projeto?: string | null
           ts_desqualificado?: string | null
           ts_pedido_conta_luz?: string | null
           ts_primeira_resposta?: string | null
