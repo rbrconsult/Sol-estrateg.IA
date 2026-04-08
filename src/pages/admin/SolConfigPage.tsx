@@ -32,6 +32,7 @@ export default function SolConfigPage() {
   const [aiInstruction, setAiInstruction] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiFupTarget, setAiFupTarget] = useState<string | null>(null);
 
   const getVal = (key: string) => editValues[key] ?? configs?.find(c => c.key === key)?.valor_text ?? "";
   const getOriginal = (key: string) => configs?.find(c => c.key === key)?.valor_text ?? "";
