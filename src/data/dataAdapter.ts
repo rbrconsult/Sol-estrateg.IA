@@ -331,8 +331,8 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
     const etapa = normalizeEtapaKanban(r.etapa, status);
     const valorProposta = parseValorPropostaBR(r.valor_proposta);
     const potenciaSistema = parsePotenciaKwp(r.potencia_sistema);
-    const rawVc = r.valor_comissao;
-    const rawPct = r.percentual_comissao;
+    const rawVc = r.comissao_valor;
+    const rawPct = r.comissao_percentual;
     const comissaoValorSync =
       rawVc != null && String(rawVc).trim() !== "" ? parseValorPropostaBR(rawVc) : undefined;
     const comissaoPercentualSync =
