@@ -38,6 +38,7 @@ export interface FilterState {
 type FilterableRecord = {
   data_envio?: string;
   ts_cadastro?: string;
+  ts_cadastro_projeto?: string;
   synced_at?: string;
   cidade?: string;
   nome?: string;
@@ -50,6 +51,21 @@ type FilterableRecord = {
   etapaFunil?: string;
   etapa_funil?: string;
 };
+
+/** Parse date strings that may be ISO 8601 or DD/MM/YYYY HH:mm:ss */
+function parseDateFlexible(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  // Try ISO first
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d;
+  // Try DD/MM/YYYY HH:mm:ss
+  const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?/);
+  if (match) {
+    const [, dd, mm, yyyy, hh, mi, ss] = match;
+    return new Date(+yyyy, +mm - 1, +dd, +(hh || 0), +(mi || 0), +(ss || 0));
+  }
+  return null;
+}
 
 const defaultState: FilterState = {
   periodo: "all",
