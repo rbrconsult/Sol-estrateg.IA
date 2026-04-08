@@ -93,10 +93,10 @@ const EDGE_FUNCTIONS: EdgeItem[] = [
   // Cron
   {
     name: 'cron-sync',
-    description: 'Sincronização multi-tenant: busca DS do Make → upsert em sol_leads_sync + sol_metricas.',
+    description: 'Sincronização multi-tenant: busca DS do Make → upsert em sol_projetos + sol_metricas.',
     category: 'cron',
     status: 'active-cron',
-    dependencies: ['MAKE_API_KEY', 'organizations', 'organization_configs', 'sol_leads_sync', 'sol_equipe_sync'],
+    dependencies: ['MAKE_API_KEY', 'organizations', 'organization_configs', 'sol_projetos', 'sol_equipe_sync'],
     notes: 'Executado via pg_cron. Auth por JWT decode manual (role anon/authenticated).',
   },
   // AI

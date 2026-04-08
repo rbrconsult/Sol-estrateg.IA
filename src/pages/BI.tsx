@@ -577,7 +577,7 @@ export default function BI() {
             lines={[
               {
                 label: "Fonte pré-venda",
-                source: "sol_leads_sync",
+                source: "sol_projetos",
                 fetchedAt: biResult.leadsDataUpdatedAt,
                 extra: `${data.totalRecords} leads no recorte`,
               },

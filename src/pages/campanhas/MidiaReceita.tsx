@@ -29,7 +29,7 @@ function useLeadsForReceita() {
     queryKey: ['sol-leads-receita', franquiaId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('sol_leads_sync')
+        .from('sol_projetos')
         .select('canal_origem, status, temperatura, closer_nome, etapa_funil, valor_conta')
         .eq('franquia_id', franquiaId);
       if (error) throw error;

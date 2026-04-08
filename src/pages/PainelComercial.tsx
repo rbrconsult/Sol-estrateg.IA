@@ -747,7 +747,7 @@ export default function PainelComercial() {
         lines={[
           {
             label: "Pré-venda / fila",
-            source: "sol_leads_sync",
+            source: "sol_projetos",
             fetchedAt: leadsDataUpdatedAt,
             extra: `${records.length} leads no filtro global`,
           },

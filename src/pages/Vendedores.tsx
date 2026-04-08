@@ -190,7 +190,7 @@ export default function Vendedores() {
           <p className="text-xs text-muted-foreground leading-relaxed">
             Só entra negócio com status <span className="font-medium text-foreground">Ganho</span> na sync de projetos. «Via
             pré-venda SOL» = mesmo <code className="text-[10px]">project_id</code> encontrado em{" "}
-            <code className="text-[10px]">sol_leads_sync</code> com etapa além de tráfego bruto/declínio. Se tudo estiver zero,
+            <code className="text-[10px]">sol_projetos</code> com etapa além de tráfego bruto/declínio. Se tudo estiver zero,
             ou não há ganhos no filtro ou os IDs não batem entre bases.
           </p>
         </CardHeader>
