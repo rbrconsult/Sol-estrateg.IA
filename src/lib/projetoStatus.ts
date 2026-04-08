@@ -74,7 +74,7 @@ export function mapProjetoRowToStatus(row: SolProjeto): ProjetoStatus {
   return "Aberto";
 }
 
-/** Status vindo de `sol_leads_sync.status` (pré-venda / legado). */
+/** Status vindo de `sol_projetos.status` (pré-venda / legado). */
 export function mapLeadStatusToProjetoStatus(status: string | null | undefined): ProjetoStatus {
   const direct = matchExplicitStatus(status);
   if (direct) return direct;

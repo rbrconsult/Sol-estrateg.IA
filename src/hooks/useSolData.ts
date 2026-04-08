@@ -1,12 +1,12 @@
 /**
  * SOL v2 — Unified data hooks.
  * Naming convention: Make DS name → Supabase table → Hook name
- * sol_leads → sol_leads_sync → useSolLeads()
+ * sol_leads → sol_projetos → useSolLeads()
  * sol_config → sol_config_sync → useSolConfig()
  * sol_equipe → sol_equipe_sync → useSolEquipe()
  * sol_funis → sol_funis_sync → useSolFunis()
  * sol_metricas → sol_metricas_sync → useSolMetricas()
- * sol_projetos → sol_propostas → useSolProjetos()
+ * sol_propostas → sol_propostas → useSolProjetos()
  * sol_qualificacao → sol_qualificacao_sync → useSolQualificacao()
  * sol_conversions → sol_conversions_sync → useSolConversions()
  */
@@ -185,7 +185,7 @@ export function useSolLeads(statusFilter?: string[]) {
       const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
       const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
       let query = supabase
-        .from("sol_leads_sync")
+        .from("sol_projetos")
         .select("*")
         .in("franquia_id", franquiaFilter)
         .order("ts_cadastro", { ascending: false });

@@ -225,7 +225,7 @@ function useEnrichedProposal() {
       try {
         const [leadResponse, qualResponse] = await Promise.all([
           supabase
-            .from("sol_leads_sync")
+            .from("sol_projetos")
             .select("*")
             .eq("franquia_id", franquiaId)
             .or(orFilter)
