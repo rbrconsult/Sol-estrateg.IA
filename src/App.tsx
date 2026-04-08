@@ -6,7 +6,7 @@ import { Lead360Drawer } from "@/components/lead360/Lead360Drawer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { SolarLayout } from "@/components/layout/SolarLayout";
+
 import { AppProviders } from "@/providers/AppProviders";
 import { PageLoader } from "@/components/ui/PageLoader";
 
