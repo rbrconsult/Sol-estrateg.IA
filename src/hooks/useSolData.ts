@@ -35,8 +35,8 @@ export type SolLead = {
   franquia_id: string | null;
   project_id: string | null;
   identificador: string | null;
-  chat_id: string | null;
-  contact_id: string | null;
+  chatid: string | null;
+  contactid: string | null;
   resumo_conversa: string | null;
   resumo_qualificacao: string | null;
   valor_conta: string | null;

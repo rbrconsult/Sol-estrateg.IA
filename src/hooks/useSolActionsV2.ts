@@ -26,8 +26,8 @@ interface QualificarData {
   valor_conta?: string | null;
   preferencia_contato?: string | null;
   email?: string | null;
-  chat_id?: string | null;
-  contact_id?: string | null;
+  chatid?: string | null;
+  contactid?: string | null;
   project_id?: string | null;
   canal_origem?: string | null;
 }
