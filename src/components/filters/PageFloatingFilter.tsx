@@ -129,7 +129,7 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
       const { from, to } = effectiveDateRange;
       if (from || to) {
         // sol_projetos: COALESCE(ts_cadastro, ts_cadastro_projeto). If both null → always include.
-        const dateStr = r.data_envio || r.ts_cadastro || (r as any).ts_cadastro_projeto || r.synced_at;
+        const dateStr = r.data_envio || r.ts_cadastro || r.ts_cadastro_projeto || r.synced_at;
         if (!dateStr) return true; // No date → always include
         const d = parseDateFlexible(dateStr);
         if (!d) return true; // Unparseable → include
@@ -158,12 +158,11 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return proposals.filter(p => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
-        /** SM nem sempre manda ts_proposta; usar última data conhecida do projeto para não “zerar” a visão. */
-        const dateStr =
-          p.dataCriacaoProposta || p.ultimaAtualizacao || p.dataCriacaoProjeto;
-        if (!dateStr) return false;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return false;
+        /** sol_propostas: prioridade para dataCriacaoProjeto (ts_cadastro_projeto). Se null → sempre incluir. */
+        const dateStr = p.dataCriacaoProjeto || p.dataCriacaoProposta || p.ultimaAtualizacao;
+        if (!dateStr) return true; // No date → always include
+        const d = parseDateFlexible(dateStr);
+        if (!d) return true; // Unparseable → include
         if (from) {
           const fromStart = new Date(from);
           fromStart.setHours(0, 0, 0, 0);
