@@ -240,7 +240,7 @@ function useEnrichedProposal() {
 
         if (!active) return;
 
-        setSyncLead(pickBestPhoneMatch(leadResponse.data as SolLead[] | null, phone));
+        setSyncLead(pickBestPhoneMatch(leadResponse.data as unknown as SolLead[] | null, phone));
         setQualData(pickBestPhoneMatch(qualResponse.data as SolQualificacao[] | null, phone));
       } catch (error) {
         console.error("Lead360 enrichment failed", error);
