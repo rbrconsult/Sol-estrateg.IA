@@ -163,7 +163,7 @@ export function Sidebar({ onResetOnboarding, onNavigate }: SidebarProps) {
           {/* Filial indicator for super admins */}
           {!isCollapsed && isSuperAdmin && orgFilter && (
             <button
-              onClick={() => { navigate("/selecao"); handleNavClick(); }}
+              onClick={() => { navigate("/dashboard"); handleNavClick(); }}
               className="mt-2 w-full flex items-center gap-1.5 px-2 py-1 rounded-md border border-border/40 bg-muted/30 text-[10px] text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
             >
               {orgFilter.isGlobal ? (

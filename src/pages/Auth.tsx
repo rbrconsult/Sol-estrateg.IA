@@ -122,7 +122,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Login realizado com sucesso!');
-      navigate('/selecao');
+      navigate('/dashboard');
     }
   };
 
