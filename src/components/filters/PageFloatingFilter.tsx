@@ -38,6 +38,7 @@ export interface FilterState {
 type FilterableRecord = {
   data_envio?: string;
   ts_cadastro?: string;
+  ts_cadastro_projeto?: string;
   synced_at?: string;
   cidade?: string;
   nome?: string;
@@ -50,6 +51,21 @@ type FilterableRecord = {
   etapaFunil?: string;
   etapa_funil?: string;
 };
+
+/** Parse date strings that may be ISO 8601 or DD/MM/YYYY HH:mm:ss */
+function parseDateFlexible(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  // Try ISO first
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d;
+  // Try DD/MM/YYYY HH:mm:ss
+  const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?/);
+  if (match) {
+    const [, dd, mm, yyyy, hh, mi, ss] = match;
+    return new Date(+yyyy, +mm - 1, +dd, +(hh || 0), +(mi || 0), +(ss || 0));
+  }
+  return null;
+}
 
 const defaultState: FilterState = {
   periodo: "all",
@@ -112,10 +128,11 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return records.filter(r => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
-        const dateStr = r.data_envio || r.ts_cadastro || r.synced_at;
-        if (!dateStr) return false;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return false;
+        // sol_projetos: COALESCE(ts_cadastro, ts_cadastro_projeto). If both null → always include.
+        const dateStr = r.data_envio || r.ts_cadastro || r.ts_cadastro_projeto || r.synced_at;
+        if (!dateStr) return true; // No date → always include
+        const d = parseDateFlexible(dateStr);
+        if (!d) return true; // Unparseable → include
         if (from) {
           const fromStart = new Date(from);
           fromStart.setHours(0, 0, 0, 0);
@@ -141,12 +158,11 @@ export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
     return proposals.filter(p => {
       const { from, to } = effectiveDateRange;
       if (from || to) {
-        /** SM nem sempre manda ts_proposta; usar última data conhecida do projeto para não “zerar” a visão. */
-        const dateStr =
-          p.dataCriacaoProposta || p.ultimaAtualizacao || p.dataCriacaoProjeto;
-        if (!dateStr) return false;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return false;
+        /** sol_propostas: prioridade para dataCriacaoProjeto (ts_cadastro_projeto). Se null → sempre incluir. */
+        const dateStr = p.dataCriacaoProjeto || p.dataCriacaoProposta || p.ultimaAtualizacao;
+        if (!dateStr) return true; // No date → always include
+        const d = parseDateFlexible(dateStr);
+        if (!d) return true; // Unparseable → include
         if (from) {
           const fromStart = new Date(from);
           fromStart.setHours(0, 0, 0, 0);
