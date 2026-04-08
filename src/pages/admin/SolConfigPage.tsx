@@ -144,7 +144,7 @@ export default function SolConfigPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
@@ -161,7 +161,7 @@ export default function SolConfigPage() {
       {/* Quadrant Grid — Prompts */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Prompts do Agent</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
           {PROMPT_KEYS.map(({ key, label, icon: Icon, description, color }) => {
             const content = getVal(key);
             const hasContent = content.trim().length > 0;
@@ -169,10 +169,10 @@ export default function SolConfigPage() {
             return (
               <Card
                 key={key}
-                className={`cursor-pointer hover:shadow-md transition-all border bg-gradient-to-br ${color}`}
+                className={`cursor-pointer hover:shadow-md transition-all border bg-gradient-to-br h-full ${color}`}
                 onClick={() => openPromptDialog(key)}
               >
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Icon className="h-4 w-4 text-primary" />
                     {label}
@@ -182,13 +182,10 @@ export default function SolConfigPage() {
                   <p className="text-xs text-muted-foreground">{description}</p>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="bg-background/60 rounded-md p-3 max-h-[240px] overflow-hidden relative">
-                    <pre className="text-xs font-mono text-foreground/70 whitespace-pre-wrap break-words leading-relaxed">
-                      {hasContent ? content.slice(0, 800) : "Nenhum conteúdo configurado..."}
+                  <div className="bg-background/60 rounded-md p-4 min-h-[280px] max-h-[46vh] overflow-y-auto">
+                    <pre className="text-sm font-mono text-foreground/80 whitespace-pre-wrap break-words leading-7">
+                      {hasContent ? content : "Nenhum conteúdo configurado..."}
                     </pre>
-                    {hasContent && content.length > 800 && (
-                      <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background/80 to-transparent" />
-                    )}
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-2">
                     {hasContent ? `${content.length} caracteres` : "Clique para configurar"} · Clique para editar
@@ -201,7 +198,7 @@ export default function SolConfigPage() {
       </div>
 
       {/* FUP Templates + Variáveis — Bottom row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {/* FUP Templates card */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all border bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20"
@@ -239,13 +236,10 @@ export default function SolConfigPage() {
             <p className="text-xs text-muted-foreground">Modelos IA, temperaturas e parâmetros do Agent</p>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="bg-background/60 rounded-md p-3 max-h-[80px] overflow-hidden relative">
-              <pre className="text-[10px] font-mono text-foreground/70 whitespace-pre-wrap break-words">
-                {getVal("variaveis_globais").slice(0, 200) || "Nenhuma variável configurada..."}
+            <div className="bg-background/60 rounded-md p-4 min-h-[220px] max-h-[38vh] overflow-y-auto">
+              <pre className="text-xs font-mono text-foreground/80 whitespace-pre-wrap break-words leading-6">
+                {getVal("variaveis_globais") || "Nenhuma variável configurada..."}
               </pre>
-              {getVal("variaveis_globais").length > 200 && (
-                <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background/80 to-transparent" />
-              )}
             </div>
           </CardContent>
         </Card>
