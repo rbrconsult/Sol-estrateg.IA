@@ -6,7 +6,7 @@ import { Lead360Drawer } from "@/components/lead360/Lead360Drawer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { SolarLayout } from "@/components/layout/SolarLayout";
+
 import { AppProviders } from "@/providers/AppProviders";
 import { PageLoader } from "@/components/ui/PageLoader";
 
@@ -18,7 +18,7 @@ const Contratos = lazy(() => import("./pages/Contratos"));
 const Performance = lazy(() => import("./pages/Performance"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const Selecao = lazy(() => import("./pages/Selecao"));
+
 const Admin = lazy(() => import("./pages/Admin"));
 const Chamados = lazy(() => import("./pages/Chamados"));
 const Operacoes = lazy(() => import("./pages/Operacoes"));
@@ -42,9 +42,6 @@ const Qualificacao = lazy(() => import("./pages/Qualificacao"));
 const Desqualificar = lazy(() => import("./pages/Desqualificar"));
 const Reprocessamento = lazy(() => import("./pages/Reprocessamento"));
 const OrgConfigPage = lazy(() => import("./pages/admin/OrgConfigPage"));
-const PreVenda = lazy(() => import("./pages/solar/PreVenda"));
-const Comercial = lazy(() => import("./pages/solar/Comercial"));
-const VendedorPerformance = lazy(() => import("./pages/solar/VendedorPerformance"));
 
 const CampanhasVisaoGeral = lazy(() => import("./pages/campanhas/VisaoGeral"));
 const MetaAdsPage = lazy(() => import("./pages/campanhas/MetaAds"));
@@ -71,13 +68,9 @@ function AppRoutesShell() {
         <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
-              <Route path="/" element={<ProtectedRoute><Navigate to="/selecao" replace /></ProtectedRoute>} />
-
-              {/* Solar Market */}
-              <Route path="/solarmarket/prevenda" element={<ProtectedRoute><SolarLayout><PreVenda /></SolarLayout></ProtectedRoute>} />
-              <Route path="/solarmarket/comercial" element={<ProtectedRoute><SolarLayout><Comercial /></SolarLayout></ProtectedRoute>} />
-              <Route path="/solarmarket/vendedores" element={<ProtectedRoute><SolarLayout><VendedorPerformance /></SolarLayout></ProtectedRoute>} />
+              <Route path="/selecao" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+              <Route path="/solarmarket/*" element={<Navigate to="/dashboard" replace />} />
 
               {/* Dashboard Pré-Venda */}
               <Route path="/dashboard" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="conferencia"><Conferencia /></ModuleGuard></MainLayout></ProtectedRoute>} />
