@@ -182,12 +182,12 @@ export default function SolConfigPage() {
                   <p className="text-xs text-muted-foreground">{description}</p>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="bg-background/60 rounded-md p-3 max-h-[120px] overflow-hidden relative">
-                    <pre className="text-[10px] font-mono text-foreground/70 whitespace-pre-wrap break-words leading-relaxed">
-                      {hasContent ? content.slice(0, 400) : "Nenhum conteúdo configurado..."}
+                  <div className="bg-background/60 rounded-md p-3 max-h-[240px] overflow-hidden relative">
+                    <pre className="text-xs font-mono text-foreground/70 whitespace-pre-wrap break-words leading-relaxed">
+                      {hasContent ? content.slice(0, 800) : "Nenhum conteúdo configurado..."}
                     </pre>
-                    {hasContent && content.length > 400 && (
-                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 to-transparent" />
+                    {hasContent && content.length > 800 && (
+                      <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background/80 to-transparent" />
                     )}
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-2">
