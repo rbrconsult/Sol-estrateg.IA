@@ -97,6 +97,7 @@ export default function SolConfigPage() {
     return {
       descricao: original.descricao,
       texto: edits?.texto ?? original.texto,
+      ativo: edits?.ativo ?? original.ativo,
     };
   };
 
