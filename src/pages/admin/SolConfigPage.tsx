@@ -239,9 +239,12 @@ export default function SolConfigPage() {
         </div>
       </div>
 
-      {/* Quadrant Grid — Prompts */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Prompts do Agent</h2>
+      {/* Section: Prompts */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-5 w-1 rounded-full bg-primary" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Prompts do Agent</h2>
+        </div>
         <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
           {PROMPT_KEYS.map(({ key, label, icon: Icon, description, color }) => {
             const content = getVal(key);
