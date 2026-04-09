@@ -78,8 +78,6 @@ const Index = () => {
       const dateStr = l.ts_cadastro || l.ts_ultima_interacao || l.ts_qualificado || l.synced_at || '';
       // Registros sem data ou anteriores a 2026 são carga histórica inválida
       if (!dateStr || dateStr < '2026-01-01') return false;
-      // Exclui registros de carga histórica bulk do SolarMarket
-      if (l.canal_origem === 'sm_bulk_load') return false;
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return false;
       if (from) { const f = new Date(from); f.setHours(0,0,0,0); if (d < f) return false; }
