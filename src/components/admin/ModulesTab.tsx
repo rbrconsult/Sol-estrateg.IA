@@ -20,7 +20,7 @@ const MODULE_GROUPS = [
   { label: 'Campanhas', icon: '📢', keys: ['ads-performance', 'midia-receita', 'ga4'] },
   { label: 'Inteligência', icon: '📊', keys: ['bi', 'followup', 'sla-monitor'] },
   { label: 'Operacional', icon: '⚙️', keys: ['chamados', 'monitoramento', 'ajuda'] },
-  { label: 'Admin', icon: '🔐', keys: ['admin', 'admin-filiais', 'admin-usuarios', 'admin-modulos', 'admin-seguranca', 'admin-sessoes', 'admin-whatsapp', 'admin-skills'] },
+  { label: 'Admin', icon: '🔐', keys: ['admin', 'admin-filiais', 'admin-usuarios', 'admin-modulos', 'admin-seguranca', 'admin-sessoes', 'admin-whatsapp', 'admin-skills', 'admin-config', 'admin-equipe', 'admin-funis'] },
 ];
 
 interface UserBasic {
