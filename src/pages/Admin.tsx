@@ -495,28 +495,64 @@ export default function Admin() {
           {/* ═══════════════════════════════════════════ */}
           {/* CONFIG GLOBAL — Krolic, Cenários, DS, Skills */}
           {/* ═══════════════════════════════════════════ */}
-          <TabsContent value="config-global" className="space-y-6">
-            {showConfigGlobalTab &&
-              !hasAccess('admin-whatsapp') &&
-              !hasAccess('admin-skills') &&
-              userRole !== 'super_admin' && (
-                <Card className="border-dashed">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Configurações editáveis</CardTitle>
-                    <CardDescription>
-                      Krolic/WhatsApp, cenários monitorados, data stores e skills aparecem aqui quando seu usuário tiver as permissões
-                      correspondentes (ex.: <strong>WhatsApp Config</strong>, <strong>Skills / Edges</strong>) ou perfil super admin.
-                    </CardDescription>
-                  </CardHeader>
+          <TabsContent value="config-global" className="space-y-5">
+            {/* Quick access cards grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {/* SOL v2 — Configuração do Robô */}
+              {(userRole === 'super_admin' || userRole === 'diretor') && (
+                <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/config')}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                      <Bot className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Configuração SOL v2</p>
+                      <p className="text-xs text-muted-foreground truncate">Prompts, perguntas, templates e variáveis do Agent IA</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  </CardContent>
                 </Card>
               )}
+
+              {/* Equipe SOL */}
+              {(userRole === 'super_admin' || userRole === 'diretor') && (
+                <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/equipe')}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className="h-11 w-11 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Users className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Equipe SOL</p>
+                      <p className="text-xs text-muted-foreground truncate">Closers, gestores e distribuição de leads</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Funis */}
+              {(userRole === 'super_admin' || userRole === 'diretor') && (
+                <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/funis')}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Zap className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Funis & Etapas</p>
+                      <p className="text-xs text-muted-foreground truncate">Configuração dos funis de vendas e etapas</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             {/* Krolic / WhatsApp — Compact */}
             {hasAccess('admin-whatsapp') && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
                     Krolic API (WhatsApp Bot SOL)
                   </CardTitle>
                 </CardHeader>
@@ -558,20 +594,6 @@ export default function Admin() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
-            )}
-
-            {/* SOL v2 — Configuração do Robô */}
-            {(userRole === 'super_admin' || userRole === 'diretor') && (
-              <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/config')}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-primary" />
-                    Configuração SOL v2 (Robô IA)
-                    <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
-                  </CardTitle>
-                  <CardDescription>Prompts, templates FUP Frio e variáveis globais do Agent IA</CardDescription>
-                </CardHeader>
               </Card>
             )}
 
