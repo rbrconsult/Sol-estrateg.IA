@@ -357,14 +357,15 @@ export default function SolConfigPage() {
             </Button>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* ═══ Mensagens Automáticas ═══ */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2">
-          <Radio className="h-4 w-4" /> Mensagens Automáticas
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
+      {/* Section: Mensagens Automáticas */}
+      <section>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="h-5 w-1 rounded-full bg-violet-500" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Mensagens Automáticas</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4 ml-3">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {MSG_AUTO_DEFS.map(({ key, label, descricao, placeholder }) => {
             const content = getVal(key);
@@ -402,10 +403,15 @@ export default function SolConfigPage() {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* FUP Templates + Variáveis — Bottom row */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      {/* Section: Templates & Variáveis */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-5 w-1 rounded-full bg-orange-500" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Templates & Variáveis</h2>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* FUP Templates card */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all border bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20"
