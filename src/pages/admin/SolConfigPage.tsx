@@ -114,7 +114,9 @@ export default function SolConfigPage() {
     setSavingKey(key);
     try {
       const val = getPerguntaVal(key);
-      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(val) });
+      const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
+      const toSave = { ...original, texto: val.texto, obrigatorio: val.obrigatorio, canais: val.canais };
+      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
       setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
     } finally {
       setSavingKey(null);
@@ -124,15 +126,30 @@ export default function SolConfigPage() {
   const handleSaveAllPerguntas = async () => {
     setSavingPerguntas(true);
     try {
-      for (const def of PERGUNTA_DEFS) {
-        if (perguntaEdits[def.key]) {
-          const val = getPerguntaVal(def.key);
-          await updateConfig.mutateAsync({ key: def.key, valor_text: JSON.stringify(val) });
+      for (const key of PERGUNTA_KEYS) {
+        if (perguntaEdits[key]) {
+          const val = getPerguntaVal(key);
+          const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
+          const toSave = { ...original, texto: val.texto, obrigatorio: val.obrigatorio, canais: val.canais };
+          await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
         }
       }
       setPerguntaEdits({});
     } finally {
       setSavingPerguntas(false);
+    }
+  };
+
+  const handleSaveMsgAuto = async (key: string) => {
+    setSavingKey(key);
+    try {
+      const val = getMsgAutoVal(key);
+      const original = parseMsgAuto(configs?.find(c => c.key === key)?.valor_text);
+      const toSave = { ...original, texto: val.texto };
+      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
+      setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
+    } finally {
+      setSavingKey(null);
     }
   };
 
