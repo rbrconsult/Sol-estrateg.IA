@@ -74,10 +74,12 @@ const Index = () => {
     const { from, to } = gf.effectiveDateRange;
     if (!from && !to) return leads;
     return leads.filter(l => {
-      // Use the most recent relevant date: last interaction, qualification, or creation
-      const dateStr = l.ts_ultima_interacao || l.ts_qualificado || l.ts_cadastro || l.synced_at || '';
+      // ts_cadastro = data real de entrada; ts_ultima_interacao muda a cada msg e distorce o filtro
+      const dateStr = l.ts_cadastro || l.ts_ultima_interacao || l.ts_qualificado || l.synced_at || '';
+      // Registros sem data ou anteriores a 2026 são carga histórica inválida
+      if (!dateStr || dateStr < '2026-01-01') return false;
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return true;
+      if (isNaN(d.getTime())) return false;
       if (from) { const f = new Date(from); f.setHours(0,0,0,0); if (d < f) return false; }
       if (to) { const t = new Date(to); t.setHours(23,59,59,999); if (d > t) return false; }
       return true;
