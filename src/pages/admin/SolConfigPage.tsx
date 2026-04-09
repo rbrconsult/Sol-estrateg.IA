@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Save, Settings, ArrowLeft, Sparkles, Send, Bot, FileText, MessageSquare, Mail, Zap } from "lucide-react";
+import { Loader2, Save, Settings, ArrowLeft, Sparkles, Send, Bot, FileText, MessageSquare, Mail, Zap, HelpCircle, Radio } from "lucide-react";
 import { useSolConfig, useSolConfigUpdate } from "@/hooks/useSolData";
 import { toast } from "sonner";
 
@@ -18,12 +19,51 @@ const PROMPT_KEYS = [
 
 const FUP_KEYS = Array.from({ length: 9 }, (_, i) => `fup_frio_${i}`);
 
+const PERGUNTA_DEFS = [
+  { key: "pergunta_1", campo: "valor_conta", descricao: "Valor da conta de luz mensal do cliente" },
+  { key: "pergunta_2", campo: "tipo_imovel", descricao: "Tipo do imóvel (residencial, comercial, rural)" },
+  { key: "pergunta_3", campo: "tipo_telhado", descricao: "Material/tipo do telhado para instalação" },
+  { key: "pergunta_4", campo: "cidade", descricao: "Cidade de instalação do sistema" },
+  { key: "pergunta_5", campo: "acrescimo_carga", descricao: "Se pretende aumentar consumo futuro" },
+  { key: "pergunta_6", campo: "prazo_decisao", descricao: "Prazo para decisão de compra" },
+  { key: "pergunta_7", campo: "forma_pagamento", descricao: "Preferência de forma de pagamento" },
+  { key: "pergunta_8", campo: "nome", descricao: "Nome completo do lead" },
+  { key: "pergunta_9", campo: "email", descricao: "E-mail do lead para contato" },
+  { key: "pergunta_10", campo: "preferencia_contato", descricao: "Preferência de canal de contato" },
+];
+
+const MSG_AUTO_DEFS = [
+  { key: "msg_boas_vindas", label: "Mensagem de Boas-Vindas", descricao: "Enviada pelo CAPTURE no primeiro contato com o lead", placeholder: "Olá {NOME}! Bem-vindo à Evolve Energia Solar..." },
+  { key: "msg_transferencia", label: "Mensagem de Transferência", descricao: "Enviada quando o lead é qualificado e transferido ao comercial", placeholder: "{NOME}, parabéns! Você está sendo direcionado..." },
+];
+
+const CANAIS_OPTIONS = ["TODOS", "INBOUND_WHATSAPP"];
+
+// Parse pergunta config from valor_text JSON
+function parsePergunta(valorText: string | null | undefined) {
+  if (!valorText) return { texto: "", obrigatorio: true, canais: ["TODOS"] };
+  try {
+    const parsed = JSON.parse(valorText);
+    return {
+      texto: parsed.texto ?? "",
+      obrigatorio: parsed.obrigatorio ?? true,
+      canais: parsed.canais ?? ["TODOS"],
+    };
+  } catch {
+    return { texto: valorText, obrigatorio: true, canais: ["TODOS"] };
+  }
+}
+
 export default function SolConfigPage() {
   const navigate = useNavigate();
   const { data: configs, isLoading } = useSolConfig();
   const updateConfig = useSolConfigUpdate();
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
+
+  // Perguntas local state
+  const [perguntaEdits, setPerguntaEdits] = useState<Record<string, { texto?: string; obrigatorio?: boolean; canais?: string[] }>>({});
+  const [savingPerguntas, setSavingPerguntas] = useState(false);
 
   // Dialog state
   const [openDialog, setOpenDialog] = useState<string | null>(null);
@@ -37,6 +77,16 @@ export default function SolConfigPage() {
   const getVal = (key: string) => editValues[key] ?? configs?.find(c => c.key === key)?.valor_text ?? "";
   const getOriginal = (key: string) => configs?.find(c => c.key === key)?.valor_text ?? "";
 
+  const getPerguntaVal = (key: string) => {
+    const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
+    const edits = perguntaEdits[key];
+    return {
+      texto: edits?.texto ?? original.texto,
+      obrigatorio: edits?.obrigatorio ?? original.obrigatorio,
+      canais: edits?.canais ?? original.canais,
+    };
+  };
+
   const handleSave = async (key: string) => {
     setSavingKey(key);
     try {
@@ -44,6 +94,32 @@ export default function SolConfigPage() {
       setEditValues(prev => { const n = { ...prev }; delete n[key]; return n; });
     } finally {
       setSavingKey(null);
+    }
+  };
+
+  const handleSavePergunta = async (key: string) => {
+    setSavingKey(key);
+    try {
+      const val = getPerguntaVal(key);
+      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(val) });
+      setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  const handleSaveAllPerguntas = async () => {
+    setSavingPerguntas(true);
+    try {
+      for (const def of PERGUNTA_DEFS) {
+        if (perguntaEdits[def.key]) {
+          const val = getPerguntaVal(def.key);
+          await updateConfig.mutateAsync({ key: def.key, valor_text: JSON.stringify(val) });
+        }
+      }
+      setPerguntaEdits({});
+    } finally {
+      setSavingPerguntas(false);
     }
   };
 
@@ -144,6 +220,8 @@ export default function SolConfigPage() {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
+  const hasPerguntaEdits = PERGUNTA_DEFS.some(d => perguntaEdits[d.key]);
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -191,6 +269,128 @@ export default function SolConfigPage() {
                   <p className="text-[10px] text-muted-foreground mt-2">
                     {hasContent ? `${content.length} caracteres` : "Clique para configurar"} · Clique para editar
                   </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ═══ Perguntas do Robô ═══ */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2">
+          <HelpCircle className="h-4 w-4" /> Perguntas do Robô
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {PERGUNTA_DEFS.map((def, i) => {
+            const val = getPerguntaVal(def.key);
+            const isEdited = !!perguntaEdits[def.key];
+            return (
+              <Card key={def.key} className="border bg-gradient-to-br from-cyan-500/5 to-cyan-600/5 border-cyan-500/15">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <span className="text-xs font-bold text-primary">#{i + 1}</span>
+                    <Badge variant="secondary" className="text-[10px] font-mono">{def.campo}</Badge>
+                    {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
+                  </CardTitle>
+                  <p className="text-[11px] text-muted-foreground">{def.descricao}</p>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-3">
+                  <Textarea
+                    value={val.texto}
+                    onChange={e => setPerguntaEdits(prev => ({
+                      ...prev,
+                      [def.key]: { ...prev[def.key], texto: e.target.value }
+                    }))}
+                    className="min-h-[80px] text-sm"
+                    placeholder={`Texto da pergunta #${i + 1}...`}
+                  />
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={val.obrigatorio}
+                        onCheckedChange={checked => setPerguntaEdits(prev => ({
+                          ...prev,
+                          [def.key]: { ...prev[def.key], obrigatorio: checked }
+                        }))}
+                      />
+                      <span className="text-xs text-muted-foreground">Obrigatório</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {CANAIS_OPTIONS.map(canal => (
+                        <Badge
+                          key={canal}
+                          variant={val.canais.includes(canal) ? "default" : "outline"}
+                          className="text-[9px] cursor-pointer"
+                          onClick={() => {
+                            const newCanais = val.canais.includes(canal)
+                              ? val.canais.filter(c => c !== canal)
+                              : [...val.canais, canal];
+                            setPerguntaEdits(prev => ({
+                              ...prev,
+                              [def.key]: { ...prev[def.key], canais: newCanais.length ? newCanais : ["TODOS"] }
+                            }));
+                          }}
+                        >
+                          {canal === "TODOS" ? "📡 Todos" : "💬 WhatsApp"}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+        {hasPerguntaEdits && (
+          <div className="flex justify-end mt-4">
+            <Button onClick={handleSaveAllPerguntas} disabled={savingPerguntas}>
+              {savingPerguntas ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Salvar todas as perguntas
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ═══ Mensagens Automáticas ═══ */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2">
+          <Radio className="h-4 w-4" /> Mensagens Automáticas
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {MSG_AUTO_DEFS.map(({ key, label, descricao, placeholder }) => {
+            const content = getVal(key);
+            const isEdited = !!editValues[key];
+            return (
+              <Card key={key} className="border bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/15">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    {label}
+                    {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
+                  </CardTitle>
+                  <p className="text-[11px] text-muted-foreground">{descricao}</p>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-3">
+                  <Textarea
+                    value={content}
+                    onChange={e => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
+                    className="min-h-[120px] text-sm"
+                    placeholder={placeholder}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">Use <code className="bg-muted px-1 rounded text-[9px]">{"{NOME}"}</code> para o nome do lead</span>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSave(key)}
+                      disabled={savingKey === key || !editValues[key]}
+                    >
+                      {savingKey === key ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Salvar
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
