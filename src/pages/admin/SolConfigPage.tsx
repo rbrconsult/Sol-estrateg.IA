@@ -19,38 +19,40 @@ const PROMPT_KEYS = [
 
 const FUP_KEYS = Array.from({ length: 9 }, (_, i) => `fup_frio_${i}`);
 
-const PERGUNTA_DEFS = [
-  { key: "pergunta_1", campo: "valor_conta", descricao: "Valor da conta de luz mensal do cliente" },
-  { key: "pergunta_2", campo: "tipo_imovel", descricao: "Tipo do imóvel (residencial, comercial, rural)" },
-  { key: "pergunta_3", campo: "tipo_telhado", descricao: "Material/tipo do telhado para instalação" },
-  { key: "pergunta_4", campo: "cidade", descricao: "Cidade de instalação do sistema" },
-  { key: "pergunta_5", campo: "acrescimo_carga", descricao: "Se pretende aumentar consumo futuro" },
-  { key: "pergunta_6", campo: "prazo_decisao", descricao: "Prazo para decisão de compra" },
-  { key: "pergunta_7", campo: "forma_pagamento", descricao: "Preferência de forma de pagamento" },
-  { key: "pergunta_8", campo: "nome", descricao: "Nome completo do lead" },
-  { key: "pergunta_9", campo: "email", descricao: "E-mail do lead para contato" },
-  { key: "pergunta_10", campo: "preferencia_contato", descricao: "Preferência de canal de contato" },
-];
+const PERGUNTA_KEYS = Array.from({ length: 10 }, (_, i) => `pergunta_${i + 1}`);
 
-const MSG_AUTO_DEFS = [
-  { key: "msg_boas_vindas", label: "Mensagem de Boas-Vindas", descricao: "Enviada pelo CAPTURE no primeiro contato com o lead", placeholder: "Olá {NOME}! Bem-vindo à Evolve Energia Solar..." },
-  { key: "msg_transferencia", label: "Mensagem de Transferência", descricao: "Enviada quando o lead é qualificado e transferido ao comercial", placeholder: "{NOME}, parabéns! Você está sendo direcionado..." },
+const MSG_AUTO_KEYS = [
+  { key: "msg_boas_vindas", label: "Mensagem de Boas-Vindas", placeholder: "Olá {NOME}! Bem-vindo à Evolve Energia Solar..." },
+  { key: "msg_transferencia", label: "Mensagem de Transferência", placeholder: "{NOME}, parabéns! Você está sendo direcionado..." },
 ];
 
 const CANAIS_OPTIONS = ["TODOS", "INBOUND_WHATSAPP"];
 
 // Parse pergunta config from valor_text JSON
 function parsePergunta(valorText: string | null | undefined) {
-  if (!valorText) return { texto: "", obrigatorio: true, canais: ["TODOS"] };
+  if (!valorText) return { campo: "", texto: "", obrigatorio: true, canais: ["TODOS"], descricao: "" };
   try {
     const parsed = JSON.parse(valorText);
     return {
+      campo: parsed.campo ?? "",
       texto: parsed.texto ?? "",
       obrigatorio: parsed.obrigatorio ?? true,
       canais: parsed.canais ?? ["TODOS"],
+      descricao: parsed.descricao ?? "",
     };
   } catch {
-    return { texto: valorText, obrigatorio: true, canais: ["TODOS"] };
+    return { campo: "", texto: valorText, obrigatorio: true, canais: ["TODOS"], descricao: "" };
+  }
+}
+
+// Parse msg auto from valor_text JSON
+function parseMsgAuto(valorText: string | null | undefined) {
+  if (!valorText) return { texto: "", descricao: "" };
+  try {
+    const parsed = JSON.parse(valorText);
+    return { texto: parsed.texto ?? "", descricao: parsed.descricao ?? "" };
+  } catch {
+    return { texto: valorText, descricao: "" };
   }
 }
 
