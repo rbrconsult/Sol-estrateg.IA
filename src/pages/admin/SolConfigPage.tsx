@@ -433,7 +433,18 @@ export default function SolConfigPage() {
                   {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
-                  <Textarea
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={val.ativo}
+                          onCheckedChange={checked => setPerguntaEdits(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], ativo: checked }
+                          }))}
+                        />
+                        <span className="text-xs text-muted-foreground">{val.ativo ? "Ativa" : "Desativada"}</span>
+                      </div>
+                    </div>
                     value={val.texto}
                     onChange={e => setPerguntaEdits(prev => ({
                       ...prev,
