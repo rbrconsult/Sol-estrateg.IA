@@ -279,14 +279,15 @@ export default function SolConfigPage() {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* ═══ Perguntas do Robô ═══ */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2">
-          <HelpCircle className="h-4 w-4" /> Perguntas do Robô
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
+      {/* Section: Perguntas do Robô */}
+      <section>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="h-5 w-1 rounded-full bg-cyan-500" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">Perguntas do Robô</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4 ml-3">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {PERGUNTA_DEFS.map((def, i) => {
             const val = getPerguntaVal(def.key);
