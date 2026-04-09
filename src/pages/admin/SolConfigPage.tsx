@@ -64,7 +64,7 @@ export default function SolConfigPage() {
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
   // Perguntas local state
-  const [perguntaEdits, setPerguntaEdits] = useState<Record<string, { texto?: string; obrigatorio?: boolean; canais?: string[] }>>({});
+  const [perguntaEdits, setPerguntaEdits] = useState<Record<string, { texto?: string; obrigatorio?: boolean; canais?: string[]; ativo?: boolean }>>({});
   const [savingPerguntas, setSavingPerguntas] = useState(false);
 
   // Dialog state
