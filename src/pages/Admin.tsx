@@ -411,124 +411,148 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-5">
+        {/* Header — cleaner with role badge */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/selecao')}>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/selecao')} className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
-                Painel de Administração
-              </h1>
-              <p className="text-sm text-muted-foreground">Scale › SOL › Gestão</p>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl font-bold text-foreground">Painel Administrativo</h1>
+                {getRoleBadge(userRole || 'user')}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Gestão de usuários, módulos e configurações do sistema</p>
             </div>
           </div>
-          <Button onClick={refreshData} disabled={refreshing} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          <Button onClick={refreshData} disabled={refreshing} variant="outline" size="sm" className="gap-1.5">
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" /> Usuários
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{users.length}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Building2 className="h-4 w-4" /> Filiais
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{organizations.length}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Activity className="h-4 w-4" /> Sessões Ativas
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold text-green-500">{activeSessions.length}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4" /> Logs
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{accessLogs.length}</div></CardContent>
-          </Card>
+        {/* Mini KPIs — compact horizontal strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { icon: Users, label: "Usuários", value: users.length, color: "text-primary" },
+            { icon: Building2, label: "Filiais", value: organizations.length, color: "text-primary" },
+            { icon: Activity, label: "Sessões Ativas", value: activeSessions.length, color: "text-success" },
+            { icon: Shield, label: "Logs recentes", value: accessLogs.length, color: "text-muted-foreground" },
+          ].map(({ icon: Icon, label, value, color }) => (
+            <Card key={label} className="border-border/50">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                  <Icon className={`h-4 w-4 ${color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-lg font-bold">{value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Tabs — reordenadas: Filiais → Pessoas → Módulos → Segurança → Config Global */}
+        {/* Tabs — underline style */}
         <Tabs defaultValue={getDefaultTab()} className="space-y-4">
-          <TabsList className="flex-wrap">
-            {hasAccess('admin-filiais') && (
-              <TabsTrigger value="filiais" className="flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5" />
-                Filiais
-              </TabsTrigger>
-            )}
-            {(hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) && (
-              <TabsTrigger value="pessoas" className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Pessoas
-              </TabsTrigger>
-            )}
-            {hasAccess('admin-modulos') && (
-              <TabsTrigger value="modulos" className="flex items-center gap-1.5">
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Módulos
-              </TabsTrigger>
-            )}
-            {userRole === 'super_admin' && (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
-              <TabsTrigger value="seguranca" className="flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5" />
-                Segurança
-              </TabsTrigger>
-            )}
-            {userRole === 'super_admin' && showConfigGlobalTab && (
-              <TabsTrigger value="config-global" className="flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5" />
-                Configurações globais
-              </TabsTrigger>
-            )}
-          </TabsList>
+          <div className="border-b border-border/60">
+            <TabsList className="bg-transparent h-auto p-0 gap-0">
+              {hasAccess('admin-filiais') && (
+                <TabsTrigger value="filiais" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" />
+                  Filiais
+                </TabsTrigger>
+              )}
+              {(hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) && (
+                <TabsTrigger value="pessoas" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  Pessoas
+                </TabsTrigger>
+              )}
+              {hasAccess('admin-modulos') && (
+                <TabsTrigger value="modulos" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Módulos
+                </TabsTrigger>
+              )}
+              {userRole === 'super_admin' && (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
+                <TabsTrigger value="seguranca" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Lock className="h-3.5 w-3.5" />
+                  Segurança
+                </TabsTrigger>
+              )}
+              {userRole === 'super_admin' && showConfigGlobalTab && (
+                <TabsTrigger value="config-global" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Globe className="h-3.5 w-3.5" />
+                  Configurações
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
           {/* ═══════════════════════════════════════════ */}
           {/* CONFIG GLOBAL — Krolic, Cenários, DS, Skills */}
           {/* ═══════════════════════════════════════════ */}
-          <TabsContent value="config-global" className="space-y-6">
-            {showConfigGlobalTab &&
-              !hasAccess('admin-whatsapp') &&
-              !hasAccess('admin-skills') &&
-              userRole !== 'super_admin' && (
-                <Card className="border-dashed">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Configurações editáveis</CardTitle>
-                    <CardDescription>
-                      Krolic/WhatsApp, cenários monitorados, data stores e skills aparecem aqui quando seu usuário tiver as permissões
-                      correspondentes (ex.: <strong>WhatsApp Config</strong>, <strong>Skills / Edges</strong>) ou perfil super admin.
-                    </CardDescription>
-                  </CardHeader>
+          <TabsContent value="config-global" className="space-y-5">
+            {/* Quick access cards grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {/* SOL v2 — Configuração do Robô */}
+              {(userRole === 'super_admin' || userRole === 'diretor') && (
+                <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/config')}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                      <Bot className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Configuração SOL v2</p>
+                      <p className="text-xs text-muted-foreground truncate">Prompts, perguntas, templates e variáveis do Agent IA</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  </CardContent>
                 </Card>
               )}
+
+              {/* Equipe SOL */}
+              {(userRole === 'super_admin' || userRole === 'diretor') && (
+                <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/equipe')}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className="h-11 w-11 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Users className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Equipe SOL</p>
+                      <p className="text-xs text-muted-foreground truncate">Closers, gestores e distribuição de leads</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Funis */}
+              {(userRole === 'super_admin' || userRole === 'diretor') && (
+                <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/funis')}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Zap className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Funis & Etapas</p>
+                      <p className="text-xs text-muted-foreground truncate">Configuração dos funis de vendas e etapas</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             {/* Krolic / WhatsApp — Compact */}
             {hasAccess('admin-whatsapp') && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
                     Krolic API (WhatsApp Bot SOL)
                   </CardTitle>
                 </CardHeader>
@@ -570,20 +594,6 @@ export default function Admin() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
-            )}
-
-            {/* SOL v2 — Configuração do Robô */}
-            {(userRole === 'super_admin' || userRole === 'diretor') && (
-              <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/admin/config')}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-primary" />
-                    Configuração SOL v2 (Robô IA)
-                    <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
-                  </CardTitle>
-                  <CardDescription>Prompts, templates FUP Frio e variáveis globais do Agent IA</CardDescription>
-                </CardHeader>
               </Card>
             )}
 

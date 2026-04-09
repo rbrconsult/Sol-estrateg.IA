@@ -223,23 +223,28 @@ export default function SolConfigPage() {
   const hasPerguntaEdits = PERGUNTA_DEFS.some(d => perguntaEdits[d.key]);
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+    <div className="p-4 md:p-6 space-y-8 max-w-7xl mx-auto">
+      {/* Header with breadcrumb */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} className="shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Settings className="h-6 w-6" /> Configurações SOL v2
-          </h1>
-          <p className="text-sm text-muted-foreground">Prompts, templates e variáveis do Agent IA</p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+            <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate('/admin')}>Admin</span>
+            <span>›</span>
+            <span className="text-foreground font-medium">Configurações SOL</span>
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Configurações SOL v2</h1>
         </div>
       </div>
 
-      {/* Quadrant Grid — Prompts */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Prompts do Agent</h2>
+      {/* Section: Prompts */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-5 w-1 rounded-full bg-primary" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Prompts do Agent</h2>
+        </div>
         <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
           {PROMPT_KEYS.map(({ key, label, icon: Icon, description, color }) => {
             const content = getVal(key);
@@ -274,14 +279,15 @@ export default function SolConfigPage() {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* ═══ Perguntas do Robô ═══ */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2">
-          <HelpCircle className="h-4 w-4" /> Perguntas do Robô
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
+      {/* Section: Perguntas do Robô */}
+      <section>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="h-5 w-1 rounded-full bg-cyan-500" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">Perguntas do Robô</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4 ml-3">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {PERGUNTA_DEFS.map((def, i) => {
             const val = getPerguntaVal(def.key);
@@ -351,14 +357,15 @@ export default function SolConfigPage() {
             </Button>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* ═══ Mensagens Automáticas ═══ */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2">
-          <Radio className="h-4 w-4" /> Mensagens Automáticas
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
+      {/* Section: Mensagens Automáticas */}
+      <section>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="h-5 w-1 rounded-full bg-violet-500" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Mensagens Automáticas</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4 ml-3">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {MSG_AUTO_DEFS.map(({ key, label, descricao, placeholder }) => {
             const content = getVal(key);
@@ -396,10 +403,15 @@ export default function SolConfigPage() {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* FUP Templates + Variáveis — Bottom row */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      {/* Section: Templates & Variáveis */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-5 w-1 rounded-full bg-orange-500" />
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">Templates & Variáveis</h2>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* FUP Templates card */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all border bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20"
@@ -444,7 +456,8 @@ export default function SolConfigPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
 
       {/* ═══ DIALOG: Prompt Editor + AI ═══ */}
       {currentPrompt && (
