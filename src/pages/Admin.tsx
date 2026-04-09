@@ -398,7 +398,10 @@ export default function Admin() {
     hasAccess('admin') ||
     hasAccess('admin-whatsapp') ||
     hasAccess('admin-skills') ||
-    hasAccess('admin-filiais');
+    hasAccess('admin-filiais') ||
+    hasAccess('admin-config') ||
+    hasAccess('admin-equipe') ||
+    hasAccess('admin-funis');
 
   // Determine default tab — prioriza filial/equipe para quem opera cadastros no dia a dia
    const getDefaultTab = () => {
@@ -499,7 +502,7 @@ export default function Admin() {
             {/* Quick access cards grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {/* SOL v2 — Configuração do Robô */}
-              {(userRole === 'super_admin' || userRole === 'diretor') && (
+              {(userRole === 'super_admin' || userRole === 'diretor') && hasAccess('admin-config') && (
                 <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/config')}>
                   <CardContent className="flex items-center gap-4 p-5">
                     <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
@@ -515,7 +518,7 @@ export default function Admin() {
               )}
 
               {/* Equipe SOL */}
-              {(userRole === 'super_admin' || userRole === 'diretor') && (
+              {(userRole === 'super_admin' || userRole === 'diretor') && hasAccess('admin-equipe') && (
                 <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/equipe')}>
                   <CardContent className="flex items-center gap-4 p-5">
                     <div className="h-11 w-11 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
@@ -531,7 +534,7 @@ export default function Admin() {
               )}
 
               {/* Funis */}
-              {(userRole === 'super_admin' || userRole === 'diretor') && (
+              {(userRole === 'super_admin' || userRole === 'diretor') && hasAccess('admin-funis') && (
                 <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/funis')}>
                   <CardContent className="flex items-center gap-4 p-5">
                     <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">

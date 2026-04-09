@@ -129,9 +129,9 @@ function AppRoutesShell() {
               <Route path="/campanhas/ga4" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><GA4Campanhas /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/time-comercial" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="time-comercial"><TimeComercialPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/sol/insights" element={<Navigate to="/leads" replace />} />
-              <Route path="/admin/config" element={<ProtectedRoute><MainLayout><SolConfigPage /></MainLayout></ProtectedRoute>} />
-              <Route path="/admin/equipe" element={<ProtectedRoute><MainLayout><SolEquipePage /></MainLayout></ProtectedRoute>} />
-              <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><SolFunisPage /></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/config" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="admin-config"><SolConfigPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/equipe" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="admin-equipe"><SolEquipePage /></ModuleGuard></MainLayout></ProtectedRoute>} />
+              <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="admin-funis"><SolFunisPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><Insights /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/mensagens" element={<Navigate to="/dashboard" replace />} />
 
