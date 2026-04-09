@@ -47,12 +47,12 @@ function parsePergunta(valorText: string | null | undefined) {
 
 // Parse msg auto from valor_text JSON
 function parseMsgAuto(valorText: string | null | undefined) {
-  if (!valorText) return { texto: "", descricao: "" };
+  if (!valorText) return { texto: "", descricao: "", ativo: true };
   try {
     const parsed = JSON.parse(valorText);
-    return { texto: parsed.texto ?? "", descricao: parsed.descricao ?? "" };
+    return { texto: parsed.texto ?? "", descricao: parsed.descricao ?? "", ativo: parsed.ativo !== false };
   } catch {
-    return { texto: valorText, descricao: "" };
+    return { texto: valorText, descricao: "", ativo: true };
   }
 }
 
