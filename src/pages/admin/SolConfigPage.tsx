@@ -47,12 +47,12 @@ function parsePergunta(valorText: string | null | undefined) {
 
 // Parse msg auto from valor_text JSON
 function parseMsgAuto(valorText: string | null | undefined) {
-  if (!valorText) return { texto: "", descricao: "" };
+  if (!valorText) return { texto: "", descricao: "", ativo: true };
   try {
     const parsed = JSON.parse(valorText);
-    return { texto: parsed.texto ?? "", descricao: parsed.descricao ?? "" };
+    return { texto: parsed.texto ?? "", descricao: parsed.descricao ?? "", ativo: parsed.ativo !== false };
   } catch {
-    return { texto: valorText, descricao: "" };
+    return { texto: valorText, descricao: "", ativo: true };
   }
 }
 
@@ -64,7 +64,7 @@ export default function SolConfigPage() {
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
   // Perguntas local state
-  const [perguntaEdits, setPerguntaEdits] = useState<Record<string, { texto?: string; obrigatorio?: boolean; canais?: string[] }>>({});
+  const [perguntaEdits, setPerguntaEdits] = useState<Record<string, { texto?: string; obrigatorio?: boolean; canais?: string[]; ativo?: boolean }>>({});
   const [savingPerguntas, setSavingPerguntas] = useState(false);
 
   // Dialog state
@@ -97,6 +97,7 @@ export default function SolConfigPage() {
     return {
       descricao: original.descricao,
       texto: edits?.texto ?? original.texto,
+      ativo: edits?.ativo ?? original.ativo,
     };
   };
 
@@ -145,7 +146,7 @@ export default function SolConfigPage() {
     try {
       const val = getMsgAutoVal(key);
       const original = parseMsgAuto(configs?.find(c => c.key === key)?.valor_text);
-      const toSave = { ...original, texto: val.texto };
+      const toSave = { ...original, texto: val.texto, ativo: val.ativo };
       await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
       setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
     } finally {
@@ -419,16 +420,29 @@ export default function SolConfigPage() {
             const val = getMsgAutoVal(key);
             const isEdited = !!perguntaEdits[key];
             return (
-              <Card key={key} className="border bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/15">
+              <Card key={key} className={`border bg-gradient-to-br border-violet-500/15 ${val.ativo ? 'from-violet-500/5 to-violet-600/5' : 'from-muted/30 to-muted/10 opacity-70'}`}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     {label}
+                    <Badge variant={val.ativo ? "default" : "outline"} className="text-[9px]">
+                      {val.ativo ? "Ativa" : "Desativada"}
+                    </Badge>
                     {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
                   </CardTitle>
                   {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={val.ativo}
+                      onCheckedChange={checked => setPerguntaEdits(prev => ({
+                        ...prev,
+                        [key]: { ...prev[key], ativo: checked }
+                      }))}
+                    />
+                    <span className="text-xs text-muted-foreground">{val.ativo ? "Ativa" : "Desativada"}</span>
+                  </div>
                   <Textarea
                     value={val.texto}
                     onChange={e => setPerguntaEdits(prev => ({
@@ -437,6 +451,7 @@ export default function SolConfigPage() {
                     }))}
                     className="min-h-[120px] text-sm"
                     placeholder={placeholder}
+                    disabled={!val.ativo}
                   />
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">Use <code className="bg-muted px-1 rounded text-[9px]">{"{NOME}"}</code> para o nome do lead</span>
