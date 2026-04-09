@@ -499,7 +499,7 @@ export default function Admin() {
             {/* Quick access cards grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {/* SOL v2 — Configuração do Robô */}
-              {(userRole === 'super_admin' || userRole === 'diretor') && (
+              {(userRole === 'super_admin' || userRole === 'diretor') && hasAccess('admin-config') && (
                 <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all" onClick={() => navigate('/admin/config')}>
                   <CardContent className="flex items-center gap-4 p-5">
                     <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">

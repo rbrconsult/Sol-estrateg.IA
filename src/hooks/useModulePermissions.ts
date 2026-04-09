@@ -40,6 +40,9 @@ export const MODULE_DEFINITIONS = [
   { key: 'admin-sessoes', label: 'Sessões Ativas', description: 'Controle de Sessões', path: '/admin' },
   { key: 'admin-whatsapp', label: 'WhatsApp Config', description: 'Configurações WhatsApp', path: '/admin' },
   { key: 'admin-skills', label: 'Skills / Edges', description: 'Edge Functions & DS', path: '/admin' },
+  { key: 'admin-config', label: 'Config SOL v2', description: 'Prompts e Templates do Agent', path: '/admin/config' },
+  { key: 'admin-equipe', label: 'Equipe SOL', description: 'Gestão da Equipe SDR/Closer', path: '/admin/equipe' },
+  { key: 'admin-funis', label: 'Funis SOL', description: 'Configuração de Funis', path: '/admin/funis' },
 ] as const;
 
 export type ModuleKey = typeof MODULE_DEFINITIONS[number]['key'];
