@@ -433,18 +433,17 @@ export default function SolConfigPage() {
                   {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={val.ativo}
-                          onCheckedChange={checked => setPerguntaEdits(prev => ({
-                            ...prev,
-                            [key]: { ...prev[key], ativo: checked }
-                          }))}
-                        />
-                        <span className="text-xs text-muted-foreground">{val.ativo ? "Ativa" : "Desativada"}</span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={val.ativo}
+                      onCheckedChange={checked => setPerguntaEdits(prev => ({
+                        ...prev,
+                        [key]: { ...prev[key], ativo: checked }
+                      }))}
+                    />
+                    <span className="text-xs text-muted-foreground">{val.ativo ? "Ativa" : "Desativada"}</span>
+                  </div>
+                  <Textarea
                     value={val.texto}
                     onChange={e => setPerguntaEdits(prev => ({
                       ...prev,
@@ -452,6 +451,7 @@ export default function SolConfigPage() {
                     }))}
                     className="min-h-[120px] text-sm"
                     placeholder={placeholder}
+                    disabled={!val.ativo}
                   />
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">Use <code className="bg-muted px-1 rounded text-[9px]">{"{NOME}"}</code> para o nome do lead</span>
