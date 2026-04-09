@@ -19,38 +19,40 @@ const PROMPT_KEYS = [
 
 const FUP_KEYS = Array.from({ length: 9 }, (_, i) => `fup_frio_${i}`);
 
-const PERGUNTA_DEFS = [
-  { key: "pergunta_1", campo: "valor_conta", descricao: "Valor da conta de luz mensal do cliente" },
-  { key: "pergunta_2", campo: "tipo_imovel", descricao: "Tipo do imóvel (residencial, comercial, rural)" },
-  { key: "pergunta_3", campo: "tipo_telhado", descricao: "Material/tipo do telhado para instalação" },
-  { key: "pergunta_4", campo: "cidade", descricao: "Cidade de instalação do sistema" },
-  { key: "pergunta_5", campo: "acrescimo_carga", descricao: "Se pretende aumentar consumo futuro" },
-  { key: "pergunta_6", campo: "prazo_decisao", descricao: "Prazo para decisão de compra" },
-  { key: "pergunta_7", campo: "forma_pagamento", descricao: "Preferência de forma de pagamento" },
-  { key: "pergunta_8", campo: "nome", descricao: "Nome completo do lead" },
-  { key: "pergunta_9", campo: "email", descricao: "E-mail do lead para contato" },
-  { key: "pergunta_10", campo: "preferencia_contato", descricao: "Preferência de canal de contato" },
-];
+const PERGUNTA_KEYS = Array.from({ length: 10 }, (_, i) => `pergunta_${i + 1}`);
 
-const MSG_AUTO_DEFS = [
-  { key: "msg_boas_vindas", label: "Mensagem de Boas-Vindas", descricao: "Enviada pelo CAPTURE no primeiro contato com o lead", placeholder: "Olá {NOME}! Bem-vindo à Evolve Energia Solar..." },
-  { key: "msg_transferencia", label: "Mensagem de Transferência", descricao: "Enviada quando o lead é qualificado e transferido ao comercial", placeholder: "{NOME}, parabéns! Você está sendo direcionado..." },
+const MSG_AUTO_KEYS = [
+  { key: "msg_boas_vindas", label: "Mensagem de Boas-Vindas", placeholder: "Olá {NOME}! Bem-vindo à Evolve Energia Solar..." },
+  { key: "msg_transferencia", label: "Mensagem de Transferência", placeholder: "{NOME}, parabéns! Você está sendo direcionado..." },
 ];
 
 const CANAIS_OPTIONS = ["TODOS", "INBOUND_WHATSAPP"];
 
 // Parse pergunta config from valor_text JSON
 function parsePergunta(valorText: string | null | undefined) {
-  if (!valorText) return { texto: "", obrigatorio: true, canais: ["TODOS"] };
+  if (!valorText) return { campo: "", texto: "", obrigatorio: true, canais: ["TODOS"], descricao: "" };
   try {
     const parsed = JSON.parse(valorText);
     return {
+      campo: parsed.campo ?? "",
       texto: parsed.texto ?? "",
       obrigatorio: parsed.obrigatorio ?? true,
       canais: parsed.canais ?? ["TODOS"],
+      descricao: parsed.descricao ?? "",
     };
   } catch {
-    return { texto: valorText, obrigatorio: true, canais: ["TODOS"] };
+    return { campo: "", texto: valorText, obrigatorio: true, canais: ["TODOS"], descricao: "" };
+  }
+}
+
+// Parse msg auto from valor_text JSON
+function parseMsgAuto(valorText: string | null | undefined) {
+  if (!valorText) return { texto: "", descricao: "" };
+  try {
+    const parsed = JSON.parse(valorText);
+    return { texto: parsed.texto ?? "", descricao: parsed.descricao ?? "" };
+  } catch {
+    return { texto: valorText, descricao: "" };
   }
 }
 
@@ -81,9 +83,20 @@ export default function SolConfigPage() {
     const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
     const edits = perguntaEdits[key];
     return {
+      campo: original.campo,
+      descricao: original.descricao,
       texto: edits?.texto ?? original.texto,
       obrigatorio: edits?.obrigatorio ?? original.obrigatorio,
       canais: edits?.canais ?? original.canais,
+    };
+  };
+
+  const getMsgAutoVal = (key: string) => {
+    const original = parseMsgAuto(configs?.find(c => c.key === key)?.valor_text);
+    const edits = perguntaEdits[key];
+    return {
+      descricao: original.descricao,
+      texto: edits?.texto ?? original.texto,
     };
   };
 
@@ -101,7 +114,9 @@ export default function SolConfigPage() {
     setSavingKey(key);
     try {
       const val = getPerguntaVal(key);
-      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(val) });
+      const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
+      const toSave = { ...original, texto: val.texto, obrigatorio: val.obrigatorio, canais: val.canais };
+      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
       setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
     } finally {
       setSavingKey(null);
@@ -111,15 +126,30 @@ export default function SolConfigPage() {
   const handleSaveAllPerguntas = async () => {
     setSavingPerguntas(true);
     try {
-      for (const def of PERGUNTA_DEFS) {
-        if (perguntaEdits[def.key]) {
-          const val = getPerguntaVal(def.key);
-          await updateConfig.mutateAsync({ key: def.key, valor_text: JSON.stringify(val) });
+      for (const key of PERGUNTA_KEYS) {
+        if (perguntaEdits[key]) {
+          const val = getPerguntaVal(key);
+          const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
+          const toSave = { ...original, texto: val.texto, obrigatorio: val.obrigatorio, canais: val.canais };
+          await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
         }
       }
       setPerguntaEdits({});
     } finally {
       setSavingPerguntas(false);
+    }
+  };
+
+  const handleSaveMsgAuto = async (key: string) => {
+    setSavingKey(key);
+    try {
+      const val = getMsgAutoVal(key);
+      const original = parseMsgAuto(configs?.find(c => c.key === key)?.valor_text);
+      const toSave = { ...original, texto: val.texto };
+      await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
+      setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
+    } finally {
+      setSavingKey(null);
     }
   };
 
@@ -220,7 +250,7 @@ export default function SolConfigPage() {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
-  const hasPerguntaEdits = PERGUNTA_DEFS.some(d => perguntaEdits[d.key]);
+  const hasPerguntaEdits = PERGUNTA_KEYS.some(key => perguntaEdits[key]);
 
   return (
     <div className="p-4 md:p-6 space-y-8 max-w-7xl mx-auto">
@@ -289,60 +319,78 @@ export default function SolConfigPage() {
         </div>
         <p className="text-xs text-muted-foreground mb-4 ml-3">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {PERGUNTA_DEFS.map((def, i) => {
-            const val = getPerguntaVal(def.key);
-            const isEdited = !!perguntaEdits[def.key];
+          {PERGUNTA_KEYS.map((key, i) => {
+            const val = getPerguntaVal(key);
+            const isEdited = !!perguntaEdits[key];
             return (
-              <Card key={def.key} className="border bg-gradient-to-br from-cyan-500/5 to-cyan-600/5 border-cyan-500/15">
+              <Card key={key} className="border bg-gradient-to-br from-cyan-500/5 to-cyan-600/5 border-cyan-500/15">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold text-primary">#{i + 1}</span>
-                    <Badge variant="secondary" className="text-[10px] font-mono">{def.campo}</Badge>
+                    {val.campo && <Badge variant="secondary" className="text-[10px] font-mono">{val.campo}</Badge>}
+                    <Badge variant={val.obrigatorio ? "default" : "outline"} className="text-[9px]">
+                      {val.obrigatorio ? "Obrigatório" : "Opcional"}
+                    </Badge>
                     {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
                   </CardTitle>
-                  <p className="text-[11px] text-muted-foreground">{def.descricao}</p>
+                  {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Badge variant="outline" className="text-[9px]">
+                      {val.canais.includes("TODOS") ? "📡 Todos os Canais" : "💬 Somente WhatsApp"}
+                    </Badge>
+                  </div>
                   <Textarea
                     value={val.texto}
                     onChange={e => setPerguntaEdits(prev => ({
                       ...prev,
-                      [def.key]: { ...prev[def.key], texto: e.target.value }
+                      [key]: { ...prev[key], texto: e.target.value }
                     }))}
                     className="min-h-[80px] text-sm"
                     placeholder={`Texto da pergunta #${i + 1}...`}
                   />
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={val.obrigatorio}
-                        onCheckedChange={checked => setPerguntaEdits(prev => ({
-                          ...prev,
-                          [def.key]: { ...prev[def.key], obrigatorio: checked }
-                        }))}
-                      />
-                      <span className="text-xs text-muted-foreground">Obrigatório</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={val.obrigatorio}
+                          onCheckedChange={checked => setPerguntaEdits(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], obrigatorio: checked }
+                          }))}
+                        />
+                        <span className="text-xs text-muted-foreground">Obrigatório</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {CANAIS_OPTIONS.map(canal => (
+                          <Badge
+                            key={canal}
+                            variant={val.canais.includes(canal) ? "default" : "outline"}
+                            className="text-[9px] cursor-pointer"
+                            onClick={() => {
+                              const newCanais = val.canais.includes(canal)
+                                ? val.canais.filter(c => c !== canal)
+                                : [...val.canais, canal];
+                              setPerguntaEdits(prev => ({
+                                ...prev,
+                                [key]: { ...prev[key], canais: newCanais.length ? newCanais : ["TODOS"] }
+                              }));
+                            }}
+                          >
+                            {canal === "TODOS" ? "📡 Todos" : "💬 WhatsApp"}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      {CANAIS_OPTIONS.map(canal => (
-                        <Badge
-                          key={canal}
-                          variant={val.canais.includes(canal) ? "default" : "outline"}
-                          className="text-[9px] cursor-pointer"
-                          onClick={() => {
-                            const newCanais = val.canais.includes(canal)
-                              ? val.canais.filter(c => c !== canal)
-                              : [...val.canais, canal];
-                            setPerguntaEdits(prev => ({
-                              ...prev,
-                              [def.key]: { ...prev[def.key], canais: newCanais.length ? newCanais : ["TODOS"] }
-                            }));
-                          }}
-                        >
-                          {canal === "TODOS" ? "📡 Todos" : "💬 WhatsApp"}
-                        </Badge>
-                      ))}
-                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSavePergunta(key)}
+                      disabled={savingKey === key || !isEdited}
+                    >
+                      {savingKey === key ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Salvar
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -367,9 +415,9 @@ export default function SolConfigPage() {
         </div>
         <p className="text-xs text-muted-foreground mb-4 ml-3">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {MSG_AUTO_DEFS.map(({ key, label, descricao, placeholder }) => {
-            const content = getVal(key);
-            const isEdited = !!editValues[key];
+          {MSG_AUTO_KEYS.map(({ key, label, placeholder }) => {
+            const val = getMsgAutoVal(key);
+            const isEdited = !!perguntaEdits[key];
             return (
               <Card key={key} className="border bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/15">
                 <CardHeader className="pb-2">
@@ -378,12 +426,15 @@ export default function SolConfigPage() {
                     {label}
                     {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
                   </CardTitle>
-                  <p className="text-[11px] text-muted-foreground">{descricao}</p>
+                  {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
                   <Textarea
-                    value={content}
-                    onChange={e => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
+                    value={val.texto}
+                    onChange={e => setPerguntaEdits(prev => ({
+                      ...prev,
+                      [key]: { ...prev[key], texto: e.target.value }
+                    }))}
                     className="min-h-[120px] text-sm"
                     placeholder={placeholder}
                   />
@@ -391,8 +442,8 @@ export default function SolConfigPage() {
                     <span className="text-[10px] text-muted-foreground">Use <code className="bg-muted px-1 rounded text-[9px]">{"{NOME}"}</code> para o nome do lead</span>
                     <Button
                       size="sm"
-                      onClick={() => handleSave(key)}
-                      disabled={savingKey === key || !editValues[key]}
+                      onClick={() => handleSaveMsgAuto(key)}
+                      disabled={savingKey === key || !isEdited}
                     >
                       {savingKey === key ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                       Salvar
