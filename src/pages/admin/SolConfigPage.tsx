@@ -415,9 +415,9 @@ export default function SolConfigPage() {
         </div>
         <p className="text-xs text-muted-foreground mb-4 ml-3">Mensagens enviadas automaticamente pelo robô em momentos-chave</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {MSG_AUTO_DEFS.map(({ key, label, descricao, placeholder }) => {
-            const content = getVal(key);
-            const isEdited = !!editValues[key];
+          {MSG_AUTO_KEYS.map(({ key, label, placeholder }) => {
+            const val = getMsgAutoVal(key);
+            const isEdited = !!perguntaEdits[key];
             return (
               <Card key={key} className="border bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/15">
                 <CardHeader className="pb-2">
@@ -426,12 +426,15 @@ export default function SolConfigPage() {
                     {label}
                     {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
                   </CardTitle>
-                  <p className="text-[11px] text-muted-foreground">{descricao}</p>
+                  {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
                   <Textarea
-                    value={content}
-                    onChange={e => setEditValues(prev => ({ ...prev, [key]: e.target.value }))}
+                    value={val.texto}
+                    onChange={e => setPerguntaEdits(prev => ({
+                      ...prev,
+                      [key]: { ...prev[key], texto: e.target.value }
+                    }))}
                     className="min-h-[120px] text-sm"
                     placeholder={placeholder}
                   />
@@ -439,8 +442,8 @@ export default function SolConfigPage() {
                     <span className="text-[10px] text-muted-foreground">Use <code className="bg-muted px-1 rounded text-[9px]">{"{NOME}"}</code> para o nome do lead</span>
                     <Button
                       size="sm"
-                      onClick={() => handleSave(key)}
-                      disabled={savingKey === key || !editValues[key]}
+                      onClick={() => handleSaveMsgAuto(key)}
+                      disabled={savingKey === key || !isEdited}
                     >
                       {savingKey === key ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                       Salvar
