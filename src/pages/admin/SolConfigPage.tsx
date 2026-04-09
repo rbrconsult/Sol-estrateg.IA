@@ -456,7 +456,7 @@ export default function SolConfigPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </section>
 
       {/* ═══ DIALOG: Prompt Editor + AI ═══ */}
       {currentPrompt && (
