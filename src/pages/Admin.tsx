@@ -411,98 +411,86 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-5">
+        {/* Header — cleaner with role badge */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/selecao')}>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/selecao')} className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
-                Painel de Administração
-              </h1>
-              <p className="text-sm text-muted-foreground">Scale › SOL › Gestão</p>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl font-bold text-foreground">Painel Administrativo</h1>
+                {getRoleBadge(userRole || 'user')}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Gestão de usuários, módulos e configurações do sistema</p>
             </div>
           </div>
-          <Button onClick={refreshData} disabled={refreshing} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          <Button onClick={refreshData} disabled={refreshing} variant="outline" size="sm" className="gap-1.5">
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" /> Usuários
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{users.length}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Building2 className="h-4 w-4" /> Filiais
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{organizations.length}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Activity className="h-4 w-4" /> Sessões Ativas
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold text-green-500">{activeSessions.length}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4" /> Logs
-              </CardTitle>
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{accessLogs.length}</div></CardContent>
-          </Card>
+        {/* Mini KPIs — compact horizontal strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { icon: Users, label: "Usuários", value: users.length, color: "text-primary" },
+            { icon: Building2, label: "Filiais", value: organizations.length, color: "text-primary" },
+            { icon: Activity, label: "Sessões Ativas", value: activeSessions.length, color: "text-success" },
+            { icon: Shield, label: "Logs recentes", value: accessLogs.length, color: "text-muted-foreground" },
+          ].map(({ icon: Icon, label, value, color }) => (
+            <Card key={label} className="border-border/50">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                  <Icon className={`h-4 w-4 ${color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-lg font-bold">{value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Tabs — reordenadas: Filiais → Pessoas → Módulos → Segurança → Config Global */}
+        {/* Tabs — underline style */}
         <Tabs defaultValue={getDefaultTab()} className="space-y-4">
-          <TabsList className="flex-wrap">
-            {hasAccess('admin-filiais') && (
-              <TabsTrigger value="filiais" className="flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5" />
-                Filiais
-              </TabsTrigger>
-            )}
-            {(hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) && (
-              <TabsTrigger value="pessoas" className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Pessoas
-              </TabsTrigger>
-            )}
-            {hasAccess('admin-modulos') && (
-              <TabsTrigger value="modulos" className="flex items-center gap-1.5">
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Módulos
-              </TabsTrigger>
-            )}
-            {userRole === 'super_admin' && (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
-              <TabsTrigger value="seguranca" className="flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5" />
-                Segurança
-              </TabsTrigger>
-            )}
-            {userRole === 'super_admin' && showConfigGlobalTab && (
-              <TabsTrigger value="config-global" className="flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5" />
-                Configurações globais
-              </TabsTrigger>
-            )}
-          </TabsList>
+          <div className="border-b border-border/60">
+            <TabsList className="bg-transparent h-auto p-0 gap-0">
+              {hasAccess('admin-filiais') && (
+                <TabsTrigger value="filiais" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" />
+                  Filiais
+                </TabsTrigger>
+              )}
+              {(hasAccess('admin-usuarios') || hasAccess('time-comercial') || hasAccess('admin-pessoas')) && (
+                <TabsTrigger value="pessoas" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  Pessoas
+                </TabsTrigger>
+              )}
+              {hasAccess('admin-modulos') && (
+                <TabsTrigger value="modulos" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Módulos
+                </TabsTrigger>
+              )}
+              {userRole === 'super_admin' && (hasAccess('admin-seguranca') || hasAccess('admin-sessoes')) && (
+                <TabsTrigger value="seguranca" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Lock className="h-3.5 w-3.5" />
+                  Segurança
+                </TabsTrigger>
+              )}
+              {userRole === 'super_admin' && showConfigGlobalTab && (
+                <TabsTrigger value="config-global" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm gap-1.5">
+                  <Globe className="h-3.5 w-3.5" />
+                  Configurações
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
           {/* ═══════════════════════════════════════════ */}
           {/* CONFIG GLOBAL — Krolic, Cenários, DS, Skills */}
