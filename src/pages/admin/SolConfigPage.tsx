@@ -146,7 +146,7 @@ export default function SolConfigPage() {
     try {
       const val = getMsgAutoVal(key);
       const original = parseMsgAuto(configs?.find(c => c.key === key)?.valor_text);
-      const toSave = { ...original, texto: val.texto };
+      const toSave = { ...original, texto: val.texto, ativo: val.ativo };
       await updateConfig.mutateAsync({ key, valor_text: JSON.stringify(toSave) });
       setPerguntaEdits(prev => { const n = { ...prev }; delete n[key]; return n; });
     } finally {
