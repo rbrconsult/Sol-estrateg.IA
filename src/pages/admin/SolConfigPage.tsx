@@ -319,60 +319,78 @@ export default function SolConfigPage() {
         </div>
         <p className="text-xs text-muted-foreground mb-4 ml-3">Configure o texto de cada pergunta enviada pelo Agent durante a qualificação</p>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {PERGUNTA_DEFS.map((def, i) => {
-            const val = getPerguntaVal(def.key);
-            const isEdited = !!perguntaEdits[def.key];
+          {PERGUNTA_KEYS.map((key, i) => {
+            const val = getPerguntaVal(key);
+            const isEdited = !!perguntaEdits[key];
             return (
-              <Card key={def.key} className="border bg-gradient-to-br from-cyan-500/5 to-cyan-600/5 border-cyan-500/15">
+              <Card key={key} className="border bg-gradient-to-br from-cyan-500/5 to-cyan-600/5 border-cyan-500/15">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold text-primary">#{i + 1}</span>
-                    <Badge variant="secondary" className="text-[10px] font-mono">{def.campo}</Badge>
+                    {val.campo && <Badge variant="secondary" className="text-[10px] font-mono">{val.campo}</Badge>}
+                    <Badge variant={val.obrigatorio ? "default" : "outline"} className="text-[9px]">
+                      {val.obrigatorio ? "Obrigatório" : "Opcional"}
+                    </Badge>
                     {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
                   </CardTitle>
-                  <p className="text-[11px] text-muted-foreground">{def.descricao}</p>
+                  {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Badge variant="outline" className="text-[9px]">
+                      {val.canais.includes("TODOS") ? "📡 Todos os Canais" : "💬 Somente WhatsApp"}
+                    </Badge>
+                  </div>
                   <Textarea
                     value={val.texto}
                     onChange={e => setPerguntaEdits(prev => ({
                       ...prev,
-                      [def.key]: { ...prev[def.key], texto: e.target.value }
+                      [key]: { ...prev[key], texto: e.target.value }
                     }))}
                     className="min-h-[80px] text-sm"
                     placeholder={`Texto da pergunta #${i + 1}...`}
                   />
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={val.obrigatorio}
-                        onCheckedChange={checked => setPerguntaEdits(prev => ({
-                          ...prev,
-                          [def.key]: { ...prev[def.key], obrigatorio: checked }
-                        }))}
-                      />
-                      <span className="text-xs text-muted-foreground">Obrigatório</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={val.obrigatorio}
+                          onCheckedChange={checked => setPerguntaEdits(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key], obrigatorio: checked }
+                          }))}
+                        />
+                        <span className="text-xs text-muted-foreground">Obrigatório</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {CANAIS_OPTIONS.map(canal => (
+                          <Badge
+                            key={canal}
+                            variant={val.canais.includes(canal) ? "default" : "outline"}
+                            className="text-[9px] cursor-pointer"
+                            onClick={() => {
+                              const newCanais = val.canais.includes(canal)
+                                ? val.canais.filter(c => c !== canal)
+                                : [...val.canais, canal];
+                              setPerguntaEdits(prev => ({
+                                ...prev,
+                                [key]: { ...prev[key], canais: newCanais.length ? newCanais : ["TODOS"] }
+                              }));
+                            }}
+                          >
+                            {canal === "TODOS" ? "📡 Todos" : "💬 WhatsApp"}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      {CANAIS_OPTIONS.map(canal => (
-                        <Badge
-                          key={canal}
-                          variant={val.canais.includes(canal) ? "default" : "outline"}
-                          className="text-[9px] cursor-pointer"
-                          onClick={() => {
-                            const newCanais = val.canais.includes(canal)
-                              ? val.canais.filter(c => c !== canal)
-                              : [...val.canais, canal];
-                            setPerguntaEdits(prev => ({
-                              ...prev,
-                              [def.key]: { ...prev[def.key], canais: newCanais.length ? newCanais : ["TODOS"] }
-                            }));
-                          }}
-                        >
-                          {canal === "TODOS" ? "📡 Todos" : "💬 WhatsApp"}
-                        </Badge>
-                      ))}
-                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSavePergunta(key)}
+                      disabled={savingKey === key || !isEdited}
+                    >
+                      {savingKey === key ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Salvar
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
