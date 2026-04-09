@@ -420,11 +420,14 @@ export default function SolConfigPage() {
             const val = getMsgAutoVal(key);
             const isEdited = !!perguntaEdits[key];
             return (
-              <Card key={key} className="border bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/15">
+              <Card key={key} className={`border bg-gradient-to-br border-violet-500/15 ${val.ativo ? 'from-violet-500/5 to-violet-600/5' : 'from-muted/30 to-muted/10 opacity-70'}`}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     {label}
+                    <Badge variant={val.ativo ? "default" : "outline"} className="text-[9px]">
+                      {val.ativo ? "Ativa" : "Desativada"}
+                    </Badge>
                     {isEdited && <Badge variant="outline" className="text-[9px] ml-auto border-amber-500/40 text-amber-500">editado</Badge>}
                   </CardTitle>
                   {val.descricao && <p className="text-[11px] text-muted-foreground">{val.descricao}</p>}
