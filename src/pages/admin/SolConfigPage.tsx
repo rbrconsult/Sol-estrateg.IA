@@ -250,7 +250,7 @@ export default function SolConfigPage() {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
-  const hasPerguntaEdits = PERGUNTA_DEFS.some(d => perguntaEdits[d.key]);
+  const hasPerguntaEdits = PERGUNTA_KEYS.some(key => perguntaEdits[key]);
 
   return (
     <div className="p-4 md:p-6 space-y-8 max-w-7xl mx-auto">
