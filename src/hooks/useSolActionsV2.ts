@@ -5,7 +5,6 @@ const WEBHOOKS = {
   qualificar: "https://hook.us2.make.com/oxaip1d1e946l7hmtyhpr1aic626o92m",
   desqualificar: "https://hook.us2.make.com/joonk1hj7ubqeogtq1hxwymncruxslbl",
   reprocessar: "https://hook.us2.make.com/m6zaweontguh6vqsfvid3g73bxb1qg44",
-  transferir: "https://hook.us2.make.com/xwxjtzfj4zul7aye2pxrv2e4glmpgwg7",
 };
 
 async function callWebhook(url: string, data: Record<string, any>) {
@@ -41,20 +40,6 @@ interface DesqualificarData {
 
 interface ReprocessarData {
   telefone: string;
-}
-
-interface TransferirData {
-  telefone: string;
-  nome?: string | null;
-  score?: string | null;
-  temperatura?: string | null;
-  valor_conta?: string | null;
-  preferencia_contato?: string | null;
-  email?: string | null;
-  chatid?: string | null;
-  contactid?: string | null;
-  project_id?: string | null;
-  canal_origem?: string | null;
 }
 
 export function useSolActionsV2() {
@@ -96,30 +81,10 @@ export function useSolActionsV2() {
     onError: (err: any) => toast.error(`Erro ao reprocessar: ${err.message}`),
   });
 
-  const transferir = useMutation({
-    mutationFn: (data: TransferirData) =>
-      callWebhook(WEBHOOKS.transferir, {
-        telefone: data.telefone,
-        chatId: data.chatid,
-        contactId: data.contactid,
-        nome: data.nome,
-        score: data.score,
-        temperatura: data.temperatura,
-        valor_conta: data.valor_conta,
-        preferencia_contato: data.preferencia_contato,
-        email: data.email,
-        project_id: data.project_id,
-        canal_origem: data.canal_origem,
-      }),
-    onSuccess: () => toast.success("Lead transferido para closer"),
-    onError: (err: any) => toast.error(`Erro ao transferir: ${err.message}`),
-  });
-
   return {
     qualificar,
     desqualificar,
     reprocessar,
-    transferir,
-    isLoading: qualificar.isPending || desqualificar.isPending || reprocessar.isPending || transferir.isPending,
+    isLoading: qualificar.isPending || desqualificar.isPending || reprocessar.isPending,
   };
 }
