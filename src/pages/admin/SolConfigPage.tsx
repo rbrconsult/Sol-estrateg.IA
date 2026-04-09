@@ -223,17 +223,19 @@ export default function SolConfigPage() {
   const hasPerguntaEdits = PERGUNTA_DEFS.some(d => perguntaEdits[d.key]);
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+    <div className="p-4 md:p-6 space-y-8 max-w-7xl mx-auto">
+      {/* Header with breadcrumb */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} className="shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Settings className="h-6 w-6" /> Configurações SOL v2
-          </h1>
-          <p className="text-sm text-muted-foreground">Prompts, templates e variáveis do Agent IA</p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+            <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate('/admin')}>Admin</span>
+            <span>›</span>
+            <span className="text-foreground font-medium">Configurações SOL</span>
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Configurações SOL v2</h1>
         </div>
       </div>
 
