@@ -83,9 +83,20 @@ export default function SolConfigPage() {
     const original = parsePergunta(configs?.find(c => c.key === key)?.valor_text);
     const edits = perguntaEdits[key];
     return {
+      campo: original.campo,
+      descricao: original.descricao,
       texto: edits?.texto ?? original.texto,
       obrigatorio: edits?.obrigatorio ?? original.obrigatorio,
       canais: edits?.canais ?? original.canais,
+    };
+  };
+
+  const getMsgAutoVal = (key: string) => {
+    const original = parseMsgAuto(configs?.find(c => c.key === key)?.valor_text);
+    const edits = perguntaEdits[key];
+    return {
+      descricao: original.descricao,
+      texto: edits?.texto ?? original.texto,
     };
   };
 
