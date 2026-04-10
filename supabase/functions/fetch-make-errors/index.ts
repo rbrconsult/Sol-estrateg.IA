@@ -643,6 +643,18 @@ Deno.serve(async (req) => {
     const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
     const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
 
+    // ── Pre-check: is AutoFix (skill 6.12) enabled? ──
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    let autofixEnabled = false;
+    if (ANTHROPIC_API_KEY) {
+      const { data: toggleData } = await supabase
+        .from("skill_toggles")
+        .select("enabled")
+        .eq("skill_id", "6.12")
+        .maybeSingle();
+      autofixEnabled = !toggleData || toggleData.enabled;
+    }
+
     try {
       if (apiKey && centralNumber && newRecords.length > 0) {
         console.log(`[alerts] ${newRecords.length} new errors detected, sending alerts to ${centralNumber}`);
@@ -663,18 +675,18 @@ Deno.serve(async (req) => {
           await new Promise((r) => setTimeout(r, 1000));
         }
 
-        // Send N2 alerts (individual stopped flows)
+        // Send N2 alerts (individual stopped flows) — with autofix note
         for (const record of n2Records) {
-          const msg = formatN2Message(record);
+          const msg = formatN2Message(record, autofixEnabled);
           const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
           if (sent) alertsSent++;
           await new Promise((r) => setTimeout(r, 1000));
         }
 
-        // Send N1 alerts (batch: max 5 individual, then summarize)
+        // Send N1 alerts — with autofix note
         if (n1Records.length <= 5) {
           for (const record of n1Records) {
-            const msg = formatN1Message(record);
+            const msg = formatN1Message(record, autofixEnabled);
             const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
             if (sent) alertsSent++;
             await new Promise((r) => setTimeout(r, 1000));
@@ -688,7 +700,9 @@ Deno.serve(async (req) => {
             ...n1Records.slice(0, 10).map((r) => `  • ${r.scenario_name} — ${r.execution_status === "warning" ? "⚠️" : "🟠"} [${r.module_app}] ${r.module_name}`),
             n1Records.length > 10 ? `  ... e mais ${n1Records.length - 10}` : null,
             "",
-            "Nenhum fluxo parou, mas vale monitorar.",
+            autofixEnabled
+              ? "🤖 *AutoFix ativado* — analisando com IA e iniciando correção automática..."
+              : "Nenhum fluxo parou, mas vale monitorar.",
             "",
             "Sol Estrateg.IA — Monitor de Fluxos",
           ].filter(Boolean).join("\n");
@@ -706,38 +720,26 @@ Deno.serve(async (req) => {
       console.error("[alerts] Error sending alerts:", alertError);
     }
 
-    // ── 6. AutoFix: attempt Claude fix on NEW stopped errors (skill 6.12) ──
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    
-    if (ANTHROPIC_API_KEY && newRecords.length > 0) {
-      // Check if skill 6.12 is enabled
-      const { data: toggleData } = await supabase
-        .from("skill_toggles")
-        .select("enabled")
-        .eq("skill_id", "6.12")
-        .maybeSingle();
+    // ── 7. AutoFix: attempt Claude fix on ALL new errors (skill 6.12) ──
+    if (autofixEnabled && ANTHROPIC_API_KEY && newRecords.length > 0) {
+      // AutoFix ALL new errors (stopped, error_continued, warnings) that have a scenario_id
+      const eligibleForFix = newRecords.filter((r) => r.scenario_id);
+      console.log(`[autofix] ${eligibleForFix.length} errors eligible for autofix`);
 
-      const autofixEnabled = !toggleData || toggleData.enabled; // default enabled if no toggle row
-
-      if (autofixEnabled) {
-        // Only autofix stopped flows (N2) — they need actual correction
-        const stoppedNew = newRecords.filter((r) => r.execution_status === "stopped" && r.scenario_id);
-        console.log(`[autofix] ${stoppedNew.length} stopped flows eligible for autofix`);
-
-        for (const record of stoppedNew) {
-          try {
-            const result = await runAutoFix(record, makeHeaders, ANTHROPIC_API_KEY, supabase, apiKey, centralNumber);
-            if (result) autofixResults.push({ scenario: record.scenario_name, ...result });
-          } catch (e) {
-            console.error(`[autofix] Error processing ${record.scenario_name}:`, e);
-          }
-          // Rate limiting between scenarios
-          await new Promise((r) => setTimeout(r, 2000));
+      for (const record of eligibleForFix) {
+        try {
+          const result = await runAutoFix(record, makeHeaders, ANTHROPIC_API_KEY, supabase, apiKey, centralNumber);
+          if (result) autofixResults.push({ scenario: record.scenario_name, ...result });
+        } catch (e) {
+          console.error(`[autofix] Error processing ${record.scenario_name}:`, e);
         }
+        // Rate limiting between scenarios
+        await new Promise((r) => setTimeout(r, 2000));
+      }
 
-        console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
-      } else {
-        console.log("[autofix] Skill 6.12 disabled, skipping");
+      console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
+    } else if (!autofixEnabled) {
+      console.log("[autofix] Skill 6.12 disabled, skipping");
       }
     }
 
