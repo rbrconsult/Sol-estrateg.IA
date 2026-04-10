@@ -472,11 +472,36 @@ Deno.serve(async (req) => {
       return fetch(url, opts);
     }
 
-    // 1. Fetch scenarios
-    const scenariosRes = await fetchRetry(
-      `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`,
-      { headers: makeHeaders }
-    );
+    // 1. Fetch folders to find monitored folder ("solestrategia")
+    const MONITORED_FOLDER_NAME = "solestrategia";
+    let monitoredFolderId: number | null = null;
+    try {
+      const foldersRes = await fetchRetry(
+        `${MAKE_BASE}/scenarios-folders?teamId=${MAKE_TEAM_ID}`,
+        { headers: makeHeaders }
+      );
+      if (foldersRes.ok) {
+        const foldersData = await foldersRes.json();
+        const folders = foldersData.scenariosFolders ?? foldersData.folders ?? [];
+        const match = folders.find((f: any) =>
+          (f.name ?? "").toLowerCase() === MONITORED_FOLDER_NAME.toLowerCase()
+        );
+        if (match) {
+          monitoredFolderId = match.id;
+          console.log(`[folders] Pasta "${MONITORED_FOLDER_NAME}" encontrada (ID: ${monitoredFolderId})`);
+        } else {
+          console.warn(`[folders] Pasta "${MONITORED_FOLDER_NAME}" não encontrada — monitorando todos os cenários`);
+        }
+      }
+    } catch (e) {
+      console.warn("[folders] Erro ao buscar pastas:", e);
+    }
+
+    // 2. Fetch scenarios (filtered by folder if found)
+    const scenarioUrl = monitoredFolderId
+      ? `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&folderId=${monitoredFolderId}&pg[limit]=200`
+      : `${MAKE_BASE}/scenarios?teamId=${MAKE_TEAM_ID}&pg[limit]=200`;
+    const scenariosRes = await fetchRetry(scenarioUrl, { headers: makeHeaders });
     if (!scenariosRes.ok) {
       const errText = await scenariosRes.text();
       throw new Error(`Failed to fetch scenarios [${scenariosRes.status}]: ${errText}`);
@@ -486,6 +511,10 @@ Deno.serve(async (req) => {
     for (const s of scenariosData.scenarios ?? []) {
       scenarios[s.id] = { name: s.name, modules: s.blueprint?.flow?.length ?? 0 };
     }
+    console.log(`[scenarios] ${Object.keys(scenarios).length} cenários monitorados${monitoredFolderId ? ` (pasta: ${MONITORED_FOLDER_NAME})` : " (todas as pastas)"}`);
+    
+    // Set of monitored scenario IDs for filtering incomplete executions
+    const monitoredScenarioIds = new Set(Object.keys(scenarios).map(Number));
 
     const records: any[] = [];
 
