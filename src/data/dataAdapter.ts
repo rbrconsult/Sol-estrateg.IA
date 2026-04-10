@@ -60,10 +60,22 @@ export interface Proposal {
   makeTotalMensagens?: number;
   makeMensagensRecebidas?: number;
   makeDataResposta?: string;
-  /** `sol_propostas.valor_comissao` (R$), quando preenchido no banco. */
+  /** `sol_propostas.comissao_valor` (R$), quando preenchido no banco. */
   comissaoValorSync?: number;
-  /** `sol_propostas.percentual_comissao` (% sobre valor_proposta), quando preenchido no banco. */
+  /** `sol_propostas.comissao_percentual` (% sobre valor_proposta), quando preenchido no banco. */
   comissaoPercentualSync?: number;
+  /** Novos campos enriquecidos da sol_propostas */
+  financeira?: string;
+  formaPagamento?: string;
+  parcelas?: number;
+  comissaoRepresentantePct?: number;
+  comissaoRepresentanteValor?: number;
+  tsGanho?: string;
+  tsPerdido?: string;
+  consumoKwh?: string;
+  distribuidora?: string;
+  tipoTelhado?: string;
+  valorContrato?: number;
 }
 
 // ── Helpers ──
