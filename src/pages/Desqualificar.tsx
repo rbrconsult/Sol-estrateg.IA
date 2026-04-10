@@ -10,11 +10,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  Search, Loader2, Users,
-  Phone, MapPin, Thermometer, RefreshCw, XCircle,
+  Search, Loader2, Users, Filter, Clock,
+  Phone, MapPin, Thermometer, XCircle,
 } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 const WEBHOOK_DESQUALIFICAR = "https://hook.us2.make.com/joonk1hj7ubqeogtq1hxwymncruxslbl";
+
+function classifyLead(r: SolLead): string {
+  return (r.fup_followup_count || 0) >= 1 ? "FUP FRIO" : "SOL SDR";
+}
 
 const isDesqualificado = (r: SolLead): boolean => {
   const etapa = (r.etapa_funil || "").toUpperCase().trim();
@@ -25,11 +32,16 @@ const isDesqualificado = (r: SolLead): boolean => {
   );
 };
 
+const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
+const STATUS_OPTIONS = ["all", "ativos", "desqualificados"] as const;
+
 export default function Desqualificar() {
   const { data: solLeads, isLoading, isFetching, refetch } = useSolLeads();
   
   const gf = useGlobalFilters();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("ativos");
+  const [etapaFilter, setEtapaFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchSending, setBatchSending] = useState(false);
   const [manualDesqPhone, setManualDesqPhone] = useState("");
@@ -48,20 +60,35 @@ export default function Desqualificar() {
         if (!ALLOWED_ETAPAS.includes(etapa)) return false;
         return true;
       })
-      .map((r) => ({ ...r, _desqualificado: isDesqualificado(r) }));
+      .map((r) => ({
+        ...r,
+        _classificacao: classifyLead(r),
+        _desqualificado: isDesqualificado(r),
+      }));
   }, [solLeads, gf]);
 
   const filtered = useMemo(() => {
-    let list = allLeads.filter((l) => !l._desqualificado);
+    let result = allLeads;
+    if (statusFilter === "ativos") result = result.filter((l) => !l._desqualificado);
+    else if (statusFilter === "desqualificados") result = result.filter((l) => l._desqualificado);
+    if (etapaFilter !== "all") result = result.filter((r) => r._classificacao === etapaFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((l) =>
+      result = result.filter((l) =>
         (l.nome || "").toLowerCase().includes(q) || (l.telefone || "").includes(q) || (l.cidade || "").toLowerCase().includes(q)
       );
     }
-    return list;
-  }, [allLeads, search]);
+    return [...result].sort((a, b) => {
+      const getLatest = (r: typeof a) => {
+        const dates = [r.ts_ultimo_fup, r.ts_ultima_interacao, r.ts_cadastro].filter(Boolean);
+        const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
+        return timestamps.length > 0 ? Math.max(...timestamps) : 0;
+      };
+      return getLatest(b) - getLatest(a);
+    });
+  }, [allLeads, statusFilter, etapaFilter, search]);
 
+  const countAtivos = useMemo(() => allLeads.filter((l) => !l._desqualificado).length, [allLeads]);
   const countDesq = useMemo(() => allLeads.filter((l) => l._desqualificado).length, [allLeads]);
 
   const toggleSelect = (key: string) => {
@@ -146,7 +173,7 @@ export default function Desqualificar() {
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><Users className="h-3.5 w-3.5 text-primary" /> Candidatos</div>
-          <p className="text-2xl font-bold">{filtered.length}</p>
+          <p className="text-2xl font-bold">{countAtivos}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><XCircle className="h-3.5 w-3.5 text-destructive" /> Já desqualificados</div>
@@ -195,12 +222,29 @@ export default function Desqualificar() {
         </CardContent>
       </Card>
 
-      {/* List with batch selection */}
+      {/* Filters + Batch */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome, telefone ou cidade..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por nome, telefone ou cidade..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <SelectTrigger className="w-44"><Filter className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativos">Ativos</SelectItem>
+                <SelectItem value="desqualificados">Desqualificados</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={etapaFilter} onValueChange={setEtapaFilter}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Etapa" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Etapas</SelectItem>
+                {ETAPA_OPTIONS.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Batch toolbar */}
@@ -235,7 +279,7 @@ export default function Desqualificar() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhum lead candidato encontrado.</p>
+            <p className="text-center text-muted-foreground py-8">Nenhum lead encontrado com os filtros aplicados.</p>
           ) : (
             <div className="space-y-1">
               {filtered.map((lead, idx) => {
@@ -253,6 +297,12 @@ export default function Desqualificar() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm truncate">{lead.nome || "Sem nome"}</span>
+                        <Badge variant="outline" className={`text-[10px] shrink-0 ${
+                          lead._classificacao === "SOL SDR" ? "border-blue-500 text-blue-500 bg-blue-500/10" : "border-orange-500 text-orange-500 bg-orange-500/10"
+                        }`}>
+                          {lead._classificacao === "SOL SDR" ? "🤖 SOL" : "🔁 FUP FRIO"}
+                        </Badge>
+                        {lead._desqualificado && <Badge variant="destructive" className="text-[10px] shrink-0">DESQUALIFICADO</Badge>}
                         {lead.temperatura && (
                           <Badge variant="secondary" className={`text-[10px] shrink-0 ${
                             lead.temperatura === "QUENTE" ? "bg-destructive/20 text-destructive"
@@ -267,6 +317,13 @@ export default function Desqualificar() {
                         <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.telefone}</span>
                         {lead.cidade && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.cidade}</span>}
                         {lead.score && <span>Score: {lead.score}</span>}
+                        {(() => {
+                          const dates = [lead.ts_ultimo_fup, lead.ts_ultima_interacao, lead.ts_cadastro].filter(Boolean);
+                          const timestamps = dates.map(d => new Date(d!).getTime()).filter(t => !isNaN(t) && t > 0);
+                          if (timestamps.length === 0) return null;
+                          const latest = new Date(Math.max(...timestamps));
+                          return <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{latest.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>;
+                        })()}
                       </div>
                     </div>
                   </div>
