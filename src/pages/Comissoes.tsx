@@ -97,6 +97,12 @@ function ProposalDrillDown({ proposals, rateFallback }: { proposals: Proposal[];
             </TableCell>
             <TableCell className="text-xs text-right text-primary font-medium">{formatCurrency(valor)}</TableCell>
             <TableCell className="text-xs text-center text-muted-foreground">
+              {p.financeira || "—"}
+            </TableCell>
+            <TableCell className="text-xs text-center text-muted-foreground">
+              {p.formaPagamento || "—"}
+            </TableCell>
+            <TableCell className="text-xs text-center text-muted-foreground">
               {p.dataCriacaoProposta ? new Date(p.dataCriacaoProposta).toLocaleDateString("pt-BR") : "—"}
             </TableCell>
           </TableRow>
