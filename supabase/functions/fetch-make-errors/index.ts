@@ -759,6 +759,14 @@ Deno.serve(async (req) => {
           if (sent) alertsSent++;
         }
 
+        // Send Inactive alerts
+        for (const record of inactiveRecords) {
+          const msg = formatInactiveMessage(record);
+          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
+          if (sent) alertsSent++;
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+
         console.log(`[alerts] Total alerts sent: ${alertsSent}`);
       } else if (!apiKey) {
         console.warn("[alerts] Krolic API key not configured, skipping alerts");
