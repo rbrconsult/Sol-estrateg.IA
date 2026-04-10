@@ -89,7 +89,7 @@ async function sendWhatsAppMessage(apiKey: string, phone: string, message: strin
   }
 }
 
-function formatN1Message(record: any): string {
+function formatN1Message(record: any, autofixActive: boolean): string {
   const time = record.occurred_at
     ? new Date(record.occurred_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
     : "agora";
@@ -105,13 +105,15 @@ function formatN1Message(record: any): string {
       : null,
     `🕐 *Horário:* ${time}`,
     "",
-    `O fluxo continuou executando mas registrou ${isWarning ? "um aviso" : "um erro"}.`,
+    autofixActive
+      ? "🤖 *AutoFix ativado* — analisando com IA e iniciando correção automática..."
+      : `O fluxo continuou executando mas registrou ${isWarning ? "um aviso" : "um erro"}.`,
     "",
     "Sol Estrateg.IA — Monitor de Fluxos",
   ].filter(Boolean).join("\n");
 }
 
-function formatN2Message(record: any): string {
+function formatN2Message(record: any, autofixActive: boolean): string {
   const time = record.occurred_at
     ? new Date(record.occurred_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
     : "agora";
@@ -131,7 +133,9 @@ function formatN2Message(record: any): string {
     `🕐 *Horário:* ${time}`,
     `🆔 *Execution ID:* ${record.execution_id}`,
     "",
-    "⚠️ Este fluxo está PARADO e precisa de ação imediata.",
+    autofixActive
+      ? "🤖 *AutoFix ativado* — analisando com IA e iniciando correção automática..."
+      : "⚠️ Este fluxo está PARADO e precisa de ação imediata.",
     "",
     "Sol Estrateg.IA — Monitor de Fluxos",
   ].filter(Boolean).join("\n");
