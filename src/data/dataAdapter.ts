@@ -385,12 +385,20 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
       etiquetas: [r.canal_origem, r.campanha_nome].filter(Boolean).join(', '),
       origemLead: r.canal_origem || '',
       probabilidade,
-      motivoPerda: status === 'Perdido' ? (r.evento || r.status_projeto || 'Perdido') : '',
+      motivoPerda: status === 'Perdido' ? (r.motivo_perda || r.evento || r.status_projeto || 'Perdido') : '',
       faseSM: r.etapa || '',
       makeNome: r.nome_cliente || undefined,
       makeEmail: r.email_cliente || undefined,
       comissaoValorSync,
       comissaoPercentualSync,
+      financeira: r.financeira || undefined,
+      formaPagamento: r.forma_pagamento || undefined,
+      parcelas: r.parcelas != null ? Number(r.parcelas) : undefined,
+      comissaoRepresentantePct: r.comissao_representante_pct != null ? Number(r.comissao_representante_pct) : undefined,
+      comissaoRepresentanteValor: r.comissao_representante_valor != null ? Number(r.comissao_representante_valor) : undefined,
+      tsGanho: r.ts_ganho || undefined,
+      tsPerdido: r.ts_perdido || undefined,
+      valorContrato: r.valor_contrato != null ? Number(r.valor_contrato) : undefined,
     };
   });
 }
