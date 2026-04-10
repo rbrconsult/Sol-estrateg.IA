@@ -141,6 +141,23 @@ function formatN2Message(record: any, autofixActive: boolean): string {
   ].filter(Boolean).join("\n");
 }
 
+function formatInactiveMessage(record: any): string {
+  const time = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return [
+    "🔕 *ALERTA — FLUXO INATIVO (DESLIGADO)*",
+    "",
+    `📋 *Fluxo:* ${record.scenario_name}`,
+    `📂 *Categoria:* ${record.flow_category}`,
+    `🆔 *Scenario ID:* ${record.scenario_id}`,
+    `🕐 *Detectado em:* ${time}`,
+    "",
+    "O cenário está *desligado* no Make e não está executando.",
+    "Verifique se foi intencional ou reative o fluxo.",
+    "",
+    "Sol Estrateg.IA — Monitor de Fluxos",
+  ].join("\n");
+}
+
 function formatN3Message(stoppedCritical: any[]): string {
   const flowList = stoppedCritical
     .map((r) => `  • ${r.scenario_name} — [${r.module_app}] ${r.module_name}`)
