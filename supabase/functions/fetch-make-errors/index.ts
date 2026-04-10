@@ -494,7 +494,7 @@ Deno.serve(async (req) => {
     }
 
     // 1. Fetch folders to find monitored folder ("solestrategia")
-    const MONITORED_FOLDER_NAME = "solestrategia";
+    const MONITORED_FOLDER_NAME = "solestrategia_";
     let monitoredFolderId: number | null = null;
     try {
       const foldersRes = await fetchRetry(
