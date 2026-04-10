@@ -36,13 +36,23 @@ export default function Desqualificar() {
   const [manualDesqName, setManualDesqName] = useState("");
   const [manualDesqSending, setManualDesqSending] = useState(false);
 
+  const ALLOWED_ETAPAS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'];
+
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
-    return gf.filterRecords(solLeads).map((r) => ({ ...r, _desqualificado: isDesqualificado(r) }));
+    return gf.filterRecords(solLeads)
+      .filter((r) => {
+        const status = (r.status || '').toUpperCase().trim();
+        if (status && status !== 'ABERTO') return false;
+        const etapa = (r.etapa_funil || '').toUpperCase().trim();
+        if (!ALLOWED_ETAPAS.includes(etapa)) return false;
+        return true;
+      })
+      .map((r) => ({ ...r, _desqualificado: isDesqualificado(r) }));
   }, [solLeads, gf]);
 
   const filtered = useMemo(() => {
-    let list = allLeads.filter((l) => !l._desqualificado); // only show candidates
+    let list = allLeads.filter((l) => !l._desqualificado);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((l) =>
