@@ -673,6 +673,7 @@ Deno.serve(async (req) => {
     }
 
     const stopped = records.filter((r) => r.execution_status === "stopped").length;
+    const inactive = records.filter((r) => r.execution_status === "inactive").length;
     const errorContinued = records.filter((r) => r.execution_status === "error_continued").length;
     const warnings = records.filter((r) => r.execution_status === "warning").length;
 
