@@ -740,7 +740,6 @@ Deno.serve(async (req) => {
       console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
     } else if (!autofixEnabled) {
       console.log("[autofix] Skill 6.12 disabled, skipping");
-      }
     }
 
     return new Response(
