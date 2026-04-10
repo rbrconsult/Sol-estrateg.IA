@@ -551,7 +551,7 @@ Deno.serve(async (req) => {
       await incompleteRes.text();
     }
 
-    // 3. Error/warning logs from each scenario (batched to avoid 429)
+    // 4. Error/warning logs from each monitored scenario (batched to avoid 429)
     const scenarioIds = Object.keys(scenarios).map(Number);
     const BATCH_SIZE = 2;
     const BATCH_DELAY = 2000;
