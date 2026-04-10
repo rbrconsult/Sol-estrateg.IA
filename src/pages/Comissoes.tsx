@@ -63,7 +63,7 @@ function ProposalDrillDown({ proposals, rateFallback }: { proposals: Proposal[];
   if (ganhas.length === 0)
     return (
       <TableRow>
-        <TableCell colSpan={9} className="px-8 py-3 text-xs text-muted-foreground italic">
+        <TableCell colSpan={11} className="px-8 py-3 text-xs text-muted-foreground italic">
           Nenhuma proposta fechada (Ganho)
         </TableCell>
       </TableRow>
