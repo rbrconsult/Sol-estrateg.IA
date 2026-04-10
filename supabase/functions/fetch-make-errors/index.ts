@@ -802,6 +802,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         stopped,
+        inactive,
         errorContinued,
         warnings,
         total: records.length,
