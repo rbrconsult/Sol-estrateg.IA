@@ -156,6 +156,249 @@ function formatN3Message(stoppedCritical: any[]): string {
   ].join("\n");
 }
 
+// ── AutoFix helpers (Claude + Make PATCH) ──
+
+async function fetchBlueprint(scenarioId: number, headers: Record<string, string>): Promise<any | null> {
+  try {
+    const res = await fetch(`${MAKE_BASE}/scenarios/${scenarioId}/blueprint`, { headers });
+    if (!res.ok) { await res.text(); return null; }
+    const data = await res.json();
+    return data.response?.blueprint ?? data.blueprint ?? data;
+  } catch { return null; }
+}
+
+async function patchBlueprint(scenarioId: number, blueprint: any, headers: Record<string, string>): Promise<{ ok: boolean; detail: string }> {
+  try {
+    const res = await fetch(`${MAKE_BASE}/scenarios/${scenarioId}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ blueprint: JSON.stringify(blueprint) }),
+    });
+    const body = await res.text();
+    if (res.ok) return { ok: true, detail: "Blueprint atualizado com sucesso" };
+    return { ok: false, detail: `PATCH falhou [${res.status}]: ${body.substring(0, 300)}` };
+  } catch (e) {
+    return { ok: false, detail: `PATCH error: ${e}` };
+  }
+}
+
+async function askClaudeFix(anthropicKey: string, scenarioName: string, errorMessage: string, moduleName: string, blueprint: any): Promise<{ fixed: boolean; explanation: string; patchedBlueprint?: any }> {
+  const systemPrompt = `Você é um especialista em Make.com (Integromat). 
+Recebe um blueprint JSON de um cenário com erro e deve:
+1. Diagnosticar a causa raiz
+2. Corrigir o blueprint JSON
+3. Retornar APENAS JSON válido (sem markdown) no formato:
+{
+  "diagnosis": "explicação curta do problema",
+  "fix_applied": "o que foi alterado",
+  "blueprint": { ...blueprint corrigido completo... }
+}
+Se não for possível corrigir automaticamente, retorne:
+{
+  "diagnosis": "explicação",
+  "fix_applied": null,
+  "blueprint": null
+}`;
+
+  const userContent = `CENÁRIO: ${scenarioName}
+MÓDULO COM ERRO: ${moduleName}
+MENSAGEM DE ERRO: ${errorMessage}
+
+BLUEPRINT ATUAL:
+${JSON.stringify(blueprint, null, 2).substring(0, 50000)}
+
+Analise e corrija o blueprint.`;
+
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": anthropicKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userContent }],
+      }),
+    });
+
+    if (!resp.ok) {
+      const t = await resp.text();
+      console.error(`[autofix] Claude error [${resp.status}]: ${t}`);
+      return { fixed: false, explanation: `Claude API error: ${resp.status}` };
+    }
+
+    const data = await resp.json();
+    const raw = data.content?.[0]?.text || "";
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { fixed: false, explanation: "Claude não retornou JSON válido" };
+    }
+
+    const result = JSON.parse(jsonMatch[0]);
+    if (result.blueprint && result.fix_applied) {
+      return {
+        fixed: true,
+        explanation: `${result.diagnosis} → ${result.fix_applied}`,
+        patchedBlueprint: result.blueprint,
+      };
+    }
+    return { fixed: false, explanation: result.diagnosis || "Correção automática não possível" };
+  } catch (e) {
+    console.error("[autofix] Claude call failed:", e);
+    return { fixed: false, explanation: `Erro ao chamar Claude: ${e}` };
+  }
+}
+
+async function runAutoFix(
+  record: any,
+  makeHeaders: Record<string, string>,
+  anthropicKey: string,
+  supabase: any,
+  krolicKey: string | null,
+  centralNumber: string | null
+): Promise<{ fixed: boolean; patched: boolean; explanation: string } | null> {
+  const scenarioId = record.scenario_id;
+  if (!scenarioId) return null;
+
+  console.log(`[autofix] Iniciando análise de "${record.scenario_name}" (ID ${scenarioId})`);
+
+  // Notify start
+  if (krolicKey && centralNumber) {
+    await sendWhatsAppMessage(krolicKey, centralNumber, [
+      "🤖 *AutoFix Iniciado*",
+      "",
+      `📋 *Fluxo:* ${record.scenario_name}`,
+      `⚙️ *Módulo:* [${record.module_app}] ${record.module_name}`,
+      `❌ *Erro:* ${(record.error_message ?? "").substring(0, 200)}`,
+      "",
+      "Analisando com IA e tentando corrigir automaticamente...",
+      "",
+      "Sol Estrateg.IA — Skill AutoFix",
+    ].join("\n"));
+  }
+
+  // Fetch blueprint
+  const blueprint = await fetchBlueprint(scenarioId, makeHeaders);
+  if (!blueprint) {
+    console.warn(`[autofix] Blueprint inacessível para cenário ${scenarioId}`);
+    if (krolicKey && centralNumber) {
+      await sendWhatsAppMessage(krolicKey, centralNumber, [
+        "⚠️ *AutoFix — Blueprint Inacessível*",
+        "",
+        `📋 *Fluxo:* ${record.scenario_name}`,
+        "Não foi possível acessar o blueprint. Verificação manual necessária.",
+        "",
+        "Sol Estrateg.IA — Skill AutoFix",
+      ].join("\n"));
+    }
+    return { fixed: false, patched: false, explanation: "Blueprint inacessível" };
+  }
+
+  // Claude analysis
+  const claudeResult = await askClaudeFix(
+    anthropicKey,
+    record.scenario_name,
+    record.error_message ?? "Unknown error",
+    record.module_name ?? "Unknown",
+    blueprint
+  );
+
+  if (claudeResult.fixed && claudeResult.patchedBlueprint) {
+    const patchResult = await patchBlueprint(scenarioId, claudeResult.patchedBlueprint, makeHeaders);
+
+    // Log insight
+    await supabase.from("sol_insights").insert({
+      franquia_id: "global",
+      tipo: "autofix",
+      titulo: patchResult.ok
+        ? `✅ AutoFix: ${record.scenario_name}`
+        : `⚠️ AutoFix parcial: ${record.scenario_name}`,
+      descricao: claudeResult.explanation,
+      severidade: patchResult.ok ? "info" : "warning",
+      categoria: "operacional",
+      robo: "skill-autofix-make",
+      acao_sugerida: patchResult.ok ? "Monitorar próximas execuções" : "Verificar PATCH manual",
+      dados: {
+        execution_id: record.execution_id,
+        scenario_id: scenarioId,
+        error: record.error_message,
+        fix: claudeResult.explanation,
+        patched: patchResult.ok,
+        patch_detail: patchResult.detail,
+      },
+    });
+
+    // Notify result
+    if (krolicKey && centralNumber) {
+      if (patchResult.ok) {
+        await sendWhatsAppMessage(krolicKey, centralNumber, [
+          "✅ *CORRIGIDO — AutoFix Aplicado*",
+          "",
+          `📋 *Fluxo:* ${record.scenario_name}`,
+          `🔧 *Diagnóstico:* ${claudeResult.explanation.substring(0, 300)}`,
+          "",
+          "O blueprint foi atualizado automaticamente.",
+          "Monitore as próximas execuções para confirmar.",
+          "",
+          "Sol Estrateg.IA — Skill AutoFix",
+        ].join("\n"));
+      } else {
+        await sendWhatsAppMessage(krolicKey, centralNumber, [
+          "⚠️ *AutoFix — PATCH Falhou*",
+          "",
+          `📋 *Fluxo:* ${record.scenario_name}`,
+          `🔧 *Diagnóstico:* ${claudeResult.explanation.substring(0, 200)}`,
+          `❌ *PATCH:* ${patchResult.detail.substring(0, 200)}`,
+          "",
+          "A IA identificou a correção, mas o PATCH falhou.",
+          "",
+          "Sol Estrateg.IA — Skill AutoFix",
+        ].join("\n"));
+      }
+    }
+
+    return { fixed: true, patched: patchResult.ok, explanation: claudeResult.explanation };
+  } else {
+    // Claude couldn't fix
+    await supabase.from("sol_insights").insert({
+      franquia_id: "global",
+      tipo: "autofix",
+      titulo: `❌ AutoFix falhou: ${record.scenario_name}`,
+      descricao: claudeResult.explanation,
+      severidade: "critical",
+      categoria: "operacional",
+      robo: "skill-autofix-make",
+      acao_sugerida: "Correção manual necessária",
+      dados: {
+        execution_id: record.execution_id,
+        scenario_id: scenarioId,
+        error: record.error_message,
+        claude_response: claudeResult.explanation,
+      },
+    });
+
+    if (krolicKey && centralNumber) {
+      await sendWhatsAppMessage(krolicKey, centralNumber, [
+        "⚠️ *AutoFix — Correção Não Possível*",
+        "",
+        `📋 *Fluxo:* ${record.scenario_name}`,
+        `🤖 *Diagnóstico:* ${claudeResult.explanation.substring(0, 200)}`,
+        "",
+        "A IA não conseguiu corrigir automaticamente.",
+        "Intervenção manual necessária.",
+        "",
+        "Sol Estrateg.IA — Skill AutoFix",
+      ].join("\n"));
+    }
+
+    return { fixed: false, patched: false, explanation: claudeResult.explanation };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -354,16 +597,18 @@ Deno.serve(async (req) => {
 
     // ── 5. Send WhatsApp alerts for NEW errors ──
     let alertsSent = 0;
+    let autofixResults: any[] = [];
+
+    // Get Krolic API key and central number
+    const { data: settings } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["krolic_api_token", "central_whatsapp_number"]);
+
+    const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
+    const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
+
     try {
-      // Get Krolic API key and central number
-      const { data: settings } = await supabase
-        .from("app_settings")
-        .select("key, value")
-        .in("key", ["krolic_api_token", "central_whatsapp_number"]);
-
-      const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
-      const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
-
       if (apiKey && centralNumber && newRecords.length > 0) {
         console.log(`[alerts] ${newRecords.length} new errors detected, sending alerts to ${centralNumber}`);
 
@@ -380,7 +625,6 @@ Deno.serve(async (req) => {
           const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
           if (sent) alertsSent++;
           console.log(`[alerts] N3 sent: ${sent} (${n3Records.length} critical flows)`);
-          // small delay
           await new Promise((r) => setTimeout(r, 1000));
         }
 
@@ -389,7 +633,6 @@ Deno.serve(async (req) => {
           const msg = formatN2Message(record);
           const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
           if (sent) alertsSent++;
-          // Rate limiting: 1s between messages
           await new Promise((r) => setTimeout(r, 1000));
         }
 
@@ -402,7 +645,6 @@ Deno.serve(async (req) => {
             await new Promise((r) => setTimeout(r, 1000));
           }
         } else {
-          // Summarize N1 if too many
           const summary = [
             "🟠 *ALERTA N1 — Resumo de Erros*",
             "",
@@ -427,7 +669,41 @@ Deno.serve(async (req) => {
       }
     } catch (alertError) {
       console.error("[alerts] Error sending alerts:", alertError);
-      // Don't fail the sync because of alert errors
+    }
+
+    // ── 6. AutoFix: attempt Claude fix on NEW stopped errors (skill 6.12) ──
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    
+    if (ANTHROPIC_API_KEY && newRecords.length > 0) {
+      // Check if skill 6.12 is enabled
+      const { data: toggleData } = await supabase
+        .from("skill_toggles")
+        .select("enabled")
+        .eq("skill_id", "6.12")
+        .maybeSingle();
+
+      const autofixEnabled = !toggleData || toggleData.enabled; // default enabled if no toggle row
+
+      if (autofixEnabled) {
+        // Only autofix stopped flows (N2) — they need actual correction
+        const stoppedNew = newRecords.filter((r) => r.execution_status === "stopped" && r.scenario_id);
+        console.log(`[autofix] ${stoppedNew.length} stopped flows eligible for autofix`);
+
+        for (const record of stoppedNew) {
+          try {
+            const result = await runAutoFix(record, makeHeaders, ANTHROPIC_API_KEY, supabase, apiKey, centralNumber);
+            if (result) autofixResults.push({ scenario: record.scenario_name, ...result });
+          } catch (e) {
+            console.error(`[autofix] Error processing ${record.scenario_name}:`, e);
+          }
+          // Rate limiting between scenarios
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+
+        console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
+      } else {
+        console.log("[autofix] Skill 6.12 disabled, skipping");
+      }
     }
 
     return new Response(
@@ -438,6 +714,11 @@ Deno.serve(async (req) => {
         total: records.length,
         newErrors: newRecords.length,
         alertsSent,
+        autofix: {
+          processed: autofixResults.length,
+          fixed: autofixResults.filter((r) => r.patched).length,
+          failed: autofixResults.filter((r) => !r.fixed).length,
+        },
         syncedAt: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
