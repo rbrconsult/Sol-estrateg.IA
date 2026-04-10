@@ -511,14 +511,43 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch scenarios [${scenariosRes.status}]: ${errText}`);
     }
     const scenariosData = await scenariosRes.json();
-    const scenarios: Record<number, { name: string; modules: number }> = {};
+    const scenarios: Record<number, { name: string; modules: number; isActive: boolean }> = {};
+    const inactiveScenarios: Array<{ id: number; name: string }> = [];
     for (const s of scenariosData.scenarios ?? []) {
-      scenarios[s.id] = { name: s.name, modules: s.blueprint?.flow?.length ?? 0 };
+      const active = s.isActive ?? s.scheduling?.isActive ?? true;
+      scenarios[s.id] = { name: s.name, modules: s.blueprint?.flow?.length ?? 0, isActive: active };
+      if (!active) {
+        inactiveScenarios.push({ id: s.id, name: s.name });
+      }
     }
     console.log(`[scenarios] ${Object.keys(scenarios).length} cenários monitorados${monitoredFolderId ? ` (pasta: ${MONITORED_FOLDER_NAME})` : " (todas as pastas)"}`);
+    if (inactiveScenarios.length > 0) {
+      console.log(`[scenarios] ${inactiveScenarios.length} cenários INATIVOS detectados: ${inactiveScenarios.map(s => s.name).join(", ")}`);
+    }
     
     // Set of monitored scenario IDs for filtering incomplete executions
     const monitoredScenarioIds = new Set(Object.keys(scenarios).map(Number));
+
+    // ── Detect INACTIVE scenarios and create synthetic error records ──
+    for (const inactive of inactiveScenarios) {
+      records.push({
+        execution_id: `inactive-${inactive.id}-${new Date().toISOString().slice(0, 13)}`,
+        scenario_id: inactive.id,
+        scenario_name: inactive.name,
+        module_name: "N/A",
+        module_app: "Scheduling",
+        failed_module_index: 0,
+        total_modules: scenarios[inactive.id]?.modules ?? 0,
+        error_type: "ScenarioInactive",
+        error_code: "INACTIVE",
+        error_message: `O cenário "${inactive.name}" está INATIVO (desligado). Nenhuma execução será realizada até que seja reativado.`,
+        attempts: 0,
+        execution_status: "inactive",
+        flow_category: detectCategory(inactive.name),
+        execution_duration_seconds: null,
+        occurred_at: new Date().toISOString(),
+      });
+    }
 
     const records: any[] = [];
 
