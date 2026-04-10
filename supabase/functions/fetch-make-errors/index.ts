@@ -526,6 +526,8 @@ Deno.serve(async (req) => {
     if (incompleteRes.ok) {
       const incompleteData = await incompleteRes.json();
       for (const item of incompleteData.incompleteExecutions ?? []) {
+        // Skip scenarios outside monitored folder
+        if (!monitoredScenarioIds.has(item.scenarioId)) continue;
         const scenarioInfo = scenarios[item.scenarioId] ?? { name: `Scenario ${item.scenarioId}`, modules: 0 };
         records.push({
           execution_id: String(item.id),
