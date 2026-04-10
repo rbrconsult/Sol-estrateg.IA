@@ -712,6 +712,8 @@ Deno.serve(async (req) => {
         const n2Records = newRecords.filter((r) => r.execution_status === "stopped");
         // N3: critical stopped flows
         const n3Records = n2Records.filter((r) => isCriticalFlow(r.scenario_name));
+        // Inactive: flows that are turned off
+        const inactiveRecords = newRecords.filter((r) => r.execution_status === "inactive");
 
         // Send N3 first (aggregated) if critical flows are stopped
         if (n3Records.length > 0) {
