@@ -141,6 +141,23 @@ function formatN2Message(record: any, autofixActive: boolean): string {
   ].filter(Boolean).join("\n");
 }
 
+function formatInactiveMessage(record: any): string {
+  const time = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return [
+    "🔕 *ALERTA — FLUXO INATIVO (DESLIGADO)*",
+    "",
+    `📋 *Fluxo:* ${record.scenario_name}`,
+    `📂 *Categoria:* ${record.flow_category}`,
+    `🆔 *Scenario ID:* ${record.scenario_id}`,
+    `🕐 *Detectado em:* ${time}`,
+    "",
+    "O cenário está *desligado* no Make e não está executando.",
+    "Verifique se foi intencional ou reative o fluxo.",
+    "",
+    "Sol Estrateg.IA — Monitor de Fluxos",
+  ].join("\n");
+}
+
 function formatN3Message(stoppedCritical: any[]): string {
   const flowList = stoppedCritical
     .map((r) => `  • ${r.scenario_name} — [${r.module_app}] ${r.module_name}`)
@@ -511,14 +528,43 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch scenarios [${scenariosRes.status}]: ${errText}`);
     }
     const scenariosData = await scenariosRes.json();
-    const scenarios: Record<number, { name: string; modules: number }> = {};
+    const scenarios: Record<number, { name: string; modules: number; isActive: boolean }> = {};
+    const inactiveScenarios: Array<{ id: number; name: string }> = [];
     for (const s of scenariosData.scenarios ?? []) {
-      scenarios[s.id] = { name: s.name, modules: s.blueprint?.flow?.length ?? 0 };
+      const active = s.isActive ?? s.scheduling?.isActive ?? true;
+      scenarios[s.id] = { name: s.name, modules: s.blueprint?.flow?.length ?? 0, isActive: active };
+      if (!active) {
+        inactiveScenarios.push({ id: s.id, name: s.name });
+      }
     }
     console.log(`[scenarios] ${Object.keys(scenarios).length} cenários monitorados${monitoredFolderId ? ` (pasta: ${MONITORED_FOLDER_NAME})` : " (todas as pastas)"}`);
+    if (inactiveScenarios.length > 0) {
+      console.log(`[scenarios] ${inactiveScenarios.length} cenários INATIVOS detectados: ${inactiveScenarios.map(s => s.name).join(", ")}`);
+    }
     
     // Set of monitored scenario IDs for filtering incomplete executions
     const monitoredScenarioIds = new Set(Object.keys(scenarios).map(Number));
+
+    // ── Detect INACTIVE scenarios and create synthetic error records ──
+    for (const inactive of inactiveScenarios) {
+      records.push({
+        execution_id: `inactive-${inactive.id}-${new Date().toISOString().slice(0, 13)}`,
+        scenario_id: inactive.id,
+        scenario_name: inactive.name,
+        module_name: "N/A",
+        module_app: "Scheduling",
+        failed_module_index: 0,
+        total_modules: scenarios[inactive.id]?.modules ?? 0,
+        error_type: "ScenarioInactive",
+        error_code: "INACTIVE",
+        error_message: `O cenário "${inactive.name}" está INATIVO (desligado). Nenhuma execução será realizada até que seja reativado.`,
+        attempts: 0,
+        execution_status: "inactive",
+        flow_category: detectCategory(inactive.name),
+        execution_duration_seconds: null,
+        occurred_at: new Date().toISOString(),
+      });
+    }
 
     const records: any[] = [];
 
@@ -627,6 +673,7 @@ Deno.serve(async (req) => {
     }
 
     const stopped = records.filter((r) => r.execution_status === "stopped").length;
+    const inactive = records.filter((r) => r.execution_status === "inactive").length;
     const errorContinued = records.filter((r) => r.execution_status === "error_continued").length;
     const warnings = records.filter((r) => r.execution_status === "warning").length;
 
@@ -665,6 +712,8 @@ Deno.serve(async (req) => {
         const n2Records = newRecords.filter((r) => r.execution_status === "stopped");
         // N3: critical stopped flows
         const n3Records = n2Records.filter((r) => isCriticalFlow(r.scenario_name));
+        // Inactive: flows that are turned off
+        const inactiveRecords = newRecords.filter((r) => r.execution_status === "inactive");
 
         // Send N3 first (aggregated) if critical flows are stopped
         if (n3Records.length > 0) {
@@ -710,6 +759,14 @@ Deno.serve(async (req) => {
           if (sent) alertsSent++;
         }
 
+        // Send Inactive alerts
+        for (const record of inactiveRecords) {
+          const msg = formatInactiveMessage(record);
+          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
+          if (sent) alertsSent++;
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+
         console.log(`[alerts] Total alerts sent: ${alertsSent}`);
       } else if (!apiKey) {
         console.warn("[alerts] Krolic API key not configured, skipping alerts");
@@ -745,6 +802,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         stopped,
+        inactive,
         errorContinued,
         warnings,
         total: records.length,
