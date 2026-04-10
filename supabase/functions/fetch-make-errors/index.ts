@@ -503,15 +503,18 @@ Deno.serve(async (req) => {
       );
       if (foldersRes.ok) {
         const foldersData = await foldersRes.json();
-        const folders = foldersData.scenariosFolders ?? foldersData.folders ?? [];
-        const match = folders.find((f: any) =>
-          (f.name ?? "").toLowerCase() === MONITORED_FOLDER_NAME.toLowerCase()
+        const folders = foldersData.scenariosFolders ?? foldersData.folders ?? foldersData ?? [];
+        const folderList = Array.isArray(folders) ? folders : [];
+        console.log(`[folders] Total pastas retornadas: ${folderList.length}`);
+        console.log(`[folders] Nomes: ${folderList.map((f: any) => `"${f.name}" (id:${f.id})`).join(", ")}`);
+        const match = folderList.find((f: any) =>
+          (f.name ?? "").toLowerCase().includes("solestrategia")
         );
         if (match) {
           monitoredFolderId = match.id;
-          console.log(`[folders] Pasta "${MONITORED_FOLDER_NAME}" encontrada (ID: ${monitoredFolderId})`);
+          console.log(`[folders] Pasta "${match.name}" encontrada (ID: ${monitoredFolderId})`);
         } else {
-          console.warn(`[folders] Pasta "${MONITORED_FOLDER_NAME}" não encontrada — monitorando todos os cenários`);
+          console.warn(`[folders] Pasta com "solestrategia" não encontrada — monitorando todos os cenários`);
         }
       }
     } catch (e) {
