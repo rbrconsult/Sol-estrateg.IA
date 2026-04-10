@@ -545,6 +545,8 @@ Deno.serve(async (req) => {
     // Set of monitored scenario IDs for filtering incomplete executions
     const monitoredScenarioIds = new Set(Object.keys(scenarios).map(Number));
 
+    const records: any[] = [];
+
     // ── Detect INACTIVE scenarios and create synthetic error records ──
     for (const inactive of inactiveScenarios) {
       records.push({
@@ -565,8 +567,6 @@ Deno.serve(async (req) => {
         occurred_at: new Date().toISOString(),
       });
     }
-
-    const records: any[] = [];
 
     // 3. Incomplete executions (stopped flows — only monitored scenarios)
     const incompleteRes = await fetch(
