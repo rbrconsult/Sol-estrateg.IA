@@ -60,10 +60,22 @@ export interface Proposal {
   makeTotalMensagens?: number;
   makeMensagensRecebidas?: number;
   makeDataResposta?: string;
-  /** `sol_propostas.valor_comissao` (R$), quando preenchido no banco. */
+  /** `sol_propostas.comissao_valor` (R$), quando preenchido no banco. */
   comissaoValorSync?: number;
-  /** `sol_propostas.percentual_comissao` (% sobre valor_proposta), quando preenchido no banco. */
+  /** `sol_propostas.comissao_percentual` (% sobre valor_proposta), quando preenchido no banco. */
   comissaoPercentualSync?: number;
+  /** Novos campos enriquecidos da sol_propostas */
+  financeira?: string;
+  formaPagamento?: string;
+  parcelas?: number;
+  comissaoRepresentantePct?: number;
+  comissaoRepresentanteValor?: number;
+  tsGanho?: string;
+  tsPerdido?: string;
+  consumoKwh?: string;
+  distribuidora?: string;
+  tipoTelhado?: string;
+  valorContrato?: number;
 }
 
 // ── Helpers ──
@@ -373,12 +385,20 @@ export function projetosToProposals(rows: SolProjeto[]): Proposal[] {
       etiquetas: [r.canal_origem, r.campanha_nome].filter(Boolean).join(', '),
       origemLead: r.canal_origem || '',
       probabilidade,
-      motivoPerda: status === 'Perdido' ? (r.evento || r.status_projeto || 'Perdido') : '',
+      motivoPerda: status === 'Perdido' ? (r.motivo_perda || r.evento || r.status_projeto || 'Perdido') : '',
       faseSM: r.etapa || '',
       makeNome: r.nome_cliente || undefined,
       makeEmail: r.email_cliente || undefined,
       comissaoValorSync,
       comissaoPercentualSync,
+      financeira: r.financeira || undefined,
+      formaPagamento: r.forma_pagamento || undefined,
+      parcelas: r.parcelas != null ? Number(r.parcelas) : undefined,
+      comissaoRepresentantePct: r.comissao_representante_pct != null ? Number(r.comissao_representante_pct) : undefined,
+      comissaoRepresentanteValor: r.comissao_representante_valor != null ? Number(r.comissao_representante_valor) : undefined,
+      tsGanho: r.ts_ganho || undefined,
+      tsPerdido: r.ts_perdido || undefined,
+      valorContrato: r.valor_contrato != null ? Number(r.valor_contrato) : undefined,
     };
   });
 }

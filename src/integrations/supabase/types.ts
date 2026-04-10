@@ -1224,23 +1224,52 @@ export type Database = {
       sol_leads_sync: {
         Row: {
           acrescimo_carga: string | null
+          ad_id: string | null
+          adset_id: string | null
+          adset_nome: string | null
           aguardando_conta_luz: boolean | null
+          bairro: string | null
+          campanha_id: string | null
+          campanha_nome: string | null
           canal_origem: string | null
+          cep: string | null
           chat_id: string | null
           cidade: string | null
           closer_nome: string | null
           closer_sm_id: string | null
+          cnpj: string | null
+          complemento: string | null
+          consumo_kwh: string | null
           contact_id: string | null
+          cpf: string | null
+          criativo: string | null
           custo_elevenlabs: number | null
+          custo_krolik: string | null
+          custo_make: string | null
           custo_openai: number | null
           custo_total_usd: number | null
+          descricao_projeto: string | null
+          distribuidora: string | null
           email: string | null
+          endereco: string | null
+          estado: string | null
           etapa_funil: string | null
+          fbclid: string | null
           forma_pagamento: string | null
           franquia_id: string | null
           fup_followup_count: number | null
+          gclid: string | null
+          hora_primeira_resposta: string | null
           identificador: string | null
+          ip_address: string | null
+          keyword: string | null
+          lead_id: string | null
+          msgs_enviadas: string | null
+          msgs_recebidas: string | null
           nome: string | null
+          numero: string | null
+          origem_sm: string | null
+          pagina_origem: string | null
           prazo_decisao: string | null
           preferencia_contato: string | null
           project_id: string | null
@@ -1252,6 +1281,7 @@ export type Database = {
           synced_at: string | null
           telefone: string
           temperatura: string | null
+          tempo_resposta_seg: string | null
           tipo_imovel: string | null
           tipo_telhado: string | null
           total_audios_enviados: number | null
@@ -1260,32 +1290,68 @@ export type Database = {
           ts_cadastro: string | null
           ts_desqualificado: string | null
           ts_pedido_conta_luz: string | null
+          ts_primeira_resposta: string | null
           ts_qualificado: string | null
+          ts_reativacao: string | null
           ts_transferido: string | null
           ts_ultima_interacao: string | null
           ts_ultimo_fup: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           valor_conta: string | null
           valor_conta_confirmado_ocr: string | null
         }
         Insert: {
           acrescimo_carga?: string | null
+          ad_id?: string | null
+          adset_id?: string | null
+          adset_nome?: string | null
           aguardando_conta_luz?: boolean | null
+          bairro?: string | null
+          campanha_id?: string | null
+          campanha_nome?: string | null
           canal_origem?: string | null
+          cep?: string | null
           chat_id?: string | null
           cidade?: string | null
           closer_nome?: string | null
           closer_sm_id?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          consumo_kwh?: string | null
           contact_id?: string | null
+          cpf?: string | null
+          criativo?: string | null
           custo_elevenlabs?: number | null
+          custo_krolik?: string | null
+          custo_make?: string | null
           custo_openai?: number | null
           custo_total_usd?: number | null
+          descricao_projeto?: string | null
+          distribuidora?: string | null
           email?: string | null
+          endereco?: string | null
+          estado?: string | null
           etapa_funil?: string | null
+          fbclid?: string | null
           forma_pagamento?: string | null
           franquia_id?: string | null
           fup_followup_count?: number | null
+          gclid?: string | null
+          hora_primeira_resposta?: string | null
           identificador?: string | null
+          ip_address?: string | null
+          keyword?: string | null
+          lead_id?: string | null
+          msgs_enviadas?: string | null
+          msgs_recebidas?: string | null
           nome?: string | null
+          numero?: string | null
+          origem_sm?: string | null
+          pagina_origem?: string | null
           prazo_decisao?: string | null
           preferencia_contato?: string | null
           project_id?: string | null
@@ -1297,6 +1363,7 @@ export type Database = {
           synced_at?: string | null
           telefone: string
           temperatura?: string | null
+          tempo_resposta_seg?: string | null
           tipo_imovel?: string | null
           tipo_telhado?: string | null
           total_audios_enviados?: number | null
@@ -1305,32 +1372,68 @@ export type Database = {
           ts_cadastro?: string | null
           ts_desqualificado?: string | null
           ts_pedido_conta_luz?: string | null
+          ts_primeira_resposta?: string | null
           ts_qualificado?: string | null
+          ts_reativacao?: string | null
           ts_transferido?: string | null
           ts_ultima_interacao?: string | null
           ts_ultimo_fup?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           valor_conta?: string | null
           valor_conta_confirmado_ocr?: string | null
         }
         Update: {
           acrescimo_carga?: string | null
+          ad_id?: string | null
+          adset_id?: string | null
+          adset_nome?: string | null
           aguardando_conta_luz?: boolean | null
+          bairro?: string | null
+          campanha_id?: string | null
+          campanha_nome?: string | null
           canal_origem?: string | null
+          cep?: string | null
           chat_id?: string | null
           cidade?: string | null
           closer_nome?: string | null
           closer_sm_id?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          consumo_kwh?: string | null
           contact_id?: string | null
+          cpf?: string | null
+          criativo?: string | null
           custo_elevenlabs?: number | null
+          custo_krolik?: string | null
+          custo_make?: string | null
           custo_openai?: number | null
           custo_total_usd?: number | null
+          descricao_projeto?: string | null
+          distribuidora?: string | null
           email?: string | null
+          endereco?: string | null
+          estado?: string | null
           etapa_funil?: string | null
+          fbclid?: string | null
           forma_pagamento?: string | null
           franquia_id?: string | null
           fup_followup_count?: number | null
+          gclid?: string | null
+          hora_primeira_resposta?: string | null
           identificador?: string | null
+          ip_address?: string | null
+          keyword?: string | null
+          lead_id?: string | null
+          msgs_enviadas?: string | null
+          msgs_recebidas?: string | null
           nome?: string | null
+          numero?: string | null
+          origem_sm?: string | null
+          pagina_origem?: string | null
           prazo_decisao?: string | null
           preferencia_contato?: string | null
           project_id?: string | null
@@ -1342,6 +1445,7 @@ export type Database = {
           synced_at?: string | null
           telefone?: string
           temperatura?: string | null
+          tempo_resposta_seg?: string | null
           tipo_imovel?: string | null
           tipo_telhado?: string | null
           total_audios_enviados?: number | null
@@ -1350,10 +1454,17 @@ export type Database = {
           ts_cadastro?: string | null
           ts_desqualificado?: string | null
           ts_pedido_conta_luz?: string | null
+          ts_primeira_resposta?: string | null
           ts_qualificado?: string | null
+          ts_reativacao?: string | null
           ts_transferido?: string | null
           ts_ultima_interacao?: string | null
           ts_ultimo_fup?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           valor_conta?: string | null
           valor_conta_confirmado_ocr?: string | null
         }
@@ -1701,6 +1812,156 @@ export type Database = {
           utm_term?: string | null
           valor_conta?: string | null
           valor_conta_confirmado_ocr?: string | null
+        }
+        Relationships: []
+      }
+      sol_projetos_sync: {
+        Row: {
+          campanha_nome: string | null
+          canal_origem: string | null
+          closer_nome: string | null
+          closer_sm_id: string | null
+          comissao_percentual: string | null
+          comissao_representante_pct: string | null
+          comissao_representante_valor: string | null
+          comissao_status: string | null
+          comissao_valor: string | null
+          consumo_kwh: string | null
+          custo_aquisicao: string | null
+          ds_key: string
+          email_cliente: string | null
+          etapa: string | null
+          etapa_id: string | null
+          etiquetas: string | null
+          evento: string | null
+          financeira: string | null
+          forma_pagamento: string | null
+          franquia_id: string | null
+          funil_nome: string | null
+          identificador: string | null
+          margem_bruta: string | null
+          margem_percentual: string | null
+          motivo_perda: string | null
+          motivo_perda_id: string | null
+          nome_cliente: string | null
+          nome_proposta: string | null
+          parcelas: string | null
+          potencia_sistema: string | null
+          project_id: string | null
+          proposta_ativa: string | null
+          representante_id: string | null
+          representante_nome: string | null
+          status_projeto: string | null
+          status_proposta: string | null
+          telefone: string | null
+          ts_cadastro_projeto: string | null
+          ts_evento: string | null
+          ts_ganho: string | null
+          ts_pagamento_comissao: string | null
+          ts_perdido: string | null
+          ts_proposta: string | null
+          ts_proposta_aceita: string | null
+          ts_sync: string | null
+          valor_contrato: string | null
+          valor_proposta: string | null
+        }
+        Insert: {
+          campanha_nome?: string | null
+          canal_origem?: string | null
+          closer_nome?: string | null
+          closer_sm_id?: string | null
+          comissao_percentual?: string | null
+          comissao_representante_pct?: string | null
+          comissao_representante_valor?: string | null
+          comissao_status?: string | null
+          comissao_valor?: string | null
+          consumo_kwh?: string | null
+          custo_aquisicao?: string | null
+          ds_key: string
+          email_cliente?: string | null
+          etapa?: string | null
+          etapa_id?: string | null
+          etiquetas?: string | null
+          evento?: string | null
+          financeira?: string | null
+          forma_pagamento?: string | null
+          franquia_id?: string | null
+          funil_nome?: string | null
+          identificador?: string | null
+          margem_bruta?: string | null
+          margem_percentual?: string | null
+          motivo_perda?: string | null
+          motivo_perda_id?: string | null
+          nome_cliente?: string | null
+          nome_proposta?: string | null
+          parcelas?: string | null
+          potencia_sistema?: string | null
+          project_id?: string | null
+          proposta_ativa?: string | null
+          representante_id?: string | null
+          representante_nome?: string | null
+          status_projeto?: string | null
+          status_proposta?: string | null
+          telefone?: string | null
+          ts_cadastro_projeto?: string | null
+          ts_evento?: string | null
+          ts_ganho?: string | null
+          ts_pagamento_comissao?: string | null
+          ts_perdido?: string | null
+          ts_proposta?: string | null
+          ts_proposta_aceita?: string | null
+          ts_sync?: string | null
+          valor_contrato?: string | null
+          valor_proposta?: string | null
+        }
+        Update: {
+          campanha_nome?: string | null
+          canal_origem?: string | null
+          closer_nome?: string | null
+          closer_sm_id?: string | null
+          comissao_percentual?: string | null
+          comissao_representante_pct?: string | null
+          comissao_representante_valor?: string | null
+          comissao_status?: string | null
+          comissao_valor?: string | null
+          consumo_kwh?: string | null
+          custo_aquisicao?: string | null
+          ds_key?: string
+          email_cliente?: string | null
+          etapa?: string | null
+          etapa_id?: string | null
+          etiquetas?: string | null
+          evento?: string | null
+          financeira?: string | null
+          forma_pagamento?: string | null
+          franquia_id?: string | null
+          funil_nome?: string | null
+          identificador?: string | null
+          margem_bruta?: string | null
+          margem_percentual?: string | null
+          motivo_perda?: string | null
+          motivo_perda_id?: string | null
+          nome_cliente?: string | null
+          nome_proposta?: string | null
+          parcelas?: string | null
+          potencia_sistema?: string | null
+          project_id?: string | null
+          proposta_ativa?: string | null
+          representante_id?: string | null
+          representante_nome?: string | null
+          status_projeto?: string | null
+          status_proposta?: string | null
+          telefone?: string | null
+          ts_cadastro_projeto?: string | null
+          ts_evento?: string | null
+          ts_ganho?: string | null
+          ts_pagamento_comissao?: string | null
+          ts_perdido?: string | null
+          ts_proposta?: string | null
+          ts_proposta_aceita?: string | null
+          ts_sync?: string | null
+          valor_contrato?: string | null
+          valor_proposta?: string | null
         }
         Relationships: []
       }
