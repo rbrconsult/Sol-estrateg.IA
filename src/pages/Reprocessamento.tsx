@@ -40,9 +40,18 @@ export default function Reprocessamento() {
   const [batchSending, setBatchSending] = useState(false);
   const [sentSet, setSentSet] = useState<Set<string>>(new Set());
 
+  const ALLOWED_ETAPAS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'];
+
   const leads = useMemo(() => {
     if (!solLeads?.length) return [];
-    let result = [...solLeads];
+    // Base filter: only ABERTO status + allowed etapas
+    let result = solLeads.filter((r) => {
+      const status = (r.status || '').toUpperCase().trim();
+      if (status && status !== 'ABERTO') return false;
+      const etapa = (r.etapa_funil || '').toUpperCase().trim();
+      if (!ALLOWED_ETAPAS.includes(etapa)) return false;
+      return true;
+    });
     if (statusFilter === "ativos") result = result.filter(r => !isDesqualificado(r) && !isQualificado(r));
     else if (statusFilter === "qualificados") result = result.filter(r => isQualificado(r));
     else if (statusFilter === "declinio") result = result.filter(r => isDesqualificado(r));

@@ -104,10 +104,17 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
-    const roboEtapas = ['SOL SDR', 'TRAFEGO PAGO', 'FOLLOW UP'];
+    const ALLOWED_ETAPAS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'];
     const { from: effFrom, to: effTo } = gf.effectiveDateRange;
     return solLeads
       .filter((r) => {
+        // Only status ABERTO
+        const status = (r.status || '').toUpperCase().trim();
+        if (status && status !== 'ABERTO') return false;
+        // Only allowed etapas
+        const etapa = (r.etapa_funil || '').toUpperCase().trim();
+        if (!ALLOWED_ETAPAS.includes(etapa)) return false;
+        // Date filter
         if (effFrom || effTo) {
           const dateStr = r.ts_cadastro;
           if (!dateStr) return false;
@@ -116,10 +123,7 @@ export default function Qualificacao() {
           if (effFrom) { const fs = new Date(effFrom); fs.setHours(0,0,0,0); if (d < fs) return false; }
           if (effTo) { const es = new Date(effTo); es.setHours(23,59,59,999); if (d > es) return false; }
         }
-        const etapa = (r.etapa_funil || '').toUpperCase().trim();
-        const status = (r.status || '').toUpperCase();
-        const isPreVenda = roboEtapas.includes(etapa) || !etapa || status === 'ABERTO';
-        return isPreVenda || (r.etapa_funil || '').toUpperCase().includes('QUALIFICADO') || isDesqualificado(r);
+        return true;
       })
       .map((r) => ({
         ...r,
