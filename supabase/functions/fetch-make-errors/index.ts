@@ -518,7 +518,7 @@ Deno.serve(async (req) => {
 
     const records: any[] = [];
 
-    // 2. Incomplete executions (stopped flows)
+    // 3. Incomplete executions (stopped flows — only monitored scenarios)
     const incompleteRes = await fetch(
       `${MAKE_BASE}/incomplete-executions?teamId=${MAKE_TEAM_ID}&pg[limit]=100`,
       { headers: makeHeaders }
