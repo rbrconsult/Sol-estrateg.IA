@@ -62,11 +62,32 @@ export default function Qualificacao() {
   const [krolicMembers, setKrolicMembers] = useState<KrolicMember[]>([]);
   const [batchVendor, setBatchVendor] = useState<string>("roleta");
   const [manualVendor, setManualVendor] = useState<string>("roleta");
+  const [krolicPhones, setKrolicPhones] = useState<Set<string>>(new Set());
 
   const selectedOrgSlug = useMemo(() => {
     if (!selectedOrgId) return null;
     return orgs.find((o) => o.id === selectedOrgId)?.slug || null;
   }, [selectedOrgId, orgs]);
+
+  // Fetch active Krolic contacts
+  useEffect(() => {
+    const fetchKrolicContacts = async () => {
+      const { data } = await supabase
+        .from("krolic_active_contacts")
+        .select("telefone");
+      if (data) {
+        const phones = new Set<string>();
+        data.forEach((d: any) => {
+          const raw = (d.telefone || "").replace(/\D/g, "");
+          phones.add(raw);
+          // Also add without country code for matching
+          if (raw.startsWith("55") && raw.length >= 12) phones.add(raw.slice(2));
+        });
+        setKrolicPhones(phones);
+      }
+    };
+    fetchKrolicContacts();
+  }, []);
 
   useEffect(() => {
     const fetchKrolic = async () => {
@@ -107,17 +128,18 @@ export default function Qualificacao() {
     const ALLOWED_ETAPAS = ['SOL SDR', 'FOLLOW UP'];
     return gf.filterRecords(solLeads)
       .filter((r) => {
-        // Excluir leads legados sem ts_cadastro (não passaram pelo SDR)
         if (!r.ts_cadastro) return false;
-        // Excluir cargas históricas (SM_BULK_LOAD, SMAPI)
         const canal = (r.canal_origem || '').toUpperCase().trim();
         if (canal === 'SM_BULK_LOAD' || canal === 'SMAPI') return false;
-        // Only status ABERTO
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
-        // Only allowed etapas
         const etapa = (r.etapa_funil || '').toUpperCase().trim();
         if (!ALLOWED_ETAPAS.includes(etapa)) return false;
+        // Only show leads with active chat in Krolic
+        if (krolicPhones.size > 0) {
+          const phone = (r.telefone || "").replace(/\D/g, "");
+          if (!krolicPhones.has(phone)) return false;
+        }
         return true;
       })
       .map((r) => ({
@@ -126,7 +148,7 @@ export default function Qualificacao() {
         _desqualificado: isDesqualificado(r),
         _qualificado: isQualificado(r),
       }));
-  }, [solLeads, gf]);
+  }, [solLeads, gf, krolicPhones]);
 
   const filtered = useMemo(() => {
     let result = allLeads;
