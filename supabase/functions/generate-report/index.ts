@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // ── Auth ──
+    // ── Auth (hybrid: user JWT OR service_role/anon for cron/Make) ──
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -134,14 +134,33 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
-    const authClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: authData, error: authError } = await authClient.auth.getUser();
-    if (authError || !authData.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    // Try to decode JWT to check if it's service_role or anon (cron/Make calls)
+    const token = authHeader.replace("Bearer ", "");
+    let isServiceCall = false;
+    let authUserId: string | null = null;
+
+    try {
+      const payloadB64 = token.split(".")[1];
+      if (payloadB64) {
+        const payload = JSON.parse(atob(payloadB64));
+        if (payload.role === "service_role" || payload.role === "anon") {
+          isServiceCall = true;
+        }
+      }
+    } catch { /* not a standard JWT, try user auth */ }
+
+    if (!isServiceCall) {
+      const authClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
       });
+      const { data: authData, error: authError } = await authClient.auth.getUser();
+      if (authError || !authData.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      authUserId = authData.user.id;
     }
 
     const { templateContent, templateTitle, organizationId: requestedOrganizationId } = await req.json();
@@ -157,9 +176,18 @@ Deno.serve(async (req) => {
     }
 
     // ── Determine effective org ──
-    const userId = authData.user.id;
-    const { data: baseOrganizationId } = await supabase.rpc("get_user_org", { p_user_id: userId });
-    const { data: isSuperAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
+    let baseOrganizationId: string | null = null;
+    let isSuperAdmin = false;
+
+    if (authUserId) {
+      const { data: orgId } = await supabase.rpc("get_user_org", { p_user_id: authUserId });
+      baseOrganizationId = orgId;
+      const { data: sa } = await supabase.rpc("has_role", { _user_id: authUserId, _role: "super_admin" });
+      isSuperAdmin = !!sa;
+    } else {
+      // Service call (Make/cron) — treat as super_admin
+      isSuperAdmin = true;
+    }
 
     let effectiveOrgId: string | null = null;
     if (requestedOrganizationId) {
