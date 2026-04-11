@@ -69,7 +69,7 @@ export default function Desqualificar() {
     fetchKrolicContacts();
   }, []);
 
-  const ALLOWED_ETAPAS = ['SOL SDR', 'FOLLOW UP'];
+  
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
