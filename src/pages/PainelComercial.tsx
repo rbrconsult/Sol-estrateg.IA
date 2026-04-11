@@ -746,16 +746,16 @@ export default function PainelComercial() {
       <DataTrustFooter
         lines={[
           {
-            label: "Pré-venda / fila",
-            source: "sol_projetos",
+            label: "Leads SDR",
+            source: "Base de leads",
             fetchedAt: leadsDataUpdatedAt,
-            extra: `${records.length} leads no filtro global`,
+            extra: `${records.length} leads`,
           },
           {
-            label: "Oportunidades (SM)",
-            source: "sol_propostas (dedupe)",
+            label: "Oportunidades",
+            source: "Projetos comerciais",
             fetchedAt: projetosDataUpdatedAt,
-            extra: `${filteredProposals.length} projetos no filtro global`,
+            extra: `${filteredProposals.length} projetos`,
           },
         ]}
       />
