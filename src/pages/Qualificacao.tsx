@@ -32,7 +32,7 @@ function isDesqualificado(r: SolLead): boolean {
   );
 }
 
-const ETAPA_OPTIONS = ["TRAFEGO PAGO", "SOL SDR", "FOLLOW UP"];
+const ETAPA_OPTIONS = ["SOL SDR", "FOLLOW UP"];
 const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 interface KrolicMember {
