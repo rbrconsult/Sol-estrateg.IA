@@ -559,6 +559,33 @@ export type Database = {
           },
         ]
       }
+      krolic_active_contacts: {
+        Row: {
+          franquia_id: string
+          krolic_id: string
+          nome: string | null
+          setor_id: string | null
+          synced_at: string
+          telefone: string
+        }
+        Insert: {
+          franquia_id?: string
+          krolic_id: string
+          nome?: string | null
+          setor_id?: string | null
+          synced_at?: string
+          telefone: string
+        }
+        Update: {
+          franquia_id?: string
+          krolic_id?: string
+          nome?: string | null
+          setor_id?: string | null
+          synced_at?: string
+          telefone?: string
+        }
+        Relationships: []
+      }
       make_errors: {
         Row: {
           attempts: number | null

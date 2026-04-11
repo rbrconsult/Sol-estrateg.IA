@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { supabase } from "@/integrations/supabase/client";
 import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -47,6 +48,26 @@ export default function Desqualificar() {
   const [manualDesqPhone, setManualDesqPhone] = useState("");
   const [manualDesqName, setManualDesqName] = useState("");
   const [manualDesqSending, setManualDesqSending] = useState(false);
+  const [krolicPhones, setKrolicPhones] = useState<Set<string>>(new Set());
+
+  // Fetch active Krolic contacts
+  useEffect(() => {
+    const fetchKrolicContacts = async () => {
+      const { data } = await supabase
+        .from("krolic_active_contacts")
+        .select("telefone");
+      if (data) {
+        const phones = new Set<string>();
+        data.forEach((d: any) => {
+          const raw = (d.telefone || "").replace(/\D/g, "");
+          phones.add(raw);
+          if (raw.startsWith("55") && raw.length >= 12) phones.add(raw.slice(2));
+        });
+        setKrolicPhones(phones);
+      }
+    };
+    fetchKrolicContacts();
+  }, []);
 
   const ALLOWED_ETAPAS = ['SOL SDR', 'FOLLOW UP'];
 
@@ -54,15 +75,18 @@ export default function Desqualificar() {
     if (!solLeads?.length) return [];
     return gf.filterRecords(solLeads)
       .filter((r) => {
-        // Excluir leads legados sem ts_cadastro
         if (!r.ts_cadastro) return false;
-        // Excluir cargas históricas (SM_BULK_LOAD, SMAPI)
         const canal = (r.canal_origem || '').toUpperCase().trim();
         if (canal === 'SM_BULK_LOAD' || canal === 'SMAPI') return false;
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
         const etapa = (r.etapa_funil || '').toUpperCase().trim();
         if (!ALLOWED_ETAPAS.includes(etapa)) return false;
+        // Only show leads with active chat in Krolic
+        if (krolicPhones.size > 0) {
+          const phone = (r.telefone || "").replace(/\D/g, "");
+          if (!krolicPhones.has(phone)) return false;
+        }
         return true;
       })
       .map((r) => ({
@@ -70,7 +94,7 @@ export default function Desqualificar() {
         _classificacao: classifyLead(r),
         _desqualificado: isDesqualificado(r),
       }));
-  }, [solLeads, gf]);
+  }, [solLeads, gf, krolicPhones]);
 
   const filtered = useMemo(() => {
     let result = allLeads;
