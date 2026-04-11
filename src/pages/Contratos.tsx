@@ -169,8 +169,8 @@ export default function Contratos() {
               <span className="text-xs font-medium">Na mesa (diretoria)</span>
             </div>
             <p className="text-2xl font-bold tabular-nums">{baseStats.naMesaDiretoria}</p>
-            <p className="text-xs text-muted-foreground mt-1 leading-snug">
-              Aberto + (R$ ou kWp) OU etapa qualif./contato/proposta/negociação
+            <p className="text-xs text-muted-foreground mt-1">
+              Com valor, potência ou etapa avançada
             </p>
           </CardContent>
         </Card>
