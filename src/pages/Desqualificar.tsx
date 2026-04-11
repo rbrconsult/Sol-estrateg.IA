@@ -32,7 +32,7 @@ const isDesqualificado = (r: SolLead): boolean => {
   );
 };
 
-const ETAPA_OPTIONS = ["TRAFEGO PAGO", "SOL SDR", "FOLLOW UP"];
+const ETAPA_OPTIONS = ["SOL SDR", "FOLLOW UP"];
 const STATUS_OPTIONS = ["all", "ativos", "desqualificados"] as const;
 
 export default function Desqualificar() {
