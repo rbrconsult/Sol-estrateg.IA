@@ -49,12 +49,12 @@ export default function Vendedores() {
 
   const SOL_SDR_SM_ID = '11995';
   const { vendedorPerformance, perdasData } = useMemo(() => {
-    if (filteredProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
-    const perf = getVendedorPerformance(filteredProposals, "closer")
-      .filter(v => v.responsavelId !== SOL_SDR_SM_ID);
+    // Exclude SOL SDR robot from vendedor rankings
+    const withoutRobot = filteredProposals.filter(p => p.responsavelId !== SOL_SDR_SM_ID);
+    if (withoutRobot.length === 0) return { vendedorPerformance: [], perdasData: null };
     return {
-      vendedorPerformance: perf,
-      perdasData: getPerdasData(filteredProposals, "closer"),
+      vendedorPerformance: getVendedorPerformance(withoutRobot, "closer"),
+      perdasData: getPerdasData(withoutRobot, "closer"),
     };
   }, [filteredProposals]);
 
