@@ -125,11 +125,8 @@ export default function Conferencia() {
   }, []);
 
   const gf = useGlobalFilters();
-  const { periodo, etapa: filterEtapa, temperatura: filterTemp, searchTerm } = gf.filters;
-  const effectiveDateRange = gf.effectiveDateRange;
 
-  // Hook receives global filter — ALL data is already filtered by period
-  const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData(effectiveDateRange);
+  const { data: realData, isLoading: dataLoading, hasData } = useConferenciaData(gf.filters);
 
   const pipelineStages = realData?.pipelineStages ?? [];
   const origemLeads = realData?.origemLeads ?? [];
@@ -146,13 +143,7 @@ export default function Conferencia() {
   const robotInsightsData = realData?.robotInsights ?? { destaques: [], comparacao: { sol: { nome: 'SOL', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 }, fup: { nome: 'FUP', taxaResposta: 0, tempoMedioResposta: '—', leadsProcessados: 0 } }, funilMensagens: [], alertasUrgentes: [] };
   const monthlyEvolution = realData?.monthlyEvolution ?? [];
 
-  // Secondary filters (etapa, temp, search) applied on top of pre-filtered data
-  const filteredLeads = useMemo(() => {
-    return tabelaLeads
-      .filter(l => filterEtapa === "todas" || l.etapa === filterEtapa)
-      .filter(l => filterTemp === "todas" || l.temperatura === filterTemp)
-      .filter(l => !searchTerm || l.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [filterEtapa, filterTemp, searchTerm, tabelaLeads]);
+  const filteredLeads = tabelaLeads;
 
   const etapasUnicas = [...new Set(tabelaLeads.map(l => l.etapa))];
 
