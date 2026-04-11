@@ -235,12 +235,8 @@ export default function Comissoes() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Comissões</h1>
-          <p className="text-sm text-muted-foreground max-w-3xl">
-            <span className="font-medium text-foreground">Racional:</span> tudo parte de{" "}
-            <span className="font-medium text-foreground">sol_propostas</span>. Por contrato fechado (Ganho), a comissão usa
-            nesta ordem o que estiver no banco em <code className="text-xs">valor_comissao</code>, depois{" "}
-            <code className="text-xs">percentual_comissao</code> sobre <code className="text-xs">valor_proposta</code>, e por último
-            o percentual da interface (padrão 2% / regra por nome).
+          <p className="text-xs text-muted-foreground">
+            Cálculo de comissões sobre contratos fechados por vendedor.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -519,10 +515,9 @@ export default function Comissoes() {
         lines={[
           {
             label: "Comercial",
-            source:
-              "sol_propostas — comissão: valor_comissao → percentual_comissao × valor_proposta → % editável",
+            source: "Projetos comerciais",
             fetchedAt: dataUpdatedAt,
-            extra: `${filteredProposals.length} linhas após filtro global e escopo de filial (allowlist quando houver)`,
+            extra: `${filteredProposals.length} contratos no filtro`,
           },
         ]}
       />

@@ -23,8 +23,7 @@ const PERIODO_LABEL: Record<string, string> = {
 };
 
 /**
- * Explica por que os números na tela podem ser menores que o que existe no SM/Supabase:
- * dedup, filtro de período, filial, allowlist e RLS.
+ * Shows a compact data pipeline summary for commercial pages.
  */
 export function CommercialDataPipelineNote() {
   const { proposals, rawCount, isLoading, error, franchiseQuerySkipped, apiReturnedRows } =
@@ -69,56 +68,30 @@ export function CommercialDataPipelineNote() {
         </Alert>
       )}
       {franchiseQuerySkipped && (
-        <Alert className="py-2 border-amber-500/40 bg-amber-500/10">
-          <AlertTitle className="text-sm text-foreground">Filial sem slug</AlertTitle>
+        <Alert className="py-2 border-warning/40 bg-warning/10">
+          <AlertTitle className="text-sm text-foreground">Filial sem identificador</AlertTitle>
           <AlertDescription className="text-xs">
-            A query comercial está desligada até existir <code className="text-[10px]">organizations.slug</code> para a filial
-            selecionada.
+            A consulta comercial está desativada até que a filial selecionada tenha um identificador configurado.
           </AlertDescription>
         </Alert>
       )}
       {zeroFromApi && (
         <Alert className="py-2">
-          <AlertTitle className="text-sm text-foreground">0 eventos em sol_propostas (resposta da API)</AlertTitle>
-          <AlertDescription className="text-xs space-y-2">
-            <p>
-              O app <strong>não recebeu nenhuma linha</strong> do Supabase (antes de filtros de período). Isso costuma ser{" "}
-              <strong>RLS</strong>: até recentemente o Postgres exigia <code className="text-[10px]">franquia_id</code>{" "}
-              <em>idêntico</em> ao <code className="text-[10px]">slug</code> da org — se o Make usa hífen e o Lovable underscore
-              (ou o contrário), vinha tudo vazio. Aplique a migração{" "}
-              <code className="text-[10px]">20260407140000_rls_franquia_slug_variants.sql</code> no projeto Supabase, ou alinhe slug
-              e <code className="text-[10px]">franquia_id</code> na base.
-            </p>
-            <p>
-              <strong>Comissões:</strong> a tela funciona com <code className="text-[10px]">valor_proposta</code> e status Ganho;
-              as colunas <code className="text-[10px]">valor_comissao</code> /{" "}
-              <code className="text-[10px]">percentual_comissao</code> são opcionais — é normal não ter nenhuma linha com elas
-              preenchidas e ainda assim ver comissão estimada (% da UI).
-            </p>
+          <AlertTitle className="text-sm text-foreground">Nenhum projeto encontrado</AlertTitle>
+          <AlertDescription className="text-xs">
+            Não há dados comerciais disponíveis para o seu perfil. Verifique se a filial e permissões estão configuradas corretamente.
           </AlertDescription>
         </Alert>
       )}
       <p>
-        <span className="font-medium text-foreground">Sobre os números:</span>{" "}
-        <span className="tabular-nums">{rawCount}</span> eventos brutos na{" "}
-        <code className="text-[10px]">sol_propostas</code> →{" "}
-        <span className="tabular-nums">{proposals.length}</span> projetos únicos (último evento por{" "}
-        <code className="text-[10px]">project_id</code>) → <span className="tabular-nums">{audit.afterFranquia}</span> após
-        escopo de filial → <span className="tabular-nums">{audit.afterGlobalFilters}</span> após filtro global (
-        <span className="text-foreground/90">período: {periodoLabel}</span>
-        ; altere no painel flutuante) →{" "}
+        <span className="font-medium text-foreground">Resumo:</span>{" "}
+        <span className="tabular-nums">{rawCount}</span> registros →{" "}
+        <span className="tabular-nums">{proposals.length}</span> projetos únicos →{" "}
+        <span className="tabular-nums">{audit.afterFranquia}</span> na filial →{" "}
+        <span className="tabular-nums">{audit.afterGlobalFilters}</span> no período (
+        <span className="text-foreground/90">{periodoLabel}</span>) →{" "}
         <span className="tabular-nums font-medium text-foreground">{audit.onScreen}</span> exibidos
-        {audit.allowlistCuts
-          ? ` (só responsáveis autorizados — ${audit.closerSource === "database" ? "lista no BD" : "legado código"})`
-          : ""}
-        .
-      </p>
-      <p>
-        <span className="font-medium text-foreground">Por que pode faltar dado mesmo com SM atualizado:</span> o app só lê o
-        que o Supabase entrega ao seu login — em geral <code className="text-[10px]">franquia_id</code> tem de coincidir com o{" "}
-        <code className="text-[10px]">slug</code> da sua organização (RLS). Com filial selecionada, só entram propostas cujo{" "}
-        <code className="text-[10px]">responsavelId</code> (SM) está em <code className="text-[10px]">comercial_closer_sm_ids</code>{" "}
-        na filial (ou legado em código). Super_admin vê todas as franquias no RLS.
+        {audit.allowlistCuts ? ` (filtrado por responsáveis autorizados)` : ""}.
       </p>
     </div>
   );
