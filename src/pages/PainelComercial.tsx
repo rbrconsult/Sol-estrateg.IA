@@ -305,7 +305,7 @@ function proposalToSolLead(p: Proposal): SolLead {
     nome: p.nomeCliente || null,
     email: p.clienteEmail || null,
     cidade: p.makeCidade || null,
-    status: p.status === 'open' ? 'ABERTO' : p.status === 'won' ? 'GANHO' : p.status === 'lost' ? 'PERDIDO' : p.status || null,
+    status: (['open', 'Aberto'].includes(p.status)) ? 'ABERTO' : (['won', 'Ganho'].includes(p.status)) ? 'GANHO' : (['lost', 'Perdido'].includes(p.status)) ? 'PERDIDO' : p.status || null,
     score: p.solScore ? String(p.solScore) : p.makeScore || null,
     temperatura: p.temperatura || p.makeTemperatura as any || null,
     canal_origem: p.origemLead || null,
@@ -793,7 +793,7 @@ export default function PainelComercial() {
           {
             label: "Leads SDR",
             source: "Base de leads",
-            fetchedAt: leadsDataUpdatedAt,
+            fetchedAt: projetosDataUpdatedAt,
             extra: `${records.length} leads`,
           },
           {
