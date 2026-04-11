@@ -337,9 +337,19 @@ async function syncSolLeads(supabase: any, creds: OrgCredentials): Promise<any> 
     };
   }).filter((l: any) => l.telefone);
 
+  // Deduplicate by telefone — keep last occurrence (most recent from DS)
+  const phoneMap = new Map<string, any>();
+  for (const lead of leadsToUpsert) {
+    phoneMap.set(lead.telefone, lead);
+  }
+  const dedupedLeads = Array.from(phoneMap.values());
+  if (dedupedLeads.length < leadsToUpsert.length) {
+    console.log(`[${creds.orgName}] sol_leads_sync: deduped ${leadsToUpsert.length} → ${dedupedLeads.length} (removed ${leadsToUpsert.length - dedupedLeads.length} duplicate phones)`);
+  }
+
   let upsertedLeads = 0;
-  for (let i = 0; i < leadsToUpsert.length; i += 50) {
-    const batch = leadsToUpsert.slice(i, i + 50);
+  for (let i = 0; i < dedupedLeads.length; i += 50) {
+    const batch = dedupedLeads.slice(i, i + 50);
     const { error } = await supabase
       .from("sol_leads_sync")
       .upsert(batch, { onConflict: "telefone", ignoreDuplicates: false });
