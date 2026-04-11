@@ -102,7 +102,8 @@ export function parseDateFlexible(dateStr: string | null | undefined): Date | nu
   const iso = new Date(raw);
   if (!Number.isNaN(iso.getTime())) return iso;
 
-  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  // Accepts DD/MM/YYYY or DD-MM-YYYY (with optional time)
+  const br = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
   if (!br) return null;
 
   const [, dd, mm, yyyy, hh = "00", mi = "00", ss = "00"] = br;
