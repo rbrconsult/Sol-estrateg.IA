@@ -98,14 +98,8 @@ export default function Contratos() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Contratos Fechados</h1>
-          <p className="text-xs md:text-sm text-muted-foreground max-w-3xl">
-            Somente dados derivados de <span className="font-medium text-foreground">sol_propostas</span> (1 registro por{" "}
-            <span className="font-medium text-foreground">project_id</span> após dedupe). Não exibimos funil de pré-venda
-            (leads) aqui — só o que a sync comercial traz. A receita prevista usa o mesmo proxy do Forecast: data de criação da
-            proposta + <span className="font-medium text-foreground">{FORECAST_EXPECTED_CLOSE_LAG_DAYS} dias</span>, horizonte
-            cumulativo até +28 dias. O status <span className="font-medium text-foreground">Aberto</span> na sync é o fallback
-            quando o SM não envia ganho/perda/exclusão explícitos — por isso o número de «abertos» pode ser maior do que as
-            oportunidades que você considera «na mesa»; usamos um recorte de diretoria nos cards abaixo.
+          <p className="text-xs text-muted-foreground">
+            Visão consolidada de negócios ganhos, abertos e receita prevista.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -162,8 +156,8 @@ export default function Contratos() {
               <span className="text-xs font-medium">Abertos (sync)</span>
             </div>
             <p className="text-2xl font-bold tabular-nums">{baseStats.abertos}</p>
-            <p className="text-xs text-muted-foreground mt-1 leading-snug">
-              Fallback quando o SM não marca ganho/perda/exclusão — não é só «mesa»
+            <p className="text-xs text-muted-foreground mt-1">
+              Aguardando definição comercial
             </p>
           </CardContent>
         </Card>
@@ -175,8 +169,8 @@ export default function Contratos() {
               <span className="text-xs font-medium">Na mesa (diretoria)</span>
             </div>
             <p className="text-2xl font-bold tabular-nums">{baseStats.naMesaDiretoria}</p>
-            <p className="text-xs text-muted-foreground mt-1 leading-snug">
-              Aberto + (R$ ou kWp) OU etapa qualif./contato/proposta/negociação
+            <p className="text-xs text-muted-foreground mt-1">
+              Com valor, potência ou etapa avançada
             </p>
           </CardContent>
         </Card>
@@ -517,9 +511,9 @@ export default function Contratos() {
         lines={[
           {
             label: "Comercial",
-            source: "sol_propostas (dedupe por project_id)",
+            source: "Projetos comerciais",
             fetchedAt: dataUpdatedAt,
-            extra: `${filteredProposals.length} projetos no filtro global`,
+            extra: `${filteredProposals.length} projetos`,
           },
         ]}
       />

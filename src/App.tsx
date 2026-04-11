@@ -79,7 +79,7 @@ function AppRoutesShell() {
 
               {/* Dashboard principal */}
 
-              {/* Pipeline unificado DS Thread + DS Comercial */}
+              {/* Pipeline */}
               <Route path="/pipeline" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="pipeline"><Pipeline /></ModuleGuard></MainLayout></ProtectedRoute>} />
 
               {/* Propostas = Forecast */}

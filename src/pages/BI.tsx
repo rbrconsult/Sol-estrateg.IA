@@ -205,9 +205,9 @@ export default function BI() {
             lines={[
               {
                 label: "Fonte comercial",
-                source: "sol_propostas (último evento por project_id)",
+                source: "Projetos comerciais",
                 fetchedAt: biResult.projetosDataUpdatedAt,
-                extra: `${biResult.filteredProjectCount} projetos no recorte filtrado`,
+                extra: `${biResult.filteredProjectCount} projetos`,
               },
               {
                 label: "KPIs",
