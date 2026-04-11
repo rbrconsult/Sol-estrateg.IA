@@ -176,9 +176,18 @@ Deno.serve(async (req) => {
     }
 
     // ── Determine effective org ──
-    const userId = authData.user.id;
-    const { data: baseOrganizationId } = await supabase.rpc("get_user_org", { p_user_id: userId });
-    const { data: isSuperAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
+    let baseOrganizationId: string | null = null;
+    let isSuperAdmin = false;
+
+    if (authUserId) {
+      const { data: orgId } = await supabase.rpc("get_user_org", { p_user_id: authUserId });
+      baseOrganizationId = orgId;
+      const { data: sa } = await supabase.rpc("has_role", { _user_id: authUserId, _role: "super_admin" });
+      isSuperAdmin = !!sa;
+    } else {
+      // Service call (Make/cron) — treat as super_admin
+      isSuperAdmin = true;
+    }
 
     let effectiveOrgId: string | null = null;
     if (requestedOrganizationId) {
