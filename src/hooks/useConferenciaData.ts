@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
-import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useFranquiaId } from '@/hooks/useFranquiaId';
+import { useOrgFilter } from '@/contexts/OrgFilterContext';
+import { franquiaColumnValuesForSlug } from '@/lib/franquiaSync';
 import { filterRecordsByGlobalFilters, getEffectiveDateRange, type FilterState } from '@/lib/globalFilters';
 
 // ─── Types matching the page component shapes ───
