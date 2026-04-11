@@ -269,12 +269,7 @@ export default function Conferencia() {
         <section className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Origem */}
           <div className="rounded-lg border border-border/50 bg-card p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Origem dos Leads</p>
-            <p className="text-[9px] text-muted-foreground/90 mb-3 leading-snug">
-              <span className="font-medium text-foreground">Conv. ganho</span> = % com vitória no lead.{" "}
-              <span className="font-medium text-foreground">MQL+</span> = % que chegaram a qualificado ou além (útil sem fechamento).{" "}
-              <span className="font-medium text-foreground">Score</span> = média do score SOL na origem (quando houver scores válidos).
-            </p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">Origem dos Leads</p>
             <div className="space-y-3">
               {origemLeads.map((o) => (
                 <div key={o.origem} className="flex flex-col gap-1">
