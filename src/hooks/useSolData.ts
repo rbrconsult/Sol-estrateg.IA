@@ -225,7 +225,14 @@ export function useSolLeads(statusFilter?: string[]) {
       }
 
       // Exclui registros de carga histórica bulk do SolarMarket
-      return (allRows as SolLead[]).filter(l => (l.canal_origem || '').toUpperCase() !== 'SM_BULK_LOAD');
+      // + registros fantasma (sem canal, sem score, etapa TRAFEGO PAGO)
+      return (allRows as SolLead[]).filter(l => {
+        const canal = (l.canal_origem || '').toUpperCase().trim();
+        if (canal === 'SM_BULK_LOAD') return false;
+        // Exclui fantasmas: canal NULL + score NULL + etapa TRAFEGO PAGO
+        if (!l.canal_origem && !l.score && (l.etapa_funil || '').toUpperCase().trim() === 'TRAFEGO PAGO') return false;
+        return true;
+      });
     },
     enabled: !!user && franchiseQueryReady,
     staleTime: 30_000,

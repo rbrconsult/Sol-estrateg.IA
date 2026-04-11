@@ -22,8 +22,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useSolLeads, type SolLead } from '@/hooks/useSolData';
+import { type SolLead } from '@/hooks/useSolData';
 import { useCommercialProposals } from "@/hooks/useCommercialProposals";
+import type { Proposal } from "@/data/dataAdapter";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
@@ -297,23 +298,67 @@ function deriveSummary(records: SolLead[]) {
 
 /* ── component ─────────────────────────────────────────── */
 
+/** Map Proposal → SolLead for backward compat with panel helpers */
+function proposalToSolLead(p: Proposal): SolLead {
+  return {
+    telefone: p.clienteTelefone || '',
+    nome: p.nomeCliente || null,
+    email: p.clienteEmail || null,
+    cidade: p.makeCidade || null,
+    status: (['open', 'Aberto'].includes(p.status)) ? 'ABERTO' : (['won', 'Ganho'].includes(p.status)) ? 'GANHO' : (['lost', 'Perdido'].includes(p.status)) ? 'PERDIDO' : p.status || null,
+    score: p.solScore ? String(p.solScore) : p.makeScore || null,
+    temperatura: p.temperatura || p.makeTemperatura as any || null,
+    canal_origem: p.origemLead || null,
+    franquia_id: p.franquiaId || null,
+    project_id: p.projetoId || null,
+    identificador: p.id || null,
+    chatid: null, contactid: null,
+    resumo_conversa: null, resumo_qualificacao: null,
+    valor_conta: p.valorProposta ? String(p.valorProposta) : null,
+    tipo_imovel: p.makeImovel || null,
+    tipo_telhado: p.tipoTelhado || null,
+    acrescimo_carga: null, prazo_decisao: null,
+    forma_pagamento: p.formaPagamento || null,
+    preferencia_contato: null,
+    closer_nome: p.responsavel || null,
+    closer_sm_id: p.responsavelId || null,
+    etapa_funil: p.etapa || null,
+    qualificado_por: null,
+    valor_conta_confirmado_ocr: null,
+    ts_cadastro: p.dataCriacaoProjeto || null,
+    ts_ultima_interacao: p.ultimaAtualizacao || null,
+    ts_qualificado: p.dataQualificacaoSol || null,
+    ts_desqualificado: null, ts_transferido: null,
+    ts_pedido_conta_luz: null, ts_ultimo_fup: null,
+    total_mensagens_ia: p.makeTotalMensagens || null,
+    aguardando_conta_luz: null,
+    custo_openai: null, custo_elevenlabs: null, custo_total_usd: null,
+    total_audios_enviados: null,
+    fup_followup_count: null,
+    transferido_comercial: null,
+    synced_at: null,
+  };
+}
+
 export default function PainelComercial() {
   const [tab, setTab] = useState("painel");
   const navigate = useNavigate();
   const { openLead360 } = useLead360();
-  const { data: solLeads, isLoading, dataUpdatedAt: leadsDataUpdatedAt } = useSolLeads();
 
-  const { proposals, dataUpdatedAt: projetosDataUpdatedAt } = useCommercialProposals();
+  const { proposals, isLoading, dataUpdatedAt: projetosDataUpdatedAt } = useCommercialProposals();
   const { selectedOrgName, isGlobal } = useOrgFilter();
   const orgFilterActive = !isGlobal;
 
   const gf = useGlobalFilters();
-  const records = useMemo(() => gf.filterRecords(solLeads || []), [solLeads, gf.filterRecords]);
+
+  // Map proposals to SolLead[] for backward compat with existing helper functions
+  const solLeads = useMemo(() => (proposals || []).map(proposalToSolLead), [proposals]);
+  const records = useMemo(() => gf.filterRecords(solLeads), [solLeads, gf.filterRecords]);
   const filteredProposals = useMemo(() => gf.filterProposals(proposals || []), [proposals, gf.filterProposals]);
 
-  const alerts = useMemo(() => deriveAlerts(records), [records]);
-  const closerQueue = useMemo(() => deriveCloserQueue(records), [records]);
-  const summary = useMemo(() => deriveSummary(records), [records]);
+  const alerts = useMemo(() => deriveAlerts(records as SolLead[]), [records]);
+  const closerQueue = useMemo(() => deriveCloserQueue(records as SolLead[]), [records]);
+  const summary = useMemo(() => deriveSummary(records as SolLead[]), [records]);
   const forecastData = useMemo(() => filteredProposals.length > 0 ? getForecastData(filteredProposals) : null, [filteredProposals]);
 
   const handleOpenLead = (lead: CloserLead) => {
@@ -748,7 +793,7 @@ export default function PainelComercial() {
           {
             label: "Leads SDR",
             source: "Base de leads",
-            fetchedAt: leadsDataUpdatedAt,
+            fetchedAt: projetosDataUpdatedAt,
             extra: `${records.length} leads`,
           },
           {
