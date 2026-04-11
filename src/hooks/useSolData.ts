@@ -6,7 +6,7 @@
  * sol_equipe → sol_equipe_sync → useSolEquipe()
  * sol_funis → sol_funis_sync → useSolFunis()
  * sol_metricas → sol_metricas_sync → useSolMetricas()
- * sol_propostas → sol_propostas → useSolProjetos()
+ * sol_projetos_sync → useSolProjetos()
  * sol_qualificacao → sol_qualificacao_sync → useSolQualificacao()
  * sol_conversions → sol_conversions_sync → useSolConversions()
  */
