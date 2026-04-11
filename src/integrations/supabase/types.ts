@@ -1819,6 +1819,8 @@ export type Database = {
         Row: {
           campanha_nome: string | null
           canal_origem: string | null
+          cep: string | null
+          cidade: string | null
           closer_nome: string | null
           closer_sm_id: string | null
           comissao_percentual: string | null
@@ -1830,6 +1832,7 @@ export type Database = {
           custo_aquisicao: string | null
           ds_key: string
           email_cliente: string | null
+          estado: string | null
           etapa: string | null
           etapa_id: string | null
           etiquetas: string | null
@@ -1849,11 +1852,14 @@ export type Database = {
           potencia_sistema: string | null
           project_id: string | null
           proposta_ativa: string | null
+          qualificado_por: string | null
           representante_id: string | null
           representante_nome: string | null
+          score: string | null
           status_projeto: string | null
           status_proposta: string | null
           telefone: string | null
+          temperatura: string | null
           ts_cadastro_projeto: string | null
           ts_evento: string | null
           ts_ganho: string | null
@@ -1861,13 +1867,17 @@ export type Database = {
           ts_perdido: string | null
           ts_proposta: string | null
           ts_proposta_aceita: string | null
+          ts_qualificado: string | null
           ts_sync: string | null
+          valor_conta: string | null
           valor_contrato: string | null
           valor_proposta: string | null
         }
         Insert: {
           campanha_nome?: string | null
           canal_origem?: string | null
+          cep?: string | null
+          cidade?: string | null
           closer_nome?: string | null
           closer_sm_id?: string | null
           comissao_percentual?: string | null
@@ -1879,6 +1889,7 @@ export type Database = {
           custo_aquisicao?: string | null
           ds_key: string
           email_cliente?: string | null
+          estado?: string | null
           etapa?: string | null
           etapa_id?: string | null
           etiquetas?: string | null
@@ -1898,11 +1909,14 @@ export type Database = {
           potencia_sistema?: string | null
           project_id?: string | null
           proposta_ativa?: string | null
+          qualificado_por?: string | null
           representante_id?: string | null
           representante_nome?: string | null
+          score?: string | null
           status_projeto?: string | null
           status_proposta?: string | null
           telefone?: string | null
+          temperatura?: string | null
           ts_cadastro_projeto?: string | null
           ts_evento?: string | null
           ts_ganho?: string | null
@@ -1910,13 +1924,17 @@ export type Database = {
           ts_perdido?: string | null
           ts_proposta?: string | null
           ts_proposta_aceita?: string | null
+          ts_qualificado?: string | null
           ts_sync?: string | null
+          valor_conta?: string | null
           valor_contrato?: string | null
           valor_proposta?: string | null
         }
         Update: {
           campanha_nome?: string | null
           canal_origem?: string | null
+          cep?: string | null
+          cidade?: string | null
           closer_nome?: string | null
           closer_sm_id?: string | null
           comissao_percentual?: string | null
@@ -1928,6 +1946,7 @@ export type Database = {
           custo_aquisicao?: string | null
           ds_key?: string
           email_cliente?: string | null
+          estado?: string | null
           etapa?: string | null
           etapa_id?: string | null
           etiquetas?: string | null
@@ -1947,11 +1966,14 @@ export type Database = {
           potencia_sistema?: string | null
           project_id?: string | null
           proposta_ativa?: string | null
+          qualificado_por?: string | null
           representante_id?: string | null
           representante_nome?: string | null
+          score?: string | null
           status_projeto?: string | null
           status_proposta?: string | null
           telefone?: string | null
+          temperatura?: string | null
           ts_cadastro_projeto?: string | null
           ts_evento?: string | null
           ts_ganho?: string | null
@@ -1959,7 +1981,9 @@ export type Database = {
           ts_perdido?: string | null
           ts_proposta?: string | null
           ts_proposta_aceita?: string | null
+          ts_qualificado?: string | null
           ts_sync?: string | null
+          valor_conta?: string | null
           valor_contrato?: string | null
           valor_proposta?: string | null
         }
