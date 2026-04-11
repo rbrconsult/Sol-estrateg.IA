@@ -511,9 +511,9 @@ export default function Contratos() {
         lines={[
           {
             label: "Comercial",
-            source: "sol_propostas (dedupe por project_id)",
+            source: "Projetos comerciais",
             fetchedAt: dataUpdatedAt,
-            extra: `${filteredProposals.length} projetos no filtro global`,
+            extra: `${filteredProposals.length} projetos`,
           },
         ]}
       />
