@@ -104,11 +104,14 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
-    const ALLOWED_ETAPAS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'];
+    const ALLOWED_ETAPAS = ['SOL SDR', 'FOLLOW UP'];
     return gf.filterRecords(solLeads)
       .filter((r) => {
         // Excluir leads legados sem ts_cadastro (não passaram pelo SDR)
         if (!r.ts_cadastro) return false;
+        // Excluir cargas históricas (SM_BULK_LOAD, SMAPI)
+        const canal = (r.canal_origem || '').toUpperCase().trim();
+        if (canal === 'SM_BULK_LOAD' || canal === 'SMAPI') return false;
         // Only status ABERTO
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
