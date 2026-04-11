@@ -20,8 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const statusFilters: { value: SkillStatus | "all" | "pendente"; label: string }[] = [
+const statusFilters: { value: SkillStatus | "all" | "pendente" | "ligadas"; label: string }[] = [
   { value: "all", label: "Todas" },
+  { value: "ligadas", label: "🟢 Ligadas" },
   { value: "ativo", label: "✅ Ativas" },
   { value: "pendente", label: "⚙️ Pendente" },
   { value: "precisa_dados", label: "⏳ Aguardando Dados" },
@@ -32,7 +33,7 @@ const statusFilters: { value: SkillStatus | "all" | "pendente"; label: string }[
 const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagens", "seguros", "academia"];
 
 export default function Insights() {
-  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all" | "pendente">("all");
+  const [statusFilter, setStatusFilter] = useState<SkillStatus | "all" | "pendente" | "ligadas">("all");
   const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("all");
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
@@ -69,7 +70,9 @@ export default function Insights() {
     return skillCategories.map(cat => ({
       ...cat,
       skills: cat.skills.filter(s => {
-        if (statusFilter === "pendente") {
+        if (statusFilter === "ligadas") {
+          if (!toggles[s.id]) return false;
+        } else if (statusFilter === "pendente") {
           const isOn = !!toggles[s.id];
           const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11";
           const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
@@ -285,6 +288,11 @@ export default function Insights() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
+                              {isOn && (
+                                <Badge variant="outline" className="text-[9px] bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-semibold animate-pulse">
+                                  🟢 Ligada
+                                </Badge>
+                              )}
                               <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
                               {isPendingConfig && (
                                 <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-400 border-amber-500/20">
