@@ -403,9 +403,96 @@ export function computeFupFrioBlock(allRecords: SolLead[]): FupFrio {
   };
 }
 
+// ─── Fetch from sol_projetos_sync (Source of Truth comercial) ───
+function useConferenciaLeads() {
+  const { user } = useAuth();
+  const { selectedOrgId } = useOrgFilter();
+  const franquiaId = useFranquiaId();
+  const franchiseQueryReady = !selectedOrgId || franquiaId.trim().length > 0;
+
+  return useQuery({
+    queryKey: ["conferencia-leads", franquiaId, selectedOrgId],
+    queryFn: async (): Promise<SolLead[]> => {
+      if (selectedOrgId && !franquiaId.trim()) return [];
+      const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
+      const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
+
+      const allRows: any[] = [];
+      let offset = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("sol_projetos_sync" as any)
+          .select("*")
+          .in("franquia_id", franquiaFilter)
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allRows.push(...data);
+          hasMore = data.length === pageSize;
+          offset += pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      // Map sol_projetos_sync fields → SolLead shape
+      return allRows.map((r: any): SolLead => ({
+        telefone: r.telefone || '',
+        nome: r.nome_cliente || null,
+        email: r.email_cliente || null,
+        cidade: r.cidade || null,
+        status: r.status_projeto || null,
+        score: r.score || null,
+        temperatura: r.temperatura || null,
+        canal_origem: r.canal_origem || null,
+        franquia_id: r.franquia_id || null,
+        project_id: r.project_id || null,
+        identificador: r.identificador || null,
+        chatid: null,
+        contactid: null,
+        resumo_conversa: null,
+        resumo_qualificacao: null,
+        valor_conta: r.valor_conta || r.valor_proposta || null,
+        tipo_imovel: null,
+        tipo_telhado: null,
+        acrescimo_carga: null,
+        prazo_decisao: null,
+        forma_pagamento: r.forma_pagamento || null,
+        preferencia_contato: null,
+        closer_nome: r.closer_nome || null,
+        closer_sm_id: r.closer_sm_id || null,
+        etapa_funil: r.etapa || null,
+        qualificado_por: r.qualificado_por || null,
+        valor_conta_confirmado_ocr: null,
+        ts_cadastro: r.ts_cadastro_projeto || null,
+        ts_ultima_interacao: r.ts_evento || null,
+        ts_qualificado: r.ts_qualificado || null,
+        ts_desqualificado: null,
+        ts_transferido: r.ts_proposta_aceita || null,
+        ts_pedido_conta_luz: null,
+        ts_ultimo_fup: null,
+        total_mensagens_ia: null,
+        aguardando_conta_luz: null,
+        custo_openai: null,
+        custo_elevenlabs: null,
+        custo_total_usd: null,
+        total_audios_enviados: null,
+        fup_followup_count: null,
+        transferido_comercial: r.status_proposta === 'Aceita' ? true : null,
+        synced_at: r.ts_sync || null,
+      }));
+    },
+    enabled: !!user && franchiseQueryReady,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 // ─── Main Hook ───
 export function useConferenciaData(filters: FilterState) {
-  const { data: solLeads, isLoading: makeLoading } = useSolLeads();
+  const { data: solLeads, isLoading: makeLoading } = useConferenciaLeads();
 
   const effectiveDateRange = useMemo(
     () => getEffectiveDateRange(filters),
