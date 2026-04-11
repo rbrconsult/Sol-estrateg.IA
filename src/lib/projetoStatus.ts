@@ -80,8 +80,8 @@ export function mapLeadStatusToProjetoStatus(status: string | null | undefined):
   if (direct) return direct;
   const s = (status || "").toUpperCase();
   if (s.includes("EXCLU")) return "Excluido";
-  if (s.includes("PERD")) return "Perdido";
-  if (s.includes("GANH") || s.includes("VENDA")) return "Ganho";
+  if (s.includes("PERD") || s.includes("LOST")) return "Perdido";
+  if (s.includes("GANH") || s.includes("VENDA") || s.includes("WON")) return "Ganho";
   return "Aberto";
 }
 
