@@ -188,6 +188,8 @@ export function useSolLeads(statusFilter?: string[]) {
         .from("sol_projetos")
         .select("*")
         .in("franquia_id", franquiaFilter)
+        .neq("canal_origem", "SM_BULK_LOAD")
+        .not("ts_cadastro", "is", null)
         .order("ts_cadastro", { ascending: false });
 
       if (statusFilter?.length) {

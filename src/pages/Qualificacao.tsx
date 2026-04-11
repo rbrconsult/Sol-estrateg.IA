@@ -107,6 +107,8 @@ export default function Qualificacao() {
     const ALLOWED_ETAPAS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'];
     return gf.filterRecords(solLeads)
       .filter((r) => {
+        // Excluir leads legados sem ts_cadastro (não passaram pelo SDR)
+        if (!r.ts_cadastro) return false;
         // Only status ABERTO
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
