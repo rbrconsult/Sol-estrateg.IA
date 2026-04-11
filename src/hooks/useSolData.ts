@@ -225,7 +225,7 @@ export function useSolLeads(statusFilter?: string[]) {
       }
 
       // Exclui registros de carga histórica bulk do SolarMarket
-      return (allRows as SolLead[]).filter(l => l.canal_origem !== 'sm_bulk_load');
+      return (allRows as SolLead[]).filter(l => (l.canal_origem || '').toUpperCase() !== 'SM_BULK_LOAD');
     },
     enabled: !!user && franchiseQueryReady,
     staleTime: 30_000,

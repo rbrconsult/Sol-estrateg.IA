@@ -47,10 +47,13 @@ export default function Vendedores() {
 
   const closerAllowlistActive = !isGlobal && hasCloserAllowlist(allowedCloserIds);
 
+  const SOL_SDR_SM_ID = '11995';
   const { vendedorPerformance, perdasData } = useMemo(() => {
     if (filteredProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
+    const perf = getVendedorPerformance(filteredProposals, "closer")
+      .filter(v => v.responsavelId !== SOL_SDR_SM_ID);
     return {
-      vendedorPerformance: getVendedorPerformance(filteredProposals, "closer"),
+      vendedorPerformance: perf,
       perdasData: getPerdasData(filteredProposals, "closer"),
     };
   }, [filteredProposals]);
