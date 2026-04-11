@@ -25,9 +25,9 @@ function matchExplicitStatus(raw: string | null | undefined): ProjetoStatus | nu
   const s = (raw || "").trim().toUpperCase();
   if (!s) return null;
   if (s === "EXCLUIDO" || s === "EXCLUIDOS" || s === "EXCLUÍDO" || s === "EXCLUÍDOS") return "Excluido";
-  if (s === "PERDIDO" || s === "PERDIDOS" || s === "PERDA") return "Perdido";
-  if (s === "GANHO" || s === "GANHOS" || s === "VENDA") return "Ganho";
-  if (s === "ABERTO" || s === "ABERTOS") return "Aberto";
+  if (s === "PERDIDO" || s === "PERDIDOS" || s === "PERDA" || s === "LOST") return "Perdido";
+  if (s === "GANHO" || s === "GANHOS" || s === "VENDA" || s === "WON") return "Ganho";
+  if (s === "ABERTO" || s === "ABERTOS" || s === "OPEN") return "Aberto";
   return null;
 }
 
