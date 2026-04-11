@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useSolLeads, useForceSync, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { filterRecordsByGlobalFilters, getEffectiveDateRange, type FilterState } from '@/lib/globalFilters';
 
 // ─── Types matching the page component shapes ───
 export interface KPICard {
@@ -397,32 +398,29 @@ export function computeFupFrioBlock(allRecords: SolLead[]): FupFrio {
 }
 
 // ─── Main Hook ───
-export function useConferenciaData(effectiveDateRange?: { from: Date | undefined; to: Date | undefined }) {
+export function useConferenciaData(filters: FilterState) {
   const { data: solLeads, isLoading: makeLoading } = useSolLeads();
 
-  // Apply global date filter BEFORE any computation
+  const effectiveDateRange = useMemo(
+    () => getEffectiveDateRange(filters),
+    [filters.periodo, filters.dateFrom?.getTime(), filters.dateTo?.getTime()],
+  );
+
   const allRecords = useMemo(() => {
     const raw = solLeads || [];
-    const from = effectiveDateRange?.from;
-    const to = effectiveDateRange?.to;
-    if (!from && !to) return raw;
-
-    return raw.filter(r => {
-      const d = getPrimaryDateForFilter(r);
-      if (!d) return false;
-      if (from) {
-        const fromStart = new Date(from);
-        fromStart.setHours(0, 0, 0, 0);
-        if (d < fromStart) return false;
-      }
-      if (to) {
-        const end = new Date(to);
-        end.setHours(23, 59, 59, 999);
-        if (d > end) return false;
-      }
-      return true;
-    });
-  }, [solLeads, effectiveDateRange?.from?.getTime(), effectiveDateRange?.to?.getTime()]);
+    return filterRecordsByGlobalFilters(raw, filters, effectiveDateRange);
+  }, [
+    solLeads,
+    effectiveDateRange,
+    filters.periodo,
+    filters.dateFrom?.getTime(),
+    filters.dateTo?.getTime(),
+    filters.canal,
+    filters.temperatura,
+    filters.searchTerm,
+    filters.etapa,
+    filters.status,
+  ]);
 
   const computed = useMemo(() => {
     const total = allRecords.length;

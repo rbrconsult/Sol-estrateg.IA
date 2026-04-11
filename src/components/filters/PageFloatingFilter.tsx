@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Filter, X, CalendarIcon, Search } from "lucide-react";
-import { format, subDays, startOfDay, startOfMonth, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,184 +10,79 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { JOURNEY_ORDER } from "@/lib/leads-utils";
+import {
+  DEFAULT_GLOBAL_FILTER_STATE,
+  filterProposalsByGlobalFilters,
+  filterRecordsByGlobalFilters,
+  getEffectiveDateRange,
+  type FilterConfig,
+  type FilterState,
+  type FilterableProposal,
+  type FilterableRecord,
+} from "@/lib/globalFilters";
 
-export interface FilterConfig {
-  showPeriodo?: boolean;
-  showCanal?: boolean;
-  showTemperatura?: boolean;
-  showSearch?: boolean;
-  showEtapa?: boolean;
-  showStatus?: boolean;
-  canais?: string[];
-  etapas?: string[];
-  statuses?: string[];
-  searchPlaceholder?: string;
-}
+export type { FilterConfig, FilterState } from "@/lib/globalFilters";
 
-export interface FilterState {
-  periodo: string;
-  dateFrom?: Date;
-  dateTo?: Date;
-  canal: string;
-  temperatura: string;
-  searchTerm: string;
-  etapa: string;
-  status: string;
-}
-
-type FilterableRecord = {
-  data_envio?: string;
-  ts_cadastro?: string;
-  ts_cadastro_projeto?: string;
-  synced_at?: string;
-  cidade?: string;
-  nome?: string;
-  makeTemperatura?: string;
-  temperatura?: string;
-  canalOrigem?: string;
-  canal_origem?: string;
-  makeStatus?: string;
-  status?: string;
-  etapaFunil?: string;
-  etapa_funil?: string;
-};
-
-/** Parse date strings that may be ISO 8601 or DD/MM/YYYY HH:mm:ss */
-function parseDateFlexible(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  // Try ISO first
-  const d = new Date(dateStr);
-  if (!isNaN(d.getTime())) return d;
-  // Try DD/MM/YYYY HH:mm:ss
-  const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?/);
-  if (match) {
-    const [, dd, mm, yyyy, hh, mi, ss] = match;
-    return new Date(+yyyy, +mm - 1, +dd, +(hh || 0), +(mi || 0), +(ss || 0));
-  }
-  return null;
-}
-
-const defaultState: FilterState = {
-  periodo: "all",
-  canal: "todos",
-  temperatura: "todas",
-  searchTerm: "",
-  etapa: "todas",
-  status: "todos",
-};
-
-// Etapa = posição no funil comercial (onde o lead está)
 const ALL_ETAPAS = JOURNEY_ORDER;
-
-// Status = estado vital do lead
-const ALL_STATUSES = [
-  'ABERTO',
-  'GANHO',
-  'PERDIDO',
-  'EXCLUIDO',
-];
+const ALL_STATUSES = ["ABERTO", "GANHO", "PERDIDO", "EXCLUIDO"];
 
 export function usePageFilters(config?: FilterConfig, defaultPeriodo?: string) {
-  const [filters, setFilters] = useState<FilterState>({ ...defaultState, periodo: defaultPeriodo || "all" });
+  const initialState = useMemo<FilterState>(
+    () => ({ ...DEFAULT_GLOBAL_FILTER_STATE, periodo: defaultPeriodo || DEFAULT_GLOBAL_FILTER_STATE.periodo }),
+    [defaultPeriodo],
+  );
+  const [filters, setFilters] = useState<FilterState>(initialState);
 
-  const setPeriodo = useCallback((v: string) => setFilters(f => ({ ...f, periodo: v, dateFrom: undefined, dateTo: undefined })), []);
-  const setDateFrom = useCallback((d: Date | undefined) => setFilters(f => ({ ...f, dateFrom: d })), []);
-  const setDateTo = useCallback((d: Date | undefined) => setFilters(f => ({ ...f, dateTo: d })), []);
-  const setCanal = useCallback((v: string) => setFilters(f => ({ ...f, canal: v })), []);
-  const setTemperatura = useCallback((v: string) => setFilters(f => ({ ...f, temperatura: v })), []);
-  const setSearchTerm = useCallback((v: string) => setFilters(f => ({ ...f, searchTerm: v })), []);
-  const setEtapa = useCallback((v: string) => setFilters(f => ({ ...f, etapa: v })), []);
-  const setStatus = useCallback((v: string) => setFilters(f => ({ ...f, status: v })), []);
-  const clearFilters = useCallback(() => setFilters(defaultState), []);
+  const setPeriodo = useCallback((v: string) => setFilters((f) => ({ ...f, periodo: v, dateFrom: undefined, dateTo: undefined })), []);
+  const setDateFrom = useCallback((d: Date | undefined) => setFilters((f) => ({ ...f, dateFrom: d })), []);
+  const setDateTo = useCallback((d: Date | undefined) => setFilters((f) => ({ ...f, dateTo: d })), []);
+  const setCanal = useCallback((v: string) => setFilters((f) => ({ ...f, canal: v })), []);
+  const setTemperatura = useCallback((v: string) => setFilters((f) => ({ ...f, temperatura: v })), []);
+  const setSearchTerm = useCallback((v: string) => setFilters((f) => ({ ...f, searchTerm: v })), []);
+  const setEtapa = useCallback((v: string) => setFilters((f) => ({ ...f, etapa: v })), []);
+  const setStatus = useCallback((v: string) => setFilters((f) => ({ ...f, status: v })), []);
+  const clearFilters = useCallback(() => setFilters(initialState), [initialState]);
 
-  const hasFilters = filters.periodo !== "all" || !!filters.dateFrom || !!filters.dateTo ||
-    filters.canal !== "todos" || filters.temperatura !== "todas" || !!filters.searchTerm ||
-    filters.etapa !== "todas" || filters.status !== "todos";
+  const hasFilters =
+    filters.periodo !== initialState.periodo ||
+    !!filters.dateFrom ||
+    !!filters.dateTo ||
+    filters.canal !== initialState.canal ||
+    filters.temperatura !== initialState.temperatura ||
+    !!filters.searchTerm ||
+    filters.etapa !== initialState.etapa ||
+    filters.status !== initialState.status;
 
-  const effectiveDateRange = useMemo(() => {
-    const today = new Date();
-    const todayStart = startOfDay(today);
-    const p = filters.periodo;
-    if (p === "custom") return { from: filters.dateFrom, to: filters.dateTo };
-    if (p === "hoje") return { from: todayStart, to: today };
-    if (p === "3d") return { from: startOfDay(subDays(today, 3)), to: today };
-    if (p === "7d") return { from: startOfDay(subDays(today, 7)), to: today };
-    if (p === "30d") return { from: startOfDay(subDays(today, 30)), to: today };
-    if (p === "90d") return { from: startOfDay(subDays(today, 90)), to: today };
-    if (p === "mes") return { from: startOfDay(startOfMonth(today)), to: today };
-    if (p === "mesAnterior") {
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-      return { from: lastMonth, to: lastMonthEnd };
-    }
-    if (p === "ano" || p === "ytd") return { from: startOfDay(startOfYear(today)), to: today };
-    return { from: undefined as Date | undefined, to: undefined as Date | undefined };
-  }, [filters.periodo, filters.dateFrom, filters.dateTo]);
+  const effectiveDateRange = useMemo(
+    () => getEffectiveDateRange(filters),
+    [filters.periodo, filters.dateFrom, filters.dateTo],
+  );
 
-  const filterRecords = useCallback(<T extends FilterableRecord>(records: T[]): T[] => {
-    return records.filter(r => {
-      const { from, to } = effectiveDateRange;
-      if (from || to) {
-        // sol_projetos: COALESCE(ts_cadastro, ts_cadastro_projeto). If both null → always include.
-        const dateStr = r.data_envio || r.ts_cadastro || r.ts_cadastro_projeto || r.synced_at;
-        if (!dateStr) return true; // No date → always include
-        const d = parseDateFlexible(dateStr);
-        if (!d) return true; // Unparseable → include
-        if (from) {
-          const fromStart = new Date(from);
-          fromStart.setHours(0, 0, 0, 0);
-          if (d < fromStart) return false;
-        }
-        if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
-      }
-      const canal = r.canalOrigem || r.canal_origem || "";
-      const temperatura = r.makeTemperatura || r.temperatura || "";
-      const etapa = r.etapaFunil || r.etapa_funil || "";
-      const status = r.makeStatus || r.status || "";
+  const filterRecords = useCallback(
+    <T extends FilterableRecord>(records: T[]): T[] => filterRecordsByGlobalFilters(records, filters, effectiveDateRange),
+    [effectiveDateRange, filters],
+  );
 
-      if (filters.canal !== "todos" && canal !== filters.canal) return false;
-      if (filters.temperatura !== "todas" && temperatura.toUpperCase() !== filters.temperatura) return false;
-      if (filters.etapa !== "todas" && etapa.toUpperCase() !== filters.etapa.toUpperCase()) return false;
-      if (filters.status !== "todos" && status.toUpperCase() !== filters.status.toUpperCase()) return false;
-      if (filters.searchTerm && !(r.nome || "").toLowerCase().includes(filters.searchTerm.toLowerCase())) return false;
-      return true;
-    });
-  }, [effectiveDateRange, filters.canal, filters.temperatura, filters.searchTerm, filters.etapa, filters.status]);
-
-  const filterProposals = useCallback(<T extends { dataCriacaoProposta?: string; ultimaAtualizacao?: string; dataCriacaoProjeto?: string; nomeCliente?: string; representante?: string; responsavel?: string; temperatura?: string; etapa?: string; status?: string }>(proposals: T[]): T[] => {
-    return proposals.filter(p => {
-      const { from, to } = effectiveDateRange;
-      if (from || to) {
-        /** sol_propostas: prioridade para dataCriacaoProjeto (ts_cadastro_projeto). Se null → sempre incluir. */
-        const dateStr = p.dataCriacaoProjeto || p.dataCriacaoProposta || p.ultimaAtualizacao;
-        if (!dateStr) return true; // No date → always include
-        const d = parseDateFlexible(dateStr);
-        if (!d) return true; // Unparseable → include
-        if (from) {
-          const fromStart = new Date(from);
-          fromStart.setHours(0, 0, 0, 0);
-          if (d < fromStart) return false;
-        }
-        if (to) { const end = new Date(to); end.setHours(23, 59, 59, 999); if (d > end) return false; }
-      }
-      if (filters.temperatura !== "todas" && (p.temperatura || "").toUpperCase() !== filters.temperatura) return false;
-      if (filters.etapa !== "todas" && (p.etapa || "").toUpperCase() !== filters.etapa.toUpperCase()) return false;
-      if (filters.status !== "todos" && (p.status || "").toUpperCase() !== filters.status.toUpperCase()) return false;
-      if (filters.searchTerm) {
-        const term = filters.searchTerm.toLowerCase();
-        const match = (p.nomeCliente || "").toLowerCase().includes(term) ||
-          (p.representante || "").toLowerCase().includes(term) ||
-          (p.responsavel || "").toLowerCase().includes(term);
-        if (!match) return false;
-      }
-      return true;
-    });
-  }, [effectiveDateRange, filters.temperatura, filters.searchTerm, filters.etapa, filters.status]);
+  const filterProposals = useCallback(
+    <T extends FilterableProposal>(proposals: T[]): T[] => filterProposalsByGlobalFilters(proposals, filters, effectiveDateRange),
+    [effectiveDateRange, filters],
+  );
 
   return {
-    filters, hasFilters, clearFilters,
-    setPeriodo, setDateFrom, setDateTo, setCanal, setTemperatura, setSearchTerm, setEtapa, setStatus,
-    effectiveDateRange, filterRecords, filterProposals,
+    filters,
+    hasFilters,
+    clearFilters,
+    setPeriodo,
+    setDateFrom,
+    setDateTo,
+    setCanal,
+    setTemperatura,
+    setSearchTerm,
+    setEtapa,
+    setStatus,
+    effectiveDateRange,
+    filterRecords,
+    filterProposals,
   };
 }
 
