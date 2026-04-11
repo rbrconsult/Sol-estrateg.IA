@@ -44,6 +44,7 @@ export default function Reprocessamento() {
     if (!solLeads?.length) return [];
     return gf.filterRecords(solLeads)
       .filter((r) => {
+        if (!r.ts_cadastro) return false;
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
         const etapa = (r.etapa_funil || '').toUpperCase().trim();
