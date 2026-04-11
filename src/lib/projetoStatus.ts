@@ -25,9 +25,9 @@ function matchExplicitStatus(raw: string | null | undefined): ProjetoStatus | nu
   const s = (raw || "").trim().toUpperCase();
   if (!s) return null;
   if (s === "EXCLUIDO" || s === "EXCLUIDOS" || s === "EXCLUÍDO" || s === "EXCLUÍDOS") return "Excluido";
-  if (s === "PERDIDO" || s === "PERDIDOS" || s === "PERDA") return "Perdido";
-  if (s === "GANHO" || s === "GANHOS" || s === "VENDA") return "Ganho";
-  if (s === "ABERTO" || s === "ABERTOS") return "Aberto";
+  if (s === "PERDIDO" || s === "PERDIDOS" || s === "PERDA" || s === "LOST") return "Perdido";
+  if (s === "GANHO" || s === "GANHOS" || s === "VENDA" || s === "WON") return "Ganho";
+  if (s === "ABERTO" || s === "ABERTOS" || s === "OPEN") return "Aberto";
   return null;
 }
 
@@ -80,8 +80,8 @@ export function mapLeadStatusToProjetoStatus(status: string | null | undefined):
   if (direct) return direct;
   const s = (status || "").toUpperCase();
   if (s.includes("EXCLU")) return "Excluido";
-  if (s.includes("PERD")) return "Perdido";
-  if (s.includes("GANH") || s.includes("VENDA")) return "Ganho";
+  if (s.includes("PERD") || s.includes("LOST")) return "Perdido";
+  if (s.includes("GANH") || s.includes("VENDA") || s.includes("WON")) return "Ganho";
   return "Aberto";
 }
 

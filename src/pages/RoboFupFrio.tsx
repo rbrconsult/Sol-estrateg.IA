@@ -59,9 +59,9 @@ function deriveFupData(records: SolLead[]) {
 
   // Status anterior analysis
   const desqEntrou = fupRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL')).length;
-  const noRespEntrou = fupRecords.filter(r => r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou').length;
+  const noRespEntrou = fupRecords.filter(r => (r.status || '').toUpperCase() === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou').length;
   const desqReativados = fupRecords.filter(r => (r.etapa_funil || '').toUpperCase().includes('DECL') && ((r as any)._status_resposta || '') === 'respondeu').length;
-  const noRespReativados = fupRecords.filter(r => (r.status === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou') && ((r as any)._status_resposta || '') === 'respondeu').length;
+  const noRespReativados = fupRecords.filter(r => ((r.status || '').toUpperCase() === 'NAO_RESPONDEU' || ((r as any)._status_resposta || '') === 'ignorou') && ((r as any)._status_resposta || '') === 'respondeu').length;
 
   // C5: Removed fallback percentages — show real data only
   const hasEnoughData = totalEntrou >= 30;
