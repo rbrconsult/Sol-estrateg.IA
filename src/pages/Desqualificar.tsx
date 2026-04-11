@@ -32,7 +32,7 @@ const isDesqualificado = (r: SolLead): boolean => {
   );
 };
 
-const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
+const ETAPA_OPTIONS = ["TRAFEGO PAGO", "SOL SDR", "FOLLOW UP"];
 const STATUS_OPTIONS = ["all", "ativos", "desqualificados"] as const;
 
 export default function Desqualificar() {
@@ -73,7 +73,7 @@ export default function Desqualificar() {
     let result = allLeads;
     if (statusFilter === "ativos") result = result.filter((l) => !l._desqualificado);
     else if (statusFilter === "desqualificados") result = result.filter((l) => l._desqualificado);
-    if (etapaFilter !== "all") result = result.filter((r) => r._classificacao === etapaFilter);
+    if (etapaFilter !== "all") result = result.filter((r) => (r.etapa_funil || "").toUpperCase().trim() === etapaFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((l) =>

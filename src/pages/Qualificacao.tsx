@@ -32,7 +32,7 @@ function isDesqualificado(r: SolLead): boolean {
   );
 }
 
-const ETAPA_OPTIONS = ["SOL SDR", "FUP FRIO"];
+const ETAPA_OPTIONS = ["TRAFEGO PAGO", "SOL SDR", "FOLLOW UP"];
 const STATUS_OPTIONS = ["all", "ativos", "qualificados", "desqualificados"] as const;
 
 interface KrolicMember {
@@ -130,7 +130,7 @@ export default function Qualificacao() {
     if (statusFilter === "ativos") result = result.filter((r) => !r._desqualificado && !r._qualificado);
     else if (statusFilter === "qualificados") result = result.filter((r) => r._qualificado);
     else if (statusFilter === "desqualificados") result = result.filter((r) => r._desqualificado);
-    if (etapaFilter !== "all") result = result.filter((r) => r._classificacao === etapaFilter);
+    if (etapaFilter !== "all") result = result.filter((r) => (r.etapa_funil || "").toUpperCase().trim() === etapaFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((r) =>
