@@ -20,8 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const statusFilters: { value: SkillStatus | "all" | "pendente"; label: string }[] = [
+const statusFilters: { value: SkillStatus | "all" | "pendente" | "ligadas"; label: string }[] = [
   { value: "all", label: "Todas" },
+  { value: "ligadas", label: "🟢 Ligadas" },
   { value: "ativo", label: "✅ Ativas" },
   { value: "pendente", label: "⚙️ Pendente" },
   { value: "precisa_dados", label: "⏳ Aguardando Dados" },
