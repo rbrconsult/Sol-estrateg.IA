@@ -185,7 +185,7 @@ export function useSolLeads(statusFilter?: string[]) {
       const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
       const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
       let query = supabase
-        .from("sol_projetos")
+        .from("sol_leads_sync")
         .select("*")
         .in("franquia_id", franquiaFilter)
         .neq("canal_origem", "SM_BULK_LOAD")
