@@ -34,7 +34,7 @@ const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagen
 
 export default function Insights() {
   const [statusFilter, setStatusFilter] = useState<SkillStatus | "all" | "pendente" | "ligadas">("all");
-  const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("all");
+  const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("solar");
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(skillCategories.map(c => [c.key, true]))
@@ -78,7 +78,13 @@ export default function Insights() {
           const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
           if (!(isOn && hasPanel && !isConfigDone)) return false;
         } else if (statusFilter !== "all" && s.status !== statusFilter) return false;
-        if (verticalFilter !== "all" && !s.verticals.includes(verticalFilter)) return false;
+        if (verticalFilter !== "all") {
+          // Show skill if it includes the selected vertical OR is universal
+          const isUniversal = s.verticals.includes("universal");
+          const matchesFilter = s.verticals.includes(verticalFilter);
+          // Hide skills that are EXCLUSIVELY for other verticals (not universal, not matching)
+          if (!isUniversal && !matchesFilter) return false;
+        }
         if (q && !s.name.toLowerCase().includes(q) && !s.desc.toLowerCase().includes(q) && !s.id.includes(q)) return false;
         return true;
       }),
