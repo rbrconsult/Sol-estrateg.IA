@@ -22,8 +22,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useLead360 } from "@/contexts/Lead360Context";
-import { useSolLeads, type SolLead } from '@/hooks/useSolData';
+import { type SolLead } from '@/hooks/useSolData';
 import { useCommercialProposals } from "@/hooks/useCommercialProposals";
+import type { Proposal } from "@/data/dataAdapter";
 import { useOrgFilter } from "@/contexts/OrgFilterContext";
 import { getForecastData } from "@/data/dataAdapter";
 import { PageFloatingFilter } from "@/components/filters/PageFloatingFilter";
