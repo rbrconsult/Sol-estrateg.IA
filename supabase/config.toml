@@ -56,6 +56,6 @@ project_id = "xffzjdulkdgyicsllznp"
   [functions.executive-summary]
     verify_jwt = true
   [functions.generate-report]
-    verify_jwt = true
+    verify_jwt = false
   [functions.generate-skill]
     verify_jwt = true
