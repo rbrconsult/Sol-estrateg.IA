@@ -47,11 +47,14 @@ export default function Vendedores() {
 
   const closerAllowlistActive = !isGlobal && hasCloserAllowlist(allowedCloserIds);
 
+  const SOL_SDR_SM_ID = '11995';
   const { vendedorPerformance, perdasData } = useMemo(() => {
-    if (filteredProposals.length === 0) return { vendedorPerformance: [], perdasData: null };
+    // Exclude SOL SDR robot from vendedor rankings
+    const withoutRobot = filteredProposals.filter(p => p.responsavelId !== SOL_SDR_SM_ID);
+    if (withoutRobot.length === 0) return { vendedorPerformance: [], perdasData: null };
     return {
-      vendedorPerformance: getVendedorPerformance(filteredProposals, "closer"),
-      perdasData: getPerdasData(filteredProposals, "closer"),
+      vendedorPerformance: getVendedorPerformance(withoutRobot, "closer"),
+      perdasData: getPerdasData(withoutRobot, "closer"),
     };
   }, [filteredProposals]);
 
