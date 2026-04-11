@@ -48,7 +48,7 @@ export default function Desqualificar() {
   const [manualDesqName, setManualDesqName] = useState("");
   const [manualDesqSending, setManualDesqSending] = useState(false);
 
-  const ALLOWED_ETAPAS = ['TRAFEGO PAGO', 'SOL SDR', 'FOLLOW UP'];
+  const ALLOWED_ETAPAS = ['SOL SDR', 'FOLLOW UP'];
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
@@ -56,6 +56,9 @@ export default function Desqualificar() {
       .filter((r) => {
         // Excluir leads legados sem ts_cadastro
         if (!r.ts_cadastro) return false;
+        // Excluir cargas históricas (SM_BULK_LOAD, SMAPI)
+        const canal = (r.canal_origem || '').toUpperCase().trim();
+        if (canal === 'SM_BULK_LOAD' || canal === 'SMAPI') return false;
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
         const etapa = (r.etapa_funil || '').toUpperCase().trim();
