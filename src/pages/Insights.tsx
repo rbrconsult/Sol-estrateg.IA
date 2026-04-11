@@ -34,7 +34,7 @@ const verticalFilters: Vertical[] = ["universal", "solar", "financeiro", "viagen
 
 export default function Insights() {
   const [statusFilter, setStatusFilter] = useState<SkillStatus | "all" | "pendente" | "ligadas">("all");
-  const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("all");
+  const [verticalFilter, setVerticalFilter] = useState<Vertical | "all">("solar");
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(skillCategories.map(c => [c.key, true]))
