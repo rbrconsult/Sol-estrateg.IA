@@ -285,6 +285,11 @@ export default function Insights() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
+                              {isOn && (
+                                <Badge variant="outline" className="text-[9px] bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-semibold animate-pulse">
+                                  🟢 Ligada
+                                </Badge>
+                              )}
                               <Badge variant="outline" className={`${cfg.className} text-[9px] shrink-0`}>{cfg.label}</Badge>
                               {isPendingConfig && (
                                 <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-400 border-amber-500/20">
