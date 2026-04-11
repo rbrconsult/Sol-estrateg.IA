@@ -125,21 +125,14 @@ export default function Qualificacao() {
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
-    const ALLOWED_ETAPAS = ['SOL SDR', 'FOLLOW UP'];
     return gf.filterRecords(solLeads)
       .filter((r) => {
-        if (!r.ts_cadastro) return false;
-        const canal = (r.canal_origem || '').toUpperCase().trim();
-        if (canal === 'SM_BULK_LOAD' || canal === 'SMAPI') return false;
+        // Krolic is the source of truth: only show leads with active chat
+        const phone = (r.telefone || "").replace(/\D/g, "");
+        if (krolicPhones.size > 0 && !krolicPhones.has(phone)) return false;
+        // Exclude already closed/won/lost
         const status = (r.status || '').toUpperCase().trim();
-        if (status && status !== 'ABERTO') return false;
-        const etapa = (r.etapa_funil || '').toUpperCase().trim();
-        if (!ALLOWED_ETAPAS.includes(etapa)) return false;
-        // Only show leads with active chat in Krolic
-        if (krolicPhones.size > 0) {
-          const phone = (r.telefone || "").replace(/\D/g, "");
-          if (!krolicPhones.has(phone)) return false;
-        }
+        if (status === 'EXCLUIDO' || status === 'PERDIDO' || status === 'GANHO') return false;
         return true;
       })
       .map((r) => ({
