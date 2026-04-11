@@ -22,7 +22,10 @@ const RESULT_COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(va
 /* ── Derive FUP metrics from Make records ── */
 
 function deriveFupData(records: SolLead[]) {
-  const fupRecords = records.filter(r => (r.fup_followup_count || 0) >= 1);
+  const fupRecords = records.filter(r => 
+    (r.fup_followup_count || 0) >= 1 || 
+    (r.etapa_funil || '').toUpperCase().trim() === 'FOLLOW UP'
+  );
   const totalEntrou = fupRecords.length;
   const reativados = fupRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaReativacao = totalEntrou > 0 ? Math.round((reativados / totalEntrou) * 100) : 0;
