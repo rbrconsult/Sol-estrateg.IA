@@ -70,7 +70,9 @@ export default function Insights() {
     return skillCategories.map(cat => ({
       ...cat,
       skills: cat.skills.filter(s => {
-        if (statusFilter === "pendente") {
+        if (statusFilter === "ligadas") {
+          if (!toggles[s.id]) return false;
+        } else if (statusFilter === "pendente") {
           const isOn = !!toggles[s.id];
           const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11";
           const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
