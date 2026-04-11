@@ -120,7 +120,7 @@ const Pipeline = () => {
           <AlertCircle className="h-4 w-4 text-muted-foreground" />
           <AlertDescription>
             {projectCount === 0
-              ? "Aguardando sincronização — sol_propostas será populada pelo cron-sync."
+              ? "Aguardando sincronização de dados comerciais."
               : "Nenhum projeto encontrado para a visualização e filtros selecionados."}
           </AlertDescription>
         </Alert>

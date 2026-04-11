@@ -139,12 +139,8 @@ export default function Vendedores() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Performance comercial</h1>
-          <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-            Fonte: <span className="font-medium text-foreground">sol_propostas</span>.{" "}
-            <span className="font-medium text-foreground">Slug</span> da filial alinha{" "}
-            <code className="text-[10px]">franquia_id</code> (RLS). O recorte mandatório por filial é por{" "}
-            <span className="font-medium text-foreground">responsável</span> (ID SM em{" "}
-            <code className="text-[10px]">organization_configs.comercial_closer_sm_ids</code>, com legado em código se vazio).
+          <p className="text-xs text-muted-foreground">
+            Análise de performance por vendedor com filtro por filial e responsável.
           </p>
         </div>
         <div className="flex items-center gap-2">
