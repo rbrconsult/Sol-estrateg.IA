@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useSolLeads, normalizePhone, type SolLead } from '@/hooks/useSolData';
+import { useGlobalFilters } from "@/contexts/GlobalFilterContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const STATUS_OPTIONS = ["all", "ativos"] as const;
 
 export default function Reprocessamento() {
   const { data: solLeads, isLoading, isFetching } = useSolLeads();
+  const gf = useGlobalFilters();
   
   const [numero, setNumero] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export default function Reprocessamento() {
 
   const allLeads = useMemo(() => {
     if (!solLeads?.length) return [];
-    return solLeads
+    return gf.filterRecords(solLeads)
       .filter((r) => {
         const status = (r.status || '').toUpperCase().trim();
         if (status && status !== 'ABERTO') return false;
@@ -52,7 +54,7 @@ export default function Reprocessamento() {
         ...r,
         _classificacao: classifyLead(r),
       }));
-  }, [solLeads]);
+  }, [solLeads, gf]);
 
   const filtered = useMemo(() => {
     let result = allLeads;
