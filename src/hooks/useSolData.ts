@@ -102,7 +102,7 @@ export type SolEquipeMembro = {
   synced_at: string | null;
 };
 
-/** Linha completa de sol_propostas (comercial / Solar Market) */
+/** Linha completa de sol_projetos_sync (comercial / Solar Market) */
 export type SolProjeto = Database["public"]["Tables"]["sol_propostas"]["Row"];
 
 export type SolQualificacao = {
