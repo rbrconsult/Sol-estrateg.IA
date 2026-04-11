@@ -331,7 +331,7 @@ export function useSolProjetos(limit = 15_000) {
       const franquiaIds = franquiaColumnValuesForSlug(franquiaId);
       const franquiaFilter = franquiaIds.length > 0 ? franquiaIds : [franquiaId];
       const { data, error } = await supabase
-        .from("sol_propostas")
+        .from("sol_projetos_sync" as any)
         .select("*")
         .in("franquia_id", franquiaFilter)
         .not("project_id", "is", null)
