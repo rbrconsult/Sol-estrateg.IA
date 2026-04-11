@@ -1,42 +1,60 @@
 
-# Reformulação do Admin — Plano
 
-## Conceito
-Substituir o layout atual por um **dashboard organizado em seções colapsáveis** com cards de ação, navegação fluida entre sub-páginas e visual mais limpo.
+## Plan: Backfill `status_projeto` and `closer_nome` in `sol_propostas`
 
-## Mudanças na `/admin` (página principal)
+### Current State
+- `sol_propostas`: 1,081 records, **0** with `status_projeto`, **632** without `closer_nome`
+- `sol_projetos_sync`: has the data, joins on `project_id` — **1,817 matching rows**
+- Sort column in sync table: `ts_sync` (not `synced_at`)
 
-### 1. Header melhorado
-- Título "Painel Administrativo" com ícone e badge do papel do usuário
-- Breadcrumb contextual (Admin > Configurações > Prompts)
+### Step 1 — Migration: Backfill `status_projeto`
 
-### 2. Layout híbrido: Abas horizontais limpas + Cards internos
-- **Abas simples no topo** (sem decoração excessiva): Visão Geral | Unidades | Pessoas | Módulos | Segurança
-- Aba "Visão Geral" (nova, padrão) com:
-  - Cards de atalho rápido categorizados: Configuração SOL, Equipe, Funis, Infraestrutura
-  - Mini-resumos (quantidade de usuários, módulos ativos, último sync)
-- Abas existentes mantém funcionalidade mas com espaçamento e tipografia melhorados
+```sql
+UPDATE sol_propostas p
+SET status_projeto = sub.status_projeto
+FROM (
+  SELECT DISTINCT ON (project_id) project_id, status_projeto
+  FROM sol_projetos_sync
+  WHERE project_id IS NOT NULL AND status_projeto IS NOT NULL
+  ORDER BY project_id, ts_sync DESC
+) sub
+WHERE p.project_id = sub.project_id
+  AND p.status_projeto IS NULL;
+```
 
-### 3. Navegação entre sub-páginas
-- Breadcrumb persistente ao entrar em `/admin/config`, `/admin/equipe`, `/admin/funis`
-- Botão "Voltar" mais visível + breadcrumb clicável
+### Step 2 — Migration: Backfill `closer_nome`
 
-## Mudanças na `/admin/config` (Configurações SOL)
+```sql
+UPDATE sol_propostas p
+SET closer_nome = sub.closer_nome
+FROM (
+  SELECT DISTINCT ON (project_id) project_id, closer_nome
+  FROM sol_projetos_sync
+  WHERE project_id IS NOT NULL AND closer_nome IS NOT NULL
+  ORDER BY project_id, ts_sync DESC
+) sub
+WHERE p.project_id = sub.project_id
+  AND p.closer_nome IS NULL;
+```
 
-### 4. Reorganização visual dos prompts
-- Seções com títulos mais destacados e separadores visuais
-- Cards de prompt com preview mais compacto (altura fixa menor), expandem ao clicar
-- Badges de status mais claros (✓ configurado, ⚠ vazio)
+### Step 3 — Verification SELECT
 
-### 5. Perguntas do Robô
-- Cards mais compactos em grid 2 colunas, mesma estética dos prompts
-- Badge obrigatório/opcional mais visível
+After both UPDATEs, run:
 
-### 6. Seção inferior (FUP + Variáveis + Mensagens)
-- Agrupar em uma "barra" de ações secundárias mais coesa
+```sql
+SELECT
+  COUNT(*) as total,
+  COUNT(status_projeto) as com_status,
+  COUNT(closer_nome) as com_closer,
+  COUNT(CASE WHEN status_projeto IN ('open','aberto') THEN 1 END) as abertos,
+  COUNT(CASE WHEN status_projeto IN ('won','ganho') THEN 1 END) as ganhos,
+  COUNT(CASE WHEN status_projeto IN ('lost','perdido') THEN 1 END) as perdidos
+FROM sol_propostas;
+```
 
-## Critérios
-- Manter 100% da funcionalidade existente
-- Apenas mudanças visuais/UX — sem alterar hooks ou lógica de negócio
-- Responsivo (mobile-friendly)
-- Tokens semânticos do design system
+### Technical Details
+- Both UPDATEs go in a single database migration
+- Uses `DISTINCT ON (project_id) ... ORDER BY ts_sync DESC` to pick the latest sync row
+- No schema changes — only fills NULL values
+- No frontend code changes needed — `projetoStatus.ts` already handles `open`/`lost`/`won`
+
