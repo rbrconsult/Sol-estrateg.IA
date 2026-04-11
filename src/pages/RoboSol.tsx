@@ -64,8 +64,16 @@ function KPICardAnimated({ label, value, suffix, color, pulse }: { label: string
 }
 
 function deriveSolData(records: SolLead[]) {
-  /** Mesmo universo da aba Leads: fora do FUP (sem follow-up ativo). */
-  const solRecords = records.filter(r => !isFupFrioLead(r));
+  /** Só leads realmente atendidos pelo robô SDR:
+   * - canal real (não bulk/legado) OU chatid preenchido */
+  const CANAIS_ROBO = ['INBOUND_WHATSAPP', 'META_ADS', 'GOOGLE_ADS', 'SITE', 'WHATSAPP'];
+  const solRecords = records.filter(r => {
+    if (isFupFrioLead(r)) return false;
+    const canal = (r.canal_origem || '').toUpperCase().trim();
+    const temCanalReal = CANAIS_ROBO.some(c => canal.includes(c));
+    const temChat = !!r.chatid;
+    return temCanalReal || temChat;
+  });
   const total = solRecords.length;
   const responderam = solRecords.filter(r => ((r as any)._status_resposta || '') === 'respondeu').length;
   const taxaResposta = total > 0 ? (responderam / total) * 100 : 0;

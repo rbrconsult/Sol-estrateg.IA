@@ -82,7 +82,7 @@ export default function FunilConsolidado() {
 
   const maxFunnel = Math.max(...funnelData.map(d => d.value), 1);
 
-  // Rates
+  // Rates — pipeline valor from sol_projetos_sync (commercial data)
   const rates = useMemo(() => {
     const total = filtered.length || 1;
     const qualificados = filtered.filter(l => (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
@@ -90,9 +90,13 @@ export default function FunilConsolidado() {
     const closerPool = filtered.filter(l => ['GANHO', 'PERDIDO'].includes(l.status || '') || (l.etapa_funil || '').toUpperCase().trim() === 'QUALIFICADO').length;
     const taxaQual = (qualificados / total) * 100;
     const taxaFech = closerPool > 0 ? (ganhos / closerPool) * 100 : 0;
-    const pipelineValor = filtered.reduce((a, l) => a + (parseFloat(l.valor_conta || '0') || 0), 0);
+    // Pipeline valor from sol_projetos_sync (valor_proposta) instead of valor_conta
+    const pipelineValor = (projetos || []).reduce((a, p: any) => {
+      const v = parseFloat(p.valor_proposta || '0') || 0;
+      return a + v;
+    }, 0);
     return { total, taxaQual, taxaFech, pipelineValor };
-  }, [filtered]);
+  }, [filtered, projetos]);
 
   // Closer performance
   const closerPerf = useMemo(() => {
