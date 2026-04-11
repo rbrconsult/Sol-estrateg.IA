@@ -1,0 +1,1 @@
+SELECT cron.unschedule('skill-autofix-make-15m');
