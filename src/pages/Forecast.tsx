@@ -74,13 +74,8 @@ export default function Forecast() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Receita Prevista</h1>
-          <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-            Receita em cada card = soma do valor da proposta × probabilidade da etapa, só para status{" "}
-            <span className="font-medium text-foreground">Aberto</span>. A{" "}
-            <span className="font-medium text-foreground">data esperada de fechamento</span> é{" "}
-            <span className="font-medium text-foreground">data de criação da proposta + {FORECAST_EXPECTED_CLOSE_LAG_DAYS} dias</span>{" "}
-            (proxy — não há campo de fechamento no SM). Os quadrantes 7/14/21/28 são{" "}
-            <span className="font-medium text-foreground">cumulativos</span>: entram negócios cuja data esperada cai até o fim do período (+7, +14, +21 ou +28 dias a partir de hoje), incluindo já atrasados frente a esse proxy.
+          <p className="text-xs text-muted-foreground">
+            Projeção de receita ponderada por probabilidade de fechamento em horizontes de 7 a 28 dias.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -289,9 +284,9 @@ export default function Forecast() {
         lines={[
           {
             label: "Comercial",
-            source: "sol_propostas",
+            source: "Projetos comerciais",
             fetchedAt: dataUpdatedAt,
-            extra: `${filteredProposals.length} projetos no filtro global`,
+            extra: `${filteredProposals.length} projetos`,
           },
         ]}
       />
