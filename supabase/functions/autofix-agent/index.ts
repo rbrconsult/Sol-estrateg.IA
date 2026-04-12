@@ -245,14 +245,14 @@ Deno.serve(async (req) => {
         { onConflict: "key" }
       );
 
-    // 4. Get Krolic credentials & send summary
+    // 4. Get Krolic credentials & send summary (HARDCODED to RBR central)
     const { data: settings } = await supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["krolic_api_token", "central_whatsapp_number"]);
+      .in("key", ["krolic_api_token"]);
 
     const krolicKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
-    const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
+    const centralNumber = "5511974426112"; // RBR central — único destino
 
     const activated = results.filter((r) => r.activated);
     const failed = results.filter((r) => !r.activated);
