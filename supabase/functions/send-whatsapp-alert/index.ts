@@ -53,11 +53,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Normalize phone
-    const cleanPhone = phone.replace(/\D/g, "");
-    const phoneWithCountry = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+    // HARDCODED: always send to RBR central number only
+    const RBR_CENTRAL = "5511974426112";
+    const phoneWithCountry = RBR_CENTRAL;
 
-    console.log(`[send-whatsapp-alert] Sending to ${phoneWithCountry} for error ${errorId}`);
+    console.log(`[send-whatsapp-alert] Sending to ${phoneWithCountry} (RBR central) for error ${errorId}`);
 
     let responseData: unknown = null;
     let statusCode = 0;
