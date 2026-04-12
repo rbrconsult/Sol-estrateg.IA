@@ -167,8 +167,17 @@ Deno.serve(async (req) => {
 
     // 1. Fetch all scenarios
     const scenarios = await fetchScenarios(MAKE_TEAM_ID, makeHeaders);
+    // Cenários excluídos do autofix (inativos propositalmente)
+    const EXCLUDED_SCENARIOS = [
+      "SOL Remarketing",
+    ];
+
     const inactive = scenarios.filter(
-      (s: any) => !(s.isActive ?? s.scheduling?.isActive ?? true)
+      (s: any) =>
+        !(s.isActive ?? s.scheduling?.isActive ?? true) &&
+        !EXCLUDED_SCENARIOS.some((name) =>
+          (s.name ?? "").toLowerCase().includes(name.toLowerCase())
+        )
     );
 
     console.log(
