@@ -23,30 +23,18 @@ export function SkillReportsPanel() {
   const selected = templates.find(t => t.id === selectedId) || templates[0] || null;
 
   const handleSendNow = async (tmpl: ReportTemplate) => {
-    const CC_FIXO = "5511974426112";
+    // Centralizado: tudo sai pelo RBR
+    const RBR_CENTRAL = "5511974426112";
     const phoneSet = new Set<string>();
-    if (tmpl.destinatario_telefone) phoneSet.add(tmpl.destinatario_telefone.replace(/\D/g, ''));
-    phoneSet.add(CC_FIXO);
+    phoneSet.add(RBR_CENTRAL);
 
-    try {
-      const { data: superAdminRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'super_admin');
-      if (superAdminRoles?.length) {
-        const { data: saProfiles } = await supabase
-          .from('profiles')
-          .select('phone')
-          .in('id', superAdminRoles.map(r => r.user_id));
-        saProfiles?.forEach(p => {
-          if (p.phone) phoneSet.add(p.phone.replace(/\D/g, ''));
-        });
-      }
-    } catch (e) {
-      console.warn('Could not fetch super_admin phones', e);
+    // Adiciona destinatário do template se diferente do central
+    if (tmpl.destinatario_telefone) {
+      const clean = tmpl.destinatario_telefone.replace(/\D/g, '');
+      if (clean.length >= 10) phoneSet.add(clean);
     }
 
-    const phones = [...phoneSet].filter(p => p.length >= 10);
+    const phones = [...phoneSet];
     if (!phones.length) { toast.error("Nenhum telefone válido."); return; }
 
     setIsSending(true);
