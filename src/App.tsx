@@ -58,6 +58,7 @@ const SolConfigPage = lazy(() => import("./pages/admin/SolConfigPage"));
 const SolEquipePage = lazy(() => import("./pages/admin/SolEquipePage"));
 const SolFunisPage = lazy(() => import("./pages/admin/SolFunisPage"));
 const Insights = lazy(() => import("./pages/Insights"));
+const AutoFixAgent = lazy(() => import("./components/AutoFixAgent"));
 
 
 /** Rotas com error boundary por URL: ao mudar de página, o boundary reinicia (evita ficar preso na tela de erro). */
