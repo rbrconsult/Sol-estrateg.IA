@@ -9,7 +9,7 @@ import { FileText, Plus, Pencil, Trash2, Clock, Users, Send, Phone } from "lucid
 import { useReportTemplates, type ReportTemplate } from "@/hooks/useReportTemplates";
 import { ReportEditorDialog } from "@/components/reports/ReportEditorDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 
 export function SkillReportsPanel() {
