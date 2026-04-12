@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
     const activated = results.filter((r) => r.activated);
     const failed = results.filter((r) => !r.activated);
 
-    if (krolicKey && centralNumber && results.length > 0) {
+    if (krolicKey && centralNumber) {
       const lines = [
         "🤖 *AutoFix Agent — Varredura Automática*",
         "",
