@@ -75,13 +75,28 @@ async function activateScenario(
   headers: Record<string, string>
 ): Promise<{ ok: boolean; detail: string }> {
   try {
-    const res = await fetch(`${MAKE_BASE}/scenarios/${scenarioId}/activate`, {
+    // Make API uses PATCH /scenarios/{id} with scheduling to activate
+    const res = await fetch(`${MAKE_BASE}/scenarios/${scenarioId}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        scheduling: JSON.stringify({ type: "indefinitely", interval: 900 }),
+      }),
+    });
+    const body = await res.text();
+    if (!res.ok) {
+      return { ok: false, detail: `PATCH scheduling falhou [${res.status}]: ${body.substring(0, 200)}` };
+    }
+
+    // Now start the scenario
+    const startRes = await fetch(`${MAKE_BASE}/scenarios/${scenarioId}/start`, {
       method: "POST",
       headers,
     });
-    const body = await res.text();
-    if (res.ok) return { ok: true, detail: "Ativado com sucesso" };
-    return { ok: false, detail: `Falhou [${res.status}]: ${body.substring(0, 200)}` };
+    const startBody = await startRes.text();
+    if (startRes.ok) return { ok: true, detail: "Cenário ativado e iniciado com sucesso" };
+    // Even if start fails, scheduling was set
+    return { ok: true, detail: `Scheduling atualizado. Start: [${startRes.status}] ${startBody.substring(0, 150)}` };
   } catch (e) {
     return { ok: false, detail: `Erro: ${e}` };
   }
