@@ -50,34 +50,18 @@ export default function Reports() {
   };
 
   const handleSendNow = async (tmpl: ReportTemplate) => {
-    // Build phone list: destinatário direto + CC fixo
-    const CC_FIXO = "5511974426112";
-    
+    // Centralizado: tudo sai pelo RBR
+    const RBR_CENTRAL = "5511974426112";
     const phoneSet = new Set<string>();
-    if (tmpl.destinatario_telefone) phoneSet.add(tmpl.destinatario_telefone.replace(/\D/g, ''));
-    phoneSet.add(CC_FIXO);
-    
-    // Super admin always receives — fetch super_admin phones
-    try {
-      const { data: superAdminRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'super_admin');
-      if (superAdminRoles && superAdminRoles.length > 0) {
-        const ids = superAdminRoles.map(r => r.user_id);
-        const { data: saProfiles } = await supabase
-          .from('profiles')
-          .select('phone')
-          .in('id', ids);
-        saProfiles?.forEach(p => {
-          if (p.phone) phoneSet.add(p.phone.replace(/\D/g, ''));
-        });
-      }
-    } catch (e) {
-      console.warn('Could not fetch super_admin phones', e);
+    phoneSet.add(RBR_CENTRAL);
+
+    // Adiciona destinatário do template se diferente do central
+    if (tmpl.destinatario_telefone) {
+      const clean = tmpl.destinatario_telefone.replace(/\D/g, '');
+      if (clean.length >= 10) phoneSet.add(clean);
     }
 
-    const phones = [...phoneSet].filter(p => p.length >= 10);
+    const phones = [...phoneSet];
     if (phones.length === 0) {
       toast.error("Nenhum telefone válido configurado.");
       return;
