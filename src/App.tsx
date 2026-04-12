@@ -135,6 +135,7 @@ function AppRoutesShell() {
               <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="admin-funis"><SolFunisPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><Insights /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/mensagens" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/autofix" element={<ProtectedRoute><MainLayout><AutoFixAgent /></MainLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
         </Routes>
