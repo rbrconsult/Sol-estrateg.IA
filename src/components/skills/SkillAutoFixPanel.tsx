@@ -33,6 +33,7 @@ export function SkillAutoFixPanel() {
   const queryClient = useQueryClient();
   const [newExclusion, setNewExclusion] = useState("");
   const [newFolderPrefix, setNewFolderPrefix] = useState("");
+  const automaticAutoFixDisabled = true;
 
   // Fetch current config from app_settings
   const { data: config, isLoading } = useQuery({
@@ -145,6 +146,11 @@ export function SkillAutoFixPanel() {
   };
 
   const handleForceRun = async () => {
+    if (automaticAutoFixDisabled) {
+      toast.info("AutoFix automático desativado. Use remediation/manual via Claude.");
+      return;
+    }
+
     try {
       // Reset cooldown
       await supabase
@@ -184,11 +190,16 @@ export function SkillAutoFixPanel() {
           size="sm"
           variant="outline"
           onClick={handleForceRun}
+          disabled={automaticAutoFixDisabled}
           className="gap-1.5 text-xs"
         >
-          <Send className="h-3 w-3" /> Forçar Varredura
+          <Send className="h-3 w-3" /> {automaticAutoFixDisabled ? "Automático desativado" : "Forçar Varredura"}
         </Button>
       </div>
+
+      <p className="text-[10px] text-muted-foreground">
+        O AutoFix automático e os disparos recorrentes foram desativados. Mantive apenas o remediation/manual via Claude.
+      </p>
 
       {/* Last run info */}
       {lastRun && (

@@ -695,15 +695,8 @@ Deno.serve(async (req) => {
 
     // ── Pre-check: is AutoFix (skill 6.12) enabled? ──
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    let autofixEnabled = false;
-    if (ANTHROPIC_API_KEY) {
-      const { data: toggleData } = await supabase
-        .from("skill_toggles")
-        .select("enabled")
-        .eq("skill_id", "6.12")
-        .maybeSingle();
-      autofixEnabled = !toggleData || toggleData.enabled;
-    }
+    const autofixEnabled = false;
+    console.log("[autofix] Automatic AutoFix disabled; manual remediation preferred");
 
     try {
       if (apiKey && centralNumber && newRecords.length > 0) {
@@ -752,9 +745,7 @@ Deno.serve(async (req) => {
             ...n1Records.slice(0, 10).map((r) => `  • ${r.scenario_name} — ${r.execution_status === "warning" ? "⚠️" : "🟠"} [${r.module_app}] ${r.module_name}`),
             n1Records.length > 10 ? `  ... e mais ${n1Records.length - 10}` : null,
             "",
-            autofixEnabled
-              ? "🤖 *AutoFix ativado* — analisando com IA e iniciando correção automática..."
-              : "Nenhum fluxo parou, mas vale monitorar.",
+            "Nenhum fluxo parou, mas vale monitorar.",
             "",
             "Sol Estrateg.IA — Monitor de Fluxos",
           ].filter(Boolean).join("\n");
@@ -799,7 +790,7 @@ Deno.serve(async (req) => {
 
       console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
     } else if (!autofixEnabled) {
-      console.log("[autofix] Skill 6.12 disabled, skipping");
+      console.log("[autofix] Automatic AutoFix disabled, skipping");
     }
 
     return new Response(

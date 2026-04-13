@@ -136,6 +136,15 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    console.log("[autofix-agent] Automatic AutoFix disabled; manual remediation preferred");
+    return new Response(
+      JSON.stringify({
+        skipped: true,
+        reason: "AutoFix automático desativado. Use remediation/manual via Claude.",
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
     // Check if skill 6.12 is enabled
     const { data: toggleData } = await supabase
       .from("skill_toggles")
