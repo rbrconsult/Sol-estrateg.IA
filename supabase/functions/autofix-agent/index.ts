@@ -43,7 +43,14 @@ async function fetchScenarios(
   teamId: string,
   headers: Record<string, string>
 ): Promise<any[]> {
-  // Find monitored folder
+  // Find monitored folder using configurable prefix
+  const { data: folderPrefixSetting } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "autofix_folder_prefix")
+    .maybeSingle();
+  const folderPrefix = (folderPrefixSetting?.value || "solestrategia").toLowerCase();
+
   let folderId: number | null = null;
   try {
     const fRes = await fetch(
@@ -54,7 +61,7 @@ async function fetchScenarios(
       const fData = await fRes.json();
       const folders = fData.scenariosFolders ?? fData.folders ?? fData ?? [];
       const match = (Array.isArray(folders) ? folders : []).find(
-        (f: any) => (f.name ?? "").toLowerCase().includes("solestrategia")
+        (f: any) => (f.name ?? "").toLowerCase().includes(folderPrefix)
       );
       if (match) folderId = match.id;
     }
