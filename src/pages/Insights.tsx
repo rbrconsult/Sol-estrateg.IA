@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
 import { SkillReportsPanel } from "@/components/skills/SkillReportsPanel";
+import { SkillAutoFixPanel } from "@/components/skills/SkillAutoFixPanel";
 import { SkillConfigPanel } from "@/components/skills/SkillConfigPanel";
 import { skillConfigSchemas } from "@/data/skillConfigSchemas";
 import { SkillCreatorForm } from "@/components/skills/SkillCreatorForm";
