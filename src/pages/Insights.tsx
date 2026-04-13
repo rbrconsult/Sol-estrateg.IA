@@ -290,7 +290,10 @@ export default function Insights() {
                           : "bg-card/40 border-border/40 opacity-75"
                         } ${isExpanded && hasConfigPanel ? "col-span-full" : ""}`}
                       >
-                        <CardHeader className="pb-2 pt-4 px-4">
+                        <CardHeader
+                          className="pb-2 pt-4 px-4 cursor-pointer"
+                          onClick={() => hasConfigPanel && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
+                        >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">{skill.id}</span>
