@@ -181,30 +181,43 @@ export default function Insights() {
       </div>
 
       {/* Summary row */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <Card className="bg-card/60 border-border/40">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold">{totals.visible}</p>
-            <p className="text-[10px] text-muted-foreground">Visíveis</p>
+            <p className="text-2xl font-bold">{totals.total}</p>
+            <p className="text-[10px] text-muted-foreground">Total Skills</p>
           </CardContent>
         </Card>
         <Card className="bg-card/60 border-primary/30">
           <CardContent className="p-3 text-center">
             <p className="text-2xl font-bold text-primary">{totals.ligadas}</p>
-            <p className="text-[10px] text-muted-foreground">Ligadas</p>
+            <p className="text-[10px] text-muted-foreground">🟢 Ligadas</p>
           </CardContent>
         </Card>
-        {(["ativo", "precisa_dados", "criar", "futuro"] as SkillStatus[]).map(st => {
-          const cfg = statusConfig[st];
-          return (
-            <Card key={st} className="bg-card/60 border-border/40">
-              <CardContent className="p-3 text-center">
-                <p className="text-2xl font-bold">{totals[st]}</p>
-                <Badge variant="outline" className={`${cfg.className} text-[9px] mt-0.5`}>{cfg.label}</Badge>
-              </CardContent>
-            </Card>
-          );
-        })}
+        <Card className="bg-card/60 border-border/40">
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl font-bold text-muted-foreground">{totals.desligadas}</p>
+            <p className="text-[10px] text-muted-foreground">🔴 Desligadas</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/60 border-border/40">
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl font-bold">{totals.visible}</p>
+            <p className="text-[10px] text-muted-foreground">Filtro atual</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/60 border-border/40">
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl font-bold">{totals.prontas}</p>
+            <Badge variant="outline" className={`${statusConfig.ativo.className} text-[9px] mt-0.5`}>Prontas</Badge>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/60 border-border/40">
+          <CardContent className="p-3 text-center">
+            <p className="text-2xl font-bold">{totals.futuro}</p>
+            <Badge variant="outline" className={`${statusConfig.futuro.className} text-[9px] mt-0.5`}>Em Criação</Badge>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Activation progress */}
