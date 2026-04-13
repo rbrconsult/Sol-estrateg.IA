@@ -284,12 +284,11 @@ export default function Insights() {
                     return (
                       <Card
                         key={skill.id}
-                        className={`border transition-colors cursor-pointer ${
+                        className={`border transition-colors ${
                           isFullyActive ? "bg-card border-primary/40 shadow-sm shadow-primary/5" 
                           : isPendingConfig ? "bg-card border-amber-500/40 shadow-sm shadow-amber-500/5"
                           : "bg-card/40 border-border/40 opacity-75"
                         } ${isExpanded && hasConfigPanel ? "col-span-full" : ""}`}
-                        onClick={() => hasConfigPanel && isOn ? setExpandedSkillId(isExpanded ? null : skill.id) : undefined}
                       >
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-start justify-between gap-2">
