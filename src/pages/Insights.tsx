@@ -66,6 +66,16 @@ export default function Insights() {
 
   const allSkills = useMemo(() => skillCategories.flatMap(c => c.skills), []);
 
+  // Skills filtered only by vertical (base for KPIs)
+  const verticalSkills = useMemo(() => {
+    if (verticalFilter === "all") return allSkills;
+    return allSkills.filter(s => {
+      const isUniversal = s.verticals.includes("universal");
+      const matchesFilter = s.verticals.includes(verticalFilter);
+      return isUniversal || matchesFilter;
+    });
+  }, [allSkills, verticalFilter]);
+
   const filteredCategories = useMemo(() => {
     const q = search.toLowerCase();
     return skillCategories.map(cat => ({
@@ -80,10 +90,8 @@ export default function Insights() {
           if (!(isOn && hasPanel && !isConfigDone)) return false;
         } else if (statusFilter !== "all" && s.status !== statusFilter) return false;
         if (verticalFilter !== "all") {
-          // Show skill if it includes the selected vertical OR is universal
           const isUniversal = s.verticals.includes("universal");
           const matchesFilter = s.verticals.includes(verticalFilter);
-          // Hide skills that are EXCLUSIVELY for other verticals (not universal, not matching)
           if (!isUniversal && !matchesFilter) return false;
         }
         if (q && !s.name.toLowerCase().includes(q) && !s.desc.toLowerCase().includes(q) && !s.id.includes(q)) return false;
@@ -94,16 +102,20 @@ export default function Insights() {
 
   const visibleSkills = useMemo(() => filteredCategories.flatMap(c => c.skills), [filteredCategories]);
 
-  const totals = useMemo(() => ({
-    total: allSkills.length,
-    visible: visibleSkills.length,
-    prontas: allSkills.filter(s => s.status === "ativo").length,
-    precisa_dados: allSkills.filter(s => s.status === "precisa_dados").length,
-    criar: allSkills.filter(s => s.status === "criar").length,
-    futuro: allSkills.filter(s => s.status === "futuro").length,
-    ligadas: allSkills.filter(s => toggles[s.id]).length,
-    desligadas: allSkills.filter(s => !toggles[s.id]).length,
-  }), [allSkills, toggles, visibleSkills]);
+  const totals = useMemo(() => {
+    const base = verticalSkills;
+    const ligadas = base.filter(s => toggles[s.id]).length;
+    return {
+      total: base.length,
+      visible: visibleSkills.length,
+      prontas: base.filter(s => s.status === "ativo").length,
+      precisa_dados: base.filter(s => s.status === "precisa_dados").length,
+      criar: base.filter(s => s.status === "criar").length,
+      futuro: base.filter(s => s.status === "futuro").length,
+      ligadas,
+      desligadas: base.length - ligadas,
+    };
+  }, [verticalSkills, toggles, visibleSkills]);
 
   const toggleCat = (key: string) =>
     setOpenCats(prev => ({ ...prev, [key]: !prev[key] }));
