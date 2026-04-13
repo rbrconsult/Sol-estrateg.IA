@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSkillToggles } from "@/hooks/useSkillToggles";
 import { SkillReportsPanel } from "@/components/skills/SkillReportsPanel";
+import { SkillAutoFixPanel } from "@/components/skills/SkillAutoFixPanel";
 import { SkillConfigPanel } from "@/components/skills/SkillConfigPanel";
 import { skillConfigSchemas } from "@/data/skillConfigSchemas";
 import { SkillCreatorForm } from "@/components/skills/SkillCreatorForm";
@@ -74,8 +75,8 @@ export default function Insights() {
           if (!toggles[s.id]) return false;
         } else if (statusFilter === "pendente") {
           const isOn = !!toggles[s.id];
-          const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11";
-          const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
+          const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11" || s.id === "6.12";
+          const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11" || s.id === "6.12";
           if (!(isOn && hasPanel && !isConfigDone)) return false;
         } else if (statusFilter !== "all" && s.status !== statusFilter) return false;
         if (verticalFilter !== "all") {
@@ -269,8 +270,8 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
-                    const hasConfigPanel = skill.id === "6.11" || !!skillConfigSchemas[skill.id];
-                    const isConfigured = configuredSkills.has(skill.id) || skill.id === "6.11";
+                    const hasConfigPanel = skill.id === "6.11" || skill.id === "6.12" || !!skillConfigSchemas[skill.id];
+                    const isConfigured = configuredSkills.has(skill.id) || skill.id === "6.11" || skill.id === "6.12";
                     const isPendingConfig = isOn && hasConfigPanel && !isConfigured;
                     const isFullyActive = isOn && (!hasConfigPanel || isConfigured);
                     const isExpanded = expandedSkillId === skill.id;
@@ -363,7 +364,7 @@ export default function Insights() {
                           {/* Inline config panels */}
                           {isOn && isExpanded && (
                             <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
-                              {skill.id === "6.11" ? <SkillReportsPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} onSaved={handleSaved} />}
+                              {skill.id === "6.11" ? <SkillReportsPanel /> : skill.id === "6.12" ? <SkillAutoFixPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} onSaved={handleSaved} />}
                             </div>
                           )}
                         </CardContent>

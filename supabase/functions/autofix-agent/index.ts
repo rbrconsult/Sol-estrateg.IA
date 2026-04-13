@@ -43,7 +43,14 @@ async function fetchScenarios(
   teamId: string,
   headers: Record<string, string>
 ): Promise<any[]> {
-  // Find monitored folder
+  // Find monitored folder using configurable prefix
+  const { data: folderPrefixSetting } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "autofix_folder_prefix")
+    .maybeSingle();
+  const folderPrefix = (folderPrefixSetting?.value || "solestrategia").toLowerCase();
+
   let folderId: number | null = null;
   try {
     const fRes = await fetch(
@@ -54,7 +61,7 @@ async function fetchScenarios(
       const fData = await fRes.json();
       const folders = fData.scenariosFolders ?? fData.folders ?? fData ?? [];
       const match = (Array.isArray(folders) ? folders : []).find(
-        (f: any) => (f.name ?? "").toLowerCase().includes("solestrategia")
+        (f: any) => (f.name ?? "").toLowerCase().includes(folderPrefix)
       );
       if (match) folderId = match.id;
     }
@@ -153,7 +160,15 @@ Deno.serve(async (req) => {
 
     const lastRunTime = lastRun?.value ? new Date(lastRun.value).getTime() : 0;
     const now = Date.now();
-    const MIN_INTERVAL_MS = 10 * 60 * 1000;
+
+    // Configurable cooldown (default 10 min)
+    const { data: cooldownSetting } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "autofix_cooldown_minutes")
+      .maybeSingle();
+    const cooldownMin = Number(cooldownSetting?.value || "10");
+    const MIN_INTERVAL_MS = cooldownMin * 60 * 1000;
 
     if (now - lastRunTime < MIN_INTERVAL_MS) {
       console.log("[autofix-agent] Skipping — ran recently");
@@ -167,10 +182,16 @@ Deno.serve(async (req) => {
 
     // 1. Fetch all scenarios
     const scenarios = await fetchScenarios(MAKE_TEAM_ID, makeHeaders);
-    // Cenários excluídos do autofix (inativos propositalmente)
-    const EXCLUDED_SCENARIOS = [
-      "SOL Remarketing",
-    ];
+    // Cenários excluídos do autofix (lidos do banco)
+    const { data: excludedSetting } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "autofix_excluded_scenarios")
+      .maybeSingle();
+    let EXCLUDED_SCENARIOS: string[] = ["SOL Remarketing"];
+    try {
+      if (excludedSetting?.value) EXCLUDED_SCENARIOS = JSON.parse(excludedSetting.value);
+    } catch { /* keep default */ }
 
     const inactive = scenarios.filter(
       (s: any) =>
