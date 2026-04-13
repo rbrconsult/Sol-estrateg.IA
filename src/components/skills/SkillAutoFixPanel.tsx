@@ -112,8 +112,6 @@ export function SkillAutoFixPanel() {
     );
   };
 
-  };
-
   const handleExcludeScenario = (name: string) => {
     if (excludedScenarios.includes(name)) return;
     const updated = [...excludedScenarios, name];
@@ -122,6 +120,8 @@ export function SkillAutoFixPanel() {
       { onSuccess: () => toast.success(`"${name}" movido para exclusões`) }
     );
   };
+
+  const handleRemoveExclusion = (name: string) => {
     const updated = excludedScenarios.filter((n) => n !== name);
     upsertSetting.mutate(
       { key: "autofix_excluded_scenarios", value: JSON.stringify(updated) },
