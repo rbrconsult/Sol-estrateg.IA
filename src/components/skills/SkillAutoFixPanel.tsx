@@ -236,18 +236,21 @@ export function SkillAutoFixPanel() {
         <CardHeader className="pb-2 pt-3 px-4">
           <CardTitle className="text-xs flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-            Cenários monitorados ({monitoredScenarios.length})
+            Cenários monitorados ({activeScenarios.length})
           </CardTitle>
+          <p className="text-[10px] text-muted-foreground">
+            Clique no <X className="h-2.5 w-2.5 inline" /> para mover o cenário para a lista de exclusão.
+          </p>
         </CardHeader>
         <CardContent className="px-4 pb-3">
-          {monitoredScenarios.length === 0 ? (
+          {activeScenarios.length === 0 ? (
             <p className="text-[10px] text-muted-foreground text-center py-3">
-              Nenhum cenário detectado ainda. A próxima varredura irá autodescobrir os cenários da pasta.
+              Nenhum cenário ativo detectado. A próxima varredura irá autodescobrir os cenários da pasta.
             </p>
           ) : (
             <ScrollArea className="h-[180px]">
               <div className="space-y-1">
-                {monitoredScenarios.map((s) => (
+                {activeScenarios.map((s) => (
                   <div
                     key={s.id}
                     className="flex items-center justify-between gap-2 py-1 px-2 rounded text-[11px] hover:bg-muted/50"
@@ -256,9 +259,20 @@ export function SkillAutoFixPanel() {
                       <Activity className="h-3 w-3 text-emerald-500 shrink-0" />
                       <span className="truncate">{s.name}</span>
                     </div>
-                    <Badge variant="outline" className="text-[9px] font-mono shrink-0">
-                      {s.id}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Badge variant="outline" className="text-[9px] font-mono">
+                        {s.id}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleExcludeScenario(s.name)}
+                        title="Excluir do monitoramento"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
