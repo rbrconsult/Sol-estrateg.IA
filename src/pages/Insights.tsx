@@ -97,11 +97,12 @@ export default function Insights() {
   const totals = useMemo(() => ({
     total: allSkills.length,
     visible: visibleSkills.length,
-    ativo: allSkills.filter(s => s.status === "ativo").length,
+    prontas: allSkills.filter(s => s.status === "ativo").length,
     precisa_dados: allSkills.filter(s => s.status === "precisa_dados").length,
     criar: allSkills.filter(s => s.status === "criar").length,
     futuro: allSkills.filter(s => s.status === "futuro").length,
     ligadas: allSkills.filter(s => toggles[s.id]).length,
+    desligadas: allSkills.filter(s => !toggles[s.id]).length,
   }), [allSkills, toggles, visibleSkills]);
 
   const toggleCat = (key: string) =>
