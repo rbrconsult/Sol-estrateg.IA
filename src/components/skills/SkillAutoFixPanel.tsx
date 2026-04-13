@@ -78,6 +78,11 @@ export function SkillAutoFixPanel() {
   const lastRun = config?.autofix_agent_last_run || null;
   const cooldownMinutes = Number(config?.autofix_cooldown_minutes || "10");
 
+  // Filter out excluded scenarios from the monitored list
+  const activeScenarios = monitoredScenarios.filter(
+    (s) => !excludedScenarios.some((ex) => s.name.includes(ex))
+  );
+
   // Save a single app_setting
   const upsertSetting = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
