@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFranquiaId } from '@/hooks/useFranquiaId';
 import { useOrgFilter } from '@/contexts/OrgFilterContext';
 import { franquiaColumnValuesForSlug } from '@/lib/franquiaSync';
-import { filterRecordsByGlobalFilters, getEffectiveDateRange, type FilterState } from '@/lib/globalFilters';
+import { filterRecordsByGlobalFilters, getEffectiveDateRange, parseDateFlexible, type FilterState } from '@/lib/globalFilters';
 
 // ─── Types matching the page component shapes ───
 export interface KPICard {
@@ -132,23 +132,7 @@ function parseScore(s: string | undefined): number {
 }
 
 function safeDate(str: string | undefined | null): Date | null {
-  if (!str) return null;
-  const raw = String(str).trim();
-  if (!raw) return null;
-
-  // dd/MM/yyyy or dd-MM-yyyy [HH:mm[:ss]] — must check BEFORE new Date() to avoid
-  // misinterpretation of dd-MM-yyyy as ISO (which swaps month/day).
-  const br = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
-  if (br) {
-    const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = br;
-    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), Number(ss));
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const iso = new Date(raw);
-  if (!isNaN(iso.getTime())) return iso;
-
-  return null;
+  return parseDateFlexible(str);
 }
 
 function dayOfWeek(d: Date): number { return d.getDay(); }
