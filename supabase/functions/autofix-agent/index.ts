@@ -174,10 +174,16 @@ Deno.serve(async (req) => {
 
     // 1. Fetch all scenarios
     const scenarios = await fetchScenarios(MAKE_TEAM_ID, makeHeaders);
-    // Cenários excluídos do autofix (inativos propositalmente)
-    const EXCLUDED_SCENARIOS = [
-      "SOL Remarketing",
-    ];
+    // Cenários excluídos do autofix (lidos do banco)
+    const { data: excludedSetting } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "autofix_excluded_scenarios")
+      .maybeSingle();
+    let EXCLUDED_SCENARIOS: string[] = ["SOL Remarketing"];
+    try {
+      if (excludedSetting?.value) EXCLUDED_SCENARIOS = JSON.parse(excludedSetting.value);
+    } catch { /* keep default */ }
 
     const inactive = scenarios.filter(
       (s: any) =>
