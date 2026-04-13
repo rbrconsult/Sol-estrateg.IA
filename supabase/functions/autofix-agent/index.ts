@@ -41,7 +41,8 @@ async function sendWhatsApp(
 // ── Make API helpers ──
 async function fetchScenarios(
   teamId: string,
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  supabase: any
 ): Promise<any[]> {
   // Find monitored folder using configurable prefix
   const { data: folderPrefixSetting } = await supabase
