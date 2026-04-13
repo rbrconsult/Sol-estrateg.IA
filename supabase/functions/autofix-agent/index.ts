@@ -160,7 +160,15 @@ Deno.serve(async (req) => {
 
     const lastRunTime = lastRun?.value ? new Date(lastRun.value).getTime() : 0;
     const now = Date.now();
-    const MIN_INTERVAL_MS = 10 * 60 * 1000;
+
+    // Configurable cooldown (default 10 min)
+    const { data: cooldownSetting } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "autofix_cooldown_minutes")
+      .maybeSingle();
+    const cooldownMin = Number(cooldownSetting?.value || "10");
+    const MIN_INTERVAL_MS = cooldownMin * 60 * 1000;
 
     if (now - lastRunTime < MIN_INTERVAL_MS) {
       console.log("[autofix-agent] Skipping — ran recently");
