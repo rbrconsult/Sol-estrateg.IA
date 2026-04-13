@@ -22,6 +22,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { JOURNEY_ORDER } from "@/lib/leads-utils";
+import { parseDateFlexible } from "@/lib/globalFilters";
 
 // ── Status colors & icons (keyed by etapa_funil) ──
 const STATUS_META: Record<string, { color: string; icon: typeof Users; desc: string }> = {
@@ -46,6 +47,7 @@ const FUNNEL_BAR_COLORS: Record<string, string> = {
 };
 
 const PIE_COLORS = ['#3b82f6','#1e40af','#22c55e','#6b7280','#f59e0b','#ef4444'];
+const MIN_VALID_RECORD_DATE = new Date(2026, 0, 1);
 
 const tempBadge = (t: string | null) => {
   if (!t) return <Badge variant="secondary" className="text-[10px]">—</Badge>;
@@ -71,20 +73,14 @@ const Index = () => {
   // ── Period filter ──
   const filtered = useMemo(() => {
     if (!leads?.length) return [];
-    const { from, to } = gf.effectiveDateRange;
-    if (!from && !to) return leads;
-    return leads.filter(l => {
-      // ts_cadastro = data real de entrada; ts_ultima_interacao muda a cada msg e distorce o filtro
-      const dateStr = l.ts_cadastro || l.ts_ultima_interacao || l.ts_qualificado || l.synced_at || '';
-      // Registros sem data ou anteriores a 2026 são carga histórica inválida
-      if (!dateStr || dateStr < '2026-01-01') return false;
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return false;
-      if (from) { const f = new Date(from); f.setHours(0,0,0,0); if (d < f) return false; }
-      if (to) { const t = new Date(to); t.setHours(23,59,59,999); if (d > t) return false; }
-      return true;
+    return gf.filterRecords(leads).filter((lead) => {
+      const recordDate = parseDateFlexible(
+        lead.ts_cadastro || lead.ts_ultima_interacao || lead.ts_qualificado || lead.synced_at || "",
+      );
+
+      return Boolean(recordDate && recordDate >= MIN_VALID_RECORD_DATE);
     });
-  }, [leads, gf.effectiveDateRange]);
+  }, [leads, gf.filterRecords]);
 
   // ══════════════════════════════════════════════════════════════
   // SEÇÃO 1: FUNIL GERAL
