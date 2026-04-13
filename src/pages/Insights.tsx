@@ -364,7 +364,7 @@ export default function Insights() {
                           {/* Inline config panels */}
                           {isOn && isExpanded && (
                             <div className="mt-3 pt-3 border-t border-border/30" onClick={e => e.stopPropagation()}>
-                              {skill.id === "6.11" ? <SkillReportsPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} onSaved={handleSaved} />}
+                              {skill.id === "6.11" ? <SkillReportsPanel /> : skill.id === "6.12" ? <SkillAutoFixPanel /> : skillConfigSchemas[skill.id] && <SkillConfigPanel schema={skillConfigSchemas[skill.id]} onSaved={handleSaved} />}
                             </div>
                           )}
                         </CardContent>
