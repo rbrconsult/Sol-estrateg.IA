@@ -99,16 +99,19 @@ export function parseDateFlexible(dateStr: string | null | undefined): Date | nu
   const raw = String(dateStr).trim();
   if (!raw) return null;
 
+  // DD/MM/YYYY or DD-MM-YYYY (with optional time) — must check BEFORE new Date()
+  // to avoid misinterpretation of DD-MM-YYYY as US-style MM-DD-YYYY.
+  const br = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (br) {
+    const [, dd, mm, yyyy, hh = "00", mi = "00", ss = "00"] = br;
+    const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi), Number(ss));
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
   const iso = new Date(raw);
   if (!Number.isNaN(iso.getTime())) return iso;
 
-  // Accepts DD/MM/YYYY or DD-MM-YYYY (with optional time)
-  const br = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
-  if (!br) return null;
-
-  const [, dd, mm, yyyy, hh = "00", mi = "00", ss = "00"] = br;
-  const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi), Number(ss));
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return null;
 }
 
 export function getEffectiveDateRange(filters: FilterState): { from: Date | undefined; to: Date | undefined } {
