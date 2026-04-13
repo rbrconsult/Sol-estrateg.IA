@@ -112,7 +112,16 @@ export function SkillAutoFixPanel() {
     );
   };
 
-  const handleRemoveExclusion = (name: string) => {
+  };
+
+  const handleExcludeScenario = (name: string) => {
+    if (excludedScenarios.includes(name)) return;
+    const updated = [...excludedScenarios, name];
+    upsertSetting.mutate(
+      { key: "autofix_excluded_scenarios", value: JSON.stringify(updated) },
+      { onSuccess: () => toast.success(`"${name}" movido para exclusões`) }
+    );
+  };
     const updated = excludedScenarios.filter((n) => n !== name);
     upsertSetting.mutate(
       { key: "autofix_excluded_scenarios", value: JSON.stringify(updated) },
