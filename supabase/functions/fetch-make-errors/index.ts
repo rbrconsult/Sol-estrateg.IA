@@ -699,7 +699,9 @@ Deno.serve(async (req) => {
     console.log("[autofix] Automatic AutoFix disabled; manual remediation preferred");
 
     try {
-      if (apiKey && centralNumber && newRecords.length > 0) {
+      // WhatsApp alerts completely disabled per user request
+      const alertsDisabled = true;
+      if (!alertsDisabled && apiKey && centralNumber && newRecords.length > 0) {
         console.log(`[alerts] ${newRecords.length} new errors detected, sending alerts to ${centralNumber}`);
 
         // N1: errors that didn't stop the flow
