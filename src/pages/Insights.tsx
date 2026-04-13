@@ -75,8 +75,8 @@ export default function Insights() {
           if (!toggles[s.id]) return false;
         } else if (statusFilter === "pendente") {
           const isOn = !!toggles[s.id];
-          const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11";
-          const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11";
+          const hasPanel = !!skillConfigSchemas[s.id] || s.id === "6.11" || s.id === "6.12";
+          const isConfigDone = configuredSkills.has(s.id) || s.id === "6.11" || s.id === "6.12";
           if (!(isOn && hasPanel && !isConfigDone)) return false;
         } else if (statusFilter !== "all" && s.status !== statusFilter) return false;
         if (verticalFilter !== "all") {
