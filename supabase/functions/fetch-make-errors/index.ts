@@ -8,6 +8,10 @@ const corsHeaders = {
 
 const MAKE_BASE = "https://us2.make.com/api/v2";
 const KROLIC_SEND_URL = "https://api.camkrolik.com.br/core/v2/api/chats/send-text";
+const RBR_CENTRAL = "5511974426112";
+const ALERT_COOLDOWN_MS = 30 * 60 * 1000;
+const ALERT_LAST_SENT_KEY = "autofix_summary_last_sent_at";
+const ALERT_LAST_SIGNATURE_KEY = "autofix_summary_last_signature";
 
 function detectCategory(name: string): string {
   const n = (name ?? "").toLowerCase();
@@ -177,6 +181,102 @@ function formatN3Message(stoppedCritical: any[]): string {
   ].join("\n");
 }
 
+function compactText(value: string | null | undefined, max = 120): string {
+  const normalized = (value ?? "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "sem detalhes";
+  return normalized.length > max ? `${normalized.substring(0, max - 1)}…` : normalized;
+}
+
+function buildRecordSignature(record: any): string {
+  return [
+    record.scenario_id ?? "na",
+    record.execution_status ?? "na",
+    record.error_type ?? "na",
+    record.module_name ?? "na",
+    compactText(record.error_message, 80),
+  ].join("::");
+}
+
+function buildAlertSignature(
+  n1Records: any[],
+  n2Records: any[],
+  n3Records: any[],
+  inactiveRecords: any[],
+  autofixResults: Array<{ scenario: string; fixed: boolean; patched: boolean; explanation: string }>,
+): string {
+  return [
+    `n1=${n1Records.map(buildRecordSignature).sort().join("|")}`,
+    `n2=${n2Records.map(buildRecordSignature).sort().join("|")}`,
+    `n3=${n3Records.map(buildRecordSignature).sort().join("|")}`,
+    `inactive=${inactiveRecords.map((r) => `${r.scenario_id ?? "na"}::${r.scenario_name ?? "sem_nome"}`).sort().join("|")}`,
+    `fix=${autofixResults
+      .map((r) => `${r.scenario}::${r.patched ? "patched" : r.fixed ? "diagnosed" : "failed"}::${compactText(r.explanation, 80)}`)
+      .sort()
+      .join("|")}`,
+  ].join(";;");
+}
+
+function formatConsolidatedAlert(params: {
+  newRecords: any[];
+  n1Records: any[];
+  n2Records: any[];
+  n3Records: any[];
+  inactiveRecords: any[];
+  autofixResults: Array<{ scenario: string; fixed: boolean; patched: boolean; explanation: string }>;
+}): string {
+  const { newRecords, n1Records, n2Records, n3Records, inactiveRecords, autofixResults } = params;
+  const patched = autofixResults.filter((r) => r.patched);
+  const failedFixes = autofixResults.filter((r) => !r.patched);
+  const pendingMap = new Map<string, string>();
+
+  for (const record of [...n3Records, ...n2Records, ...inactiveRecords, ...n1Records]) {
+    const key = `${record.execution_id ?? record.scenario_id ?? record.scenario_name}`;
+    if (pendingMap.has(key)) continue;
+    const detail = record.execution_status === "inactive"
+      ? "inativo"
+      : compactText(record.error_message, 110);
+    pendingMap.set(key, `  • [${record.scenario_id}] ${record.scenario_name} — ${detail}`);
+  }
+
+  const nowLabel = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  const lines = [
+    `🤖 *SOL AutoFix — Resumo Consolidado* [${nowLabel}]`,
+    "",
+    `📊 *Novos eventos:* ${newRecords.length}`,
+    `🚨 *Críticos parados:* ${n3Records.length}`,
+    `🔴 *Fluxos parados:* ${n2Records.length}`,
+    `🔕 *Fluxos inativos:* ${inactiveRecords.length}`,
+    `🟠 *Erros/avisos:* ${n1Records.length}`,
+    `🧯 *Fixes aplicados:* ${patched.length}`,
+  ];
+
+  if (patched.length > 0) {
+    lines.push("", `✅ *Fixes aplicados (${patched.length}):*`);
+    for (const result of patched.slice(0, 5)) {
+      lines.push(`  • ${result.scenario} — ${compactText(result.explanation, 100)}`);
+    }
+  }
+
+  const pending = Array.from(pendingMap.values());
+  if (pending.length > 0) {
+    lines.push("", `⚠️ *Pendências principais (${pending.length}):*`);
+    lines.push(...pending.slice(0, 6));
+    if (pending.length > 6) {
+      lines.push(`  ... e mais ${pending.length - 6}`);
+    }
+  }
+
+  if (failedFixes.length > 0) {
+    lines.push("", `🛠️ *AutoFix não resolveu (${failedFixes.length}):*`);
+    for (const result of failedFixes.slice(0, 4)) {
+      lines.push(`  • ${result.scenario} — ${compactText(result.explanation, 100)}`);
+    }
+  }
+
+  lines.push("", "Resumo único enviado para reduzir ruído.", "", "Sol Estrateg.IA — Monitor de Fluxos");
+  return lines.join("\n");
+}
+
 // ── AutoFix helpers (Claude + Make PATCH) ──
 
 async function fetchBlueprint(scenarioId: number, headers: Record<string, string>): Promise<any | null> {
@@ -287,35 +387,10 @@ async function runAutoFix(
 
   console.log(`[autofix] Iniciando análise de "${record.scenario_name}" (ID ${scenarioId})`);
 
-  // Notify start
-  if (krolicKey && centralNumber) {
-    await sendWhatsAppMessage(krolicKey, centralNumber, [
-      "🤖 *AutoFix Iniciado*",
-      "",
-      `📋 *Fluxo:* ${record.scenario_name}`,
-      `⚙️ *Módulo:* [${record.module_app}] ${record.module_name}`,
-      `❌ *Erro:* ${(record.error_message ?? "").substring(0, 200)}`,
-      "",
-      "Analisando com IA e tentando corrigir automaticamente...",
-      "",
-      "Sol Estrateg.IA — Skill AutoFix",
-    ].join("\n"));
-  }
-
   // Fetch blueprint
   const blueprint = await fetchBlueprint(scenarioId, makeHeaders);
   if (!blueprint) {
     console.warn(`[autofix] Blueprint inacessível para cenário ${scenarioId}`);
-    if (krolicKey && centralNumber) {
-      await sendWhatsAppMessage(krolicKey, centralNumber, [
-        "⚠️ *AutoFix — Blueprint Inacessível*",
-        "",
-        `📋 *Fluxo:* ${record.scenario_name}`,
-        "Não foi possível acessar o blueprint. Verificação manual necessária.",
-        "",
-        "Sol Estrateg.IA — Skill AutoFix",
-      ].join("\n"));
-    }
     return { fixed: false, patched: false, explanation: "Blueprint inacessível" };
   }
 
@@ -353,35 +428,6 @@ async function runAutoFix(
       },
     });
 
-    // Notify result
-    if (krolicKey && centralNumber) {
-      if (patchResult.ok) {
-        await sendWhatsAppMessage(krolicKey, centralNumber, [
-          "✅ *CORRIGIDO — AutoFix Aplicado*",
-          "",
-          `📋 *Fluxo:* ${record.scenario_name}`,
-          `🔧 *Diagnóstico:* ${claudeResult.explanation.substring(0, 300)}`,
-          "",
-          "O blueprint foi atualizado automaticamente.",
-          "Monitore as próximas execuções para confirmar.",
-          "",
-          "Sol Estrateg.IA — Skill AutoFix",
-        ].join("\n"));
-      } else {
-        await sendWhatsAppMessage(krolicKey, centralNumber, [
-          "⚠️ *AutoFix — PATCH Falhou*",
-          "",
-          `📋 *Fluxo:* ${record.scenario_name}`,
-          `🔧 *Diagnóstico:* ${claudeResult.explanation.substring(0, 200)}`,
-          `❌ *PATCH:* ${patchResult.detail.substring(0, 200)}`,
-          "",
-          "A IA identificou a correção, mas o PATCH falhou.",
-          "",
-          "Sol Estrateg.IA — Skill AutoFix",
-        ].join("\n"));
-      }
-    }
-
     return { fixed: true, patched: patchResult.ok, explanation: claudeResult.explanation };
   } else {
     // Claude couldn't fix
@@ -401,20 +447,6 @@ async function runAutoFix(
         claude_response: claudeResult.explanation,
       },
     });
-
-    if (krolicKey && centralNumber) {
-      await sendWhatsAppMessage(krolicKey, centralNumber, [
-        "⚠️ *AutoFix — Correção Não Possível*",
-        "",
-        `📋 *Fluxo:* ${record.scenario_name}`,
-        `🤖 *Diagnóstico:* ${claudeResult.explanation.substring(0, 200)}`,
-        "",
-        "A IA não conseguiu corrigir automaticamente.",
-        "Intervenção manual necessária.",
-        "",
-        "Sol Estrateg.IA — Skill AutoFix",
-      ].join("\n"));
-    }
 
     return { fixed: false, patched: false, explanation: claudeResult.explanation };
   }
@@ -680,18 +712,20 @@ Deno.serve(async (req) => {
     const errorContinued = records.filter((r) => r.execution_status === "error_continued").length;
     const warnings = records.filter((r) => r.execution_status === "warning").length;
 
-    // ── 5. Send WhatsApp alerts for NEW errors ──
+    // ── 5. Classify events for consolidated alerting ──
     let alertsSent = 0;
     let autofixResults: any[] = [];
 
-    // Get Krolic API key and central number
+    // Get Krolic API key and alert state
     const { data: settings } = await supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["krolic_api_token", "central_whatsapp_number"]);
+      .in("key", ["krolic_api_token", ALERT_LAST_SENT_KEY, ALERT_LAST_SIGNATURE_KEY]);
 
     const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
-    const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
+    const centralNumber = RBR_CENTRAL;
+    const lastAlertAt = settings?.find((s: any) => s.key === ALERT_LAST_SENT_KEY)?.value;
+    const lastAlertSignature = settings?.find((s: any) => s.key === ALERT_LAST_SIGNATURE_KEY)?.value ?? "";
 
     // ── Pre-check: is AutoFix (skill 6.12) enabled? ──
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -705,80 +739,14 @@ Deno.serve(async (req) => {
       autofixEnabled = !toggleData || toggleData.enabled;
     }
 
-    try {
-      if (apiKey && centralNumber && newRecords.length > 0) {
-        console.log(`[alerts] ${newRecords.length} new errors detected, sending alerts to ${centralNumber}`);
-
-        // N1: errors that didn't stop the flow
-        const n1Records = newRecords.filter((r) => r.execution_status === "error_continued" || r.execution_status === "warning");
-        // N2: stopped flows
-        const n2Records = newRecords.filter((r) => r.execution_status === "stopped");
-        // N3: critical stopped flows
-        const n3Records = n2Records.filter((r) => isCriticalFlow(r.scenario_name));
-        // Inactive: flows that are turned off
-        const inactiveRecords = newRecords.filter((r) => r.execution_status === "inactive");
-
-        // Send N3 first (aggregated) if critical flows are stopped
-        if (n3Records.length > 0) {
-          const msg = formatN3Message(n3Records);
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-          if (sent) alertsSent++;
-          console.log(`[alerts] N3 sent: ${sent} (${n3Records.length} critical flows)`);
-          await new Promise((r) => setTimeout(r, 1000));
-        }
-
-        // Send N2 alerts (individual stopped flows) — with autofix note
-        for (const record of n2Records) {
-          const msg = formatN2Message(record, autofixEnabled);
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-          if (sent) alertsSent++;
-          await new Promise((r) => setTimeout(r, 1000));
-        }
-
-        // Send N1 alerts — with autofix note
-        if (n1Records.length <= 5) {
-          for (const record of n1Records) {
-            const msg = formatN1Message(record, autofixEnabled);
-            const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-            if (sent) alertsSent++;
-            await new Promise((r) => setTimeout(r, 1000));
-          }
-        } else {
-          const summary = [
-            "🟠 *ALERTA N1 — Resumo de Erros*",
-            "",
-            `Detectados *${n1Records.length} novos erros/avisos* em fluxos:`,
-            "",
-            ...n1Records.slice(0, 10).map((r) => `  • ${r.scenario_name} — ${r.execution_status === "warning" ? "⚠️" : "🟠"} [${r.module_app}] ${r.module_name}`),
-            n1Records.length > 10 ? `  ... e mais ${n1Records.length - 10}` : null,
-            "",
-            autofixEnabled
-              ? "🤖 *AutoFix ativado* — analisando com IA e iniciando correção automática..."
-              : "Nenhum fluxo parou, mas vale monitorar.",
-            "",
-            "Sol Estrateg.IA — Monitor de Fluxos",
-          ].filter(Boolean).join("\n");
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, summary);
-          if (sent) alertsSent++;
-        }
-
-        // Send Inactive alerts
-        for (const record of inactiveRecords) {
-          const msg = formatInactiveMessage(record);
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-          if (sent) alertsSent++;
-          await new Promise((r) => setTimeout(r, 1000));
-        }
-
-        console.log(`[alerts] Total alerts sent: ${alertsSent}`);
-      } else if (!apiKey) {
-        console.warn("[alerts] Krolic API key not configured, skipping alerts");
-      } else if (!centralNumber) {
-        console.warn("[alerts] Central WhatsApp number not configured, skipping alerts");
-      }
-    } catch (alertError) {
-      console.error("[alerts] Error sending alerts:", alertError);
-    }
+    // N1: errors that didn't stop the flow
+    const n1Records = newRecords.filter((r) => r.execution_status === "error_continued" || r.execution_status === "warning");
+    // N2: stopped flows
+    const n2Records = newRecords.filter((r) => r.execution_status === "stopped");
+    // N3: critical stopped flows
+    const n3Records = n2Records.filter((r) => isCriticalFlow(r.scenario_name));
+    // Inactive: flows that are turned off
+    const inactiveRecords = newRecords.filter((r) => r.execution_status === "inactive");
 
     // ── 7. AutoFix: attempt Claude fix on ALL new errors (skill 6.12) ──
     if (autofixEnabled && ANTHROPIC_API_KEY && newRecords.length > 0) {
@@ -800,6 +768,43 @@ Deno.serve(async (req) => {
       console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
     } else if (!autofixEnabled) {
       console.log("[autofix] Skill 6.12 disabled, skipping");
+    }
+
+    try {
+      if (apiKey && newRecords.length > 0) {
+        const summarySignature = buildAlertSignature(n1Records, n2Records, n3Records, inactiveRecords, autofixResults);
+        const lastAlertTime = lastAlertAt ? new Date(lastAlertAt).getTime() : 0;
+        const now = Date.now();
+        const withinCooldown = now - lastAlertTime < ALERT_COOLDOWN_MS;
+        const signatureChanged = summarySignature !== lastAlertSignature;
+
+        if (signatureChanged || !withinCooldown) {
+          console.log(`[alerts] Sending consolidated summary to ${centralNumber}`);
+          const summaryMessage = formatConsolidatedAlert({
+            newRecords,
+            n1Records,
+            n2Records,
+            n3Records,
+            inactiveRecords,
+            autofixResults,
+          });
+          const sent = await sendWhatsAppMessage(apiKey, centralNumber, summaryMessage);
+
+          if (sent) {
+            alertsSent = 1;
+            await supabase.from("app_settings").upsert([
+              { key: ALERT_LAST_SENT_KEY, value: new Date().toISOString() },
+              { key: ALERT_LAST_SIGNATURE_KEY, value: summarySignature },
+            ], { onConflict: "key" });
+          }
+        } else {
+          console.log("[alerts] Consolidated summary suppressed by cooldown/signature");
+        }
+      } else if (!apiKey) {
+        console.warn("[alerts] Krolic API key not configured, skipping alerts");
+      }
+    } catch (alertError) {
+      console.error("[alerts] Error sending consolidated summary:", alertError);
     }
 
     return new Response(
