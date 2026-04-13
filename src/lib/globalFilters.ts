@@ -108,6 +108,23 @@ export function parseDateFlexible(dateStr: string | null | undefined): Date | nu
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
+   // YYYY-MM-DD or YYYY-MM-DD HH:mm:ss / YYYY-MM-DDTHH:mm:ss
+   // Parse explicitly in local time to avoid timezone shifts on date-only values.
+   const isoLocal = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{1,3}))?)?$/);
+   if (isoLocal) {
+     const [, yyyy, mm, dd, hh = "00", mi = "00", ss = "00", ms = "0"] = isoLocal;
+     const parsed = new Date(
+       Number(yyyy),
+       Number(mm) - 1,
+       Number(dd),
+       Number(hh),
+       Number(mi),
+       Number(ss),
+       Number(ms.padEnd(3, "0")),
+     );
+     return Number.isNaN(parsed.getTime()) ? null : parsed;
+   }
+
   const iso = new Date(raw);
   if (!Number.isNaN(iso.getTime())) return iso;
 
