@@ -270,8 +270,8 @@ export default function Insights() {
                   {cat.skills.map(skill => {
                     const cfg = statusConfig[skill.status];
                     const isOn = !!toggles[skill.id];
-                    const hasConfigPanel = skill.id === "6.11" || !!skillConfigSchemas[skill.id];
-                    const isConfigured = configuredSkills.has(skill.id) || skill.id === "6.11";
+                    const hasConfigPanel = skill.id === "6.11" || skill.id === "6.12" || !!skillConfigSchemas[skill.id];
+                    const isConfigured = configuredSkills.has(skill.id) || skill.id === "6.11" || skill.id === "6.12";
                     const isPendingConfig = isOn && hasConfigPanel && !isConfigured;
                     const isFullyActive = isOn && (!hasConfigPanel || isConfigured);
                     const isExpanded = expandedSkillId === skill.id;
