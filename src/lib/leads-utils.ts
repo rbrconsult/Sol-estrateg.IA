@@ -30,7 +30,16 @@ export function getEtapaLabel(r: SolLead): string {
 
 export function safeDate(str: string | undefined): Date | null {
   if (!str) return null;
-  const d = new Date(str);
+  const raw = String(str).trim();
+  if (!raw) return null;
+  // DD/MM/YYYY or DD-MM-YYYY first to avoid US-style misinterpretation
+  const br = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (br) {
+    const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = br;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), Number(ss));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(raw);
   return isNaN(d.getTime()) ? null : d;
 }
 
