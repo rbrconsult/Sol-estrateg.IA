@@ -853,6 +853,8 @@ Deno.serve(async (req) => {
         );
       }
       console.log(`[alerts] Hourly summary sent: ${sent}`);
+    } else if (isQuietHours) {
+      console.log(`[alerts] Quiet hours (${hourBRT}h BRT) — no messages until 06:00`);
     } else if (!shouldSendSummary) {
       const minutesLeft = Math.ceil((HOURLY_COOLDOWN_MS - (now - lastAlertTime)) / 60000);
       console.log(`[alerts] Cooldown active — next summary in ~${minutesLeft}min`);
