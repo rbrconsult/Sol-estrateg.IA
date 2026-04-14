@@ -276,17 +276,19 @@ Deno.serve(async (req) => {
         { onConflict: "key" }
       );
 
-    // 4. Get Krolic credentials & send summary (HARDCODED to RBR central)
+    // 4. WhatsApp notifications permanently disabled per user request
+    const whatsappDisabled = true;
+    const activated = results.filter((r) => r.activated);
+    const failed = results.filter((r) => !r.activated);
+
+    if (!whatsappDisabled) {
     const { data: settings } = await supabase
       .from("app_settings")
       .select("key, value")
       .in("key", ["krolic_api_token"]);
 
     const krolicKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
-    const centralNumber = "5511974426112"; // RBR central — único destino
-
-    const activated = results.filter((r) => r.activated);
-    const failed = results.filter((r) => !r.activated);
+    const centralNumber = "5511974426112";
 
     if (krolicKey && centralNumber) {
       const lines = [
