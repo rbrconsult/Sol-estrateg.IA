@@ -50,7 +50,7 @@ async function fetchScenarios(
     .select("value")
     .eq("key", "autofix_folder_prefix")
     .maybeSingle();
-  const folderPrefix = (folderPrefixSetting?.value || "solestrategia").toLowerCase();
+  const folderPrefix = (folderPrefixSetting?.value || "scale_solestrategia").toLowerCase();
 
   let folderId: number | null = null;
   try {
