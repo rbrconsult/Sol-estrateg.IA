@@ -28,6 +28,30 @@ function isCriticalFlow(name: string): boolean {
   return CRITICAL_FLOW_PATTERNS.some((p) => p.test(name ?? ""));
 }
 
+function suggestAction(record: any): string {
+  const err = (record.error_message ?? "").toLowerCase();
+  const errType = (record.error_type ?? "").toLowerCase();
+  if (err.includes("token") || err.includes("expired") || err.includes("reauthorize") || errType.includes("accountvalidation")) {
+    return "Reconectar credencial/conexão expirada no Make.com → Connections";
+  }
+  if (err.includes("blueprint") || errType.includes("blueprintvalidation")) {
+    return "Abrir cenário no Make, localizar módulo em vermelho, corrigir configuração";
+  }
+  if (err.includes("json") || err.includes("invalid") || errType.includes("invalidconfiguration")) {
+    return "Verificar campos com dados null — usar ifempty() no módulo HTTP/Body";
+  }
+  if (err.includes("rate") || err.includes("429") || err.includes("limit")) {
+    return "Rate limit atingido — aumentar intervalo entre execuções";
+  }
+  if (err.includes("timeout") || err.includes("timed out")) {
+    return "Timeout — verificar se API externa está respondendo";
+  }
+  if (err.includes("not found") || err.includes("404")) {
+    return "Recurso não encontrado — verificar IDs/URLs no módulo";
+  }
+  return "Abrir cenário no Make.com e verificar o módulo com erro";
+}
+
 async function fetchLogDetail(
   sid: number,
   logId: string,
@@ -742,6 +766,12 @@ Deno.serve(async (req) => {
           lines.push(`🔕 *${inactiveList.length} cenário(s) INATIVO(S):*`);
           for (const r of inactiveList.slice(0, 5)) {
             lines.push(`  • ${r.scenario_name} (ID ${r.scenario_id})`);
+            // Suggest action based on error type
+            if (r.error_message?.includes("Token") || r.error_message?.includes("conexão")) {
+              lines.push(`    🔧 Reconectar credencial no Make.com`);
+            } else {
+              lines.push(`    🔧 Verificar e reativar no Make.com`);
+            }
           }
           if (inactiveList.length > 5) lines.push(`  ... e mais ${inactiveList.length - 5}`);
           lines.push("");
@@ -753,23 +783,51 @@ Deno.serve(async (req) => {
             const errType = r.error_type ?? "Erro";
             lines.push(`  • ${r.scenario_name} — ${errType}`);
             if (r.error_message) {
-              lines.push(`    💬 ${(r.error_message as string).substring(0, 120)}`);
+              lines.push(`    💬 ${(r.error_message as string).substring(0, 150)}`);
             }
+            lines.push(`    🔧 ${suggestAction(r)}`);
           }
           if (stoppedList.length > 5) lines.push(`  ... e mais ${stoppedList.length - 5}`);
           lines.push("");
         }
 
         if (errorList.length > 0) {
-          lines.push(`🟠 ${errorList.length} erro(s) em fluxos que continuaram rodando`);
+          lines.push(`🟠 *${errorList.length} erro(s) em fluxos que continuaram:*`);
+          // Group by scenario to avoid repetition
+          const byScenario = new Map<string, { name: string; count: number; lastError: string; lastModule: string; errorType: string }>();
+          for (const r of errorList) {
+            const key = String(r.scenario_id);
+            const existing = byScenario.get(key);
+            if (existing) {
+              existing.count++;
+            } else {
+              byScenario.set(key, {
+                name: r.scenario_name,
+                count: 1,
+                lastError: (r.error_message ?? "").substring(0, 120),
+                lastModule: `[${r.module_app}] ${r.module_name}`,
+                errorType: r.error_type ?? "Erro",
+              });
+            }
+          }
+          for (const [, info] of [...byScenario.entries()].slice(0, 6)) {
+            lines.push(`  • ${info.name} — ${info.count}x ${info.errorType}`);
+            lines.push(`    ⚙️ Módulo: ${info.lastModule}`);
+            if (info.lastError) lines.push(`    💬 ${info.lastError}`);
+          }
+          if (byScenario.size > 6) lines.push(`  ... e mais ${byScenario.size - 6} cenário(s)`);
+          lines.push("");
         }
+
         if (warningList.length > 0) {
-          lines.push(`⚠️ ${warningList.length} aviso(s)`);
+          // Just count warnings, group by scenario
+          const warnScenarios = new Set(warningList.map((r) => r.scenario_name));
+          lines.push(`⚠️ ${warningList.length} aviso(s) em ${warnScenarios.size} cenário(s)`);
+          lines.push("");
         }
 
         if (stoppedList.length > 0 || inactiveList.length > 0) {
-          lines.push("");
-          lines.push("⚠️ *Ação manual necessária nos itens acima.*");
+          lines.push("⚠️ *Ação manual necessária nos itens marcados com 🔧*");
         }
 
         lines.push("");
