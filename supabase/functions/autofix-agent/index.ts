@@ -281,49 +281,8 @@ Deno.serve(async (req) => {
     const activated = results.filter((r) => r.activated);
     const failed = results.filter((r) => !r.activated);
 
-    if (!whatsappDisabled) {
-    const { data: settings } = await supabase
-      .from("app_settings")
-      .select("key, value")
-      .in("key", ["krolic_api_token"]);
-
-    const krolicKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
-    const centralNumber = "5511974426112";
-
-    if (krolicKey && centralNumber) {
-      const lines = [
-        "🤖 *AutoFix Agent — Varredura Automática*",
-        "",
-        `📊 *Total cenários:* ${scenarios.length}`,
-        `🔴 *Inativos detectados:* ${inactive.length}`,
-      ];
-
-      if (activated.length > 0) {
-        lines.push("");
-        lines.push(`✅ *Reativados (${activated.length}):*`);
-        for (const r of activated) {
-          lines.push(`  • ${r.name} (ID ${r.id})`);
-        }
-      }
-
-      if (failed.length > 0) {
-        lines.push("");
-        lines.push(`❌ *Falha na reativação (${failed.length}):*`);
-        for (const r of failed) {
-          lines.push(`  • ${r.name}: ${r.detail.substring(0, 100)}`);
-        }
-      }
-
-      if (inactive.length === 0) {
-        lines.push("");
-        lines.push("✅ Todos os cenários estão ativos. Nenhuma ação necessária.");
-      }
-
-      lines.push("");
-      lines.push("Sol Estrateg.IA — AutoFix Agent");
-
-      await sendWhatsApp(krolicKey, centralNumber, lines.join("\n"));
-    } // end whatsappDisabled check
+    // WhatsApp notifications permanently disabled — skip everything
+    console.log(`[autofix-agent] WhatsApp disabled — ${activated.length} activated, ${failed.length} failed`);
 
     const summary = {
       success: true,
