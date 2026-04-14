@@ -38,13 +38,6 @@ Deno.serve(async (req) => {
 
     const { phone, message, errorId } = await req.json();
 
-    // All automated WhatsApp alerts permanently disabled per user request
-    console.log(`[send-whatsapp-alert] DISABLED — would have sent alert for error ${errorId}`);
-    return new Response(
-      JSON.stringify({ success: true, disabled: true, note: "WhatsApp alerts permanently disabled" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-
     // Read Krolic API key from settings
     const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: settings } = await supabaseAdmin
