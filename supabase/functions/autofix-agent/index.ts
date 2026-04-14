@@ -323,7 +323,7 @@ Deno.serve(async (req) => {
       lines.push("Sol Estrateg.IA — AutoFix Agent");
 
       await sendWhatsApp(krolicKey, centralNumber, lines.join("\n"));
-    }
+    } // end whatsappDisabled check
 
     const summary = {
       success: true,
