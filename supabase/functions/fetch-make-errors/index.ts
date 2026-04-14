@@ -493,8 +493,8 @@ Deno.serve(async (req) => {
       return fetch(url, opts);
     }
 
-    // 1. Fetch folders to find monitored folder ("solestrategia")
-    const MONITORED_FOLDER_NAME = "solestrategia_";
+    // 1. Fetch folders to find monitored folder ("scale_solestrategia")
+    const MONITORED_FOLDER_NAME = "scale_solestrategia";
     let monitoredFolderId: number | null = null;
     try {
       const foldersRes = await fetchRetry(
@@ -508,13 +508,13 @@ Deno.serve(async (req) => {
         console.log(`[folders] Total pastas retornadas: ${folderList.length}`);
         console.log(`[folders] Nomes: ${folderList.map((f: any) => `"${f.name}" (id:${f.id})`).join(", ")}`);
         const match = folderList.find((f: any) =>
-          (f.name ?? "").toLowerCase().includes("solestrategia")
+          (f.name ?? "").toLowerCase().includes("scale_solestrategia")
         );
         if (match) {
           monitoredFolderId = match.id;
           console.log(`[folders] Pasta "${match.name}" encontrada (ID: ${monitoredFolderId})`);
         } else {
-          console.warn(`[folders] Pasta com "solestrategia" não encontrada — monitorando todos os cenários`);
+          console.warn(`[folders] Pasta "scale_solestrategia" não encontrada — monitorando todos os cenários`);
         }
       }
     } catch (e) {
