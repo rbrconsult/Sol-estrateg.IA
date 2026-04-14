@@ -722,7 +722,13 @@ Deno.serve(async (req) => {
     const HOURLY_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
     const lastAlertTime = lastAlertRaw ? new Date(lastAlertRaw).getTime() : 0;
     const now = Date.now();
-    const shouldSendSummary = (now - lastAlertTime) >= HOURLY_COOLDOWN_MS;
+
+    // Quiet hours: no messages between 23:59 and 06:00 BRT (UTC-3)
+    const nowBRT = new Date(now - 3 * 60 * 60 * 1000); // approximate BRT
+    const hourBRT = nowBRT.getUTCHours();
+    const isQuietHours = hourBRT >= 0 && hourBRT < 6; // midnight to 6am BRT
+
+    const shouldSendSummary = !isQuietHours && (now - lastAlertTime) >= HOURLY_COOLDOWN_MS;
 
     if (shouldSendSummary && apiKey && centralNumber) {
       console.log(`[alerts] Hourly summary triggered — ${records.length} total records`);
@@ -847,6 +853,8 @@ Deno.serve(async (req) => {
         );
       }
       console.log(`[alerts] Hourly summary sent: ${sent}`);
+    } else if (isQuietHours) {
+      console.log(`[alerts] Quiet hours (${hourBRT}h BRT) — no messages until 06:00`);
     } else if (!shouldSendSummary) {
       const minutesLeft = Math.ceil((HOURLY_COOLDOWN_MS - (now - lastAlertTime)) / 60000);
       console.log(`[alerts] Cooldown active — next summary in ~${minutesLeft}min`);
