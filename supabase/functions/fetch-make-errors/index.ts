@@ -28,6 +28,30 @@ function isCriticalFlow(name: string): boolean {
   return CRITICAL_FLOW_PATTERNS.some((p) => p.test(name ?? ""));
 }
 
+function suggestAction(record: any): string {
+  const err = (record.error_message ?? "").toLowerCase();
+  const errType = (record.error_type ?? "").toLowerCase();
+  if (err.includes("token") || err.includes("expired") || err.includes("reauthorize") || errType.includes("accountvalidation")) {
+    return "Reconectar credencial/conexão expirada no Make.com → Connections";
+  }
+  if (err.includes("blueprint") || errType.includes("blueprintvalidation")) {
+    return "Abrir cenário no Make, localizar módulo em vermelho, corrigir configuração";
+  }
+  if (err.includes("json") || err.includes("invalid") || errType.includes("invalidconfiguration")) {
+    return "Verificar campos com dados null — usar ifempty() no módulo HTTP/Body";
+  }
+  if (err.includes("rate") || err.includes("429") || err.includes("limit")) {
+    return "Rate limit atingido — aumentar intervalo entre execuções";
+  }
+  if (err.includes("timeout") || err.includes("timed out")) {
+    return "Timeout — verificar se API externa está respondendo";
+  }
+  if (err.includes("not found") || err.includes("404")) {
+    return "Recurso não encontrado — verificar IDs/URLs no módulo";
+  }
+  return "Abrir cenário no Make.com e verificar o módulo com erro";
+}
+
 async function fetchLogDetail(
   sid: number,
   logId: string,
