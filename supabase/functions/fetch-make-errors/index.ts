@@ -680,120 +680,125 @@ Deno.serve(async (req) => {
     const errorContinued = records.filter((r) => r.execution_status === "error_continued").length;
     const warnings = records.filter((r) => r.execution_status === "warning").length;
 
-    // ── 5. Send WhatsApp alerts for NEW errors ──
+    // ── 5. Hourly consolidated WhatsApp summary ──
     let alertsSent = 0;
-    let autofixResults: any[] = [];
+    const autofixResults: any[] = [];
 
     // Get Krolic API key and central number
     const { data: settings } = await supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["krolic_api_token", "central_whatsapp_number"]);
+      .in("key", ["krolic_api_token", "central_whatsapp_number", "fetch_errors_last_alert"]);
 
     const apiKey = settings?.find((s: any) => s.key === "krolic_api_token")?.value;
     const centralNumber = settings?.find((s: any) => s.key === "central_whatsapp_number")?.value;
+    const lastAlertRaw = settings?.find((s: any) => s.key === "fetch_errors_last_alert")?.value;
 
-    // ── Pre-check: is AutoFix (skill 6.12) enabled? ──
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    const autofixEnabled = false;
-    console.log("[autofix] Automatic AutoFix disabled; manual remediation preferred");
+    // Hourly cooldown: only send summary once per hour
+    const HOURLY_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+    const lastAlertTime = lastAlertRaw ? new Date(lastAlertRaw).getTime() : 0;
+    const now = Date.now();
+    const shouldSendSummary = (now - lastAlertTime) >= HOURLY_COOLDOWN_MS;
 
-    try {
-      // WhatsApp alerts completely disabled per user request
-      const alertsDisabled = true;
-      if (!alertsDisabled && apiKey && centralNumber && newRecords.length > 0) {
-        console.log(`[alerts] ${newRecords.length} new errors detected, sending alerts to ${centralNumber}`);
+    if (shouldSendSummary && apiKey && centralNumber) {
+      console.log(`[alerts] Hourly summary triggered — ${records.length} total records`);
 
-        // N1: errors that didn't stop the flow
-        const n1Records = newRecords.filter((r) => r.execution_status === "error_continued" || r.execution_status === "warning");
-        // N2: stopped flows
-        const n2Records = newRecords.filter((r) => r.execution_status === "stopped");
-        // N3: critical stopped flows
-        const n3Records = n2Records.filter((r) => isCriticalFlow(r.scenario_name));
-        // Inactive: flows that are turned off
-        const inactiveRecords = newRecords.filter((r) => r.execution_status === "inactive");
+      // Build consolidated summary
+      const stoppedList = records.filter((r) => r.execution_status === "stopped");
+      const inactiveList = records.filter((r) => r.execution_status === "inactive");
+      const errorList = records.filter((r) => r.execution_status === "error_continued");
+      const warningList = records.filter((r) => r.execution_status === "warning");
 
-        // Send N3 first (aggregated) if critical flows are stopped
-        if (n3Records.length > 0) {
-          const msg = formatN3Message(n3Records);
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-          if (sent) alertsSent++;
-          console.log(`[alerts] N3 sent: ${sent} (${n3Records.length} critical flows)`);
-          await new Promise((r) => setTimeout(r, 1000));
-        }
+      const allGood = stoppedList.length === 0 && inactiveList.length === 0 && errorList.length === 0;
 
-        // Send N2 alerts (individual stopped flows) — with autofix note
-        for (const record of n2Records) {
-          const msg = formatN2Message(record, autofixEnabled);
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-          if (sent) alertsSent++;
-          await new Promise((r) => setTimeout(r, 1000));
-        }
+      let summaryMsg: string;
 
-        // Send N1 alerts — with autofix note
-        if (n1Records.length <= 5) {
-          for (const record of n1Records) {
-            const msg = formatN1Message(record, autofixEnabled);
-            const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-            if (sent) alertsSent++;
-            await new Promise((r) => setTimeout(r, 1000));
+      if (allGood) {
+        // Everything is fine
+        const time = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+        summaryMsg = [
+          "✅ *SOL Monitor — Tudo OK*",
+          "",
+          `🕐 ${time}`,
+          `📊 ${Object.keys(scenarios).length} cenários monitorados`,
+          warningList.length > 0 ? `⚠️ ${warningList.length} aviso(s) leve(s)` : null,
+          "",
+          "Todos os fluxos estão rodando normalmente.",
+          "",
+          "Sol Estrateg.IA",
+        ].filter(Boolean).join("\n");
+      } else {
+        // There are issues — consolidated report
+        const time = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+        const lines: string[] = [
+          "🛑 *SOL Monitor — Resumo Horário*",
+          "",
+          `🕐 ${time}`,
+          `📊 ${Object.keys(scenarios).length} cenários monitorados`,
+          "",
+        ];
+
+        if (inactiveList.length > 0) {
+          lines.push(`🔕 *${inactiveList.length} cenário(s) INATIVO(S):*`);
+          for (const r of inactiveList.slice(0, 5)) {
+            lines.push(`  • ${r.scenario_name} (ID ${r.scenario_id})`);
           }
-        } else {
-          const summary = [
-            "🟠 *ALERTA N1 — Resumo de Erros*",
-            "",
-            `Detectados *${n1Records.length} novos erros/avisos* em fluxos:`,
-            "",
-            ...n1Records.slice(0, 10).map((r) => `  • ${r.scenario_name} — ${r.execution_status === "warning" ? "⚠️" : "🟠"} [${r.module_app}] ${r.module_name}`),
-            n1Records.length > 10 ? `  ... e mais ${n1Records.length - 10}` : null,
-            "",
-            "Nenhum fluxo parou, mas vale monitorar.",
-            "",
-            "Sol Estrateg.IA — Monitor de Fluxos",
-          ].filter(Boolean).join("\n");
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, summary);
-          if (sent) alertsSent++;
+          if (inactiveList.length > 5) lines.push(`  ... e mais ${inactiveList.length - 5}`);
+          lines.push("");
         }
 
-        // Send Inactive alerts
-        for (const record of inactiveRecords) {
-          const msg = formatInactiveMessage(record);
-          const sent = await sendWhatsAppMessage(apiKey, centralNumber, msg);
-          if (sent) alertsSent++;
-          await new Promise((r) => setTimeout(r, 1000));
+        if (stoppedList.length > 0) {
+          lines.push(`🔴 *${stoppedList.length} fluxo(s) PARADO(S):*`);
+          for (const r of stoppedList.slice(0, 5)) {
+            const errType = r.error_type ?? "Erro";
+            lines.push(`  • ${r.scenario_name} — ${errType}`);
+            if (r.error_message) {
+              lines.push(`    💬 ${(r.error_message as string).substring(0, 120)}`);
+            }
+          }
+          if (stoppedList.length > 5) lines.push(`  ... e mais ${stoppedList.length - 5}`);
+          lines.push("");
         }
 
-        console.log(`[alerts] Total alerts sent: ${alertsSent}`);
-      } else if (!apiKey) {
-        console.warn("[alerts] Krolic API key not configured, skipping alerts");
-      } else if (!centralNumber) {
-        console.warn("[alerts] Central WhatsApp number not configured, skipping alerts");
-      }
-    } catch (alertError) {
-      console.error("[alerts] Error sending alerts:", alertError);
-    }
-
-    // ── 7. AutoFix: attempt Claude fix on ALL new errors (skill 6.12) ──
-    if (autofixEnabled && ANTHROPIC_API_KEY && newRecords.length > 0) {
-      // AutoFix ALL new errors (stopped, error_continued, warnings) that have a scenario_id
-      const eligibleForFix = newRecords.filter((r) => r.scenario_id);
-      console.log(`[autofix] ${eligibleForFix.length} errors eligible for autofix`);
-
-      for (const record of eligibleForFix) {
-        try {
-          const result = await runAutoFix(record, makeHeaders, ANTHROPIC_API_KEY, supabase, apiKey, centralNumber);
-          if (result) autofixResults.push({ scenario: record.scenario_name, ...result });
-        } catch (e) {
-          console.error(`[autofix] Error processing ${record.scenario_name}:`, e);
+        if (errorList.length > 0) {
+          lines.push(`🟠 ${errorList.length} erro(s) em fluxos que continuaram rodando`);
         }
-        // Rate limiting between scenarios
-        await new Promise((r) => setTimeout(r, 2000));
+        if (warningList.length > 0) {
+          lines.push(`⚠️ ${warningList.length} aviso(s)`);
+        }
+
+        if (stoppedList.length > 0 || inactiveList.length > 0) {
+          lines.push("");
+          lines.push("⚠️ *Ação manual necessária nos itens acima.*");
+        }
+
+        lines.push("");
+        lines.push("Sol Estrateg.IA");
+
+        summaryMsg = lines.join("\n");
       }
 
-      console.log(`[autofix] Completed: ${autofixResults.length} processed, ${autofixResults.filter((r) => r.patched).length} fixed`);
-    } else if (!autofixEnabled) {
-      console.log("[autofix] Automatic AutoFix disabled, skipping");
+      // Send the single summary
+      const sent = await sendWhatsAppMessage(apiKey, centralNumber, summaryMsg);
+      if (sent) {
+        alertsSent = 1;
+        // Update last alert timestamp
+        await supabase.from("app_settings").upsert(
+          { key: "fetch_errors_last_alert", value: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+      }
+      console.log(`[alerts] Hourly summary sent: ${sent}`);
+    } else if (!shouldSendSummary) {
+      const minutesLeft = Math.ceil((HOURLY_COOLDOWN_MS - (now - lastAlertTime)) / 60000);
+      console.log(`[alerts] Cooldown active — next summary in ~${minutesLeft}min`);
+    } else {
+      if (!apiKey) console.warn("[alerts] Krolic API key not configured");
+      if (!centralNumber) console.warn("[alerts] Central WhatsApp number not configured");
     }
+
+    // AutoFix disabled — manual remediation preferred
+    console.log("[autofix] Automatic AutoFix disabled, skipping");
 
     return new Response(
       JSON.stringify({
