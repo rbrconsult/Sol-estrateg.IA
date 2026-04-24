@@ -58,7 +58,8 @@ const SolConfigPage = lazy(() => import("./pages/admin/SolConfigPage"));
 const SolEquipePage = lazy(() => import("./pages/admin/SolEquipePage"));
 const SolFunisPage = lazy(() => import("./pages/admin/SolFunisPage"));
 const Insights = lazy(() => import("./pages/Insights"));
-const AutoFixAgent = lazy(() => import("./components/AutoFixAgent"));
+// AutoFixAgent desabilitado — reativar em /agentes quando necessário
+// const AutoFixAgent = lazy(() => import("./components/AutoFixAgent"));
 
 
 /** Rotas com error boundary por URL: ao mudar de página, o boundary reinicia (evita ficar preso na tela de erro). */
@@ -135,7 +136,8 @@ function AppRoutesShell() {
               <Route path="/admin/funis" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="admin-funis"><SolFunisPage /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><MainLayout><ModuleGuard moduleKey="bi"><Insights /></ModuleGuard></MainLayout></ProtectedRoute>} />
               <Route path="/mensagens" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/autofix" element={<ProtectedRoute><MainLayout><AutoFixAgent /></MainLayout></ProtectedRoute>} />
+              {/* Rota /autofix desabilitada — reativar via página de Agentes */}
+              <Route path="/autofix" element={<Navigate to="/dashboard" replace />} />
 
               <Route path="*" element={<NotFound />} />
         </Routes>
