@@ -71,6 +71,17 @@ function AppRoutesShell() {
         <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              {/* Simulador público — acessível sem login */}
+              <Route
+                path="/simulador"
+                element={
+                  <iframe
+                    src="/simulacao-v4.html"
+                    title="Simular Operação"
+                    style={{ width: "100vw", height: "100vh", border: "none" }}
+                  />
+                }
+              />
               <Route path="/selecao" element={<ProtectedRoute><Selecao /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Navigate to="/selecao" replace /></ProtectedRoute>} />
               <Route path="/solarmarket/*" element={<Navigate to="/dashboard" replace />} />
